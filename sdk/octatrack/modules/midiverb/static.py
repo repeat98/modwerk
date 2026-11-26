@@ -1,38 +1,41 @@
 """Midiverb's static bound: executed instructions a sample for each program, counted from engine.asm, not run.
 
-Each handler's longest path (every conditional add taken), a run of k reads 6 + 2k, over the program's units, plus
-frame B's prologue and phase test, frame A (the input average and the interpolated output), and MIX while a fade
-runs, averaged over the two frames of a program sample (the program runs every second frame). Per-call work (the
-stream's loader, the ring clear) is outside the sample loop and left out; dsp_host's meter counts it (verify.py,
-stress.py). The counts follow engine.asm as written: change them with it.
+Each handler's longest path (every conditional add taken), k read pairs before a unit's operation 2k, over the
+program's units, plus frame B (its prologue stores the input), frame A (the input average and the interpolated
+output), END and MIX while a fade runs, averaged over the two frames of a program sample (the program runs every
+second frame). Per-call work (the stream's loader, the ring clear, the loop's set-up) is outside the sample loop and
+left out; dsp_host's meter counts it (verify.py, stress.py). The counts follow engine.asm as written: change them
+with it.
 """
 import json
 import pathlib
 
 HERE = pathlib.Path(__file__).resolve().parent
-HANDLERS = ["run", "st", "ld", "stn", "in", "outR", "outL", "stR", "stL", "stnR", "stnL", "end"]
-SLOT = 16
-COST = {"st": 9, "ld": 4, "stn": 10, "in": 5, "outR": 6, "outL": 6, "stR": 15, "stL": 15, "stnR": 18, "stnL": 18, "end": 13}
-FRAME_A, FRAME_B, MIX = 21, 33, 24
+HANDLERS = ["run", "st", "stc", "stn", "stnc", "outR", "outRc", "outL", "outLc", "end"]
+SLOT, READS = 24, 7
+COST = {"run": 3, "st": 8, "stc": 8, "stn": 9, "stnc": 9, "outR": 6, "outRc": 6, "outL": 6, "outLc": 6, "end": 4}
+FRAME_A, FRAME_B, MIX = 21, 34, 18
 
 
 def units(words):
-    i, total = 1, 0
+    """The executed instructions of one program sample's units (words[0] the header, words[1] the input's offset)."""
+    i, total = 2, 0
     while True:
-        kind, arg = HANDLERS[words[i] // SLOT], words[i + 1]
-        i += 2
-        if kind == "run":
-            total += 6 + 2 * arg
-            i += arg
-        else:
-            total += COST[kind]
+        kind = HANDLERS[words[i] // SLOT]
+        k = 0 if kind == "end" else READS - (words[i] % SLOT) // 2
+        total += 2 * k + COST[kind]
+        i += 1 + k + (0 if kind in ("run", "end") else 1)
         if kind == "end":
             return total
 
 
+def sample_cost(words):
+    return ((FRAME_A + MIX) + (FRAME_B + units(words) + MIX)) / 2
+
+
 def main():
     programs = json.loads((HERE / "programs.json").read_text())["programs"]
-    rows = sorted((((FRAME_A + MIX) + (FRAME_B + units(p["words"]) + MIX)) / 2, p["bank"], p["number"]) for p in programs)
+    rows = sorted((sample_cost(p["words"]), p["bank"], p["number"]) for p in programs)
     per, bank, number = rows[-1]
     print(f"static: {per:.1f} executed instructions a sample at most, {bank} #{number}; 4 a core: {4 * per:.1f} of 3,120")
 

@@ -168,7 +168,7 @@ def model(chunks, left, right, knobs, block=16):
             else:
                 x0 = (dl + dr + 2 * held) >> 2
                 x1 = clamp((x0 * lev) >> 21)
-                acc, p = run(area, ring, p, acc, half((x1 >> 3) & ~0x1FF), out_run)
+                p = run(area, ring, p, half((x1 >> 3) & ~0x1FF), out_run)
                 y_prev, y_cur = y_cur, list(out_run)
                 wet, phase = list(y_prev), 0
             if s["fade"]:
@@ -182,40 +182,39 @@ def mixed(dry, wet, mix, wet_mix):
     return clamp(((dry << 24) - 2 * dry * mix + 2 * wet * wet_mix) >> 24)
 
 
-HANDLERS = ["run", "st", "ld", "stn", "in", "outR", "outL", "stR", "stL", "stnR", "stnL", "end"]
-SLOT = 16  # generate.mjs SLOT: a unit's first word is its handler's offset from mvqJTAB
-LABELS = ["mvqRUN_", "mvqST__", "mvqLD__", "mvqSTN_", "mvqIN__", "mvqOUTR", "mvqOUTL", "mvqSTR_", "mvqSTL_", "mvqSNR_",
-          "mvqSNL_", "mvqEND_"]
+HANDLERS = ["run", "st", "stc", "stn", "stnc", "outR", "outRc", "outL", "outLc", "end"]
+SLOT, READS = 24, 7  # generate.mjs SLOT and READS: a unit's first word lands k read pairs before its handler
+LABELS = ["mvqRUN_", "mvqST__", "mvqSTC_", "mvqSTN_", "mvqSNC_", "mvqOUTR", "mvqORC_", "mvqOUTL", "mvqOLC_", "mvqEND_"]
 
 
-def run(words, ring, p, acc, w_in, out):
+def run(words, ring, p, w_in, out):
+    """One program sample: words[0] is the header, words[1] the input's offset, then the units."""
     at = lambda off: (p + off) % RING  # noqa: E731
-    i = 1  # words[0] is the header
+    ring[at(words[1])] = w_in
+    acc, i = 0, 2
     while True:
-        kind, arg = HANDLERS[words[i] // SLOT], words[i + 1]
-        i += 2
+        h = words[i]
+        kind = HANDLERS[h // SLOT]
+        i += 1
         if kind == "end":
-            return wrap(acc), (p + 1) % RING
+            return (p + 1) % RING
+        k = READS - (h % SLOT) // 2
+        for off in words[i:i + k]:
+            acc += ring[at(off)]
+        i += k
         if kind == "run":
-            for off in words[i:i + arg]:
-                acc += ring[at(off)]
-            i += arg
             continue
+        arg, op = words[i], kind[:-1] if kind.endswith("c") else kind
+        i += 1
         x = wrap(acc)
-        if kind == "st":
+        if op == "st":
             ring[at(arg)] = half(x); acc = x + ring[at(arg)]
-        elif kind == "ld":
-            acc = ring[at(arg)]
-        elif kind == "stn":
+        elif op == "stn":
             ring[at(arg)] = half(-x - 0x100); acc = ring[at(arg)]
-        elif kind == "in":
-            ring[at(arg)] = w_in
-        elif kind in ("outR", "outL"):
-            out[0 if kind == "outL" else 1] = clamp(ring[at(arg)] * 16)
         else:
-            v = x if kind in ("stR", "stL") else -x - 0x100
-            ring[at(arg)] = half(v)
-            out[0 if kind.endswith("L") else 1] = clamp(v * 8)
+            out[0 if op == "outL" else 1] = clamp(ring[at(arg)] * 16)
+        if kind.endswith("c"):
+            acc = 0
 
 
 def main():
@@ -228,7 +227,8 @@ def main():
     ok = not problems
     print(("[PASS]" if ok else "[FAIL]") + f" assembler traps: {problems or 'none'}")
     base = asm.syms["mvqJTAB"]
-    misplaced = [f"{name} at +{asm.syms[name] - base}" for k, name in enumerate(LABELS) if asm.syms[name] - base != SLOT * k]
+    entry = [SLOT * k + (0 if name == "mvqEND_" else 2 * READS) for k, name in enumerate(LABELS)]
+    misplaced = [f"{name} at +{asm.syms[name] - base}" for k, name in enumerate(LABELS) if asm.syms[name] - base != entry[k]]
     ok &= not misplaced
     print(("[PASS]" if not misplaced else "[FAIL]") + f" handlers {SLOT} words apart from mvqJTAB: {misplaced or 'all'}")
     blocks = 900

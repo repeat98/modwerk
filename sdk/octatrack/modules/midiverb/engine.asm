@@ -23,14 +23,15 @@
 ; calls); while none plays the reverb is silent and the dry stays at its mix.
 ;
 ; State, r7+: 00 base  01 ring pointer  02 clear counter  03 phase
-; 04 acc  05 first frame's (L+R)/2  06/07 unused  08/09 current out L/R
-; 0a program playing ($ffffff none)  0b/0c the out L/R played (the previous sample's after END)  0d mix  0e level
-; 0f half(input)  10 program loading ($ffffff none)  11 its next chunk
+; 04 unused  05 first frame's (L+R)/2  06/07 unused  08/09 current out L/R
+; 0a program playing ($ffffff none)  0b/0c the out L/R played (frame B copies 08/09 there first)  0d mix  0e level
+; 0f unused  10 program loading ($ffffff none)  11 its next chunk
 ; 12 loaded (1)  13 its running sum  14 its N  15 its checksum
 ; 16 fade calls left  17 the wet's mix  18 its fall a sample  19 this build's
-; signature ($4d5605: bump it with any change to this layout)  1a the tail kill holds
-; Program words: units [handler*16][argument]; a run of reads is [0][k] then k
-; ring offsets; the handlers sit 16 words apart from mvqJTAB, in HANDLER's order.
+; signature ($4d5606: bump it with any change to this layout or the program's)  1a the tail kill holds
+; Program words (generate.mjs encode): the input's ring offset, then units [handler word][k offsets][offset]: k reads
+; added to the accumulator, then the handler's operation. The handlers sit SLOT (24) words apart from mvqJTAB in
+; HANDLER's order, each with READS (7) read pairs before its operation; the handler word lands k pairs before it.
 
 init:
         move    #>$ffffff,m4
@@ -47,7 +48,7 @@ mvqZERO:
         move    #>$ffffff,a
         move    a,x:(r7+$0a)            ; nothing plays until a program arrives
         move    a,x:(r7+$10)
-        move    #>$4d5605,a
+        move    #>$4d5606,a
         move    a,x:(r7+$19)            ; this build's state
         rts
 
@@ -59,7 +60,7 @@ proc:
 ; changes, so a new version installed over the same id meets the old one's
 ; state. Start afresh then, keeping only the slot's buffer base.
         move    x:(r7+$19),a
-        move    #>$4d5605,x0
+        move    #>$4d5606,x0
         cmp     x0,a
         beq     mvqSIGK
         move    x:(r7+$00),b
@@ -73,7 +74,7 @@ mvqSIGZ:
         move    #>$ffffff,a
         move    a,x:(r7+$0a)
         move    a,x:(r7+$10)
-        move    #>$4d5605,a
+        move    #>$4d5606,a
         move    a,x:(r7+$19)
 mvqSIGK:
 ; The stream's chunk: k and g from r6+$c.
@@ -314,22 +315,28 @@ mvqMIXA:
         move    a,b
         move    x:(r7+$16),a
         tst     a
+        move    #>mvqMIXF,r3            ; a fade runs: MIX lowers the wet's mix every frame
         bne     mvqFADG
         move    b,x:(r7+$17)            ; no fade: the wet's mix is the mix
+        move    #>mvqMIX_,r3
 mvqFADG:
         move    x:(r6+$1),a
         move    a,x:(r7+$0e)
+        move    #>$3cf9,a               ; the program's words, after its header
+        move    x:(r7+$00),x0
+        add     x0,a
+        move    a,r2
+        move    #>mvqJTAB,r1
 
         move    #>$3cf7,m5
         move    x:(r7+$01),r5
-        move    #>$000100,y0            ; one 16-bit LSB, left-aligned
         move    #>$1,n0
         do      n7,>mvqSMPE
         move    x:(r7+$03),a
         tst     a
         bne     mvqFRMB
 ; Frame A: keep (L+R)/2; the output is halfway between the last two program samples
-; (the previous one in 0b/0c, where END left it, the current one in 08/09).
+; (the previous one in 0b/0c, where frame B left it, the current one in 08/09).
         move    x:(r0),a
         move    x:(r0+n0),x0
         add     x0,a
@@ -347,10 +354,18 @@ mvqFADG:
         add     x0,a
         asr     a
         move    a,x:(r7+$0c)
-        bra     mvqMIX_
+        jmp     (r3)
 
-; Frame B: one program sample.
+; Frame B: one program sample. The last sample's outputs (08/09) become the ones this frame plays (0b/0c); the
+; program writes the new ones to 08/09. Every program starts with the input's store and a load: the input is stored
+; here and the accumulator cleared, so the load is the first unit's first read.
 mvqFRMB:
+        move    r2,r4
+        move    x:(r7+$08),a
+        move    a,x:(r7+$0b)
+        move    x:(r7+$09),a
+        move    a,x:(r7+$0c)
+        move    y:(r4)+,n5              ; the input's word
         move    #>$000100,y0            ; one 16-bit LSB, left-aligned
         move    x:(r0),a
         move    x:(r0+n0),x0
@@ -368,34 +383,36 @@ mvqFRMB:
         asr     #$3,b,b
         and     #>$fffe00,b             ; 13 bits, the 12-bit converter's clear LSB
         asr     b
-        and     #>$ffff00,b
+        move    #>$ffff00,x0            ; the halving's mask, in x0 while the program runs
+        and     x0,b
         bpl     mvqHIN_
         add     y0,b
 mvqHIN_:
-        move    b,x:(r7+$0f)
-        move    #>$3cf9,a               ; the program's words, after its header
-        move    x:(r7+$00),x0
-        add     x0,a
-        move    a,r4
-        move    #>mvqJTAB,r1
-        move    x:(r7+$04),a            ; acc
-        move    y:(r4)+,n1
+        move    b,y:(r5+n5)             ; word = half(input)
+        clr     a               y:(r4)+,n1
         move    y:(r4)+,n5
         jmp     (r1+n1)
 
-; The handlers, each at 16 words times its index from mvqJTAB: a unit's first
-; word is that offset, so the jump lands on its handler (generate.mjs SLOT;
-; verify.py checks the layout). Each ends by fetching the next unit and jumping.
+; The handlers, SLOT (24) words apart from mvqJTAB in generate.mjs HANDLER's order (verify.py checks the layout).
+; Each but END starts with READS (7) read pairs, acc += word, the last pair's fetch taking the operation's offset;
+; a unit's handler word lands k pairs before the operation. Each ends by fetching the next unit and jumping there.
 mvqJTAB:
-; 0: a run of reads, n5 of them: acc += word. The last parallel fetch takes the
-; next unit's handler word.
-mvqRUN_:
-        move    n5,n2
-        move    y:(r4)+,n5
-        do      n2,>mvqRUNE
+; 0: reads only, then the next unit (a run longer than READS before an operation).
         move    y:(r5+n5),b
         add     b,a             y:(r4)+,n5
-mvqRUNE:
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+mvqRUN_:
         move    n5,n1
         move    y:(r4)+,n5
         jmp     (r1+n1)
@@ -407,80 +424,129 @@ mvqRUNE:
         nop
         nop
 ; 1: word = half(acc), acc += word
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
 mvqST__:
         move    a1,a                    ; acc wrapped to 16 bits
         asr     #$1,a,b
-        and     #>$ffff00,b
+        and     x0,b            y:(r4)+,n1
         bpl     mvqH1__
         add     y0,b
 mvqH1__:
         move    b,y:(r5+n5)
-        add     b,a             y:(r4)+,n1
-        move    y:(r4)+,n5
+        add     b,a             y:(r4)+,n5
         jmp     (r1+n1)
         nop
-        nop
-        nop
-        nop
-        nop
-; 2: acc = word
-mvqLD__:
-        move    y:(r5+n5),a
-        move    y:(r4)+,n1
-        move    y:(r4)+,n5
-        jmp     (r1+n1)
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-; 3: word = half(~acc), acc = word
-mvqSTN_:
+; 2: word = half(acc), then acc = 0 (the next step loads)
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+mvqSTC_:
         move    a1,a                    ; acc wrapped to 16 bits
-        neg     a
-        sub     y0,a            y:(r4)+,n1
+        asr     #$1,a,b
+        and     x0,b            y:(r4)+,n1
+        bpl     mvqH1C_
+        add     y0,b
+mvqH1C_:
+        move    b,y:(r5+n5)
+        clr     a               y:(r4)+,n5
+        jmp     (r1+n1)
+        nop
+; 3: word = half(~acc), acc = word. not a1 is ~acc with its low byte set, which the shift and the mask drop.
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+mvqSTN_:
+        not     a               y:(r4)+,n1
+        move    a1,a                    ; ~acc wrapped to 16 bits
         asr     a
-        and     #>$ffff00,a
+        and     x0,a
         bpl     mvqH2__
         add     y0,a
 mvqH2__:
         move    a,y:(r5+n5)
         move    y:(r4)+,n5
         jmp     (r1+n1)
-        nop
-        nop
-        nop
-        nop
-; 4: word = half(input)
-mvqIN__:
-        move    x:(r7+$0f),b
-        move    b,y:(r5+n5)
-        move    y:(r4)+,n1
-        move    y:(r4)+,n5
+; 4: word = half(~acc), then acc = 0 (the next step loads)
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+mvqSNC_:
+        not     a               y:(r4)+,n1
+        move    a1,a                    ; ~acc wrapped to 16 bits
+        asr     a
+        and     x0,a
+        bpl     mvqH2C_
+        add     y0,a
+mvqH2C_:
+        move    a,y:(r5+n5)
+        clr     a               y:(r4)+,n5
         jmp     (r1+n1)
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-; 5, 6: an output tap reads a whole word: twice the stored half, then 16-bit << 3.
+; 5-8: an output tap reads a whole word: twice the stored half, then 16-bit << 3 (right to 09, left to 08);
+; 6 and 8 then clear acc (the next step loads).
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
 mvqOUTR:
         move    y:(r5+n5),b
         asl     #$4,b,b
-        move    b,x:(r7+$0c)
+        move    b,x:(r7+$09)
         move    y:(r4)+,n1
         move    y:(r4)+,n5
         jmp     (r1+n1)
@@ -488,16 +554,49 @@ mvqOUTR:
         nop
         nop
         nop
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+mvqORC_:
+        move    y:(r5+n5),b
+        asl     #$4,b,b
+        move    b,x:(r7+$09)
+        clr     a               y:(r4)+,n1
+        move    y:(r4)+,n5
+        jmp     (r1+n1)
         nop
         nop
         nop
         nop
-        nop
-        nop
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
 mvqOUTL:
         move    y:(r5+n5),b
         asl     #$4,b,b
-        move    b,x:(r7+$0b)
+        move    b,x:(r7+$08)
         move    y:(r4)+,n1
         move    y:(r4)+,n5
         jmp     (r1+n1)
@@ -505,99 +604,40 @@ mvqOUTL:
         nop
         nop
         nop
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-; 7-10: a store at an output step: the stored value goes out, acc is kept.
-mvqSTR_:
-        move    a1,x1
-        move    x1,b
-        bsr     mvqHST_
-        move    x1,b
-        asl     #$3,b,b
-        move    b,x:(r7+$0c)
-        move    y:(r4)+,n1
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+        move    y:(r5+n5),b
+        add     b,a             y:(r4)+,n5
+mvqOLC_:
+        move    y:(r5+n5),b
+        asl     #$4,b,b
+        move    b,x:(r7+$08)
+        clr     a               y:(r4)+,n1
         move    y:(r4)+,n5
         jmp     (r1+n1)
         nop
         nop
         nop
         nop
-        nop
-        nop
-mvqSTL_:
-        move    a1,x1
-        move    x1,b
-        bsr     mvqHST_
-        move    x1,b
-        asl     #$3,b,b
-        move    b,x:(r7+$0b)
-        move    y:(r4)+,n1
-        move    y:(r4)+,n5
-        jmp     (r1+n1)
-        nop
-        nop
-        nop
-        nop
-        nop
-        nop
-mvqSNR_:
-        move    a1,x1
-        move    x1,b
-        neg     b
-        sub     y0,b
-        move    b,x1
-        bsr     mvqHST_
-        move    x1,b
-        asl     #$3,b,b
-        move    b,x:(r7+$0c)
-        move    y:(r4)+,n1
-        move    y:(r4)+,n5
-        jmp     (r1+n1)
-        nop
-        nop
-        nop
-mvqSNL_:
-        move    a1,x1
-        move    x1,b
-        neg     b
-        sub     y0,b
-        move    b,x1
-        bsr     mvqHST_
-        move    x1,b
-        asl     #$3,b,b
-        move    b,x:(r7+$0b)
-        move    y:(r4)+,n1
-        move    y:(r4)+,n5
-        jmp     (r1+n1)
-        nop
-        nop
-        nop
-; 11: the end of the sample: the new outputs become the current ones, the
-; current ones the previous (in 0b/0c, which frame B plays).
+; 9: the end of the sample (no reads: the accumulator does not carry).
 mvqEND_:
-        move    a1,x1                   ; acc carries into the next sample, wrapped
-        move    x1,x:(r7+$04)
         move    (r5)+
-        move    x:(r7+$0b),a
-        move    x:(r7+$08),b
-        move    a,x:(r7+$08)
-        move    b,x:(r7+$0b)
-        move    x:(r7+$0c),a
-        move    x:(r7+$09),b
-        move    a,x:(r7+$09)
-        move    b,x:(r7+$0c)
         clr     a
         move    a,x:(r7+$03)
+        jmp     (r3)
 
-; out = dry - MIX dry + WET wet: WET is MIX, falling to 0 while a program fades out.
-mvqMIX_:
-        move    x:(r7+$16),a
-        tst     a
-        beq     mvqFNON
+; A fade runs: the wet's mix falls by its step every frame, to 0.
+mvqMIXF:
         move    x:(r7+$17),a
         move    x:(r7+$18),x1
         sub     x1,a
@@ -605,19 +645,17 @@ mvqMIX_:
         clr     a
 mvqFPOS:
         move    a,x:(r7+$17)
-mvqFNON:
+; out = dry - MIX dry + WET wet: WET is MIX, falling to 0 while a program fades out.
+mvqMIX_:
         move    x:(r7+$0d),y1
         move    x:(r7+$17),y0
         move    x:(r0),x0
-        mpy     x0,y1,b
-        move    x0,a
+        mpy     x0,y1,b         x0,a
         sub     b,a
         move    x:(r7+$0b),x0
-        mac     y0,x0,a
-        move    x:(r0+n0),x0
+        mac     y0,x0,a         x:(r0+n0),x0
         move    a,x:(r0)+
-        mpy     x0,y1,b
-        move    x0,a
+        mpy     x0,y1,b         x0,a
         sub     b,a
         move    x:(r7+$0c),x0
         mac     y0,x0,a
@@ -649,14 +687,4 @@ mvqQMIX:
         sub     b,a
         move    a,x:(r0)+
 mvqQEND:
-        rts
-
-; b = half(b), stored at the step's word (the output steps' units).
-mvqHST_:
-        asr     b
-        and     #>$ffff00,b
-        bpl     mvqH3__
-        add     y0,b
-mvqH3__:
-        move    b,y:(r5+n5)
         rts

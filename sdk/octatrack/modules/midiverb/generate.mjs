@@ -199,24 +199,37 @@ export function compiledMachine(ops, size) {
   };
 }
 
-// One program as streamed: a header ($8000 | N, N the words after it), the units, a checksum (the low 16 bits of
-// the sum of every word before it, xor $a5a5). Units are [handler * SLOT][argument]: a run of k reads is [0][k] then
-// k ring offsets; every other operation is [handler * SLOT][ring offset]: the handler's offset from engine.asm's
-// mvqJTAB, where the handlers sit SLOT words apart in this order, so a unit's word is where it jumps.
+// One program as streamed: a header ($8000 | N, N the words after it), the input's ring offset, the units, a
+// checksum (the low 16 bits of the sum of every word before it, xor $a5a5). Every program starts with the input's
+// store and a load (frame B stores the input and clears the accumulator, so the load is a read like any other) and
+// ends with nothing left in the accumulator (it does not carry into the next sample).
+// A unit is [handler word][k ring offsets to read][the operation's ring offset]: it adds k words to the accumulator,
+// then does its operation. The handlers sit SLOT words apart from engine.asm's mvqJTAB in HANDLER's order, each with
+// READS read pairs before its operation; the handler word is where the jump lands, k pairs before the operation:
+// SLOT * index + 2 * (READS - k). 'run' only reads (no offset of its own: a run longer than READS before an
+// operation), a 'c' handler clears the accumulator after its operation (the next step loads), 'end' has no reads
+// and no offset (SLOT * index). Stores at an output step (stR, stL, stnR, stnL) have no handler: no program has one.
 // The engine keeps the whole program above the ring (262 words at most).
-export const HANDLER = ['run', 'st', 'ld', 'stn', 'in', 'outR', 'outL', 'stR', 'stL', 'stnR', 'stnL', 'end'];
-export const SLOT = 16;
+export const HANDLER = ['run', 'st', 'stc', 'stn', 'stnc', 'outR', 'outRc', 'outL', 'outLc', 'end'];
+export const SLOT = 24;
+export const READS = 7;
 export const PROGRAM_WORDS = 262;
+const handler = (kind, k) => SLOT * HANDLER.indexOf(kind) + (kind === 'end' ? 0 : 2 * (READS - k));
 export function encode(ops) {
-  const body = [];
-  for (let i = 0; i < ops.length;) {
-    if (ops[i][0] === 'mac') {
-      let j = i; while (j < ops.length && ops[j][0] === 'mac') j++;
-      body.push(0, j - i, ...ops.slice(i, j).map(([, a]) => a));
-      i = j;
-    } else { body.push(SLOT * HANDLER.indexOf(ops[i][0]), ops[i][1]); i++; }
+  if (ops[0]?.[0] !== 'in' || ops[1]?.[0] !== 'ld') throw new Error('a program must start with the input and a load');
+  const body = [ops[0][1]];
+  let reads = [ops[1][1]];
+  for (let i = 2; i < ops.length; i++) {
+    const [kind, a] = ops[i];
+    if (kind === 'mac') { reads.push(a); continue; }
+    if (!['st', 'stn', 'outR', 'outL'].includes(kind)) throw new Error(`${kind} at step ${i}: the engine has no handler for it here`);
+    while (reads.length > READS) { const r = reads.splice(0, READS); body.push(handler('run', r.length), ...r); }
+    const clear = ops[i + 1]?.[0] === 'ld';
+    body.push(handler(clear ? `${kind}c` : kind, reads.length), ...reads, a);
+    reads = clear ? [ops[++i][1]] : [];
   }
-  body.push(SLOT * HANDLER.indexOf('end'), 0);
+  if (reads.length) throw new Error('reads after the last operation: the accumulator does not carry into the next sample');
+  body.push(handler('end', 0));
   const words = [0x8000 | (body.length + 1), ...body];
   if (words.length + 1 > PROGRAM_WORDS) throw new Error(`a program of ${words.length + 1} words passes the ${PROGRAM_WORDS}-word area`);
   return [...words, (words.reduce((t, w) => (t + w) & 0xffff, 0) ^ 0xa5a5)];
