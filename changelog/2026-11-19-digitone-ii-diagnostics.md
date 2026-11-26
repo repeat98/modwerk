@@ -1,0 +1,1 @@
+Digitone II: development bases keep the Octatrack's diagnostics log (starts and UI freezes with the keys pressed before them, and five-minute load windows), read over the USB link in the same format the site reads from the Octatrack.

@@ -170,5 +170,154 @@
       "requires",
       "conflicts"
     ]
+  },
+  "dev": {
+    "identity": "base/build_identity.h",
+    "about": "The development link (base/link.c, link.s): diagnostics over USB MIDI SysEx in the Analog Rytm MKII link's wire format (ident, the link's counters; screen, the frame on the screen in eight parts of 128 bytes copied when the first is asked for; no request names an address), and while SETTINGS > REMOTE CTRL is on (at every boot) panel keys and encoder turns, posted on the UI queue as the panel's. Its receive site observes stock's SysEx router at 0x4012197a, where core-dn2 0.3's ev_sysex sits; replies go through stock's sysex_send on USB from ev_tick. is_key_held (0x4011fac4) also sees the keys the link holds. The diagnostics log (base/diag.c, the Octatrack's layout), read through the link's diag and log, in parts the unit chooses. RAM boot (link.s, link.c): where stock's upgrade job would erase and write the flash (0x4010921c) the base resets into the staged image instead, and a gate at 0x4000053e unpacks and enters it; bootdiag sends what the gate found. Development bases only. Runtime loader (base/runtime.c, the machine-neutral sdk/runtime/loader and its upload controller, staged beside it by shared): modules load to RAM over the link's upload command (0x30) and run from a pool in DDR stock does not use (RUNTIME_POOL_AT), hooked on the core's ev_tick, ev_draw, ev_key and ev_enc; a power cycle ends them (LOADER.md).",
+    "sources": [
+      "../base/link.c",
+      "../base/link.s",
+      "../base/diag.c",
+      "../base/runtime.c",
+      "../base/loader.c",
+      "../base/upload.c",
+      "../base/wire.c",
+      "../base/sha256.c",
+      "../base/freestanding.c"
+    ],
+    "sites": [
+      {
+        "addr": "0x4012197a",
+        "len": 6,
+        "stockSha256": "d8acd0e6e84b3d17d530cf3e5621bc1d0a1e5062f8c0a62a79113c0d9548fc33",
+        "op": "jsr",
+        "target": "mw_link_router"
+      },
+      {
+        "addr": "0x4011fac4",
+        "len": 6,
+        "stockSha256": "9eab14ed9d527816054c9f68837b2e021fba5470d105516b94b63ffb8ed1f45d",
+        "op": "jmp",
+        "target": "mw_link_held"
+      },
+      {
+        "addr": "0x4010921c",
+        "len": 6,
+        "stockSha256": "bed7566b303eed127e5a4f320a0e52bb80eb0bb2f1d45b3765b209b307774e82",
+        "op": "jsr",
+        "target": "mw_link_program"
+      },
+      {
+        "addr": "0x4000053e",
+        "len": 8,
+        "stockSha256": "dbd7ee3ac848bc629a889c3a534a8b23d8bb88fb05c5dd9f8f825696a3c6b633",
+        "op": "jsr",
+        "target": "mw_boot_site"
+      }
+    ],
+    "cflags": [
+      "-DSYSEX_SEND_AT=0x401236d2",
+      "-DUSB_SYSEX_STATE_AT=0x445090ac",
+      "-DFRAME_POINTERS_AT=0x402a10c8",
+      "-DUI_QUEUE_AT=0x4013747a",
+      "-DQUEUE_POST_AT=0x40001896",
+      "-DKEY_INDEX_AT=0x401f3d10",
+      "-DKEY_BITS_AT=0x445a2e30",
+      "-DFRAME_HZ_MEASURED=1500",
+      "-DKEY_IDS=111",
+      "-DENC_FIRST=1",
+      "-DENC_LAST=9",
+      "-DKEY_YES=0x0a",
+      "-DUPLOAD_AT=0x4038bec0",
+      "-DRAMBOOT_COPY_AT=0x47000000",
+      "-DCONTAINER_MAX=0x300000",
+      "-DRAMBOOT_DIAG_AT=0x47feffbc",
+      "-DBOOT_ARG_AT=0x40287a60",
+      "-DSTOCK_DELAY_AT=0x4013492c",
+      "-DSTOCK_DRAIN_AT=0x400023f6",
+      "-DRUNTIME_POOL_AT=0x46800000",
+      "-DRUNTIME_POOL_BYTES=0x200000",
+      "-DSTAGING_AT=0x46a00000",
+      "-DSTAGING_BYTES=0x40000"
+    ],
+    "defsym": {
+      "SYSEX_TABLE": "0x40207f9e",
+      "mw_link_flash": "0x40139104",
+      "mw_boot_data": "0x4000045c",
+      "mw_boot_bss": "0x400004b2"
+    },
+    "subscribe": [
+      {
+        "event": "ev_tick",
+        "fn": "mw_link_tick",
+        "order": 240
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_link_key",
+        "order": 1
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_link_enc",
+        "order": 1
+      },
+      {
+        "event": "ev_settings",
+        "fn": "mw_link_settings",
+        "order": 50
+      },
+      {
+        "event": "ev_frame_params",
+        "fn": "mw_diag_frame",
+        "order": 250
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_diag_tick",
+        "order": 245
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_diag_key",
+        "order": 2
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_runtime_tick",
+        "order": 100
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_runtime_draw",
+        "order": 100
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_runtime_key",
+        "order": 10
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_runtime_enc",
+        "order": 10
+      }
+    ],
+    "shared": {
+      "base": [
+        "sdk/runtime/loader/loader.c",
+        "sdk/runtime/loader/loader.h",
+        "sdk/runtime/loader/context.h",
+        "sdk/runtime/loader/journal.h",
+        "sdk/runtime/loader/set_package.h",
+        "sdk/runtime/loader/modwerk_module.h",
+        "sdk/runtime/upload/upload.c",
+        "sdk/runtime/upload/upload.h",
+        "sdk/runtime/upload/wire.c",
+        "sdk/runtime/upload/wire.h",
+        "sdk/runtime/upload/sha256.c",
+        "sdk/runtime/logging/freestanding.c"
+      ]
+    }
   }
 }

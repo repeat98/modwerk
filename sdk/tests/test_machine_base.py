@@ -454,10 +454,21 @@ class MachineBases(unittest.TestCase):
                     with tempfile.TemporaryDirectory() as work:
                         core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev, leave=leave)
                         mod = json.loads((core / "mod.json").read_text())
+                        staged = {source: (core / source).is_file() for source in config["dev"]["sources"]}
                     for source in config["dev"]["sources"]:
                         (self.assertIn if dev else self.assertNotIn)(source, mod["sources"], (name, dev))
-                        self.assertTrue(pathlib.Path(source).name in shared or
-                                        (APP / "sdk/machines" / machine / "elekloader/base" / pathlib.Path(source).name).is_file())
+                        own = APP / "sdk/machines" / machine / "elekloader/base" / pathlib.Path(source).name
+                        self.assertTrue(own.is_file() or pathlib.Path(source).name in shared, source)
+                        if dev:
+                            self.assertTrue(staged[source], (name, source))
+
+    def test_dev_shared_stages_repository_sources_and_never_replaces_a_machines_own(self):
+        for machine, config in bases():
+            for folder, files in config.get("dev", {}).get("shared", {}).items():
+                for name in files:
+                    self.assertTrue((APP / name).is_file(), name)
+                    self.assertFalse((APP / "sdk/machines" / machine / "elekloader" / folder / pathlib.Path(name).name).exists(), name)
+                    self.assertTrue(name.startswith("sdk/runtime/"), name)
 
     def test_dev_sites_take_no_bytes_a_release_site_or_the_core_takes(self):
         for machine, config in bases():

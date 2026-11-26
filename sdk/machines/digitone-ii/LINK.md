@@ -1,0 +1,119 @@
+# Digitone II development link
+
+Piece 4 of the [goal](GOAL.md): diagnostics over USB MIDI SysEx and, while armed, panel keys and encoders, in the
+[Analog Rytm MKII link's](../analog-rytm-mkii/LINK.md) wire format, so one host can speak to both. It is in
+development bases only (`npm run machine:base -- digitone-ii --dev`, base.json's `dev`), never in a release.
+
+```sh
+python3 sdk/machines/digitone-ii/tools/dn2_link.py ident
+python3 sdk/machines/digitone-ii/tools/dn2_link.py screen --png screen.png
+python3 sdk/machines/digitone-ii/tools/dn2_link.py press PLAY      # keys: FUNC PLAY STOP TRIG1-16, or an id
+python3 sdk/machines/digitone-ii/tools/dn2_link.py turn A 8        # encoders A-H, LEVEL
+```
+
+| Request | cmd | What comes back |
+| --- | --- | --- |
+| `ident` | 0x01 | the link's own counters: link version, link messages received, dropped (ring full or too long), ticks, armed, a person at the unit, presses and turns by a person, events posted, requests refused, RAM boot status and image, the boot record's address, modules live, the modules' test value (the value, not its address) |
+| `disarm` | 0x02 | turns the arm off and lets go of every key the link holds; a release the UI queue cannot take yet follows from the UI tick |
+| `key ID FLAGS` | 0x10 | armed: a panel key message, flags 0x01 press, 0x10 release; a held key reads as held to stock's is_key_held |
+| `enc N DELTA` | 0x11 | armed: an encoder turn, 1-8 A-H, 9 LEVEL |
+| `release` | 0x12 | armed: lets go of every key the link holds |
+| `screen OFF` | 0x20 | OFF, the copy's number, then 128 bytes of the frame on the screen from OFF (0, 128 … 896) |
+| `diag` | 0x22 | the diagnostics log's size, frame interrupts and UI ticks so far (and where the log is, for reference) |
+| `freeze N` | 0x23 | armed: the next UI tick stands still N frames (at most 15 s), to test FREEZE logging |
+| `ramboot ULEN UCRC CLEN CCRC` | 0x14 | armed: YES at UPGRADE OS NOW?, and the staged image boots from RAM instead of being flashed (below) |
+| `log OFF` | 0x24 | OFF, the log's seq, then up to 128 bytes of the diagnostics log from OFF (0, 128 …; the last part shorter) |
+| `bootdiag` | 0x25 | the RAM boot gate's 15 words (what it found at the last start) and the two marks of the way to the reset |
+| `upload FRAME` | 0x30 | armed: one frame of the runtime loader's upload controller, 7-bit packed; the reply holds its response, packed ([LOADER.md](LOADER.md)) |
+
+**The unit chooses what each request returns.** No request names an address, so a USB client reads the link's counters
+the screen and the diagnostics log, posts keys and turns while armed, and reaches nothing else of the instrument's
+state. Every other
+command, the earlier `mem` (0x21) included, is refused with status 2 and nothing but the status.
+
+`screen 0` copies the frame on the screen and sends its first part; `screen 128` to `screen 896` send the rest of that
+copy, each with the copy's number, so the eight parts are one frame even if stock draws in between, and the host checks
+the number. A part before any `screen 0`, an offset past the frame or between parts, or a frame pointer that does not
+lie wholly in DDR is refused with status 4. Stock keeps two frame pointers side by side at 0x402a10c8 and sends the
+first to the display, then swaps them (0x40131fd2), so the frame on the screen is the second; 128x64 pixels, 1 bit each,
+in the Analog Rytm MKII's layout.
+
+Status 0 ok, 1 not armed, 2 bad request, 3 busy, 4 out of range, 5 a person at the unit, 6 an OS upload waits at UPGRADE OS NOW? (key and enc refused, and stock's is_key_held stops seeing the link's holds, until the next boot: a flash needs a person's YES), 7 `ramboot` found no UPGRADE OS NOW? waiting for the upload it describes (container length and CRC32) and pressed nothing. A press, release or turn the link posted, still in stock's queue when the prompt opens or posted by `release` after it, is taken at `ev_key`/`ev_enc` before stock sees it and counted as refused: stock answers the prompt on YES's release as on its press (on a unit, 26 November 2026, a link holding YES and then `release` started the flash). A person's YES and NO still reach stock. USB only: a link message from DIN is never acted on.
+
+`sdk/tests/dn2_link_host.c` compiles `link.c` for the host and checks every request and refusal (`test_dn2_link.py`
+runs it). `ident`, the first version's `mem` and its out-of-range refusal answered on a unit over USB
+([19 November 2026](../../../docs/verification/2026-11-19-digitone-ii-link-on-a-unit.md)); this version's `screen` has
+not run on a unit yet.
+
+## Where it runs (OS 1.12)
+
+- **Receive.** `link.s` observes stock's SysEx router at 0x4012197a (MIDI task), the site core-dn2 0.3's `ev_sysex`
+  uses: the message in a1, its length in d1, the source in d2 (2 or 4 USB). The link copies its own messages
+  (`F0 7D 'MWL'`) into a ring; every register comes back as it was and stock routes every message as before.
+- **Work.** `ev_tick` (UI task) answers up to four a tick through stock's `sysex_send` (0x401236d2) on USB.
+- **Waits for stock.** A tick answers nothing while stock is mid-SysEx on USB: the status byte of stock's USB MIDI
+  receive parser (0x4011f3c0, the function the USB driver is given) at 0x445090ac reads 0xF0 then. The Rytm's is a word.
+- **Keys and encoders.** Posted on the UI task's queue (getter 0x4013747a, queue_put 0x40001896) as the panel's
+  messages are, so the UI loop plays them through the core's ev_key/ev_enc sites and stock, and modules see them too.
+  A key the link holds also reads as held to stock's is_key_held (0x4011fac4, which base.json points at
+  mw_link_held). Key ids and encoders were read from the panel's own messages on a unit
+  ([record](../../../docs/verification/2026-11-19-digitone-ii-link-keys-on-a-unit.md)).
+- **Arm.** SETTINGS > REMOTE CTRL, ON at every boot of a development base. Keys and turns need it; reads do not. A
+  press or turn from a person at the panel refuses the host for about three seconds and lets go of what it held;
+  the YES that turns the row on does not count. OFF stops the host until the next boot.
+- **Diagnostics.** The Octatrack's log ([`diag.c`](elekloader/base/diag.c), its layout `diag.h` byte for byte), so
+  the site reads it with `device-log.ts`: a START at each start, a FREEZE when the UI tick stands still five seconds
+  while the frame interrupt goes on (1,500 a second, measured), each with the last 16 keys, and a load window every
+  five minutes with the longest run of frames without a tick. No meters, machines or tempo yet, and the log lives in
+  .bss, so it starts empty at every start ([record](../../../docs/verification/2026-11-19-digitone-ii-diagnostics-on-a-unit.md)).
+  `log OFF` sends it in parts the unit reads itself; every part carries the log's `seq`. `dn2_link.py diag --save F`
+  and the site's `readLog` read part 0, the rest, then part 0 again, and keep the capture only when the header and
+  the `seq` stayed the same (no record was written in between), reading again up to three times.
+- **Not yet.** The Rytm link's remote YES for a flash (on purpose: only a person's YES writes the flash); the
+  diagnostics' upload from the page.
+
+## RAM boot
+
+`dn2_link.py ramboot IMAGE.syx` runs an image without erasing or writing the flash; a power cycle brings the
+flashed OS back. The unit must run a *flashed* development base: the gate is the flashed image's. The Analog Rytm
+MKII link's RAM boot ([its LINK.md](../analog-rytm-mkii/LINK.md#ram-boot)), at OS 1.12's addresses, with one change.
+
+1. The host uploads the image with stock's OS upgrade, then sends `ramboot` with the unpacked MAIN OS's length and
+   CRC32 and the container's (the Rytm link's `ramboot_args`). The base presses YES and sets a flag, but only while
+   UPGRADE OS NOW? waits for that upload: stock's upload buffer complete, its struct the container's length, and the
+   staged container's CRC32 the one the host sent (read in the UI task, a nibble table at a time, before the YES), so
+   another image of the same size is never confirmed. Otherwise it answers status 7 and leaves the panel alone.
+2. Stock's upgrade job validates the upload and saves the working state. Where it calls the erase-and-write routine
+   (0x4010921c -> 0x40139104), the base looks at the flag: clear, stock's routine runs. Set, it waits and drains as
+   stock does, writes the data cache's dirty lines out, switches the data cache off and, if the staged upload has the
+   length the host gave and the link is still armed, **copies the container to 0x47000000**, writes a mailbox over the
+   32-byte header of stock's upload buffer (0x4038bec0) and resets. Nothing is erased or written.
+3. At the next start the flashed base's gate runs at 0x4000053e, before stock fills SRAM and clears its RAM
+   (0x402fb000-0x466b8c50, the staged upload included) and before the data cache comes on. It takes the mailbox once,
+   only after a software reset, checks it, the copy's CRC32 and its MAIN OS section, unpacks it over the running OS
+   with the Rytm link's depacker and enters it. A failure before the unpack boots the flashed OS; one after it resets
+   once more, and the spent mailbox boots the flashed OS.
+
+The change: the Digitone II's bootstrap reads the flashed image's packed MAIN OS to 0x40400000 on every start, inside
+the staged upload, so the upload is copied before the reset to DDR neither the bootstrap nor stock's start touches.
+The CRCs stand guard: a copy that did not survive boots the flashed OS. The same 8 bytes as the Rytm's boot site, the
+same reset and the same cache settings on OS 1.12.
+
+Status in `ident` and `bootdiag`: 0 the flashed OS; 1 booted from RAM; 2 a mailbox without a software reset; 3 check
+word; 4 lengths; 5 the copy's CRC; 6 no MAIN OS section; 8 failed after the unpack. `bootdiag` sends what the gate
+found (the mailbox, the staged struct's first words, the marks of the way to the reset, RSR), from 0x47feffbc.
+`ramboot` exits 0 only when the unit answers after the reset with status 1 and the image CRC it asked for; the
+flashed OS, another CRC, a reply without a boot status or no answer within a minute exit nonzero.
+
+Cancelling: a press or turn on the panel or a `disarm` cancels the request, and a cancelled request never becomes a
+flash: for two minutes after `ramboot` the job's call resets without a mailbox, so the flashed OS comes back
+unwritten.
+
+On a unit, 20 November 2026: an image without the marker booted from RAM (boot 1, its own CRC), a power cycle brought
+the flashed one back, and stock then flashed normally from this base ([record](../../../docs/verification/2026-11-20-digitone-ii-ram-boot-on-a-unit.md)).
+RSR read 0x20 after a power cycle too, so the software-reset check does not tell them apart here; the mailbox, lost
+with the DDR's contents at power-off, does.
+
+Limits: the unpacked OS must end below the mailbox (0x38bac0 bytes), the container fit the copy (0x300000 bytes);
+the host refuses others. The gate's C code, compiled for a computer, unpacked a development image's container to the
+linker's main OS byte for byte (19 November 2026).
