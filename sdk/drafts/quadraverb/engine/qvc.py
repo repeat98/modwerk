@@ -28,7 +28,7 @@ original might make differently is marked ASSUMPTION below and listed in ENGINE.
   product    of 01 adds the full A. ASSUMPTION (the original may scale the full accumulator).
   B, M       hold words: a read latches the word it read, a write the word it wrote (A limited, or the input at
              step 0x5e). Adding B or M adds the word. ASSUMPTION: the latches are word wide.
-  coefficient  c / 2048 exactly: x0 = c << 12. The original's 11-bit coefficient, as the README reads it.
+  coefficient  c / 2048 exactly: x0 = c << 12. The original's 11-bit coefficient, as FIRMWARE.md reads it.
   input      floor((L + R) / 2), stored as the word step 0x5e writes. Not the original's: its converter.
   outputs    the words read at steps 0x00 (left) and 0x5f (right), wet only, unscaled.
 

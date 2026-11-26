@@ -16,13 +16,13 @@ export const ROMS = {
 };
 
 export class Board {
-  // signal: the gate's detector reads "signal" all the time (pin P3.2 held low; README, "The gate"). Without it every
+  // signal: the gate's detector reads "signal" all the time (pin P3.2 held low; FIRMWARE.md, "The gate"). Without it every
   // pin reads 1, "no signal".
   constructor(romPath, { signal = false } = {}) {
     this.rom = new Uint8Array(readFileSync(romPath));
     const md5 = createHash('md5').update(this.rom).digest('hex');
     this.known = ROMS[md5];
-    if (!this.known) throw new Error(`${romPath}: not a ROM whose layout is known (md5 ${md5}); see ../README.md`);
+    if (!this.known) throw new Error(`${romPath}: not a ROM whose layout is known (md5 ${md5}); see ../FIRMWARE.md`);
     this.dsp = new Uint8Array(0x200);
     this.ram = new Uint8Array(0x8000);
     this.lcd = { ddram: new Uint8Array(0x80).fill(0x20), addr: 0 };

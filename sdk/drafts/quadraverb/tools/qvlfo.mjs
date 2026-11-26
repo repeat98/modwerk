@@ -7,7 +7,7 @@
 // crossfade, the Leslie's depth against speed, VERB SHIFTER's two sweeps), this tool reads it from
 // the ROM you pass, at run time, and also reports how close a simple formula comes.
 //
-// What the firmware does (QV 1.07, read from the disassembly; ../README.md, "Modulation"):
+// What the firmware does (QV 1.07, read from the disassembly; ../FIRMWARE.md, "Modulation"):
 //   Timer 0 (16-bit mode, reloaded to 0xff06 at its vector 0x000b) interrupts every 250 machine cycles
 //   plus the response time. Unless bit 2ah.0 is set (the main loop sets it while it rebuilds the DSP
 //   program), the interrupt writes 1 to bytes 0x17f and 0x180 and jumps through internal RAM 0x60/0x61
@@ -16,7 +16,7 @@
 // The gate and the triggered sweeps are not in the interrupt: the main loop runs them every 16 ticks
 // from a 1-bit signal detector on the 8051's P3.2 pin, which the emulator holds high ("no signal").
 // This tool applies the main loop's writes from the trace and prints each program's gate settings;
-// ../README.md ("The gate") has the algorithm.
+// ../FIRMWARE.md ("The gate") has the algorithm.
 // Seconds are an assumption: a 12 MHz crystal (the MIDI baud rate needs it: timer 1 reload 0xff,
 // SMOD 0), 1 us a machine cycle, the emulator's cycles per tick plus the 8051's 3-cycle interrupt
 // response, and the DSP at 42 samples a millisecond (the firmware's own conversion of delay times).

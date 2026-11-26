@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "First release: 22 reverbs of the Alesis Quadraverb (1989) on FX2, rooms, halls, chambers and plates, each its original factory program.",
+      "PROG (A) picks the program by its number on the original Quadraverb; MIX (F) sets dry and wet, 0 exact dry.",
+      "Needs the Modwerk base with program areas and the stream channel, over USB.",
+      "Known issue: not compared with a real Quadraverb; reverb times are about 5 % shorter than the original's.",
+      "Known issue: the gated reverbs are not in this release yet."
+    ]
+  }
+]

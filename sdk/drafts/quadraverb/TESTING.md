@@ -1,9 +1,44 @@
-# Quadraverb DEV testing
+# Quadraverb testing
 
-Development builds only: one factory program compiled into the engine, MIX on knob F, nothing else. They exist to
-measure the compiled engine's DSP cost on a unit and to listen to it, before any base work ([ENGINE.md](ENGINE.md)).
-Never published. Record what you ran, on which build and which unit, and what you saw; "not tested" is a valid answer,
-and emulator runs stay apart from hardware ones.
+Record what you ran, on which build and which unit, and what you saw; "not tested" is a valid answer, and emulator
+runs stay apart from hardware ones.
+
+## 0.1.0-experimental
+
+Not built and not tested yet (26 November 2026). The release package (PROG over the 22 reverbs in `manifest.py`
+REVERBS, MIX, the program areas and the stream channel) has no generator yet: what exists is the engine for one
+program at a time, proved in `dsp_host` ([Bit-exact in dsp_host](#bit-exact-in-dsp_host-26-november-2026)), and the
+development builds below, which run one program each without the base's program areas or stream. Nothing of 0.1.0 has
+run on a unit, in the emulator, or been heard.
+
+## Bit-exact in dsp_host (26 November 2026)
+
+Every program is compiled by the engine's generator and run in `dsp_host` against the integer model
+(`engine/verify.py` for the 7 that need no stream, `engine/verify_stream.py` for the rest, with the stream's ColdFire
+side modelled): noise and impulses, trig splits at frames 1, 5, 7 and 13, a dirty state, two instances. Branch
+`module/quadraverb`; inputs derived from the owner's ROM in `~/.cache/modwerk-local/quadraverb/engine/` (programs.json,
+`lfo-all/` from `node engine/extract_lfo.mjs <rom> <dir>`, `lfo-signal/` with `--signal`).
+
+| Programs | How | Result |
+| --- | --- | --- |
+| 76 programs: every one but those below | the gates above, the firmware's program after each of 16,384 ticks | pass (ENGINE.md) |
+| 3, 23-27 (gated reverbs), 28, 29, 86, 87 (gated), 31, 32, 88 (onset restart) | the same, extracted with the detector held at "signal" (`extract_lfo.mjs --signal`, pin P3.2 low): gate open, no onset | pass, in their open form (e45c55983); cycles not traced |
+| 73 VERB SHIFTER | | not run: the engine has no tick for its coefficient sweep (two 256-entry curves read from the ROM), and it is gated |
+
+So 89 of 90 run bit-exact, 13 of them in their open form only. Why the 13 are not the original yet: the gate (a window
+every 16 ticks, hold and release, FIRMWARE.md "The gate") and the onset restart are not in the engine, and both need a
+signal detector the original has in hardware; its threshold and time constant would be assumptions.
+
+## Captures
+
+None. Captures need the package installed in the emulator, and on the base 0.8.3 twins the emulator does not take an
+upload. See [Captures, 26 November 2026](#captures-26-november-2026) below for the last try.
+
+## Development builds
+
+One factory program compiled into the engine, MIX on knob F, nothing else (PROG is on the page but does nothing).
+They exist to measure the compiled engine's DSP cost on a unit and to listen to it, before the base's program areas
+and stream ([ENGINE.md](ENGINE.md)). Never published.
 
 ## On another computer, from scratch
 

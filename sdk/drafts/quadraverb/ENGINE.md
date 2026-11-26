@@ -137,7 +137,7 @@ otherwise is an assumption, marked in the code:
 | A | 56 bits; products kept whole (`mpy`/`mac`); sums wrap at 56 bits (saturation mode off) | no product bit lost |
 | A write's product | scales A limited to a word (`mpy x0,y1`); select 01 adds the full A | it may scale the full A |
 | B, M | words: a read latches its word, a write the word it stores (the input at 0x5e) | word-wide latches |
-| Coefficient | c / 2048 exactly (`x0 = c << 12`) | as the README reads it |
+| Coefficient | c / 2048 exactly (`x0 = c << 12`) | as FIRMWARE.md reads it |
 | Input, output | floor((L + R) / 2) at step 0x5e; the words read at 0x00 (left) and 0x5f (right), wet only | not the original's converters |
 
 **Against the float model** (`tools/qv.mjs`, 2 s, `check_model.py`, tolerance -80 dBFS): an impulse and noise at 0.1, where no store
@@ -337,7 +337,7 @@ tick still matches the reconstruction. All 13 that leaves pass the same gates: 3
 FLANGE/GATE, 32 TWITCH FLANGER, 86-88 through `verify_stream.py`, and 31 TRIGGER FLANGE, which needs no stream (ring
 468 words), through `verify.py`. They stream 48-352 halfwords in and 32-144 out a frame. This proves the code of their
 open form only: the gate's own work (a window every 16 ticks, hold and release) and the onset restart are not in the
-engine, and the detector they need is hardware (README, "The gate"). Their cycles have not been traced. So 89 of the
+engine, and the detector they need is hardware (FIRMWARE.md, "The gate"). Their cycles have not been traced. So 89 of the
 90 programs run bit-exact, 13 of them as their open form; 73 VERB SHIFTER is the one left (below).
 
 **The split** (`qvs.Plan`). A read at delay D (from `qvc.analyse`) can take its word from SDRAM when D is at least 16 ×
@@ -351,7 +351,7 @@ window. Every factory program but the gated ones fits:
 | --- | --- | --- | --- |
 | 76 programs (69 stream) | median 96, at most 352 | median 64, at most 144 | 79 (1.5 s delay) to 15,772 |
 
-The earlier estimate (README, Memory: median 224, worst 560 each way) streamed whole lines, a 16-word run for every
+The earlier estimate (FIRMWARE.md, Memory: median 224, worst 560 each way) streamed whole lines, a 16-word run for every
 read. The plan is the same for every latency from 2 to 32 frames: the reads that move are all far longer.
 
 Per kind (the 69 that stream; `qvs.py --all` lists every program), with cycles a sample by interlock_scan's model on
@@ -498,5 +498,5 @@ procedure: [TESTING.md](TESTING.md).
 
 ## Not settled
 
-- **The gate's detector:** an envelope on the DSP, threshold and time constant assumed (README, "The gate").
+- **The gate's detector:** an envelope on the DSP, threshold and time constant assumed (FIRMWARE.md, "The gate").
 - **The stream's base side**: the channel's latency, mailboxes and core 1 ([what the base must provide](#what-the-base-must-provide)).

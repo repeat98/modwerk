@@ -1,5 +1,5 @@
 // A model of the Quadraverb's DSP in floating point, inferred from programs whose purpose
-// is known (../README.md, "The DSP"). Word width and saturation are not modelled yet.
+// is known (../FIRMWARE.md, "The DSP"). Word width and saturation are not modelled yet.
 //
 // A step is { a: delay address, k: coefficient 0 .. 2047/2048, op: 5 bits }.
 //   bit 4  negate the product        bit 3  write (else read)

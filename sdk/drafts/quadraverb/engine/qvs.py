@@ -45,7 +45,7 @@ sys.path.insert(0, str(HERE))
 import qvc  # noqa: E402
 
 N = 16                 # samples a frame
-LAT = 4                # frames from an out-block to the in-block that can use it (ASSUMPTION, README "Memory": 64 samples)
+LAT = 4                # frames from an out-block to the in-block that can use it (ASSUMPTION, FIRMWARE.md "Memory": 64 samples)
 FADE_WORDS = 256       # the pitch crossfade after the distance table
 
 

@@ -2,36 +2,69 @@
   "schemaVersion": 2,
   "id": "quadraverb",
   "key": "QUADRAVERB",
-  "name": "Quadraverb DEV",
-  "version": "0.0.1-dev",
+  "name": "Quadraverb",
+  "version": "0.1.0-experimental",
   "category": "effects",
   "author": {
     "github": "repeat98",
     "credits": [
-      "Alesis: the Quadraverb (1989) and its factory programs, which a development build compiles from the owner's own ROM image on the developer's computer; no Alesis program is in this repository",
+      "Alesis: the Quadraverb (1989) and its factory programs (software by Fast Forward Designs, hardware by Keith Barr and Alan Zak), which the build compiles from the owner's own ROM image; no Alesis program is in this repository",
       "repeat98: the reverse engineering of the Quadraverb's DSP, the integer model and the compiled engine"
     ]
   },
   "nativeManifest": "manifest.py",
   "presentation": {
-    "label": "DEV BUILD",
+    "label": "1989 DIGITAL REVERB",
     "family": "Reverb",
-    "summary": "Development build for measuring the compiled Quadraverb engine on a unit: one factory program, a MIX knob. Not a release.",
-    "overview": "One Quadraverb factory program compiled to straight-line DSP code, run at 44.1 kHz on its own FX2 ring, bit-exact against the integer model in the emulator. Built on the developer's computer from their own ROM image and never published.",
+    "summary": "22 reverbs of the Alesis Quadraverb (1989), each its original factory program run step for step on FX2.",
+    "overview": "Rooms, halls, chambers and plates from the Quadraverb's factory programs. Each is the original's 96-step DSP program, compiled to DSP code when you pick it and run at 44.1 kHz; its long delay lines live in the Octatrack's main memory. Not compared with a real Quadraverb.",
     "highlights": [
-      "One program built in, named in the effect's name (QV DEV 5, QV DEV 40)",
-      "MIX on knob F: 0 dry, 127 wet only"
+      "22 original reverb programs: rooms, halls, chambers, plates",
+      "Each program is the original's, step for step, with its own LFO sweeps",
+      "PROG picks the program by its number on the original; MIX 0 is exact dry"
     ],
     "usage": [
-      "Try the package from engine/qvunit.py build on a unit (TESTING.md), pick QV DEV on an audio track's FX2, turn F (MIX)."
+      "Choose QUADRAVERB in FX2 SETUP: hold FUNC, press FX2, turn LEVEL to it and press YES, then press FX2 for the main page.",
+      "PROG (A) picks the program by its number on the original Quadraverb: 10-12 rooms, 13-16 halls, 17-19 plates, 20-22 chambers.",
+      "MIX (F): 0 dry, 127 wet only."
     ]
   },
   "controls": [
     {
+      "name": "PROG",
+      "default": 2,
+      "count": 22,
+      "doc": "the factory program, by its number on the original Quadraverb (10 SMALL ROOM by default)",
+      "labels": [
+        "01",
+        "02",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "52",
+        "53",
+        "66",
+        "78",
+        "79",
+        "80",
+        "81"
+      ]
+    },
+    {
       "name": "MIX",
-      "default": 64,
+      "default": 40,
       "count": 128,
-      "doc": "dry/wet: 0 the dry alone, 127 the wet alone",
+      "doc": "dry/wet: 0 is exact dry, 127 wet only",
       "labels": null
     }
   ],
@@ -41,10 +74,12 @@
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "Development build: one factory program per package, no program choice, MIX only. Never published.",
-      "FX2 only: each instance uses the first 15,870 words of its track's 16K-word FX2 buffer (Midiverb's layout), leaving Sidechain Compressor's key window.",
-      "A new instance is silent (dry at its mix) for its first 7 to 13 calls while its ring clears, 1,024 words a call: under 5 ms.",
-      "Unlike the original: 44.1 kHz instead of about 42 kHz (delays and sweeps about 5 % shorter and faster), a mono input from the average of left and right, and 24-bit words; not compared with a real Quadraverb."
+      "Needs the Modwerk base's program areas and stream channel (loader ABI 9, the package requires `programs`), so it is USB-only. They are in the base 0.8.3 draft, on development twins only so far.",
+      "FX2 only: each instance uses the first 15,870 words of its track's 16K-word FX2 buffer for its short delay lines, and keeps its long ones in the ColdFire's memory, which the base moves to and from the DSP every 16 samples.",
+      "Each pick writes the program's code into one of two areas the base holds for the slot, so a pick is silent for a moment while the code and the new reverb's memory start; the other area keeps the program before.",
+      "Unlike the original: 44.1 kHz instead of about 42 kHz (reverb times, delays and sweeps about 5 % shorter and faster), a mono input from the average of left and right, 24-bit words in the DSP and 16 bits where a word crosses to the ColdFire. Not compared with a real Quadraverb.",
+      "The gated reverbs (3, 23-27) are not in this release: their gate needs a signal detector the original has in hardware.",
+      "Built from the owner's own Quadraverb 1.07 ROM image on the developer's computer: the build reads it, and nothing derived from it is in this repository."
     ],
     "effectId": 10
   },
@@ -52,35 +87,35 @@
     "recorded": "2026-11-26",
     "storage": {
       "label": "DSP program / state",
-      "display": "about 900 words / 132-word state",
+      "display": "two areas of about 600-850 words a slot / 132-word state",
       "value": null,
       "unit": "see display",
       "method": "static",
-      "conditions": "The generated engine for one program: its code and the tables its init writes (about 900 P words), the r7 block $00-$83, and up to 15,870 words of the track's FX2 buffer in Y (the ring, its distance table and 32 dry words). See TESTING.md.",
-      "source": "TESTING.md"
+      "conditions": "Model, not built yet: two program areas a slot on its core (program_words), the r7 block $00-$83, up to 15,870 words of the track's FX2 buffer in Y, and 4-160 KB of ColdFire memory an instance for the long delay lines. See ENGINE.md.",
+      "source": "ENGINE.md"
     },
     "processing": {
       "label": "DSP cycles",
-      "display": "about 215-241 cycles/sample per instance (model)",
+      "display": "about 207-316 cycles/sample per instance (model)",
       "value": null,
       "unit": "see display",
       "method": "emulator",
-      "conditions": "interlock_scan's stall model on the traced proc in dsp_host, one instance, 16-frame blocks (engine/verify_unit.py --cycles): 5 STEREO FLANGE 214.7 on average and 221.6 in the dearest block, 40 167 ms DELAY and 56 SKANK GUITAR 240.6. A model, not a measurement on a unit.",
-      "source": "TESTING.md"
+      "conditions": "interlock_scan's stall model on the traced proc in dsp_host, one instance, 16-frame blocks, the stream's copies included: 207-310 on average across the streamed programs, 316 in the dearest block (53 BALLAD SNARE 2). A model, not a measurement on a unit.",
+      "source": "ENGINE.md"
     },
     "cpuPrice": {
-      "value": 1,
+      "value": 15,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
       "date": "2026-11-26",
-      "conditions": "Provisional, not measured: a DSP-only effect with no ColdFire code, so its frame-interrupt share is expected near Midiverb's (1.1 with ColdFire code). To be measured on the unit with npm run device:price (TESTING.md).",
+      "conditions": "Provisional, not measured: the stream's transfers (about 0.07 us a halfword, up to 352 in and 144 out a frame for the plates) and the ColdFire's copies run in the frame interrupt. To be measured on a unit with npm run device:price (TESTING.md).",
       "source": "TESTING.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Development build. engine/verify_unit.py: bit-exact against the integer model in dsp_host for programs 5, 40 and 56 (MIX values, splits, a dirty Y, two instances, a stale state, the guard). Not run on a unit.",
+    "summary": "Not built yet as 0.1.0-experimental. In dsp_host the compiled engine runs 89 of the 90 factory programs bit-exact against the integer model with the stream modelled, all 22 of this release among them; the development builds of programs 5, 40 and 56 were priced on an MKII. Not heard on a unit.",
     "hardwareStatus": "untested",
     "evidenceRevision": "cab0eb2039203a17f43b8ec3c599a212f7b84f59",
     "gates": [
@@ -92,16 +127,16 @@
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
-    "declaration": "The draft's own code and documentation are MIT (LICENSE). The Alesis Quadraverb programs are not in this repository: engine/qvunit.py compiles one from the developer's own ROM image into gen/ (ignored by Git) and ~/.cache, and the package built from it stays on the developer's computer. No Elektron firmware, routines or tables are included."
+    "declaration": "The module's own code and documentation are MIT (LICENSE). The Alesis Quadraverb programs are not in this repository: the build compiles them from the owner's own ROM image into gen/ (ignored by Git) and ~/.cache, and the packages built from them stay on the developer's computer until the owner allows their inclusion. No Elektron firmware, routines or tables are included."
   },
   "media": [],
   "access": {
-    "location": "Audio track FX2 SETUP: QV DEV <program> in the effect chooser.",
+    "location": "Audio track FX2 SETUP: QUADRAVERB in the effect chooser.",
     "steps": [
       "Select an audio track with its TRACK key.",
       "Hold FUNC and press FX2 to open FX2 SETUP.",
-      "Turn LEVEL to QV DEV <program> and press YES.",
-      "Press FX2 for the main page: MIX on knob F."
+      "Turn LEVEL to QUADRAVERB and press YES.",
+      "Press FX2 for the main page: PROG on knob A, MIX on knob F."
     ],
     "screenshots": []
   }
