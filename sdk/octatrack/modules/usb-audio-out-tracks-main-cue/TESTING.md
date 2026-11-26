@@ -1,5 +1,50 @@
 # USB Audio testing
 
+## 0.4.1-experimental (draft), 25 November 2026
+
+**Windows 11 shows Code 10 with 0.4.0 and INPUTS AB, the reporter's error; 0.4.1 starts and plays with INPUTS ABCD, and all three Undos reconnected.** One agent-run unit turn on the owner's Octatrack MKII, base 0.8.1 `e11525835106` RAM-booted from its release image with an empty set (24 November had the owner's kept set of four modules loaded), Windows 11 (usbaudio2 10.0.26100.9974), RAM trials only, nothing kept. Each trial was rolled back and the unit checked 30 s later.
+
+- **0.4.0, Main + INPUTS AB** (published package with the preset `0x8100010C`, `443ca2b0…`, 150 s): the audio function (MI_04, `usbaudio2`) stopped with **Code 10** for the whole trial (31 samples), and Windows offered no Octatrack playback device. This is the Windows 10 report's error, so Windows 11 rejects the implicit-feedback input stream as well and can stand in for Windows 10. Undo: the unit came back on `e11525835106`.
+- **0.4.1, Main + INPUTS ABCD** (`5a16b47e…`, 150 s): MI_04 started with `usbaudio2`, status OK, problem 0 (29 samples). WASAPI shared mode played a −30 dBFS 440 Hz tone on all four channels for 60.15 s (2,646,000 frames), no stream status flags. Vendor request 0x56 over 55 s: the host 56.4 ppm faster than the unit, 137 frames absorbed, none repeated; fill 92-112, no underrun, overrun, bad packet or reprime until the tone ended (then one underrun as the stream stopped). Undo: the unit came back.
+- **0.4.1, Main + INPUTS AB** (`1c8f7da4…`, the 24 November package, 150 s): MI_04 started, status OK. The player opened the four-channel endpoint Windows still listed from the ABCD trial and failed ("Invalid device"), so no audio was sent in this trial. Undo: the unit came back.
+- **The 24 November failure did not recur** in three Undos, one of them after 60 s of four-channel input. Not known whether it depends on the kept set, on the longer stream (240 s), or is intermittent.
+
+### Performance (25 November 2026)
+
+`evidence/performance.json`, measured on the owner's MKII on base 0.8.1 `e11525835106` (release image, RAM-booted, empty set, transport stopped: a release base answers no PLAY key and no `stats` or `guard` request), from the base's own 5-minute load windows (`device.mjs diaglog`):
+
+| | Base alone | 0.4.1, INPUTS ABCD, Windows 11 duplex (4 ch in, 2 ch out) |
+| --- | --- | --- |
+| CPU meter mean / peak | 43.8 / 44.1 % | 62.7 / 87.9 % |
+| DSP T1-4 mean / peak | 32.9 / 33.9 % | 33.6 / 34.8 % |
+| DSP T5-8 mean / peak | 41.9 / 43 % | 42.7 / 99.4 % |
+| Longest time between two audio frames | 427 µs | 403 µs |
+| Longest run of frames without a UI tick | 47 | 2,780 (about 1.0 s; no freeze incident; cause not isolated) |
+| Renders skipped, late frame entries | 0, 0 | 0, 0 |
+
+Streaming both ways costs about 19 points of the CPU meter with nothing playing, past the audit's default of 10 points of idle time; not separated into output and input, not measured with a pattern playing, and 0.4.0 not measured the same way. 600 s of duplex: no underrun, overrun or bad packet, 1,511 frames absorbed (57 ppm), no stream status flag on Windows; the Undo reconnected. What changed against the audit's ColdFire template, and why: no static cycle bound and no cfmeter capture (the owner's 0.4.1 approval waives worst-case cycles and current-build hardware evidence), and no MIDI flood (the package has no MIDI path of its own); the measured figures are in the record's method texts and the scored fields stay empty, as `ownerWaivedPerformanceRow` requires.
+
+## 0.4.1-experimental (draft), 24 November 2026
+
+**Windows 11 accepted the input stream and played into INPUTS AB for four minutes; the unit then left USB after the trial's Undo.** Release package `6d7bf894418653feee4aa32a5fb5f74996274edc78f766cc72420bf2193a5502`, tried with the install preset Main + INPUTS AB (`1c8f7da4…`, word `0x8143210c`) as a 330 s RAM trial on the owner's Octatrack MKII, on base 0.8.1 `e11525835106` RAM-booted from its release image, the owner's kept set (Tape Echo, Air Chorus, Grain, Analog BD) loaded. Windows 11 (usbaudio2 10.0.26100.9974), agent-run, nothing kept.
+
+- **Enumeration:** the audio function (MI_04) started with `usbaudio2`, status OK, problem 0, through the whole trial (86 samples, every 2 s). Windows read 343 bytes: EP 0x83 attributes 0x05, EP 0x03 0x09 (adaptive), 96 bytes, bInterval 2.
+- **Playback:** WASAPI shared mode played a −30 dBFS 440 Hz tone on both channels of "Line (Elektron Octatrack DPS-1)" for 240.08 s, 10,584,000 frames, no stream status flags.
+- **Drift:** vendor request 0x56 every 5 s over 235 s: the host sent 58.1 ppm more frames than the unit consumed (10,374,491 against 10,373,888). The trim absorbed 606 frames (2.58 a second, none repeated), matching the excess with the fill change (603). The ring stayed between 98 and 119 frames: no underrun, overrun, bad packet or reprime.
+- **Undo:** the trial rolled back with no crash, stall, freeze or skipped track logged, and the unit answered on base `e11525835106` right after. About a second later it left USB; 15 s later Windows reported an unknown device whose port reset failed (`VID_0000&PID_0001`). It had not come back by 14:44, six minutes later; the owner's power cycle is needed. Whether 0.4.0 does the same after a duplex Undo on Windows is not known.
+- **Not run:** INPUTS ABCD (the unit was away), CD, listening (owner), Windows 10 (the reporter's computer), macOS, Linux, the soak, the price and frame cost, Keep and a power cycle. The emulator rehearsal ran on twin `678843ccf3d6`, which refuses USB Audio packages (refusal 3, the published 0.4.0 too).
+
+Host: the trim's tests (`sdk/tests/test_usb_audio_input_trim.py`: bit-for-bit copy with no drift, ±100 ppm and 40 ppm absorbed with no underrun, the interpolated block exact on a ramp and bounded on full-scale input), the descriptor tests, the package tests and the site's USB Audio tests.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Windows enumerates the audio function with INPUTS on | the endpoint attributes | trials with INPUTS AB and ABCD, PnP status and descriptor on Windows 11; 0.4.0 with INPUTS AB for comparison | pass on Windows 11 (0.4.0: Code 10, as reported on Windows 10); not run on Windows 10 |
+| Minutes of playback into INPUTS with the host on its own clock | the trim must hold the ring | 240 s tone, 0x56 counters every 5 s | pass: 58.1 ppm absorbed, no underrun |
+| Undo of a duplex trial on Windows | the reconnect after the package leaves | the trial's rollback | 24 Nov fail (kept set loaded, after 240 s of input): the unit left USB, port reset failed; 25 Nov pass three times (empty set; 0.4.0 AB, 0.4.1 ABCD after 60 s of input, 0.4.1 AB) |
+| INPUTS ABCD | four channels, 192-byte packets | trial with INPUTS ABCD | pass on Windows 11: 60 s on four channels, 56.4 ppm absorbed, no underrun |
+| Sound of the trims | an interpolated block every 0.4 s at 58 ppm | by ear | not run: the owner's |
+| macOS, Linux | they no longer get implicit feedback | — | not run: not available here |
+
 ## 0.4.0-experimental, 23 November 2026
 
 **Not tested on a unit as this exact package.** The owner released it without that run: "Let's just release it, it's been well tested in the other repos it's fine" ([approval](../../../approvals/usb-audio-out-tracks-main-cue-build-approval.json)).
