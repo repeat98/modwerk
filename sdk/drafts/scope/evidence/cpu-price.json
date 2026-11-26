@@ -1,0 +1,71 @@
+{
+  "module": "scope",
+  "version": "0.1.0-experimental",
+  "base": "twin 4c7eb79b, MKII",
+  "scene": "author's project, pattern A02, playing",
+  "inputs": {
+    "transport": "playing"
+  },
+  "seconds": 8,
+  "readings": 3,
+  "measuredAt": "2026-11-26T09:23:33.289Z",
+  "result": {
+    "id": "scope",
+    "version": "file",
+    "packageSha256": "48522941a043dad83d0ebfcb26e4b68734ddc439b16d443e5f87eecb6cf63b57",
+    "before": {
+      "frame": 68.4,
+      "frameMax": 110.6,
+      "frames": 67163,
+      "skipped": 0,
+      "cpu": 92.2,
+      "dsp1to4": 39.9,
+      "dsp5to8": 48.9,
+      "dsp1to4Peak": 41.4,
+      "dsp5to8Peak": 50,
+      "readings": 3,
+      "spread": {
+        "frame": 0.1,
+        "cpu": 0.4,
+        "dsp1to4": 0.2,
+        "dsp5to8": 0.2,
+        "frameMax": 3.9,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 0
+      }
+    },
+    "atRest": {
+      "frame": 68.6,
+      "frameMax": 110.7,
+      "frames": 67179,
+      "skipped": 0,
+      "cpu": 93.3,
+      "dsp1to4": 40.1,
+      "dsp5to8": 47.9,
+      "dsp1to4Peak": 41.5,
+      "dsp5to8Peak": 49.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 2.1,
+        "dsp1to4": 0,
+        "dsp5to8": 0.3,
+        "frameMax": 5.8,
+        "dsp1to4Peak": 1.1,
+        "dsp5to8Peak": 0.1
+      }
+    },
+    "atRestAdds": {
+      "frame": 0.2,
+      "cpu": 1.1,
+      "dsp1to4": 0.2,
+      "dsp5to8": -1,
+      "dsp1to4Peak": 0.1,
+      "dsp5to8Peak": -0.2
+    },
+    "curve": {
+      "error": "not an effect or a machine: no curve"
+    },
+    "rolledBack": true
+  }
+}
