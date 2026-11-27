@@ -44,6 +44,12 @@ import { bankPrograms } from './octatrack-part-state.mjs'
 
 export const ROOT = resolve(import.meta.dirname, '..')
 
+/* The session's answer while the unit is off USB (usb-bench.mjs). */
+const UNIT_AWAY = /the unit (?:is|went) away/
+/* Commands that only read the unit: the status, the inventory and the Part reading. */
+const reads = argv => argv.some(a => /octatrack-part-state\.mjs$/.test(a)) && argv.includes('read') ||
+  argv.some(a => /device\.mjs$/.test(a)) && (argv.includes('status') || argv.includes('inventory'))
+
 // The soak's program changes and MIDI channels: its own defaults (programs 0-3, bank A, on channel 1) unless the
 // project receives them elsewhere, as a project with PROG CH RECEIVE on CH AUTO does (docs/OCTATRACK_DRIVING.md).
 const SOAK_OPTIONS = [['programs', 'programs', 'soak-programs'], ['pcChannel', 'pc-channel', 'soak-pc-channel'], ['autoChannel', 'auto-channel', 'soak-auto-channel']]
@@ -299,7 +305,13 @@ export async function runSteps(ids, ctx, deps, results = []) {
       const outputs = [], codes = []
       let code = 0
       for (const argv of p.commands) {
-        const run = await deps.exec(argv, log, env)
+        let run = await deps.exec(argv, log, env)
+        // A USB function's install or removal (USB Audio) takes the unit off USB while the host enumerates it again: a
+        // reading that found it away is asked again for up to 40 s. Only readings: nothing they send presses a key.
+        for (const until = deps.now() + 40000; run.code !== 0 && UNIT_AWAY.test(run.output ?? '') && reads(argv) && deps.now() < until;) {
+          await deps.wait(2000)
+          run = await deps.exec(argv, log, env)
+        }
         outputs.push(run.output ?? ''); codes.push(run.code)
         if (run.code !== 0) { code = run.code; result.reason = (p.why && (run.output ?? '').match(p.why)?.[0].slice(0, 400)) || `exit ${run.code}: ${shown(argv)}`; break }
       }
@@ -579,6 +591,7 @@ function realDeps(root) {
   }
   return {
     now: () => Date.now(),
+    wait: ms => new Promise(resolve => setTimeout(resolve, ms)),
     exists: path => existsSync(path),
     read: path => readFileSync(path, 'utf8'),
     sha256: path => createHash('sha256').update(readFileSync(path)).digest('hex'),
