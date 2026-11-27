@@ -35,6 +35,7 @@ These kit files hold a one-line re-export of Modwerk's own implementation instea
 | `src/elemod.ts` | [`src/engine/elektron/module-package.ts`](../../src/engine/elektron/module-package.ts), module package validation, whole-build bundles and set checks |
 | `src/devices.ts` | [`src/engine/elektron/devices.ts`](../../src/engine/elektron/devices.ts), the machines and stock releases the builder knows |
 | `src/store.ts` | [`src/engine/elektron/store.ts`](../../src/engine/elektron/store.ts), module storage lockfile and allocator (Rytm MKII, A4 MKII) |
+| `src/syx.ts` | [`src/engine/elektron/syx-container.ts`](../../src/engine/elektron/syx-container.ts), ELE3 .syx reading, writing (sealed included) and verifying |
 | `src/codec/aplib.ts` | [`src/engine/elektron/codec/pack.ts`](../../src/engine/elektron/codec/pack.ts), the section packer |
 | `src/codec/elz.ts` | [`src/engine/elektron/codec/depack.ts`](../../src/engine/elektron/codec/depack.ts), the section depacker |
 | `src/codec/transport.ts` | [`src/engine/elektron/codec/transport.ts`](../../src/engine/elektron/codec/transport.ts), the SysEx transport |
