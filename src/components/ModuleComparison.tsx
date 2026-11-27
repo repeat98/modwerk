@@ -11,6 +11,7 @@ import { digiDownloadsEnabled } from '../engine/elekloader/protocol'
 import { comesWithBase } from '../config/usb-audio'
 import { canAdd, LIMIT_REACHED } from '../catalog/set-limit'
 import { useSetWords } from '../community/beta-ui'
+import { Icon } from './Icon'
 
 const ROWS = ['Machine', 'Version', 'Purpose', 'Location', 'Storage', 'Processing', 'Hardware record', 'Build status'] as const
 
@@ -56,7 +57,7 @@ export function ModuleComparison({ betaAccess = false, ids, onClose, onToggle, s
     return () => { element?.close(); if (previousFocus instanceof HTMLElement) previousFocus.focus() }
   }, [])
   return <dialog ref={ref} className="comparison-dialog" aria-labelledby="comparison-title" onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose() }}>
-    <div className="section-title"><h2 id="comparison-title">Compare modules</h2><button className="icon-button" onClick={onClose} aria-label="Close comparison">×</button></div>
+    <div className="section-title"><h2 id="comparison-title">Compare modules</h2><button className="icon-button" onClick={onClose} aria-label="Close comparison"><Icon name="close" size={18} /></button></div>
     <div className="comparison-scroll" tabIndex={0} role="region" aria-label="Module comparison table"><table>
       <thead><tr><th scope="col">Module</th>{modules.map(module => <th scope="col" key={module.key}><a href={module.href} onClick={onClose}>{module.name} ↗</a><small>by <a href={module.authorUrl} target="_blank" rel="noreferrer">{module.author}</a></small></th>)}</tr></thead>
       <tbody>{ROWS.map(label => <tr key={label}><th scope="row">{label}</th>{modules.map(module => <td key={module.key}>{module.values[label]}</td>)}</tr>)}

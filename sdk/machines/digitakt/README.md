@@ -1,6 +1,6 @@
 # Digitakt SDK
 
-**Platform:** elemod · **OS:** 1.53 and 1.54 (mk1) · **Core:** 2.1 · **Modules:** [`sdk/digitakt/modules/`](../../digitakt/modules/) · **Status:** preview
+**Platform:** elemod · **OS:** 1.53 and 1.54 (mk1) · **Core:** 4.4 (elekloader's; mods use the hooks below, interface 2.1) · **Modules:** [`sdk/digitakt/modules/`](../../digitakt/modules/) · **Status:** preview
 
 Digitakt mods are linkable objects. One core patches the OS once at a few shared sites and calls every subscribed mod's handler, in order, from tables the linker builds. So any set of mods that fits the budgets combines. The site builds firmware with elekloader's builder (below), so the machine is in preview.
 
@@ -20,10 +20,10 @@ To try it before a pull request, build a local image from your own stock OS and 
 
 ```sh
 node scripts/link-image.mjs --stock Digitakt_OS1.53.syx --version XX01 --out test.syx \
-  --elemod vendor/elekloader/catalog/core-2.1.elemod --module digitakt:my-mod
+  --elemod vendor/elekloader/catalog/core-4.4.elemod --module digitakt:my-mod
 ```
 
-For OS 1.54 use `core-2.1-os1.54.elemod`.
+For OS 1.54 use `core-4.4-os1.54.elemod`. The catalog keeps core 2.1 beside it; a build takes the newest core its mods link with.
 
 ## Core hooks
 

@@ -488,7 +488,8 @@ export function parseElemodDependency(value: unknown, machine: MachineProfile) {
   const releases = texts(c.releases, 'dependency.releases', 1, 12, 20)
   if (new Set(releases).size !== releases.length || releases.some(release => !machine.firmware?.releases.some(r => r.version === release))) fail('dependency.releases', 'expected unique supported releases')
   const ids = (v: unknown, path: string) => texts(v, path, 0, 20, 60).map(id => { if (!/^[a-z][a-z0-9-]*$/.test(id)) fail(path, 'invalid module id'); return id })
-  const platform = object(d.platform, 'dependency.platform', ['build', 'events', 'claims'])
+  // A framework names the oldest core it links with when that is older than the machine's newest (Core 2.1 for the Digitakt's).
+  const platform = object(d.platform, 'dependency.platform', ['build', 'events', 'claims'], ['core'])
   return {
     id, version: coreVersion(d.version, 'dependency.version'), name: text(d.name, 'dependency.name', 60), machine: machine.id,
     category: 'system', exclusive: false,
@@ -496,6 +497,6 @@ export function parseElemodDependency(value: unknown, machine: MachineProfile) {
     author: { github: login(object(d.author, 'dependency.author', ['github']).github, 'dependency.author.github') },
     license: { spdx: text(object(d.license, 'dependency.license', ['spdx']).spdx, 'dependency.license.spdx', 120) },
     compatibility: { releases, requires: ids(c.requires, 'dependency.requires'), conflicts: ids(c.conflicts, 'dependency.conflicts'), limitations: [] },
-    platform: { kind: 'elemod' as const, core: machine.sdk?.core?.version ?? '1.0', build: modulePath(platform.build, 'dependency.build'), events: texts(platform.events, 'dependency.events', 0, 32, 40), claims: texts(platform.claims, 'dependency.claims', 0, 32, 80) },
+    platform: { kind: 'elemod' as const, core: platform.core === undefined ? machine.sdk?.core?.version ?? '1.0' : coreVersion(platform.core, 'dependency.platform.core'), build: modulePath(platform.build, 'dependency.build'), events: texts(platform.events, 'dependency.events', 0, 32, 40), claims: texts(platform.claims, 'dependency.claims', 0, 32, 80) },
   }
 }

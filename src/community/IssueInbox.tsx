@@ -43,7 +43,7 @@ export function IssueInbox({moduleId, status, onStatus, onClearModule}: {
       setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (error) { setActionError(error instanceof Error ? error.message : 'The log could not be downloaded.') }
   }
-  return <section className="configuration-section"><div className="section-title"><h2>Issue reports</h2>{!loading && !error && <span className="pill">{items.length} {items.length === 1 ? 'report' : 'reports'}</span>}</div>
+  return <section className="configuration-section"><div className="section-title"><h2>Issue reports{!loading && !error && <span className="subtle">{items.length} {items.length === 1 ? 'report' : 'reports'}</span>}</h2></div>
     <div className="statistics-controls inbox-controls"><label>Issue status<select value={status} disabled={!!busy} onChange={event => onStatus(event.target.value)}><option value="all">All reports</option><option value="open">Open reports</option><option value="closed">Closed reports</option></select></label>{moduleId && <span className="service-note">Module: {moduleId} <button className="text-button" onClick={onClearModule}>Clear module filter</button></span>}</div>
     {items.length===200 && <p className="service-note">Showing the latest 200 matching reports.</p>}
     {loading ? <p role="status">Loading reports…</p> : items.length ? items.map(item => <AdminRecord key={item.id}

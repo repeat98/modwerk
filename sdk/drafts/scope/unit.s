@@ -186,6 +186,64 @@ sc_tick_body:
 tick_done:
         rts
 
+.ifdef MODWERK_EVENTS
+| ---- Modwerk base hooks: the same three paths, no stock site -----------
+| module_key runs before stock's key dispatch, on its task. Stock calls the
+| handler in the key's slot (+0 of 24 bytes a key); SCOPE takes DOWN+TEMPO
+| only while TEMPO's slot is the handler the native build detours, so an
+| open SCOPE, TUNER or menu layer still gets TEMPO as before.
+        .set    KEYSLOT,   0x46c7d8de
+        .set    KTEMPO,    0x18
+        .set    TEMPO_FN,  0x40059ef0
+        .globl  sc_key, sc_usb_frame, sc_mw_tick
+
+| int sc_key(int code, int pressed)
+sc_key:
+        moveq   #KTEMPO,%d0
+        cmpl    %sp@(4),%d0
+        bne.s   8f
+        tstl    %sp@(8)
+        beq.s   8f
+        movel   KEYSLOT+KTEMPO*24,%d0
+        cmpil   #TEMPO_FN,%d0
+        bne.s   8f
+        moveq   #0,%d0
+        moveb   KROWS+(KDOWN>>3),%d0
+        btst    #(KDOWN&7),%d0
+        beq.s   8f
+        lea     %sp@(-44),%sp
+        movem.l %d2-%d7/%a2-%a6,%sp@
+        bsr.w   sc_tempo_down
+        movem.l %sp@,%d2-%d7/%a2-%a6
+        lea     %sp@(44),%sp
+        moveq   #1,%d0
+        rts
+8:      moveq   #0,%d0
+        rts
+
+| unsigned sc_usb_frame(void): ev_usb_frame, every 16-sample block, one
+| instruction past the native frame detour.
+sc_usb_frame:
+        lea     %sp@(-20),%sp
+        movem.l %d2-%d5/%a2,%sp@
+        bsr.w   sc_frame_body
+        movem.l %sp@,%d2-%d5/%a2
+        lea     %sp@(20),%sp
+        moveq   #0,%d0
+        rts
+
+| void sc_mw_tick(api *): module_tick at 60 Hz, one draw per tick that saw
+| a block.
+sc_mw_tick:
+        tstl    scope_win
+        beq.s   9f
+        tstl    sc_frames
+        beq.s   9f
+        clrl    sc_frames
+        bsr.w   sc_draw
+9:      rts
+.endif
+
 | ---- viz switch -------------------------------------------------------
 sc_viz_up:
         movel   sc_viz,%d0

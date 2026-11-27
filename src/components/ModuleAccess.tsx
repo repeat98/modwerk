@@ -10,7 +10,8 @@ export function ModuleAccess({ id, showScreenshots = true }: { id: string; showS
   const screenshots = document.media.filter(item => access.screenshots.includes(item.path) || documentation?.screenshots.includes(item.path))
   const hasQuickTest = downloadedModuleGuide({ id, name: document.name, version: document.version })?.hasQuickTest
   const setup = <>
-    <ol>{access.steps.map((step, index) => <li key={index}>{step}</li>)}</ol>
+    {/* A tutorial that repeats the access steps word for word replaces them. */}
+    {documentation?.tutorial.steps.join('\n') !== access.steps.join('\n') && <ol>{access.steps.map((step, index) => <li key={index}>{step}</li>)}</ol>}
     {documentation && <><h3>{documentation.tutorial.title}</h3><ol>{documentation.tutorial.steps.map((step,index)=><li key={index}>{step}</li>)}</ol></>}
   </>
   return <section className="detail-section module-access">

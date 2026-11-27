@@ -1,0 +1,1 @@
+Module tests on the Octatrack: right after a USB Audio trial, the automated test no longer fails by calling a development base a release base while the Octatrack reconnects over USB. It waits for the Octatrack to come back, as it does for every other reading.

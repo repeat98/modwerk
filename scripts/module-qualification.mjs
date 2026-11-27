@@ -207,22 +207,47 @@ export function evidenceOnBaseProblem({ root, base }) {
   return null
 }
 
-/** A pull request that gives a module a new version also says in its TESTING.md what was tested at that version: 84 of 87 modules
- * name their current version there, and a report left at the old one reads as evidence for the new. Every machine's manifests and drafts. */
-export function testingVersionProblem({ root, base }) {
+/** The module folders this branch gives a new version, every machine's manifests and drafts: { folder, version, text } with text its TESTING.md. */
+function newVersions({ root, base }) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
   const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octatrack/modules/*/octamod.module.json', ':(glob)sdk/*/modules/*/modwerk.module.json']
   const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
+  const found = []
   for (const path of new Set(changed)) {
     const version = JSON.parse(readFileSync(resolve(root, path), 'utf8')).version
     let before = null
     // An Octatrack module's manifest sat under sdk/octabam/modules/ before the folders moved (12 November 2026).
     for (const at of [path, path.replace(/^sdk\/octatrack\/modules\//, 'sdk/octabam/modules/')]) { try { before = JSON.parse(git('show', base + ':' + at)).version; break } catch { /* new here */ } }
     if (version === before || typeof version !== 'string') continue
-    const folder = path.slice(0, path.lastIndexOf('/')), report = resolve(root, folder, 'TESTING.md')
-    const text = (() => { try { return readFileSync(report, 'utf8') } catch { return '' } })(), short = version.replace(/-experimental$/, '')
+    const folder = path.slice(0, path.lastIndexOf('/'))
+    found.push({ folder, version, text: (() => { try { return readFileSync(resolve(root, folder, 'TESTING.md'), 'utf8') } catch { return '' } })() })
+  }
+  return found
+}
+
+/** A pull request that gives a module a new version also says in its TESTING.md what was tested at that version: 84 of 87 modules
+ * name their current version there, and a report left at the old one reads as evidence for the new. */
+export function testingVersionProblem({ root, base }) {
+  for (const { folder, version, text } of newVersions({ root, base })) {
+    const short = version.replace(/-experimental$/, '')
     if (!text.includes(version) && !new RegExp('(?<![\\d.])' + short.replaceAll('.', '\\.') + '(?![\\d.])').test(text))
       return folder + '/TESTING.md does not name ' + version + '. Say what you ran on this version, and on which build, or write that it is not tested yet.'
+  }
+  return null
+}
+
+/** Every new version, first release or update, goes through docs/TEST_PROCEDURE.md (owner, 26 November 2026): its TESTING.md holds the
+ * record of `npm run test:procedure -- <id>`, and for an Octatrack module the shipped package's SHA-256, so the record is of the build
+ * that ships. Five of the ten Octatrack releases before this had only a typed "Tested on a unit" line. Drafts in sdk/drafts/ ship nothing. */
+export function procedureRecordProblem({ root, base }) {
+  for (const { folder, version, text } of newVersions({ root, base })) {
+    if (folder.startsWith('sdk/drafts/')) continue
+    const id = folder.split('/').at(-1), see = ' Every new version goes through the test procedure on the build it ships, with a unit or without one, and its record goes in TESTING.md (docs/TEST_PROCEDURE.md#where-the-record-goes).'
+    if (!new RegExp('test:procedure -- (?:[a-z0-9-]+:)?' + id + '(?![\\w-])').test(text)) return folder + '/TESTING.md has no record of `npm run test:procedure -- ' + id + '` for ' + version + '.' + see
+    // shortcut: only an Octatrack package has a fixed path here, so other machines' records are not matched to a package; add theirs when they commit one.
+    const pkg = resolve(root, 'public/octatrack-modules', id, version + '.mwrm')
+    const sha = (() => { try { return createHash('sha256').update(readFileSync(pkg)).digest('hex') } catch { return null } })()
+    if (sha && !text.includes(sha.slice(0, 8))) return folder + '/TESTING.md does not name the package that ships, public/octatrack-modules/' + id + '/' + version + '.mwrm (SHA-256 ' + sha.slice(0, 12) + '…), so its test procedure record is of another build.' + see
   }
   return null
 }

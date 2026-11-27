@@ -46,9 +46,10 @@ function deviceCrash(v: unknown) {
     && words(v.d, 8) && words(v.a, 7) && words(v.stack, 8) && words(v.code, 8) && words(v.memory, 8)
 }
 function deviceStall(v: unknown) {
-  return object(v) && fields(v, ['count','reason','report','ticks','frames','packets']) && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
+  return object(v) && fields(v, ['count','reason','report','ticks','frames','packets','host']) && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
     && (!('frames' in v) || Array.isArray(v.frames) && v.frames.length <= 256 && v.frames.length % 2 === 0 && v.frames.every(us => upTo(us, 0xffff))) // diag.h's trace: 128 frames, two times each
     && (!('packets' in v) || Array.isArray(v.packets) && v.packets.length === 2 && v.packets.every(header => Array.isArray(header) && header.length === 8 && header.every(word => upTo(word, 0xffff)))) // each core's last packet header
+    && (!('host' in v) || Array.isArray(v.host) && v.host.length === 2 && v.host.every(word => upTo(word, 0xffff))) // the host port's status words
 }
 function deviceLog(v: unknown) {
   return object(v) && fields(v, ['loads','incidents','crash','stall']) && Array.isArray(v.loads) && Array.isArray(v.incidents)
