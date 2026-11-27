@@ -1,19 +1,11 @@
 [
   {
     "version": "0.2.0-experimental",
-    "date": "2026-11-26",
+    "date": "2026-11-27",
     "changes": [
-      "Subscribe to module_key, module_tick and ev_usb_frame; no stock detours.",
-      "Tuner conflict removed; install beside Tuner once ev_usb_frame is confirmed on the base."
-    ]
-  },
-  {
-    "version": "0.1.0-experimental",
-    "date": "2026-11-25",
-    "changes": [
-      "First Modwerk draft: standalone SCOPE from octabam (DOWN + TEMPO OSC/XY/ALL).",
-      "Known issue: conflicts with Tuner on the TEMPO, frame and UI sites until a base hook exists.",
-      "Tried over USB on one MKII; not yet qualified with device:qualify."
+      "First library release: full-panel SCOPE on DOWN + TEMPO (OSC, XY, ALL) on the selected audio track, ported from octabam.",
+      "Hooks build: module_key, module_tick and ev_usb_frame; Tuner can share a set once the base raises ev_usb_frame.",
+      "Replaces the 0.1.0 draft approach that patched stock TEMPO, frame and UI sites and conflicted with Tuner."
     ]
   }
 ]
