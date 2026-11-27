@@ -2,7 +2,7 @@
 
 ## In Modwerk
 
-The evidence tier is `author-hardware`, the author's own report below. Nothing has been run on a unit in Modwerk.
+Modwerk 1.6.0 is the author's released 1.6 files, unchanged. Its evidence tier is `author-hardware`, the author's own report below. 1.6.0 is not tested on a unit in Modwerk yet.
 
 ## Import — 27 November 2026
 
