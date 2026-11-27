@@ -1,8 +1,7 @@
-.diagnostics-invitation { width: min(540px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; position: fixed; padding: 28px; border: 1px solid var(--control-border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); box-shadow: 0 24px 90px #000a; }
-.diagnostics-invitation::backdrop { background: #000b; backdrop-filter: blur(4px); }
-.diagnostics-close { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; }
-.diagnostics-heading-icon { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-bottom: 16px; border: 1px solid var(--accent-line); border-radius: var(--radius-md); color: var(--accent); background: var(--accent-soft); }
-.diagnostics-invitation h2 { margin: 0; padding-right: 24px; outline: none; font-size: 25px; line-height: 1.2; letter-spacing: -.5px; }
+.diagnostics-invitation { width: min(540px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; position: fixed; padding: 28px; border: 1px solid var(--control-border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); box-shadow: var(--shadow-popover); }
+.diagnostics-invitation::backdrop { background: #0009; }
+.diagnostics-close { position: absolute; top: 16px; right: 16px; width: var(--control-h); height: var(--control-h); }
+.diagnostics-invitation h2 { margin: 0; padding-right: 40px; outline: none; font-size: var(--text-lg); line-height: 1.2; letter-spacing: -.2px; }
 .diagnostics-intro { margin: 12px 0 22px; color: var(--text-secondary); font-size: 14px; line-height: 1.65; }
 .diagnostics-facts { display: grid; gap: 18px; margin: 0; padding: 0; list-style: none; }
 .diagnostics-facts li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; }
@@ -11,13 +10,13 @@
 .diagnostics-facts p { margin: 4px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 .diagnostics-connected, .diagnostics-choice { margin: 18px 0 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
 .diagnostics-details { margin-top: 14px; font-size: 12px; line-height: 1.65; color: var(--text-secondary); }
-.diagnostics-details summary { min-height: 44px; align-content: center; cursor: pointer; color: var(--text-secondary); }
+.diagnostics-details summary { min-height: var(--control-h); align-content: center; cursor: pointer; color: var(--text-secondary); }
 .diagnostics-details p { margin: 8px 0; }
 .diagnostics-actions { position: sticky; bottom: -28px; display: flex; justify-content: space-between; gap: 12px; margin: 22px -28px -28px; padding: 16px 28px; border-top: 1px solid var(--line); background: var(--surface); }
-.diagnostics-actions .button { min-height: 44px; flex: 1; }
+.diagnostics-actions .button { min-height: var(--control-h); flex: 1; }
 .diagnostics-preview { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
 .diagnostics-step { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
-.diagnostics-step h3 { margin: 0 0 6px; font-size: 22px; line-height: 1.25; letter-spacing: -.35px; color: var(--text); }
+.diagnostics-step h3 { margin: 0 0 6px; font-size: var(--text-md); line-height: 1.25; color: var(--text); }
 .diagnostics-step p { margin: 8px 0; }
 .diagnostics-step .diagnostics-step-lead { margin: 8px 0 20px; font-size: 15px; line-height: 1.65; }
 .diagnostics-step .diagnostics-facts p { margin: 4px 0 0; }
@@ -25,9 +24,9 @@
 /* While the step asks, its two buttons are the way on: the guide's Continue comes back with the answer. */
 .base-install-dialog:has(.diagnostics-step-actions) .base-install-footer { display: none; }
 .diagnostics-step-actions { display: flex; gap: 12px; margin-top: 14px; }
-.diagnostics-step-actions .button { min-height: 48px; flex: 1; font-size: 15px; }
+.diagnostics-step-actions .button { min-height: var(--control-h); flex: 1; font-size: var(--text-base); }
 .octatrack-diagnostics { margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; }
 .octatrack-diagnostics h3 { margin: 0 0 6px; font-size: 15px; }
 .octatrack-diagnostics p { margin: 8px 0; }
-.octatrack-diagnostics .button, .octatrack-diagnostics .text-button { min-height: 44px; }
+.octatrack-diagnostics .button, .octatrack-diagnostics .text-button { min-height: var(--control-h); }
 @media (max-width: 600px) { .diagnostics-invitation { padding: 24px 20px; } .diagnostics-actions { bottom: -24px; margin: 20px -20px -24px; padding: 14px 20px; } }
