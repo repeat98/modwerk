@@ -64,6 +64,14 @@ const soakPrograms = ctx => !ctx.soak?.programs && ctx.partStart ? ['--programs'
 const partReading = text => { for (const line of (text ?? '').trim().split('\n').reverse()) { try { const part = JSON.parse(line).part; if (part) return part } catch { /* not this line */ } } return undefined }
 const REFUSED = /^refused: .*$/m // device.mjs set prints a refusal and exits 0, so the large-set steps read their output
 const CURVE_TRACKS = 'T1,T3,T6,T7' // empty tracks of the test bank (docs/MODULE_PERFORMANCE.md)
+/** An explicit module curve scope; the normal four-track procedure stays the default. */
+export function priceTracks(value = CURVE_TRACKS) {
+  const tracks = value.split(',').map(track => track.trim().toUpperCase())
+  if (!tracks.length || tracks.some(track => !/^T[1-8]$/.test(track)) || new Set(tracks).size !== tracks.length)
+    throw new Error('--price-tracks takes distinct T1-T8 tracks, separated by commas')
+  return tracks.join(',')
+}
+
 const DEFAULT_SCENE = 'the bank, pattern and Part the unit was on, transport stopped (test:procedure)'
 
 /** What the developer, the submitter, judges at their own unit after the agent's steps passed on this build (modwerk-test-on-unit,
@@ -233,7 +241,7 @@ export function plan(step, ctx) {
       // --price-base names the base for the record: then the price and the curve land in the module's folder, a draft's too.
       return { commands: [npmRun('device:price', '--share', ctx.share, '--out', join(ctx.out, 'price.json'), '--scene', ctx.scene ?? DEFAULT_SCENE,
         ...(module && ctx.priceBase && ctx.source ? ['--write', '--base', ctx.priceBase] : []),
-        ...(module ? ['--curve', CURVE_TRACKS, ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), pkg] : ctx.priceModules ?? []))] }
+        ...(module ? ['--curve', ctx.curveTracks ?? CURVE_TRACKS, ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), ...(ctx.admissionPattern ? ['--admission-pattern', ctx.admissionPattern] : []), pkg] : ctx.priceModules ?? []))] }
     case 'restore':
       return { commands: [node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share), partRestore(ctx)], compare: 'unit-read', compareAt: 0, why: NOT_PUT_BACK }
     case 'by-hand': return { todo: BY_HAND[ctx.kind] }
@@ -397,7 +405,7 @@ export async function runProcedure(ctx, deps) {
     const file = join(ctx.out, 'unit-steps.json')
     const argv = ['npm', 'run', 'unit', '--', 'run', '--note', `test:procedure ${ctx.id ?? 'base'} ${ctx.build.revision.slice(0, 8)}`, '--expect', ctx.kind === 'base' ? '45m' : '15m', '--',
       'node', 'scripts/test-procedure.mjs', ...(ctx.kind === 'base' ? ['--base', ...(other(ctx) ? [ctx.machine] : [])] : [other(ctx) ? ctx.machine + ':' + ctx.id : ctx.id]), '--package', ctx.pkg, '--share', ctx.share, '--out', ctx.out, ...(ctx.passOn ?? []),
-      '--soak-seconds', String(ctx.soakSeconds), ...soakFlags(ctx), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []), '--unit-phase', file]
+      '--soak-seconds', String(ctx.soakSeconds), ...soakFlags(ctx), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), ...(ctx.admissionPattern ? ['--admission-pattern', ctx.admissionPattern] : []), ...(ctx.curveTracks ? ['--price-tracks', ctx.curveTracks] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []), '--unit-phase', file]
     const started = deps.now(), run = await deps.exec(argv, join(ctx.out, 'logs', 'unit-queue.log'))
     const inner = deps.exists(file) ? JSON.parse(deps.read(file)) : null
     if (inner) results.push(...inner)
@@ -501,7 +509,7 @@ export function context(root, values, positionals, env = process.env) {
   let ctx = { kind: values.base ? 'base' : 'module', share, target, devSocket,
     // The session's line socket for device:test's steps; an emulator takes no turn of the unit queue.
     env: { ...(devSocket ? { MODWERK_DEV_SOCKET: devSocket } : {}), ...(target === 'emulator' ? { MODWERK_UNIT: 'emulator' } : {}) }, soakSeconds: Number(values['soak-seconds'] ?? 120),
-    soak: { programs: values['soak-programs'], pcChannel: values['soak-pc-channel'], autoChannel: values['soak-auto-channel'] }, scene: values.scene, priceBase: values['price-base'], pickPattern: values['pick-pattern'], measurePattern: values['measure-pattern'], emulatorSocket: values['emulator-socket'],
+    soak: { programs: values['soak-programs'], pcChannel: values['soak-pc-channel'], autoChannel: values['soak-auto-channel'] }, scene: values.scene, priceBase: values['price-base'], curveTracks: priceTracks(values['price-tracks']), pickPattern: values['pick-pattern'], measurePattern: values['measure-pattern'], admissionPattern: values['admission-pattern'], emulatorSocket: values['emulator-socket'],
     tools: { cycleScan: existsSync(join(root, SCAN_TOOL)), soak: existsSync(join(root, SOAK_TOOL)), unitQueue: !!scripts.unit },
     build: { revision: git('rev-parse', 'HEAD') || 'unknown', dirty: !!git('status', '--porcelain', '--untracked-files=no') } }
   const named = positionals[0]
@@ -623,8 +631,8 @@ function realDeps(root) {
 
 const OPTIONS = { base: { type: 'boolean' }, package: { type: 'string' }, published: { type: 'boolean' }, plan: { type: 'boolean' }, out: { type: 'string' },
   share: { type: 'string' }, 'no-unit': { type: 'boolean' }, 'emulator-socket': { type: 'string' }, 'soak-seconds': { type: 'string' }, 'soak-programs': { type: 'string' },
-  'soak-pc-channel': { type: 'string' }, 'soak-auto-channel': { type: 'string' }, scene: { type: 'string' }, 'pick-pattern': { type: 'string' }, 'measure-pattern': { type: 'string' },
-  'price-modules': { type: 'string' }, 'price-base': { type: 'string' }, target: { type: 'string' }, 'dev-socket': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' },
+  'soak-pc-channel': { type: 'string' }, 'soak-auto-channel': { type: 'string' }, scene: { type: 'string' }, 'pick-pattern': { type: 'string' }, 'measure-pattern': { type: 'string' }, 'admission-pattern': { type: 'string' },
+  'price-modules': { type: 'string' }, 'price-tracks': { type: 'string' }, 'price-base': { type: 'string' }, target: { type: 'string' }, 'dev-socket': { type: 'string' }, 'unit-phase': { type: 'string' }, help: { type: 'boolean', short: 'h' },
   stock: { type: 'string' }, elemod: { type: 'string' }, label: { type: 'string' }, link: { type: 'boolean' }, cases: { type: 'string' }, emu: { type: 'string' },
   emulator: { type: 'string' }, twin: { type: 'string' }, 'no-emulator': { type: 'boolean' } }
 
@@ -632,7 +640,7 @@ async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: OPTIONS })
   if (values.help || (!values.base && !positionals.length)) {
     console.log('Usage: npm run test:procedure -- <module id> | FILE.mwrm | --base [machine]  [--plan] [--package FILE] [--published] [--share SOCKET] [--no-unit]\n' +
-      '         [--emulator OT_EMU --twin DIR | --no-emulator | --emulator-socket SOCK] [--target unit|emulator] [--dev-socket SOCK] [--out DIR] [--soak-seconds 120] [--soak-programs 0-3] [--soak-pc-channel 1] [--soak-auto-channel 1] [--scene TEXT] [--pick-pattern 2] [--measure-pattern 1] [--price-modules a,b] [--price-base TEXT]\n' +
+      '         [--emulator OT_EMU --twin DIR | --no-emulator | --emulator-socket SOCK] [--target unit|emulator] [--dev-socket SOCK] [--out DIR] [--soak-seconds 120] [--soak-programs 0-3] [--soak-pc-channel 1] [--soak-auto-channel 1] [--scene TEXT] [--pick-pattern 2] [--measure-pattern 1] [--admission-pattern N] [--price-modules a,b] [--price-tracks T1,T3,T6,T7] [--price-base TEXT]\n' +
       '         another machine: [--stock STOCK.syx --elemod BASE.elemod --label XX01] [--link] [--cases DIR] [--emu DTBOOT]   (docs/TEST_PROCEDURE.md)')
     process.exit(values.help ? 0 : 2)
   }
