@@ -23,9 +23,9 @@ export const USB_AUDIO_MIDI_CREDITS: readonly Credit[] = [
     links: [repo('markandrus/octemu'), usbSource('modules/usb-audio-out-tracks-main-cue/README.md')],
   },
   {
-    name: 'USB Audio · MAIN / CUE', author: 'Bryan Tysinger (@bryantysinger)',
-    description: 'MAIN/CUE channel layouts, stream latency and alignment work, including CUE alignment with a master track, plus hardware measurements of the shared USB audio stack.',
-    links: [repo('bryantysinger'), usbSource('modules/usb-audio-out-tracks-main-cue/README.md')],
+    name: 'USB Audio · input, MAIN / CUE', author: 'Bryan Tysinger (@bryantysinger)',
+    description: 'The USB audio input receiver and DSP inject (with Sam Banks) and the inject’s optimization, MAIN/CUE channels, the latency servo and hardware alignment, plus hardware measurements of the shared USB audio stack (octabam PRs 435, 499, 518, 533, 854, 863 and 956).',
+    links: [repo('bryantysinger'), usbSource('modules/usb-audio-out-tracks-main-cue/README.md'), { label: 'USB input source', href: 'https://github.com/sambanks/octabam/tree/382a478b03a1f788a335e57f318a234d29b194d0/modules/usb' }],
   },
   {
     name: 'USB Audio & MIDI · Octabam integration', author: 'Sam Banks (@sambanks)',

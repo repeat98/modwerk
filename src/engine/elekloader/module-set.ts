@@ -43,10 +43,10 @@ export interface RuntimePackageManifest {
   usbAudio?: Partial<Record<UsbAudioPackageKind, RuntimePackage>>
 }
 /** The layout number a USB Audio package carries (usb_audio_package.py: its source's layout define, plus one). */
-export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 9 : kind === 'configurable-0.4' ? 8 : kind === 'configurable-0.3' ? 7 : usbAudioLayout(kind).define + 1
+export const usbAudioLayoutNumber = (kind: UsbAudioPackageKind) => kind === 'configurable' ? 10 : kind === 'configurable-0.4.1' ? 9 : kind === 'configurable-0.4' ? 8 : kind === 'configurable-0.3' ? 7 : usbAudioLayout(kind).define + 1
 const USB_AUDIO_SETTING_KEY = 0x8c3a257f // settings.c st_key("USB AUDIO")
 const LAYOUT_BY_NUMBER = new Map<number, UsbAudioPackageKind>(USB_AUDIO_LAYOUTS.map(item => [item.define + 1, item.id]))
-for (const kind of ['configurable', 'configurable-0.4', 'configurable-0.3'] as const) LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber(kind), kind)
+for (const kind of ['configurable', 'configurable-0.4.1', 'configurable-0.4', 'configurable-0.3'] as const) LAYOUT_BY_NUMBER.set(usbAudioLayoutNumber(kind), kind)
 export class BaseUpdateRequired extends ModuleSetError {
   constructor(message = 'Update to the latest Modwerk base to sync this module set. Your selected modules will stay here.') { super(message) }
 }
@@ -127,9 +127,12 @@ export const KEY_BUS_BASES: readonly string[] = [...new Set([baseBinding.identit
 const DSP_CLAIMS = 16, HOOK_ENTRIES = 8, INIT_WORDS = 4096
 /** The base's module pool (build_core.py RUNTIME_POOL_BYTES), and the loader's records in it on the ColdFire: loader.h's
  * runtime_module, runtime_site, runtime_dsp_claim and runtime_dsp_entry, as the unit's pool readings confirm
- * (docs/verification/2026-11-21-octatrack-module-pool-allocation.json). */
+ * (docs/verification/2026-11-*-octatrack-module-pool-allocation.json). runtime_module holds 9 bytes a hook (hook[],
+ * order[], runtime_dsp's hook_offset[]) on 187 others, 2-byte aligned on the ColdFire: 736 with base 0.7's 57 site
+ * events, 754 with base 0.8's 59. */
 export const OCTATRACK_POOL_BYTES = 768 * 1024
-const MODULE_RECORD = 736, SITE_RECORD = 74, CLAIM_RECORD = 12, ENTRY_RECORD = 8
+const MODULE_RECORD = (187 + 9 * (4 + SITE_EVENTS) + 1) & ~1
+const SITE_RECORD = 74, CLAIM_RECORD = 12, ENTRY_RECORD = 8
 function requirements(entry: RuntimePackage, group = false) {
   const abi = entry.abi ?? ('octabam' in entry && entry.octabam ? 7 : 6), sites = entry.sites ?? 0, copies = entry.copies ?? 0, fills = entry.fills ?? 0
   const requires = entry.requires ?? 0, claims = entry.claims ?? 0, entries = entry.entries ?? 0
@@ -154,7 +157,7 @@ type DspClaim = { space: number; core: number; address: number; words: number }
 const claimsMeet = (a: DspClaim, b: DspClaim) => (a.address >= 0x30000 && b.address >= 0x30000 ||
   (a.core === b.core || a.core === 2 || b.core === 2) && a.space === b.space) && a.address < b.address + b.words && b.address < a.address + a.words
 /** The manifest and fetched header must agree before anything is staged, including retained Undo packages. */
-function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, variant?: MachineVariant, layout?: number) {
+function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, variant?: MachineVariant, layout?: number, moduleRecord = MODULE_RECORD) {
   const fail = () => { throw invalidPackage() }, want = requirements(entry, !!variant)
   if (data.length !== entry.bytes || sha(data) !== entry.sha256 || data.length < 68) fail()
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength), abi = view.getUint16(4)
@@ -276,11 +279,12 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   }
   // What the loader takes from the pool for it (loader.c prepare: head + code + tail, each in whole 16-byte lines).
   const lines = (n: number) => Math.ceil(n / 16) * 16
-  return lines(MODULE_RECORD + SITE_RECORD * want.sites) + lines(image + bss) +
+  return lines(moduleRecord + SITE_RECORD * want.sites) + lines(image + bss) +
     lines(((4 * dspWords + 2 * dspRelocations + 3) & ~3) + CLAIM_RECORD * want.claims + ENTRY_RECORD * want.entries + 4 * initWords)
 }
-/** The bytes of the base's module pool a published package takes once installed. */
-export const poolExtent = (entry: RuntimePackage & { id: string }, data: Uint8Array) => checkPackage(entry, data, entry.id)
+/** The bytes of the base's module pool a published package takes once installed; `moduleRecord` for an older base's layout. */
+export const poolExtent = (entry: RuntimePackage & { id: string }, data: Uint8Array, moduleRecord = MODULE_RECORD) =>
+  checkPackage(entry, data, entry.id, undefined, undefined, moduleRecord)
 
 /** Expand known machine groups for display, while planning replacements from their exact inventory layouts. */
 export function createRuntimeCatalogue(document: RuntimePackageManifest) {

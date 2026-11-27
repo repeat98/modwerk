@@ -12,6 +12,8 @@ import { isModuleAvailable } from '../catalog/availability'
 import { asBeta } from '../catalog/beta-fixture'
 import { CommunityContext, emptySession } from '../community/context'
 import type { Session } from '../community/api'
+import { MODULES } from '../catalog/modules'
+import { moduleCaution } from '../catalog/module-cautions'
 import { LoadDialog } from './LoadDialog'
 
 vi.mock('../engine/elekloader/module-set', async original => ({ ...await original<typeof import('../engine/elekloader/module-set')>(), moduleSetReview: vi.fn() }))
@@ -143,5 +145,30 @@ describe('a sync that removes or updates modules', () => {
     expect(button('Sync to Octatrack')?.disabled).toBe(false)
     await act(async () => button('Sync to Octatrack')!.click())
     expect(prepareUpdate).toHaveBeenCalledTimes(2); expect(link.update).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('after a sync with a High or Heavy CPU module', () => {
+  it('says the flagged modules are for the studio, not for live', async () => {
+    const flagged = ids.find(id => moduleCaution(id))!, light = ids.find(id => !moduleCaution(id))!
+    review.mockImplementation(target => ({ changes: { ...noChanges, add: target.moduleIds }, updates: [], needsSync: true, problem: undefined }))
+    await open(newConfiguration('Live', [flagged, light]))
+    expect(container.textContent).not.toContain('Studio only')
+    await act(async () => button('Sync to Octatrack')!.click())
+    const note = container.querySelector('.module-caution[role="note"]')!
+    expect(note.querySelector('strong')?.textContent).toBe('Studio only, not for live')
+    expect([...note.querySelectorAll('li')].map(item => item.firstChild?.textContent)).toEqual([MODULES.find(module => module.id === flagged)!.name])
+    expect(note.querySelector('li .module-caution-badge')?.textContent).toContain(moduleCaution(flagged)!.badge)
+    expect(note.querySelector('p')?.textContent).toBe('It puts a heavy load on the Octatrack and can drop out or crackle when a pattern gets busy. Before you play live, switch it off on the Octatrack in PROJECT › MODWERK › MODULES, or sync a set without it.')
+    expect(container.querySelector('.success-note')).toBeNull()
+    await act(() => root.unmount()); root = createRoot(container)
+    await open(newConfiguration('Light', [light]))
+    await act(async () => button('Sync to Octatrack')!.click())
+    expect(container.querySelector('.success-note')?.textContent).toBe('Done.')
+    expect(container.textContent).not.toContain('Studio only')
+    await act(() => root.unmount()); root = createRoot(container)
+    await open(newConfiguration('Streaming', [light, USB_AUDIO_MODULE]), tester)
+    await act(async () => button('Sync to Octatrack')!.click())
+    expect([...container.querySelectorAll('.module-caution li')].map(item => item.textContent)).toEqual([MODULES.find(module => module.id === USB_AUDIO_MODULE)!.name])
   })
 })

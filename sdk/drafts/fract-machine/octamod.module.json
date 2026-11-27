@@ -3,16 +3,16 @@
   "id": "fract-machine",
   "key": "FRACT",
   "name": "FRACT",
-  "version": "0.1.2-experimental",
+  "version": "0.1.3-experimental",
   "category": "machines",
   "source": {
     "repository": "https://github.com/ex1010/modwerk",
-    "revision": "b4c69ecdfd62a1cb6b3d6a313191518c86bcd8ca",
+    "revision": "4ed908fa76a5fa93cc2f053242af4e39d80c0ccf",
     "path": "sdk/drafts/fract-machine"
   },
   "build": {
     "status": "pending",
-    "reason": "Base-following candidate has named-build functional hardware evidence. Timing/stress and release integration and owner approval remain pending; historical PROJECT RELOAD stall unresolved."
+    "reason": "Current-base 0.1.3 preparation. Current-build hardware, timing/stress, integration and first-release approval remain pending; historical reports retain their original build scope."
   },
   "author": {
     "github": "ex1010",
@@ -122,15 +122,15 @@
       "Unlisted source draft; not offered by the public configurator.",
       "Eight registry slots exist; FRACT admits only one owner on T1–T4.",
       "USB package requires the base identified by requiredBase; compatible base rebuilds relink imports.",
-      "Candidate functional lifecycle recorded; full resource, stress and companion qualification pending."
+      "Historical functional lifecycle recorded on package6ff/base72; current-build hardware, stress and companion qualification pending."
     ]
   },
   "resources": {
-    "recorded": "10 November 2026; own memory/stack accounted; functional hardware reported; timing pending",
+    "recorded": "25 November 2026; current own memory/stack accounted; hardware/timing pending",
     "storage": {
       "label": "Public package memory",
-      "display": "31,424 resident pool bytes; 712 own stack bytes per callback",
-      "value": 31424,
+      "display": "31,824 resident pool bytes; 712 own stack bytes per callback",
+      "value": 31824,
       "unit": "bytes",
       "method": "static",
       "conditions": "One owner, three heads; includes loader header, image/BSS and alignment. Stack separately bounded; samples reuse stock arena.",
@@ -162,19 +162,19 @@
       "memory": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "31,424 resident pool bytes and up to 712 own stack bytes per callback; no independent sample buffer. Replacement retains two extents.",
+        "rationale": "31,824 resident pool bytes and up to 712 own stack bytes per callback; no independent sample buffer. Replacement retains two extents.",
         "source": "release/resources.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Named package6ff/base72 passed functional install/Keep/Undo/removal/reinstall, Part/project reload and physical reboot with exact USB set restoration. Timing/stress/companions/full qualification pending; historical reload stall unresolved.",
-    "hardwareStatus": "reported",
+    "summary": "Current 0.1.3 has source/host and strict original-stock build checks only; hardware and rendered UI pending. Historical package6ff/base72 functional observations are retained separately and do not qualify this build.",
+    "hardwareStatus": "untested",
     "gates": [
       "modules/fract-machine/verify.py"
     ],
-    "evidenceRevision": "b4c69ecdfd62a1cb6b3d6a313191518c86bcd8ca",
+    "evidenceRevision": "4ed908fa76a5fa93cc2f053242af4e39d80c0ccf",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -185,9 +185,9 @@
         ]
       },
       "screenshots": [
-        "media/ot-setup.png",
-        "media/ot-main.png",
-        "media/ot-playing.png"
+        "media/qualification-20261125-full.png",
+        "media/qualification-20261125-local.png",
+        "media/qualification-20261125-main.png"
       ],
       "screenshotStyle": "black-and-white"
     }
@@ -199,9 +199,60 @@
   },
   "media": [
     {
+      "path": "media/qualification-20261125-full.png",
+      "captureType": "emulator",
+      "caption": "Choose FRACT in SRC SETUP. PAN remains a knob and SRNG is now the two-value FULL/LOCAL switch.",
+      "alt": "FRACT selected in SRC SETUP, PAN knob and SRNG switch set to FULL.",
+      "credit": "ex1010/toli (actual emulator framebuffer capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC SETUP",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "Current adapted ot_emu, MKII panel, DSP/frame enabled and wall-clock pacing. Development twin4c7eb79b, packagee6dc7f57; disposable emulator state, no sample loaded. No hardware/audio timing claim. See media/qualification-20261125.json."
+      }
+    },
+    {
+      "path": "media/qualification-20261125-local.png",
+      "captureType": "emulator",
+      "caption": "Turn encoder C on SRC SETUP to choose LOCAL; the SRNG switch moves to its other segment.",
+      "alt": "FRACT SRC SETUP with SRNG set to LOCAL.",
+      "credit": "ex1010/toli (actual emulator framebuffer capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "Current adapted ot_emu, MKII panel, DSP/frame enabled and wall-clock pacing. Development twin4c7eb79b, packagee6dc7f57; disposable emulator state, no sample loaded. No hardware/audio timing claim. See media/qualification-20261125.json."
+      }
+    },
+    {
+      "path": "media/qualification-20261125-main.png",
+      "captureType": "emulator",
+      "caption": "Press SRC for the six MAIN controls. This offline capture has no sample loaded and proves only control rendering.",
+      "alt": "Stopped FRACT MAIN showing POS, SIZE, REVS, SPRD, SHPE and PTCH, with LOAD SAMPLE in the center.",
+      "credit": "ex1010/toli (actual emulator framebuffer capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC MAIN",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.3-experimental",
+        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
+        "setup": "Current adapted ot_emu, MKII panel, DSP/frame enabled and wall-clock pacing. Development twin4c7eb79b, packagee6dc7f57; disposable emulator state, no sample loaded. No hardware/audio timing claim. See media/qualification-20261125.json."
+      }
+    },
+    {
       "path": "media/ot-setup.png",
       "captureType": "emulator",
-      "caption": "Select T1, hold FUNC and press SRC, then choose FRACT and confirm with YES. This same SETUP page provides PAN for random stereo width and SRNG for FULL or LOCAL source range.",
+      "caption": "Historical 0.1.2 capture. Select T1, hold FUNC and press SRC, then choose FRACT and confirm with YES. This same SETUP page provides PAN for random stereo width and SRNG for FULL or LOCAL source range.",
       "alt": "SRC SETUP with FRACT highlighted below FLEX, THRU, NEIGHBOR and PICKUP; PAN and SRNG at the right.",
       "credit": "ex1010/toli (actual emulator framebuffer capture)",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -218,7 +269,7 @@
     {
       "path": "media/ot-main.png",
       "captureType": "emulator",
-      "caption": "Load a sample from the FLEX pool, then press SRC for MAIN. Turn A (POS) to move the grain center and B (SIZE) to widen the span; set F (PTCH) to 64 for neutral pitch, displayed 0.0—the pictured stored setting is +3.0.",
+      "caption": "Historical 0.1.2 capture. Load a sample from the FLEX pool, then press SRC for MAIN. Turn A (POS) to move the grain center and B (SIZE) to widen the span; set F (PTCH) to 64 for neutral pitch, displayed 0.0—the pictured stored setting is +3.0.",
       "alt": "Stopped FRACT MAIN with the PLUCKS1 waveform, POS 18, SIZE 106, REVS 127, SPRD 0, SHPE 64 and PTCH +3.0.",
       "credit": "ex1010/toli (actual emulator framebuffer capture)",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -235,7 +286,7 @@
     {
       "path": "media/ot-playing.png",
       "captureType": "emulator",
-      "caption": "Place a sample trig and press PLAY to follow the three grain markers. Try D (SPRD) for displaced centers and C (REVS) for reverse grains, then press STOP twice; to leave FRACT, select a stock machine in SRC SETUP.",
+      "caption": "Historical 0.1.2 capture. Place a sample trig and press PLAY to follow the three grain markers. Try D (SPRD) for displaced centers and C (REVS) for reverse grains, then press STOP twice; to leave FRACT, select a stock machine in SRC SETUP.",
       "alt": "FRACT MAIN with the play indicator, three grain markers over the PLUCKS1 waveform, horizontal span bars and SIZE 106.",
       "credit": "ex1010/toli (actual emulator framebuffer capture)",
       "license": "LicenseRef-OT-UI-Documentation",

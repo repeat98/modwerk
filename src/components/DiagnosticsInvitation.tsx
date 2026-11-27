@@ -51,7 +51,6 @@ export function DiagnosticsInvitation({onClose,preview=false,placement,reason}: 
   function notNow() { if(!preview){count('not-now');declineForThisVisit(state.accountId)} onClose(false) }
   return <dialog ref={dialog} className="diagnostics-invitation" aria-labelledby="diagnostics-title" aria-describedby="diagnostics-intro" onCancel={event=>{event.preventDefault();notNow()}}>
     <button type="button" className="icon-button diagnostics-close" aria-label="Close diagnostics invitation" onClick={notNow}><Icon name="close"/></button>
-    <div className="diagnostics-heading-icon" aria-hidden="true"><Icon name="wave" size={24}/></div>
     <h2 id="diagnostics-title" tabIndex={-1}>Help us find bugs</h2>
     {preview && <p className="diagnostics-preview">Preview · no data is shared</p>}
     <p id="diagnostics-intro" className="diagnostics-intro">{reason ?? 'If a build or sync fails, a technical report helps us see where it went wrong and fix the problem.'}</p>
@@ -87,7 +86,6 @@ export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => vo
   if (answer) return <section className="diagnostics-step" aria-label="Diagnostics"><p role="status">{answer === 'shared' ? 'Thanks. Diagnostics sharing is on.' : 'Nothing is shared. You can turn diagnostics on any time under Diagnostics in Your Octatrack.'}</p></section>
   if (!offer) return null
   return <section className="diagnostics-step" aria-labelledby="diagnostics-step-title">
-    <div className="diagnostics-heading-icon" aria-hidden="true"><Icon name="wave" size={24}/></div>
     <h3 id="diagnostics-step-title">Help make this work on every Octatrack</h3>
     <p className="diagnostics-step-lead">Modules over USB are new, and every Octatrack setup is different. If something goes wrong on yours, a diagnostics report shows us what happened, so it gets fixed for you and for everyone else.</p>
     <ul className="diagnostics-facts">

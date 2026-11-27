@@ -1,0 +1,1 @@
+Development: the test run prints a test's console output only when that test fails. Tests that exercise a failure on purpose no longer fill the pull request logs with expected errors, so the error that failed a job is easier to find. `npx vitest run FILE --silent=false` shows everything again.

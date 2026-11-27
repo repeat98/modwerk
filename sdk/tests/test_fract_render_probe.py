@@ -1,4 +1,7 @@
 """Host counter/protocol tests for the private probe; no hardware timing claims."""
+import argparse
+import copy
+import importlib.util
 import json
 from pathlib import Path
 import shutil
@@ -8,6 +11,83 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE = ROOT / 'sdk/drafts/fract-machine'
+
+
+class RenderProbeBuildGuard(unittest.TestCase):
+    def builder(self):
+        spec = importlib.util.spec_from_file_location('probe_build_guard', MODULE / 'qualification/build_probe.py')
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        return builder
+
+    def test_new_base_requires_both_explicit_identities_and_exact_tree(self):
+        builder = self.builder()
+        with tempfile.TemporaryDirectory(prefix='fract-probe-baseline-') as directory:
+            root = Path(directory)
+            binding = root / 'sdk/machines/octatrack/base-binding.json'
+            binding.parent.mkdir(parents=True)
+            binding.write_text(json.dumps({'identity': builder.BASE}))
+            args = argparse.Namespace(base_tree=root, base_identity=None, normal_sha256=None)
+            self.assertEqual(builder.checked_baseline(args), (builder.BASE, builder.NORMAL_SHA))
+            binding.write_text(json.dumps({'identity': '1' * 64}))
+            with self.assertRaisesRegex(ValueError, 'measurement base'):
+                builder.checked_baseline(args)
+            args.base_identity = '1' * 64
+            with self.assertRaisesRegex(ValueError, 'both'):
+                builder.checked_baseline(args)
+            args.normal_sha256 = '2' * 64
+            self.assertEqual(builder.checked_baseline(args), ('1' * 64, '2' * 64))
+            args.base_identity = '3' * 64
+            with self.assertRaisesRegex(ValueError, 'measurement base'):
+                builder.checked_baseline(args)
+            args.base_identity = '1' * 64
+            args.normal_sha256 = 'not-a-sha256'
+            with self.assertRaisesRegex(ValueError, 'SHA-256'):
+                builder.checked_baseline(args)
+            args.base_identity = args.normal_sha256 = ''
+            with self.assertRaisesRegex(ValueError, 'SHA-256'):
+                builder.checked_baseline(args)
+
+    def layout(self):
+        package = {'sections': {'.run': {'len': 0x1000, 'align': 512},
+                                '.bss': {'size': 0x100, 'align': 2048}},
+                   'symbols': {'mw_frame_count': ['.bss', 2], 'modwerk_idle_counts': ['.bss', 8],
+                               'mw_frame_max': ['.bss', 14], 'mw_frame_share': ['.run', 18],
+                               'mw_frame_sheds': ['.bss', 22]}}
+        # Collection tables follow .run; BSS starts at the next 2048 boundary.
+        linked = {'link': {'layout': {'ddr': [0x3fffffe0, 0x40001030],
+                                      'bss': [0x40001030, 0x40001900]}},
+                  '_map': {name: (0x40000000 if section == '.run' else 0x40001800) + offset
+                           for name, (section, offset) in package['symbols'].items()}}
+        return package, linked
+
+    def test_counter_addresses_use_linked_collections_padding_and_word_alignment(self):
+        package, linked = self.layout()
+        addresses = self.builder().counter_addresses(package, 0x40000000, linked)
+        self.assertEqual(addresses['FRAMES'], 0x40001802)
+        self.assertEqual(addresses['SHARE'], 0x40000012)
+        linked['_map']['mw_frame_count'] -= 0x600  # historical 512-byte guess
+        with self.assertRaisesRegex(ValueError, 'linked layout'):
+            self.builder().counter_addresses(package, 0x40000000, linked)
+
+    def test_counter_addresses_refuse_invalid_symbols_and_layouts(self):
+        original_package, original_linked = self.layout()
+        for invalid in (['.bss', 3], ['.bss', 0xfe], ['.bss', -2], ['.boot', 0]):
+            package = copy.deepcopy(original_package)
+            package['symbols']['mw_frame_count'] = invalid
+            with self.subTest(symbol=invalid), self.assertRaises(ValueError):
+                self.builder().counter_addresses(package, 0x40000000, original_linked)
+        for alignment in (0, 3, 8192, True):
+            package = copy.deepcopy(original_package)
+            package['sections']['.bss']['align'] = alignment
+            with self.subTest(alignment=alignment), self.assertRaisesRegex(ValueError, 'alignment'):
+                self.builder().counter_addresses(package, 0x40000000, original_linked)
+        with self.assertRaisesRegex(ValueError, 'origin'):
+            self.builder().counter_addresses(original_package, 0x40000200, original_linked)
+        linked = copy.deepcopy(original_linked)
+        linked['link']['layout']['bss'][1] = 0x40001880
+        with self.assertRaisesRegex(ValueError, 'linked layout'):
+            self.builder().counter_addresses(original_package, 0x40000000, linked)
 
 
 @unittest.skipUnless(shutil.which('cc'), 'Host C compiler unavailable')

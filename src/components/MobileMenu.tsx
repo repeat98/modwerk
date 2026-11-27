@@ -48,11 +48,11 @@ export function MobileMenu({ route, online, selectedCount, configurationHref, ad
     [
       { href: '#base', label: 'Base firmware', icon: 'shield', current: route === 'base', isNew: true },
       { href: '#faq', label: 'Help & FAQ', icon: 'help', current: route === 'faq' },
-      { href: '#credits', label: 'Credits & acknowledgements', icon: 'heart', current: route === 'credits' },
-      { href: '#modding-guidelines', label: 'Modding guidelines', icon: 'file', current: route === 'modding-guidelines' },
-      { href: '#privacy', label: 'Privacy', icon: 'shield', current: route === 'privacy' },
     ],
   ]
+  const labels = ['Browse', 'Community', 'Help']
+  // The pages people rarely open from a phone close the sheet as one line of small links.
+  const more = [['#credits', 'Credits', 'credits'], ['#modding-guidelines', 'Modding guidelines', 'modding-guidelines'], ['#privacy', 'Privacy', 'privacy'], ['#impressum', 'Impressum', 'impressum']] as const
   return (
     <div className="mobile-menu">
       <button ref={buttonRef} type="button" className="mobile-menu-button" aria-label="Menu" aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? 'mobile-menu-panel' : undefined} onClick={() => setOpen(value => !value)}>{open ? <Icon name="close" size={20} /> : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>}</button>
@@ -60,7 +60,8 @@ export function MobileMenu({ route, online, selectedCount, configurationHref, ad
         <div className="mobile-menu-scrim" aria-hidden="true" onClick={() => setOpen(false)} />
         <div ref={panelRef} id="mobile-menu-panel" className="mobile-menu-panel" role="dialog" aria-modal="true" aria-label="Menu" tabIndex={-1}>
           <div className="sheet-head"><span className="sheet-handle" aria-hidden="true" /><strong>Menu</strong><button type="button" className="sheet-close" aria-label="Close menu" onClick={() => { setOpen(false); buttonRef.current?.focus() }}><Icon name="close" size={18} /></button></div>
-          {groups.map((links, index) => <div key={index} className="mobile-menu-group">{links.map(link => <a key={link.href} href={link.href} className={link.tag ? 'is-highlight' : undefined} aria-current={link.current ? 'page' : undefined} onClick={() => setOpen(false)}><Icon name={link.icon} size={18} /><span>{link.label}</span>{link.tag && <small>{link.tag}</small>}{link.isNew && <small className="menu-feature-new">New</small>}{link.count !== undefined && <small>{link.count}</small>}{link.online != null ? <small className="menu-online"><span className="online-dot" aria-hidden="true"/>{link.online} online</small> : null}</a>)}{index === 0 && onConfigurations && <button type="button" onClick={() => { setOpen(false); buttonRef.current?.focus(); onConfigurations() }}><Icon name="file" size={18} /><span>{'Saved ' + w.sets}</span></button>}</div>)}
+          {groups.map((links, index) => <section key={index} aria-label={labels[index]}><h3 className="mobile-menu-label" aria-hidden="true">{labels[index]}</h3><div className="mobile-menu-group">{links.map(link => <a key={link.href} href={link.href} className={link.tag ? 'is-highlight' : undefined} aria-current={link.current ? 'page' : undefined} onClick={() => setOpen(false)}><Icon name={link.icon} size={18} /><span>{link.label}</span>{link.tag && <small>{link.tag}</small>}{link.isNew && <small className="menu-feature-new">New</small>}{link.count !== undefined && <small>{link.count}</small>}{link.online != null ? <small className="menu-online"><span className="online-dot" aria-hidden="true"/>{link.online} online</small> : null}</a>)}{index === 0 && onConfigurations && <button type="button" onClick={() => { setOpen(false); buttonRef.current?.focus(); onConfigurations() }}><Icon name="file" size={18} /><span>{'Saved ' + w.sets}</span></button>}</div></section>)}
+          <nav className="mobile-menu-more" aria-label="More">{more.map(([href, label, id]) => <a key={href} href={href} aria-current={route === id ? 'page' : undefined} onClick={() => setOpen(false)}>{label}</a>)}</nav>
 
           {onSupport && <div className="mobile-menu-support"><SupportButton onClick={() => { setOpen(false); buttonRef.current?.focus(); onSupport() }} /></div>}
         </div>

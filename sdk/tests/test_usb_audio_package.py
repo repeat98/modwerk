@@ -39,8 +39,8 @@ class UsbAudioPackage(unittest.TestCase):
     def test_one_configurable_package_describes_every_output_width(self):
         data, facts = builder.build(None)
         self.assertEqual(struct.unpack_from('>H', data, 66)[0], 7)
-        # The duplex package is the published one: its own kind, so the site replaces 0.3.0 and 0.4.0 with it.
-        self.assertEqual(struct.unpack_from('>H', builder.build(None, usb_input=True)[0], 66)[0], 9)
+        # The duplex package is the published one: its own kind, so the site replaces 0.3.0, 0.4.0 and 0.4.1 with it.
+        self.assertEqual(struct.unpack_from('>H', builder.build(None, usb_input=True)[0], 66)[0], 10)
         self.assertLess(facts['image'] + facts['bss'], 128 * 1024)
         hook_count = struct.unpack_from('>I', data, 20)[0]
         hook_index = next(e['index'] for e in events.load()['events'] if e['event'] == 'ot_usb_functions')
@@ -86,6 +86,37 @@ class UsbAudioPackage(unittest.TestCase):
         self.assertIn('.set UAC2_AC_IFACE,  4 ', text)
         with self.assertRaisesRegex(ValueError, 'Not built as a package yet'):
             builder.build('USB AUDIO IN')
+
+    def test_the_configurable_producer_skips_what_its_layout_does_not_send(self):
+        configurable = load('modwerk_usb_configurable', OT / 'module-adapters/usb_audio_configurable.py')
+        text = configurable.source(builder.ROOT, builder.MODULE, builder.SUPPORTED[0], functions, builder.load,
+                                   builder.sine_curve, builder.package_hooks,
+                                   usb_input=builder.load('modwerk_usb_input', OT / 'module-adapters/usb_audio_input.py'))
+        # Every gain-history pass and its EMAC restore sit behind the POST tap, and the frame's two calls test
+        # the same flag, so the EMAC is restored exactly when it was saved. The single-layout TRACKS POST
+        # producer is not assembled here (the twenty-channel layout is).
+        start = text.index('.elseif USB_LAYOUT == LAYOUT_TRACKS_POST\n')
+        text = text[:start] + text[text.index('\n.else\naudio_frame_shim_body:', start):]
+        for call in ('    bsr     post_frame\n', '    bsr post_emac_leave\n', '    bsr     post_emac_leave\n'):
+            for at in [i for i in range(len(text)) if text.startswith(call, i)]:
+                self.assertIn('tstb    mwua_post', text[max(0, at - 160):at], call)
+        # MAIN + CUE does the built-in's work: once a frame the producer sets mwua_main_cue, only at high speed, in
+        # the two-pair profile, with words 16-19 sent and Main first; the track stores and the routed copy test it.
+        flag = text.split('    moveal  %d1,%a1                 | a1 != 0: skip the sum this block\n', 1)[1]
+        flag = flag.split('    moveb   %d0,mwua_main_cue\n', 1)[0]
+        for test in ('tstl    %d1', 'mvzb    mwua_pairs,%d1\n    subql   #2,%d1', 'cmpil   #0xf0000,%d1',
+                     'mvzb    mwua_fs_pair,%d1\n    subql   #8,%d1', 'moveq   #1,%d0'):
+            self.assertIn(test, flag)
+        skip = text.split('.Lpre_words:\n', 1)[1].split('.Lstems_store:\n', 1)[0]
+        for test in ('tstb    mwua_main_cue', 'lea     %a3@(64),%a3'):
+            self.assertIn(test, skip)
+        route = text.split('mwua_route:', 1)[1].split('    bsr mwua_copy\n', 1)[0]
+        self.assertLess(route.index('tstb aud_hs'), route.index('bne mwua_copy_main_cue'))
+        self.assertLess(route.index('bne audio_copy80'), route.index('bne mwua_copy_main_cue'))
+        copy = text.split('mwua_copy_main_cue:', 1)[1].split('rts', 1)[0]
+        for test in ('lea %a2@(64),%a2', 'moveml %a2@,%d1-%d4', 'moveml %d1-%d4,%a1@', 'lea %a2@(80),%a2',
+                     'lea %a1@(16),%a1'):
+            self.assertIn(test, copy)
 
     def test_the_setting_offers_main_and_cue_only_in_the_twenty_channel_layout(self):
         twenty, tracks = builder.source(functions, usb, LAYOUT), builder.source(functions, usb, 'USB AUDIO OUT TRACKS')

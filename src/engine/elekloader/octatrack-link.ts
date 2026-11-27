@@ -172,6 +172,10 @@ const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
  * base takes no change until it has (modset.c modwerk_modset_check_set). In November 2026 three units synced their whole
  * set into that window, read "can't run this module file", and had it back from the restore moments later. */
 const NOT_RESTORED = 'The Octatrack hasn’t loaded its saved modules yet, so nothing changed. It loads them a few seconds after it starts, while nothing plays or records. Wait until Status shows them, then sync again if anything is missing.'
+/** The same with `saved` 8: the last Keep's card write failed, and the base takes no change until it lands (it retries
+ * every ten seconds while stopped; a restart drops it). On 26 November 2026 a tester's 166-198 kB sets never saved, and
+ * each sync after one read "can't run this module file". */
+const NOT_SAVED = 'The Octatrack couldn’t save your last change to its card yet, so nothing changed. It takes no new change until that save lands, and keeps trying while it’s stopped. If Status doesn’t show “Saved and checked” soon, the card may be full: switch the Octatrack off and on, make room on the card, then sync again.'
 const RUNTIME_IN_USE = 7
 /** After refusal 7, the modules the sync removes or replaces: one of them is on a track. The base does not say which
  * track (November 2026: testers were refused several times in a row looking for it). */
@@ -187,11 +191,15 @@ export function inUseSlotHint(slot: number, modules: readonly string[]) {
   return ` Track ${(slot - 1) % 8 + 1} runs ${names.length === 1 ? names[0] : 'it'} as its FX${slot > 8 ? 2 : 1} effect in the current Part.`
 }
 /** The browser couldn't claim the unit. In the data (11 Nov 2026) that was mostly Modwerk in another tab or browser, which
- * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). On Windows it
- * can also be the computer: an interface it set up without the base's interface GUID never claims (the same NetworkError),
- * and only a base with a new USB revision makes Windows set it up again (usb_base.py device()), so that one comes from the card. */
+ * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). It is also the
+ * unit itself: a claim fails for a few seconds while the Octatrack starts, and for as long as its UI is stuck (25 Nov 2026,
+ * one tab on macOS: every claim failure came at a start or after the UI stopped following SAVE PROJECT, issue #2212), so
+ * the text names the unit first. On Windows it can also be the computer: an interface it set up without the base's
+ * interface GUID never claims (the same NetworkError), and only a base with a new USB revision makes Windows set it up
+ * again (usb_base.py device()), so that one comes from the card. */
 export function linkBusy(agent = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
-  return 'Modwerk is open in another tab or browser, or another app is using your Octatrack. Close it, and this page connects by itself.' +
+  return 'Your Octatrack isn’t answering this page. If it is starting or saving a project, wait until its screen responds. ' +
+    'Otherwise Modwerk is open in another tab or browser, or another app is using it: close it. This page connects by itself.' +
     (/Windows/.test(agent) ? ' If nothing else is open, install the latest base from the card once, and this computer connects from then on.' : '')
 }
 export const LINK_BUSY = linkBusy()
@@ -877,7 +885,7 @@ export class OctatrackLink {
       this.live(connection)
       await this.release()
       this.live(connection) // a reply that arrived after the unit went away confirms nothing
-      this.ready(unsaved ? { tone: 'error', text: `Kept, but the Octatrack couldn’t save ${module} to the card. It runs until you switch off; load it again to save it.` }
+      this.ready(unsaved ? { tone: 'error', text: `Kept, but the Octatrack couldn’t save ${module} to the card yet. It keeps trying while it’s stopped and takes no other change until then. If Status doesn’t show “Saved and checked” soon, the card may be full: switch off and on (it starts with the modules saved before), make room on the card, then sync again.` }
         // Not saved yet is not a failed save: the base saves by itself once the unit is idle, and Status shows it.
         : saved === 'pending' ? { tone: 'success', text: `Synced. The Octatrack is still busy and saves ${module} to the card once it is stopped and idle. Leave it switched on until Status shows “Saved and checked”.` }
         : { tone: 'success', text: keep ? `Synced. ${module} stays on your Octatrack, also after a restart.` : 'Undone. Your Octatrack is back to how it was.' },
@@ -905,7 +913,8 @@ export class OctatrackLink {
     const failed = this.step === 'stage' && (error instanceof UploadUnconfirmedError || error instanceof UploadDeviceError) ? error.upload : undefined
     const sequence = usb?.supportsRemaining ? failed?.sequence : undefined
     const after = usb && error instanceof UploadUnconfirmedError ? await this.syncUsbCounters(this.abort?.signal, sequence).catch(() => undefined) : undefined
-    const counts = after && usb ? after.counts.map((count, i) => (count - usb.counts[i]) >>> 0) : undefined
+    // The six counters over the sync, then the last descriptor's status byte as it stands (#1596: a short stage or an error).
+    const counts = after && usb ? [...after.counts.map((count, i) => (count - usb.counts[i]) >>> 0), after.token] : undefined
     const remaining = counts && counts[2] === 0 && counts[3] > 0 ? after?.remainingBytes : undefined
     if (connection !== this.connection) return
     let clean = !session, settled = session?.connectionTrusted ? session : undefined, recovered = false
@@ -939,7 +948,7 @@ export class OctatrackLink {
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.
-    const text = recovered && clean ? RECOVERED : (refusedAs === 'unsafe' ? unsafeText(busy) : why === 0 && record?.saved === 0 ? NOT_RESTORED : REJECTED[why ?? 0] ?? explainLinkError(error)) +
+    const text = recovered && clean ? RECOVERED : (refusedAs === 'unsafe' ? unsafeText(busy) : why === 0 && record?.saved === 0 ? NOT_RESTORED : why === 0 && record?.saved === 8 ? NOT_SAVED : REJECTED[why ?? 0] ?? explainLinkError(error)) +
       (why === RUNTIME_IN_USE ? record?.inUseSlot ? inUseSlotHint(record.inUseSlot, this.replaced) : inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG)
     if (this.device && connection === this.connection) {
       const notice = { tone: 'error', text } as const

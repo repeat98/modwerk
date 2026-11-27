@@ -165,6 +165,29 @@ class Emulator(unittest.TestCase):
         self.assertIn("until(lambda: mem(0x800065bd, 2) == bytes([bank, pattern]), 20)", source)
 
 
+class Session(unittest.TestCase):
+    def test_a_port_number_reaches_the_session_over_tcp(self):
+        # Windows Python has no AF_UNIX: there the session listens on a port (MODWERK_DEV_SOCKET=47812).
+        import socket, threading
+        server = socket.create_server(('127.0.0.1', 0))
+        self.addCleanup(server.close)
+        heard = []
+
+        def answer():
+            conn, _ = server.accept()
+            with conn:
+                heard.append(conn.makefile().readline())
+                conn.sendall(b'part 1, stopped\n')
+        threading.Thread(target=answer, daemon=True).start()
+        with mock.patch.object(qualify, 'SOCKET', str(server.getsockname()[1])):
+            self.assertEqual(qualify.send('ui'), 'part 1, stopped\n')
+        self.assertEqual(heard, ['ui\n'])
+
+    def test_a_path_stays_a_unix_socket(self):
+        self.assertEqual(qualify.session_address('/tmp/modwerk-dev.sock'), '/tmp/modwerk-dev.sock')
+        self.assertEqual(qualify.session_address('47812'), ('127.0.0.1', 47812))
+
+
 class Qualify(unittest.TestCase):
     def test_it_starts_only_once_the_keeps_are_acknowledged(self):
         with mock.patch.object(sys, 'argv', ['octatrack-qualify.py', 'x.mwrm']), mock.patch.object(qualify, 'send', side_effect=AssertionError('reached the unit')):
@@ -199,3 +222,31 @@ class Qualify(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class UsbReconnect(unittest.TestCase):
+    """A USB function's install or removal takes the unit off USB for a moment: requests wait for it, keys never repeat."""
+    def run_send(self, sequence, replies):
+        asked = []
+        clock = iter(range(0, 1000, 2))
+        with mock.patch.object(qualify, 'ask', side_effect=lambda s: asked.append(s) or replies.pop(0)), \
+             mock.patch.object(qualify.time, 'monotonic', side_effect=lambda: next(clock)), \
+             mock.patch.object(qualify.time, 'sleep'), mock.patch.object(qualify, 'log'):
+            return qualify.send(sequence), asked
+
+    def test_a_request_waits_while_the_unit_is_away(self):
+        away = 'error: Bench: err the unit is away\n'
+        reply, asked = self.run_send('STOP w300', [away, away, 'ok\n'])
+        self.assertEqual((reply, asked), ('ok\n', ['STOP w300'] * 3))
+
+    def test_a_read_cut_off_half_way_goes_again_but_keys_do_not(self):
+        gone = 'error: Bench: err the unit went away: [Errno 5] Input/Output Error\n'
+        reply, asked = self.run_send('mem:0x40ae8eb4:4', [gone, '00000001\n'])
+        self.assertEqual(len(asked), 2)
+        with self.assertRaises(RuntimeError):
+            self.run_send('PLAY w300', [gone, 'ok\n'])
+
+    def test_it_gives_up_after_its_deadline(self):
+        away = 'error: Bench: err the unit is away\n'
+        with self.assertRaises(RuntimeError):
+            self.run_send('STOP w300', [away] * 100)

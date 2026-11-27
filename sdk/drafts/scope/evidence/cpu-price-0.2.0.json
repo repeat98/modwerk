@@ -1,0 +1,69 @@
+{
+ "base": "4c7eb79b",
+ "scene": "A03 part2, SEQ+Tuner+Scope kept",
+ "inputs": {
+  "transport": "playing"
+ },
+ "seconds": 8,
+ "readings": 3,
+ "slot": "T1",
+ "measuredAt": "2026-11-26T13:48:12.432Z",
+ "results": [
+  {
+   "id": "scope-0.2.0",
+   "version": "file",
+   "packageSha256": "f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273",
+   "before": {
+    "frame": 25.4,
+    "frameMax": 51.1,
+    "frames": 67149,
+    "skipped": 0,
+    "cpu": 37.4,
+    "dsp1to4": 34.4,
+    "dsp5to8": 41.9,
+    "dsp1to4Peak": 35.7,
+    "dsp5to8Peak": 42,
+    "readings": 3,
+    "spread": {
+     "frame": 0,
+     "cpu": 0.2,
+     "dsp1to4": 0.1,
+     "dsp5to8": 0,
+     "frameMax": 1.8,
+     "dsp1to4Peak": 0,
+     "dsp5to8Peak": 0
+    }
+   },
+   "atRest": {
+    "frame": 25.3,
+    "frameMax": 50.1,
+    "frames": 67121,
+    "skipped": 0,
+    "cpu": 37.5,
+    "dsp1to4": 34.6,
+    "dsp5to8": 41.9,
+    "dsp1to4Peak": 35.7,
+    "dsp5to8Peak": 42.9,
+    "readings": 3,
+    "spread": {
+     "frame": 0,
+     "cpu": 0.1,
+     "dsp1to4": 0.1,
+     "dsp5to8": 0,
+     "frameMax": 0.9,
+     "dsp1to4Peak": 0,
+     "dsp5to8Peak": 0.9
+    }
+   },
+   "atRestAdds": {
+    "frame": -0.1,
+    "cpu": 0.1,
+    "dsp1to4": 0.2,
+    "dsp5to8": 0,
+    "dsp1to4Peak": 0,
+    "dsp5to8Peak": 0.9
+   },
+   "rolledBack": true
+  }
+ ]
+}

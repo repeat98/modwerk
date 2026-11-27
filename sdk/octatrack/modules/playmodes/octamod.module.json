@@ -3,7 +3,7 @@
   "id": "playmodes",
   "key": "PLAY MODES",
   "name": "Play Modes",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "category": "machines",
   "source": {
     "repository": "https://github.com/pgstath/Octaplay",
@@ -68,7 +68,7 @@
       "Does not combine with octabam's PLOCKS P2 (not in this catalog): both use battery RAM 0x100f8600.. and the 20 pattern-copy memcpy sites.",
       "Deliberate stock-flow change: TRACK held + UP / DOWN changes the mode and does not reach the stock arrow handler; project.work gains #PLAY_MODES= comment lines.",
       "Deliberate stock-flow change (0.2.0, REPEAT only): while the sequencer plays and the current track is in REPEAT, the trig keys in TRACKS trig mode loop steps and no longer trigger tracks; stopped, GRID REC, LIVE REC and the other trig modes stay stock.",
-      "Copying a single track does not copy its mode; PROJECT > NEW may keep the previous project's modes (untested).",
+      "Copying a single track does not copy its mode. PROJECT > NEW starts every pattern NORMAL (0.2.1, #810); it needs a base with project hooks.",
       "Played interactively on one MKII (builds 12-24); MKI, micro-timing, trig conditions, slides, live recording and MIDI tracks beyond a first check are untested.",
       "Chip worst-case cycles are unmeasured; no stress project has been run.",
       "Like every DRAM module, the build gives up about 10 MB of sample memory to the platform reserve.",
@@ -118,18 +118,18 @@
       }
     },
     "cpuPrice": {
-      "value": 0.1,
+      "value": 0,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
-      "date": "2026-11-21",
-      "conditions": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7. Private runtime package built from the listed Play Modes 0.2.0 source; base 8850f5399c453b9c (development twin, ef6099b0a); 8 s per reading. Frame interrupt 32.6 % before, 32.7 % installed and used nowhere; CPU meter 45.6 % before, 45.2 % at rest.",
+      "date": "2026-11-26",
+      "conditions": "Octatrack MKII (owner's development unit), project LIVE/Dev17, pattern A01, Part 1, every Play Modes pattern NORMAL, the transport stopped then playing. USB package playmodes 0.2.1-experimental (5656b2cd) from this branch; base 3704e55778f82f9b (development base running on the owner's MKII, 26 Nov 2026); 3 readings of 8 s a state. Frame interrupt 43.3 % before, 43.3 % installed and used nowhere; CPU meter 62.6 % before, 63 % at rest.",
       "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host suites for the engine and firmware glue pass, including STEP REPEAT's; instruction counts in octabam's ColdFire core for 0.2.0 bound one track step at 4,746 instructions (1,969 measured); STEP REPEAT ran under the ColdFire port on a real project (GRID REC, LIVE REC, CHROMATIC, stopped and a MIDI track left stock). The author's MKII report covers 0.1.1's build 24 and is historical for 0.2.0; 0.2.0 has not been played on a unit. No stress run, no chip timing.",
+    "summary": "Host suites for the engine and firmware glue pass, including STEP REPEAT's; instruction counts in octabam's ColdFire core for 0.2.0 bound one track step at 4,746 instructions (1,969 measured); STEP REPEAT ran under the ColdFire port on a real project (GRID REC, LIVE REC, CHROMATIC, stopped and a MIDI track left stock). The author's MKII report covers 0.1.1's build 24 and is historical for 0.2.x. 0.2.1's USB package ran as RAM trials on the owner's MKII for PROJECT > NEW, CHANGE and RELOAD only (the modes read from battery RAM); STEP REPEAT and the modes have not been played on a unit. No stress run, no chip timing.",
     "hardwareStatus": "historical",
     "evidenceRevision": "41dbdaaaf18ddea0bc18f72bc88cc1a0926b84f0",
     "gates": [

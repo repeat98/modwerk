@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useActionsMenu } from '../hooks/useActionsMenu'
 import type { Configuration } from '../config/workspace'
 import { FIRMWARE_SHARING_NOTICE, FLASHING_RISKS } from '../firmware-notices'
@@ -36,10 +37,20 @@ export function ConfigurationHeader({ kicker, meta, emptyTitle, configuration, c
 }
 
 // The flashing risks stay beside the build button; the backup advice and sharing notice are one click away.
-export function RiskAcceptance({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
-  return <div className="risk-acceptance">
-    <p><strong>Before you flash.</strong> {FLASHING_RISKS}</p>
+/** The flashing risks and the backups disclosure, with more of the same warning (`children`) between them: the base
+ * install guide shows it as one warning box with its checkbox (RiskCheckbox) under it. `id` names the lead. */
+export function RiskNotice({ id, children }: { id?: string; children?: ReactNode }) {
+  return <>
+    <p><strong id={id}>Before you flash.</strong> {FLASHING_RISKS}</p>
+    {children}
     <details><summary>Backups and sharing</summary><p>Back up your projects and samples, review the module test records, and keep the original OS. Flash at your own risk.</p><p>{FIRMWARE_SHARING_NOTICE}</p></details>
-    <label className="risk-accept"><input type="checkbox" checked={checked} onChange={event => onChange(event.target.checked)} /><span>I understand the risks of flashing custom firmware.</span></label>
-  </div>
+  </>
+}
+
+export function RiskCheckbox({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  return <label className="risk-accept"><input type="checkbox" checked={checked} onChange={event => onChange(event.target.checked)} /><span>I understand the risks of flashing custom firmware.</span></label>
+}
+
+export function RiskAcceptance({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  return <div className="risk-acceptance"><RiskNotice /><RiskCheckbox checked={checked} onChange={onChange} /></div>
 }

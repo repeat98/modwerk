@@ -123,9 +123,11 @@ export function cReserved0(folder, symbol) {
 }
 
 /** Every machine descriptor the module contributes to ot_machines, from its runtime*.json, its machine port and its USB package row,
- *  with the reserved[0] each carries: [{ symbol, where, price } | { symbol, problem, fix }]. [] for a module that is not a machine. */
+ *  with the reserved[0] each carries: [{ symbol, where, price } | { symbol, problem, fix }]. [] for a module that is not a machine.
+ *  A draft (sdk/drafts/<id>, not yet listed) is read from there, so device:price can measure its curve before the release. */
 export function machineDescriptors({ root, id, glue = null }) {
-  const folder = resolve(root, 'sdk/octatrack/modules', id), symbols = new Map()
+  const listed = resolve(root, 'sdk/octatrack/modules', id), draft = resolve(root, 'sdk/drafts', id)
+  const folder = existsSync(listed) || !existsSync(draft) ? listed : draft, symbols = new Map()
   for (const name of existsSync(folder) ? readdirSync(folder).filter(name => /^runtime.*\.json$/.test(name)) : []) {
     for (const item of readJson(join(folder, name))?.contribute ?? []) if (item.to === 'ot_machines') symbols.set(item.data, 'c')
   }
@@ -353,11 +355,16 @@ export const FRAME_COST_FROM = '2026-11-23' // the day after base 0.8's curves w
 // where the guard drops renders, and no step had ever checked that a module is admitted on an empty and a medium pattern.
 export const RELEASE_COST_FROM = '2026-11-24'
 export const CURVE_ROOM = 100 // percent of a frame: the first instance's reading must stay under it
-/** Why a current-version curve does not carry a release, or null: its first reading past CURVE_ROOM, or no clean admission run. */
+// The medium pattern's stock alone, at the least (MODULE_PERFORMANCE.md: about 80 %). A heavy machine reads low on a lighter one
+// (UNGEMACH 0.1.0: +14.6 with stock alone at 63.1 %, +23.5 at 78.7 %; FM Synth 0.1.5: +16.8 at 64.2 %, +26.9 at 81 %).
+export const MEDIUM_FLOOR = 75
+/** Why a current-version curve does not carry a release, or null: read on a pattern lighter than the medium one, its first reading
+ *  past CURVE_ROOM, or no clean admission run. */
 export function curveProblem(record) {
   const reading = Array.isArray(record.points) ? record.points[1] : undefined
   if (typeof reading !== 'number') return 'its curve holds no readings (points), so nothing shows the frame had room'
-  if (!(reading < CURVE_ROOM)) return 'its first instance was read at ' + reading + ' % of a frame: past ' + CURVE_ROOM + ' % the guard drops renders, so that is the overload, not the module\'s cost. Read it on a pattern with room (--measure-pattern)'
+  if (!(record.points[0] >= MEDIUM_FLOOR)) return 'its curve was read where stock alone took ' + record.points[0] + ' % of a frame, under the medium pattern\'s ' + MEDIUM_FLOOR + ' %: a lighter pattern reads a machine low (UNGEMACH 14.6 at 63 %, 23.5 at 79 %). Read it on the medium pattern (--measure-pattern, docs/MODULE_PERFORMANCE.md)'
+  if (!(reading < CURVE_ROOM)) return 'its first instance takes the medium pattern to ' + reading + ' % of a frame, past ' + CURVE_ROOM + ' %: too heavy for a medium project. Make it cheaper, or ask the owner to waive release-cost in sdk/approvals/' + record.module + '-build-approval.json'
   const runs = Array.isArray(record.admission) ? record.admission : []
   for (const pattern of ['empty', 'medium']) {
     const run = runs.find(item => item?.pattern === pattern)

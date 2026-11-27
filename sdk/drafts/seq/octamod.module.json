@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 2,
+  "id": "seq",
+  "key": "SEQ",
+  "name": "SEQ",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "author": {
+    "github": "ilia-murzinov",
+    "credits": [
+      "ilia-murzinov: SEQ and its octabam module",
+      "repeat98: the Euclidean rhythm math SEQ shares with the EUCLID filter"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Euclidean SEQ",
+    "family": "Sequencer",
+    "summary": "A track window that writes Euclidean rhythms, parameter lock rhythms and in-scale melodies into the pattern, for audio and MIDI tracks.",
+    "overview": "Hold [TRACK] and press [PAGE] to open SEQ on that track. The rhythm page spreads PULS hits over the track length and turns them with ROT. LANE chooses whether A, B and the step grid edit the TRIG rhythm (sample trigs or note trigs) or the PLCK rhythm (parameter locks on their own steps). D picks the page and parameter to lock, E (DPTH) how far the locks move around the Part's value. [RIGHT] opens Harmony for PTCH or NOTE: a scale, a root, a phrase shape and a jump size, plus voices and chords on MIDI tracks. [YES] writes the result into the pattern as ordinary trigs and locks, so it plays, saves and copies like anything you program by hand.",
+    "highlights": [
+      "Euclidean TRIG and PLCK rhythms up to 64 steps, drawn as a 4 x 16 step grid.",
+      "Parameter lock rhythms for any page-1 parameter the LFO can reach on audio tracks, and every page-1 parameter on MIDI tracks.",
+      "Harmony page for PTCH and NOTE: scale, root, phrase (RAND, UP, DOWN, ALT, TRI) and jump size; voices and chords on MIDI tracks.",
+      "[CUE] released alone places random hits on the focused lane; [FUNC] + [BANK] clears SEQ's locks or trigs on the track."
+    ],
+    "usage": [
+      "Hold [TRACK] and press [PAGE]: SEQ opens on that track. Press another [TRACK] to switch, [MIDI] to move between the audio and MIDI track.",
+      "Turn A (PULS) and B (ROT) to shape the rhythm in the step grid, then press [YES] to write it into the pattern.",
+      "Turn C to PLCK, pick a parameter with D and a depth with E, then [YES]: that parameter gets locks on its own rhythm. [NO] closes SEQ."
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [
+      "key:TRACK+PAGE",
+      "key:FUNC+BANK@SEQ",
+      "key:CUE@SEQ",
+      "key:MIDI@SEQ",
+      "key:LEFT@SEQ",
+      "key:RIGHT@SEQ",
+      "key:YES@SEQ",
+      "key:NO@SEQ",
+      "key:LEVEL@SEQ",
+      "screen:SEQ"
+    ],
+    "limitations": [
+      "OS 1.40C on the Modwerk base, over USB. Tested on the author's MKII with RAM-booted development twin 4c7eb79b; emulator rollback cases are recorded in TESTING.md.",
+      "The octabam module's FX page-2 destinations and CX OSC SETUP destinations are left out: D offers page-1 parameters only. A seq.work from octabam keeps them and loads here unchanged.",
+      "Keep SEQ installed while you save, reload or copy a project that uses it: without it, seq.work is not saved or reloaded with the project.",
+      "A seq.work SEQ cannot read is left as it is and SEQ starts from its defaults; the next save copies it to seq.bak before writing a new one."
+    ]
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "The package is 36,760 bytes of code and data (module:dev --build-only); seq.work is about 9 KB per project. Not yet measured on a unit.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "SEQ runs only in the UI task while its window is open and in the project-file task; it adds nothing to the frame interrupt. Not yet measured on a unit.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Partial MKII and emulator results are recorded in TESTING.md; full publication qualification remains incomplete.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "95dd7cfc00b48eca5320f47e800d749044abb1ed",
+    "gates": [
+      "Package build (module:dev --build-only) and cross-compatibility (modules:compat)",
+      "Unit trial over USB: open, write, clear and close on audio and MIDI tracks; seq.work saved and reloaded",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "SEQ is ilia-murzinov's original work, ported from his octabam module (MIT). No Elektron firmware, extracted routines or tables: stock sites are named by address, length and SHA-256."
+  },
+  "media": [],
+  "access": {
+    "location": "Any track page: hold [TRACK] and press [PAGE]",
+    "steps": [
+      "Hold a [TRACK] key and press [PAGE]: the SEQ window opens on that track.",
+      "Turn A to D to set the rhythm, the lane and the parameter; [LEFT] and [RIGHT] switch between the rhythm and Harmony pages.",
+      "Press [YES] to write the rhythm and locks into the pattern, or [NO] to close SEQ."
+    ],
+    "screenshots": []
+  }
+}
