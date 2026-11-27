@@ -1005,7 +1005,8 @@ h1 { font-size: var(--text-xl); }
 .module-discussion-dialog .dialog-actions .module-issue-action { font-size: var(--text-base); }
 /* The draft note belongs to Report an issue; a gap then sets the other way apart. */
 .module-discussion-dialog .dialog-actions > p { margin: -2px 0 12px; font-size: var(--text-sm); line-height: 1.5; text-align: center; text-wrap: balance; }
-.module-discussion-dialog .dialog-actions .button-quiet:not(.module-issue-action) { min-height: 44px; border-color: var(--control-border); }
+.module-discussion-dialog .dialog-actions .button { min-height: 44px; }
+.module-discussion-dialog .dialog-actions .button-quiet:not(.module-issue-action) { border-color: var(--control-border); }
 /* Keep editing is the calm way back, centred under the two choices. */
 .module-discussion-dialog .dialog-actions .text-button { justify-content: center; min-height: 44px; color: var(--muted); font-size: var(--text-base); }
 .module-discussion-dialog .dialog-actions .text-button:hover { color: var(--text); }
@@ -1914,7 +1915,7 @@ h1 { font-size: var(--text-xl); }
 .login-prompt-dialog .dialog-actions .button-quiet { border-color: var(--control-border); }
 .login-prompt-skip { display: block; margin: 14px auto 0; color: var(--muted); }
 .login-prompt-skip:enabled:hover { color: var(--text); }
-.login-prompt-dialog .login-prompt-notice { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--text-secondary); font-size: var(--text-sm); font-weight: 500; text-align: center; }
+.login-prompt-dialog .login-prompt-notice { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--control-border); color: var(--text-secondary); font-size: var(--text-sm); font-weight: 500; text-align: center; }
 @media (max-width: 600px) {
   .login-prompt-dialog { padding: 20px; }
 }
