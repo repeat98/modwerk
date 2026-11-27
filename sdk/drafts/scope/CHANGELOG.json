@@ -4,7 +4,8 @@
     "date": "2026-11-26",
     "changes": [
       "Subscribe to module_key, module_tick and ev_usb_frame; no stock detours.",
-      "Tuner conflict removed; install beside Tuner once ev_usb_frame is confirmed on the base."
+      "Tuner conflict removed; install beside Tuner once ev_usb_frame is confirmed on the base.",
+      "Media only: replaced the SCOPE library thumbnail."
     ]
   },
   {
