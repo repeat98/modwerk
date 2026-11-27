@@ -319,11 +319,14 @@ DSP_RESERVE = max(STOCK_CYCLES.values())
 FX_IDS = 128
 VALIDATOR_CLAMPS = (0x400023b6, 0x400023bc, 0x400023de, 0x400023e4)  # the Part validator's moveq #31, FX1 then FX2
 FX_WORDS = (FX_IDS + 31) // 32
-# Modules installed at once and their memory (loader.h; owner, 12 October 2026: up to 128 modules). About 5 KB a
-# module today; the pool is taken from sample memory at boot (core-ot's arena pages), and modset.c keeps a copy of
-# the set as staged beside it.
+# Modules installed at once and their memory (loader.h; owner, 12 October 2026: up to 128 modules; 27 November 2026:
+# the pool 1.5 MiB, one module's image 256 KiB and its image and bss 512 KiB, for the Quadraverb's 48 programs and
+# large sets). The pool is taken from sample memory at boot (core-ot's arena pages, 6,144 bytes each), and modset.c
+# keeps a copy of the set as staged beside it, so the pool's 768 KiB more take 256 more pages.
 RUNTIME_MODULES = 128
-RUNTIME_POOL_BYTES = 768 * 1024
+RUNTIME_POOL_BYTES = 1536 * 1024
+RUNTIME_IMAGE_BYTES = 256 * 1024
+RUNTIME_MODULE_BYTES = 512 * 1024
 DSP_EDITS = {
     # The FX selectors read their chooser list through these LEA operands, which the chooser composer repoints.
     'selection.c': (('static uint8_t paste[6322]={0};', 'static uint8_t paste[6322]; /* in .bss, which the core clears at boot: '
@@ -2225,7 +2228,8 @@ modwerk_retained_end:
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
                         '-fno-merge-constants', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
                         '-Wall', '-Wextra', '-Werror', '-DMODWERK_RUNTIME_METADATA_EXTERNAL', '-DMODWERK_RUNTIME_VOLATILE_JOURNAL', '-DMODWERK_FX_IDS=%du' % FX_IDS] + (['-DMODWERK_DSP_XWATCH'] if args.dsp_probe == 'X' else []) + [
-                        '-DRUNTIME_MODULES=%du' % RUNTIME_MODULES, '-DRUNTIME_POOL_BYTES=%du' % RUNTIME_POOL_BYTES] + (['-DMODWERK_DEV'] if args.dev else []) + (
+                        '-DRUNTIME_MODULES=%du' % RUNTIME_MODULES, '-DRUNTIME_POOL_BYTES=%du' % RUNTIME_POOL_BYTES,
+                        '-DRUNTIME_IMAGE_BYTES=%du' % RUNTIME_IMAGE_BYTES, '-DRUNTIME_MODULE_BYTES=%du' % RUNTIME_MODULE_BYTES] + (['-DMODWERK_DEV'] if args.dev else []) + (
         ['-DMODWERK_DSP_LOADER', '-DMODWERK_DSP_ALLOWANCE0=%d' % DSP_ALLOWANCE[0], '-DMODWERK_DSP_ALLOWANCE1=%d' % DSP_ALLOWANCE[1],
          '-DMODWERK_DSP_RESERVE=%d' % DSP_RESERVE] +
         ['-DMODWERK_DSP_%s%d=%d' % (key, n, dsp_layout[t][field]) for n, t in enumerate('AB')
@@ -2537,7 +2541,7 @@ modwerk_retained_end:
                   packageSha256=sha(Path(path).read_bytes()), manifest=manifest,
                   savedHashes={ext:sha(data) for ext,data in outputs.items()}, trustStorage=trust_storage,
                   productionReady=False, hardware='not tested', emulator='not tested',
-                  limitations=['Up to 128 ColdFire runtime modules at once (hooks on ev_tick, ev_draw, ev_key and ev_enc, stock-code sites that no two modules share) in a 768 KiB pool reclaimed once no task can reach a module; no data-table sites, MIDI or frame hooks, or DSP modules and DSP resource ledger yet.',
+                  limitations=['Up to 128 ColdFire runtime modules at once (hooks on ev_tick, ev_draw, ev_key and ev_enc, stock-code sites that no two modules share) in a %d KiB pool reclaimed once no task can reach a module; no data-table sites, MIDI or frame hooks, or DSP modules and DSP resource ledger yet.' % (RUNTIME_POOL_BYTES // 1024),
                                'The base owns the USB configuration: USB MIDI/Audio cannot be combined with it yet.',
                                'RAM boot (boot.s): any host on the vendor interface can boot a whole OS image without a confirmation on the unit; development only. Nothing it does writes flash; the image must carry NOR\'s bootstrap version.',
                                'Logger retention/ABI and modified bootstrap require emulator/hardware qualification.',

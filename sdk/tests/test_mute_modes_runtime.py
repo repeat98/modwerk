@@ -59,7 +59,7 @@ class MuteModesRuntime(unittest.TestCase):
                     obj = work / (name + '-' + source.stem + '.o')
                     subprocess.run(['m68k-elf-gcc', '-mcpu=5475', '-msoft-float', '-O2', '-ffreestanding', '-fno-builtin', '-fno-jump-tables',
                                     '-fno-asynchronous-unwind-tables', '-fomit-frame-pointer', '-ffunction-sections', '-fdata-sections',
-                                    '-Wall', '-Wextra', '-Werror', *defines, '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u',
+                                    '-Wall', '-Wextra', '-Werror', *defines, '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=1572864u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u',
                                     '-I' + str(GLUE), '-I' + str(ADAPTERS), '-I' + str(LOADER), '-I' + str(ROOT / 'sdk/runtime/upload'),
                                     '-c', str(source), '-o', str(obj)], check=True, capture_output=True)
                     objects.append(obj)

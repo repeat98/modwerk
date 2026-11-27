@@ -76,7 +76,7 @@ class SavedSetWiring(unittest.TestCase):
                 (work / 'usb_base.h').write_text(usb.header())
                 flags = ['-std=c99', '-mcpu=54455', '-Os', '-Wall', '-Wextra', '-Werror', '-ffreestanding', '-fno-builtin',
                          '-DMODWERK_SAVED_SET_EXPORT', '-DMODWERK_RUNTIME_VOLATILE_JOURNAL', '-DMODWERK_DSP_LOADER', '-DMODWERK_FX_IDS=128',
-                         '-DRUNTIME_POOL_BYTES=786432u', '-DMODWERK_DSP_ALLOWANCE0=3120',
+                         '-DRUNTIME_POOL_BYTES=1572864u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u', '-DMODWERK_DSP_ALLOWANCE0=3120',
                          '-DMODWERK_DSP_ALLOWANCE1=3565', '-DMODWERK_DSP_RESERVE=342']
                 flags += ['-DMODWERK_DSP_%s%d=4096' % (name, c) for name in ('TABLE', 'WORDS', 'MISS', 'METER') for c in (0, 1)]
                 if resident:
@@ -92,7 +92,7 @@ class SavedSetWiring(unittest.TestCase):
                 nm = subprocess.run(['m68k-elf-nm', '-S', str(work / 'ep0.o')], check=True, capture_output=True, text=True).stdout
                 row = next(line.split() for line in nm.splitlines() if line.endswith(' modwerk_saved_set_export'))
                 self.assertEqual(row[2], 'B')
-                self.assertEqual(int(row[1], 16), 790588)
+                self.assertEqual(int(row[1], 16), core.RUNTIME_POOL_BYTES + 0x1000 + 60)
                 gate = next(line.split() for line in nm.splitlines() if line.endswith(' modwerk_machine_journal_begin_safe'))
                 self.assertEqual(gate[2], 'T')
 

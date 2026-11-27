@@ -12,8 +12,6 @@
 #define RUNTIME_CAPABILITY_FLAGS 7u     /* CF sites, hash-backed stock copies, authored constant fills; and 128, site events, when the machine has them (64 is the volatile journal) */
 #define RUNTIME_HEADER_BYTES 80u        /* ABI 9 and 10: ABI 8 (76) plus requires u16, claim and hook-entry counts u8;
                                          * older headers: 76, 72, 68, 50, 32, 28 */
-#define RUNTIME_IMAGE_BYTES 131072u      /* one module's image (Tape Echo's tone table is 86 KiB) */
-#define RUNTIME_MODULE_BYTES 294912u     /* one module's image and bss (MIDI Scenes' locks: 64 Parts of 4 KiB) */
 #define RUNTIME_RELOCATIONS 2048u
 #define RUNTIME_SITES 128u
 #define RUNTIME_SITE_BYTES 32u
@@ -25,7 +23,14 @@
 #define RUNTIME_DSP_CLAIMS 16u           /* ABI 9: X/Y words the DSP code reads or writes outside its slot */
 #define RUNTIME_DSP_HOOK_ENTRIES 8u      /* ABI 9: entries for the base's stock-DSP hook sites (ABI 10: an engine's) */
 #define RUNTIME_DSP_INIT_WORDS 4096u     /* ABI 10: an engine's claims' initial words, 24-bit */
-/* A machine may raise these (the Octatrack: 128 modules in 768 KiB, build_core.py). */
+/* A machine may raise these (the Octatrack: 128 modules in 1.5 MiB, a module's image up to 256 KiB and its image and
+ * bss up to 512 KiB, build_core.py). */
+#ifndef RUNTIME_IMAGE_BYTES
+#define RUNTIME_IMAGE_BYTES 131072u      /* one module's image (Tape Echo's tone table is 86 KiB) */
+#endif
+#ifndef RUNTIME_MODULE_BYTES
+#define RUNTIME_MODULE_BYTES 294912u     /* one module's image and bss (MIDI Scenes' locks: 64 Parts of 4 KiB) */
+#endif
 #ifndef RUNTIME_POOL_BYTES
 #define RUNTIME_POOL_BYTES 262144u       /* every module's memory, reclaimed once nothing can reach it */
 #endif

@@ -16,7 +16,7 @@ class SavedSetExport(unittest.TestCase):
         cc = shutil.which('cc')
         if not cc:
             self.skipTest('host compiler unavailable')
-        for defines in ([], ['-DRUNTIME_POOL_BYTES=786432u']):
+        for defines in ([], ['-DRUNTIME_POOL_BYTES=1572864u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u']):
             with self.subTest(defines=defines), tempfile.TemporaryDirectory() as temp:
                 binary = str(Path(temp) / 'snapshot')
                 subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-DMODWERK_HOST', *defines,

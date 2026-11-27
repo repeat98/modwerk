@@ -34,7 +34,7 @@ class LoaderTests(unittest.TestCase):
         cc = shutil.which('cc')
         if not cc:
             self.skipTest('no host C compiler')
-        octatrack = ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')
+        octatrack = ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=1572864u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u')
         # Force the 32-bit stock/pool address collision in one cached build, where both kinds of flush run.
         cached_overlap = ('-DMODWERK_CACHED_MODULES', '-DMODWERK_HOST_OVERLAP_STOCK')
         for defines in ((), octatrack, cached_overlap, octatrack + ('-DMODWERK_CACHED_MODULES',),
@@ -265,7 +265,7 @@ class SiteEventTests(unittest.TestCase):
         cc = shutil.which('cc')
         if not cc:
             self.skipTest('no host C compiler')
-        for defines in (('-DRUNTIME_MODULES=32u',), ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')):
+        for defines in (('-DRUNTIME_MODULES=32u',), ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=1572864u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u')):
             with self.subTest(defines), tempfile.TemporaryDirectory() as temp:
                 subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-g', *SANITIZE,
                                 '-fno-sanitize-recover=all', *defines, '-I', LOADER / 'tests/events', '-I', LOADER,
@@ -636,7 +636,7 @@ start_record = {1,16,machine,TARGET};
                     obj = work / (build_name + '-' + source.stem + '.o')
                     subprocess.run(['m68k-elf-gcc', '-mcpu=5475', '-msoft-float', '-O2', '-ffreestanding', '-fno-builtin', '-fno-jump-tables',
                                     '-fno-asynchronous-unwind-tables', '-fomit-frame-pointer', '-ffunction-sections', '-fdata-sections',
-                                    '-Wall', '-Wextra', '-Werror', *defines, '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u',
+                                    '-Wall', '-Wextra', '-Werror', *defines, '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=1572864u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u',
                                     '-I' + str(glue), '-I' + str(adapters), '-I' + str(LOADER), '-I' + str(ROOT / 'sdk/runtime/upload'),
                                     '-c', str(source), '-o', str(obj)], check=True, capture_output=True)
                     objects.append(obj)
