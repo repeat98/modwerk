@@ -82,6 +82,13 @@ npm run perf:audit -- check --stamp sdk/octatrack/modules/scope/evidence/perform
 
 Details and method strings: `evidence/performance.json` and `perf.py`.
 
+The **stress** row is MIDI and clock flood in **ot_emu** while SCOPE is open
+(`dropped` counts MIDI messages, not audio buffer gaps). It is not a MAIN/CUE
+USB dropout test. Dropout counts from recorded MAIN/CUE were not run: during
+dev-twin work on macOS the Octatrack often appeared as USB mass storage only,
+without a stable **Elektron Octatrack DPS-1** audio input in `ffmpeg
+avfoundation` device list (see session notes in the 27 November Codex thread).
+
 ## 0.2.0-experimental
 
 **Hardware status: reported by hand on one MKII over USB, 26 November 2026,
