@@ -1,9 +1,9 @@
 {
   "kind": "owner-approved-update",
   "id": "miniverb",
-  "version": "0.2.3-experimental",
+  "version": "0.2.4-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-20",
+  "approvedOn": "2026-11-27",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
@@ -11,7 +11,7 @@
     "release-documentation"
   ],
   "retainedUiVersion": "0.2.1-experimental",
-  "sourceSha256": "6ccdb6851fd24734541b5e8abff6ad0517b7f7348766176c5ef1f2c1230ccb62",
-  "ownerStatement": "Approved by repeat98 in chat 20 Oct 2026: release Mini Verb 0.2.3-experimental without hardware testing, with the same waivers as 0.2.2.",
-  "reason": "The owner approved this exact native source: 0.2.2 with the ring wrapped at 15,870 words so it never writes Sidechain Compressor's key window on T3 and T7, output bit-identical to published 0.2.2 in verify.py's 76 checks, guarded renders without a stray write and a control that catches 0.2.2. The OT pages and controls are unchanged, so the 0.2.1 emulator captures are retained. Current-build hardware, chip worst-case timing and complete runtime memory bounds are not measured for this source and stay waived for this exact version only. Isolated source-only packages, native/browser parity and repository checks remain required."
+  "sourceSha256": "8316a4800cf3d222a103c049ba5e6b958903f4b80481fcc82698c0ac57ebc304",
+  "ownerStatement": "Re-signed by repeat98 on 27 Nov 2026 (\"signed\", his answer to re-signing Mini Verb 0.2.4 with its measured curve, as in #2027).",
+  "reason": "0.2.3 with octabam's four MINIVERB speed-ups (05971e11, af7f4112, 0a85c45d, 9268e8ed): bit-identical to 0.2.3 under the widened identity gate (56 of 56 settings, instance block included) and to published 0.2.2 in verify.py's 76 checks. OT pages and controls unchanged, so the 0.2.1 captures are retained. Current-build hardware, chip worst-case timing and complete memory bounds stay waived for this exact version only. On the owner's MKII (development twin 46c30886 of base 0.8.2, Dev17 C04 at 80.3 % with stock alone, 26 November 2026): instance curve first 0, each 0, rest 0 % of a frame, admitted alone on the empty and the medium pattern with nothing dropped; price 0 % of a frame, DSP +12.6 in use; module pool 3,424 bytes in rolled-back trials."
 }

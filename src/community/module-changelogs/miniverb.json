@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.2.4-experimental",
+    "date": "2026-11-23",
+    "changes": [
+      "Uses less DSP time with exactly the same sound: the reverb waits less on the DSP between its delay taps, about a sixth less work a sample.",
+      "Controls, defaults and saved projects are unchanged.",
+      "Known issue: checked on an MKII by an automated run only; not yet tested by ear or on the MKI."
+    ]
+  },
+  {
     "version": "0.2.3-experimental",
     "date": "2026-10-20",
     "changes": [

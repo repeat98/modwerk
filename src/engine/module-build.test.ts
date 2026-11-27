@@ -6,7 +6,7 @@ describe('source-built module identity', () => {
   it('binds compiled packages to every card-built catalog module', () => {
     const source = compiledModuleSource()
     expect(Object.keys(source.moduleVersions).sort()).toEqual(sdkCatalog.modules.map(module => module.id).filter(id => !moduleCardless(id)).sort())
-    expect(source.moduleVersions.miniverb).toBe('0.2.3-experimental')
+    expect(source.moduleVersions.miniverb).toBe('0.2.4-experimental')
     expect(source.sourceTreeSha256).toMatch(/^[a-f0-9]{64}$/)
   })
   it('rejects stale or missing compiled versions before firmware composition', () => {

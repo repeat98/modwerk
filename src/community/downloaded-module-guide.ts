@@ -10,7 +10,7 @@ type Step = { title: string; text: string }
 type GuideMedia = NonNullable<ReturnType<typeof moduleMediaDocument>>['media'][number]
 // Teaching copy for exact published versions; other modules use their own usage documentation.
 const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
-  miniverb: { version: '0.2.3-experimental', steps: [
+  miniverb: { version: '0.2.4-experimental', steps: [
     { title: 'Load a sample.', text: 'Open a fresh project and play a sample on an audio track.' },
     { title: 'Choose MINI VERB.', text: 'Hold FUNC and press FX2. Choose Mini Verb with LEVEL, then press YES.' },
     { title: 'Listen to the tail.', text: 'Press FX2. Raise MIX on encoder F, then try DECAY and TONE. TONE 64 is neutral; MIX 0 gives dry playback.' },
