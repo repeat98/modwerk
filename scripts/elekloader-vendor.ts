@@ -29,6 +29,7 @@ export const KIT_REPLACEMENTS: Readonly<Record<string, string>> = {
   'src/codec/aplib.ts': 'src/engine/elektron/codec/pack.ts',
   'src/codec/elz.ts': 'src/engine/elektron/codec/depack.ts',
   'src/codec/transport.ts': 'src/engine/elektron/codec/transport.ts',
+  'src/devices.ts': 'src/engine/elektron/devices.ts',
   'src/isa/coldfire.ts': 'src/engine/elektron/codec/coldfire-kit.ts',
   'src/py.ts': 'src/engine/elektron/py.ts',
   'src/pyjson.ts': 'src/engine/elektron/pyjson.ts',
