@@ -1,0 +1,1 @@
+Development: the unit queue guide says that a go passed from one agent session to another is not the developer's OK. A session's permission check refuses unit commands on it, so before leaving the unit unattended, the developer gives each session that will drive it the go directly.
