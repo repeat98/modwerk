@@ -18,10 +18,10 @@
   --surface-hover: #38383f;
   --field: #151518;
   --preview: #232328;
-  --line: #3d3d45;
+  --line: #303037;
   --chrome-edge: rgb(255 255 255 / 8%);
-  --line-hover: #60606b;
-  --control-border: #55555f;
+  --line-hover: #55555f;
+  --control-border: #44444d;
   --text: #f5f5f8;
   --text-secondary: #dadade;
   --muted: #bebec9;
@@ -206,7 +206,6 @@ h2 { font-size: var(--text-md); letter-spacing: -.15px; font-weight: 600; }
   .module-library { max-width: 70rem; }
   .module-library .module-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.25rem), 1fr)); gap: 18px; }
   .module-library .module-card .module-preview { height: 172px; }
-  .module-library .module-card .signal-art { transform: scale(.9); }
   .module-library .hover-info > span { -webkit-line-clamp: 4; }
 }
 
@@ -295,7 +294,8 @@ h2 { font-size: var(--text-md); letter-spacing: -.15px; font-weight: 600; }
 .card-proof label:has(input:disabled) { cursor: not-allowed; opacity: .5; }
 .card-proof input { accent-color: var(--accent); margin: 0; width: 13px; height: 13px; }
 @media (max-width: 600px) {
-  .module-card { position: relative; }
+  .module-card { position: relative; border-radius: 12px; }
+  .module-card.is-selected { border-color: color-mix(in srgb, var(--accent) 30%, var(--line)); }
   .module-card .module-preview { height: 150px; }
   .module-card-body { padding: 14px 16px 10px; }
   .module-card-title { align-items: center; }
@@ -510,8 +510,8 @@ h2 { font-size: var(--text-md); letter-spacing: -.15px; font-weight: 600; }
 .github-issue-replies pre, .github-issue-replies table { max-width: 100%; overflow-x: auto; }
 @media (max-width: 600px) {
   .module-issue-card { padding: 16px; }
-  .module-issue-results { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .module-issue-filters button { min-height: 44px; }
+  .module-issue-results { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .module-issues-empty { padding: 18px; }
 }
 .tab-count { min-width: 22px; padding: 0 7px; border-radius: 11px; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 700; line-height: 20px; text-align: center; }
@@ -530,8 +530,8 @@ h2 { font-size: var(--text-md); letter-spacing: -.15px; font-weight: 600; }
 .info-panel dl > div { display: flex; justify-content: space-between; gap: 12px; }
 .info-panel dt { color: var(--faint); }
 .info-panel dd { color: var(--text-secondary); margin: 0; text-align: right; }
-.source-link { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 13px; color: var(--accent); font-size: 12px; }
 .info-panel dd a { color: var(--accent); }
+.source-link { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 13px; color: var(--accent); font-size: 12px; }
 .control-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .control-list span { padding: 7px 9px; color: var(--muted); font: var(--text-xs) var(--mono); border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-sm); }
 .section-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
@@ -1784,10 +1784,10 @@ h1 { font-size: var(--text-xl); }
   .module-showcase .media-empty { padding: 16px; }
   .module-showcase .section-title { flex-wrap: wrap; }
   .control-docs { grid-template-columns: minmax(0, 1fr); }
-  .module-disclosure summary small { display: block; margin: 3px 0 0; }
   .control-docs dd small { font: var(--text-sm)/1.5 var(--mono); }
   .community-privacy { font-size: var(--text-sm); }
   .module-full-instructions > summary { padding-block: 11px; }
+  .module-disclosure summary small { display: block; margin: 3px 0 0; }
 }
 
 .module-access ol { padding-left: 1.5rem; line-height: 1.7; }
@@ -1851,9 +1851,9 @@ h1 { font-size: var(--text-xl); }
   .configuration-section { margin-bottom: 16px; }
   .configuration-heading { flex-wrap: wrap; }
   .configuration-heading > div:first-child { flex: 1 1 100%; }
-
   .configuration-switcher { min-height: 44px; }
   .configuration-checkout > .compatibility-panel { margin-bottom: 16px; }
+
   .module-set-art .preview-label, .module-set-art .preview-controls, .module-set-art .signal-art text { display: none; }
   .module-set-art .signal-art { height: 100%; }
 }
@@ -2210,8 +2210,8 @@ h1 { font-size: var(--text-xl); }
 }
 @media (max-width: 600px) {
   .detail-hero-with-resources .detail-description { margin: 12px 0 8px; font-size: 14px; }
-  .detail-hero-with-resources .detail-intro h1 { font-size: var(--text-xl); }
   .detail-hero-with-resources .detail-rating { display: none; }
+  .detail-hero-with-resources .detail-intro h1 { font-size: var(--text-xl); }
   :is(.detail-page, .module-dialog-bar) .share-button-label { display: none; }
   :is(.detail-page, .module-dialog-bar) .share-control > .button { width: 44px; padding: 0; }
   .detail-page .catalog-position { display: none; }
