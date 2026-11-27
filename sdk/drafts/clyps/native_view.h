@@ -229,10 +229,13 @@ static void clip_native_draw(unsigned char *f)
     else { ui_dotted(f, 11, 35, 28, 11); ui_text(f, src, 17, 37, &UI_C7, 1); }
     char low[4] = {'A', 0, 0, 0};
     if (want != now) {
-        int pulse = st.run == 1 && (beat & 1);           /* one gentle beat-locked swap, no timer */
+        /* Pending is always an outline, never filled (filled = playing). The gentle beat-locked
+         * pulse only adds a second outline around it on odd beats while running; no timer. */
+        int pulse = st.run == 1 && (beat & 1);
         ui_two(low + 1, want + 1);
-        if (pulse) ui_plate(f, 11, 49, 28, 7); else ui_contour(f, 11, 49, 28, 7);
-        ui_text(f, "NXT", 13, 50, &UI_M3, !pulse); ui_text_r(f, low, 37, 50, &UI_M3, !pulse);
+        ui_contour(f, 11, 49, 28, 7);
+        if (pulse) ui_contour(f, 10, 48, 30, 9);
+        ui_text(f, "NXT", 13, 50, &UI_M3, 1); ui_text_r(f, low, 37, 50, &UI_M3, 1);
     } else {
         low[0] = (char)('A' + (PLAY_BANK & 15)); ui_two(low + 1, (PLAY_PATTERN & 15) + 1);
         ui_text(f, "HOM", 13, 50, &UI_M3, 1); ui_text_r(f, low, 37, 50, &UI_M3, 1);   /* 25 px, as NXT */

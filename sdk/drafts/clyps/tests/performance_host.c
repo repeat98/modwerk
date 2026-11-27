@@ -291,6 +291,24 @@ static void alpha2_session(void)
     content[1][2] = 0; for (unsigned n = 0; n < 16; ++n) module_tick(&(struct modwerk_runtime_api){0});
     assert(slot_state(2, 1) == SLOT_EMPTY);             /* an edit shows within one rolling pass */
     tap(5); assert(requested == 5 || playing == 5);     /* an empty slot is still launchable as before */
+
+    /* Sprint 06-C: Capture stores the real reference of every lane, empty ones included, and a
+     * Row launch plays exactly those references. A dot is drawing only: no STOP, HOLD or skip. */
+    host_fresh();
+    for (unsigned p = 0; p < 16; ++p) for (unsigned t = 0; t < 8; ++t) content[p][t] = 0;
+    content[0][0] = content[2][0] = content[2][1] = 1;   /* A01 T1, A03 T1-T2 hold trigs */
+    tap(ARR); tap(2); select_track(1); tap(2); select_track(4); tap(2); select_track(0);
+    assert(playing == 0x20022);                         /* T1, T2, T5 on A03; T5 has no sequence */
+    assert(slot_state(4, 2) == SLOT_EMPTY && slot_state(1, 2) == SLOT_AVAILABLE);
+    tap(ARR); tap(PAGE_KEY); tap(YES);                  /* Capture R01 */
+    assert(defined == 1 && rows[0] == 0x20022);         /* the empty lane keeps its index, A03 */
+    tap(YES); assert(playing == 0x20022);               /* stopped YES path relaunches R01 */
+    tap(DOWN); tap(PAGE_KEY); tap(YES);
+    tap(0);                                             /* direct Row launch, stopped */
+    assert(playing == 0x20022 && last_row == 1);        /* T5 plays A03 (silent), never held or stopped */
+    running = 1; tap(1); clyps_wrap();
+    assert(playing == 0x20022 && last_row == 2);        /* running: the wrap commits every lane alike */
+    running = 0;
 }
 
 int main(int argc, char **argv)

@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.5.1-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "If a bank or project load cannot be confirmed, your Rows are kept and the Octatrack plays its own patterns; CLYPS stays closed until the next power cycle (protection, not the final behaviour).",
+      "The waiting line under the playing source stays an outline; on the beat a second outline appears instead of filling it."
+    ]
+  },
+  {
     "version": "0.5.0-experimental",
     "date": "2026-11-27",
     "changes": [

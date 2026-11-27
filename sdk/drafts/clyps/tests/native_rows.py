@@ -236,7 +236,7 @@ with tempfile.TemporaryDirectory() as tmp:
         if args.project_change or args.project_reload:
             switch(1)
             if args.performance_overlay:
-                tap(ARR); tap(ARR); tap(6); tap(ARR)
+                tap(ARR); tap(6); tap(ARR)   # Clip View first (D39.02)
                 for _ in range(3): tap(0x20)
                 tap(0x1b); tap(YES)
             else:

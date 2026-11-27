@@ -1,0 +1,28 @@
+{
+  "sha256": "d5c3e8864ce590bbde8e4d586074552f83cf3f897b60e32b64e90fe83e2742fd",
+  "offsets": {
+    "clyps_project_init": 7042,
+    "playing": 14068,
+    "requested": 14064,
+    "defined": 13998,
+    "last_row": 13950,
+    "pending_row": 13946,
+    "view": 13942,
+    "slot": 13970,
+    "track": 13990,
+    "src_cursor": 13954,
+    "mode": 13938,
+    "locked": 13958,
+    "lock_note": 13930,
+    "last_view": 13832,
+    "operation": 13934,
+    "org_play": 13902,
+    "org_req": 13894,
+    "occ": 13854,
+    "usable": 13852,
+    "occ_known": 13844,
+    "seen_stock": 13828,
+    "rows": 14000,
+    "bank_uncertain": 13878
+  }
+}
