@@ -196,36 +196,39 @@ The same with DCAY 0, so only the soft clip is left (plan `--tail 12`), GAIN rea
 
 ## Performance
 
-dsp_host meter, executed instructions/sample at the worst block, GAIN at 127, nine settings each with a trig split at frame 1, 7 and 15 and without: 250.8 at worst (four STRNG voices of 5TH around note 118 in C MAJ, DCAY 126, split), 249.6 without a split; four BELL voices of MAJ7 snapped to Colundi 248.7 and 247.5; one BAR voice 246.0 and 244.8. The constant-power mix costs four instructions a sample less than the old crossfade, MIX and TONE are set once per block. Before this table and mix: 255.1 and 252.1. The sample loop runs eight partials at 18 cycles each; one partial is retuned per block. The module is 844 words of code and a 667-word P table (1511 DSP words; 1851 before the short table), 89 state words. The Colundi search walks the table in address registers; a note's theta, the decay and TONE cost more per block than a lookup did. For scale only, #2047 quotes SPRING REV at 257.50 instructions/sample whole and 314.19 in its split sweep, measured in a different harness; the matched stock benchmark and the unit's CPU price are still open.
+0.1.1: `verify.py`'s dsp_host meter reads 251.9 executed instructions/sample at the worst block (27 November 2026). The ring's mix gain now glides 1/64 a sample toward MIX's, six instructions in the sample loop, and snaps onto it within 64 LSB once per call; the record's matched bench below adds 6.94 a sample to 0.1.0's. The module is 873 words of code and the 667-word P table (1,540 DSP words), 91 state words.
+
+0.1.0: dsp_host meter, executed instructions/sample at the worst block, GAIN at 127, nine settings each with a trig split at frame 1, 7 and 15 and without: 250.8 at worst (four STRNG voices of 5TH around note 118 in C MAJ, DCAY 126, split), 249.6 without a split; four BELL voices of MAJ7 snapped to Colundi 248.7 and 247.5; one BAR voice 246.0 and 244.8. The constant-power mix costs four instructions a sample less than the old crossfade, MIX and TONE are set once per block. Before this table and mix: 255.1 and 252.1. The sample loop runs eight partials at 18 cycles each; one partial is retuned per block. The module was 844 words of code and a 667-word P table (1511 DSP words; 1851 before the short table), 89 state words. The Colundi search walks the table in address registers; a note's theta, the decay and TONE cost more per block than a lookup did.
 
 ### Worst case against stock (evidence/performance.json)
 
-`npm run perf:audit -- check sdk/octatrack/modules/resonator/evidence/performance.json` passes; the record is stamped on the source it was measured on.
+`npm run perf:audit -- check sdk/octatrack/modules/resonator/evidence/performance.json` passes; the record is stamped on the source it was measured on, 0.1.1-experimental, measured again on 27 November 2026 (not on a unit).
 
-- **Static bound:** `tools/build/cycle_count.py` counts the per-sample loop `rzframe` at 225 cycles a sample, straight-line, no branch or nested loop. Per block: 16 x 225 for the loop, plus every code word outside it charged once per call, the subroutines a main call enters twice (`rzsin`, `rzsnap`, `rzlerp`) charged twice, the seven-step Colundi search charged seven times and 4 cycles for each of its 51 branches, calls, returns and `do`s: 959 per call. Two calls per block cover a trig split: 16 x 225 + 2 x 959 = 5,518 cycles a block, 22,072 for four instances on a core, against a budget of 49,920. Every knob end and branch is inside the bound: COLUN, VOIC 1-4, every TYPE and SCALE are branches of the same per-call path.
-- **Measured, matched against stock:** `benchmark_reverbs.run` as `benchmark_stock_dsp.py` runs it (one instance per core at positions 0 and 4, 4,096 blocks of 16 frames, the null stub's peak subtracted), on a private native image built from this source by `build_bus` (Resonator's 1,511 words in the space of SPRING REV and PLATE REV), through the stock benchmark's cases: fixed knobs, its moving-knob pattern and a trig split at every position 1-15, plus the dearest settings and the corners of COLUN, VOIC, TYPE, SCALE and PTCH (0, 118, 127), with and without a split: 106 cases. Executed instructions in dsp_host, not chip cycles; no stalls modelled.
+- **Static bound:** `tools/build/cycle_count.py` counts the per-sample loop `rzframe` at 232 cycles a sample (225 in 0.1.0), straight-line, no branch or nested loop. Per block: 16 x 225 for the loop, plus every code word outside it charged once per call, the subroutines a main call enters twice (`rzsin`, `rzsnap`, `rzlerp`) charged twice, the seven-step Colundi search charged seven times and 4 cycles for each of its 51 branches, calls, returns and `do`s: 981 per call (959 in 0.1.0; the gain's snap adds 22 straight-line words). Two calls per block cover a trig split: 16 x 232 + 2 x 981 = 5,674 cycles a block, 22,696 for four instances on a core, against a budget of 49,920. Every knob end and branch is inside the bound: COLUN, VOIC 1-4, every TYPE and SCALE are branches of the same per-call path.
+- **Measured, matched against stock:** `benchmark_reverbs.run` as `benchmark_stock_dsp.py` runs it (one instance per core at positions 0 and 4, 4,096 blocks of 16 frames, the null stub's peak subtracted), on a private native image built from this source by `build_bus` (Resonator's 1,540 words in the space of SPRING REV and PLATE REV), through the stock benchmark's cases: fixed knobs, its moving-knob pattern and a trig split at every position 1-15, plus the dearest settings and the corners of COLUN, VOIC, TYPE, SCALE and PTCH (0, 118, 127), with and without a split: 106 cases. Executed instructions in dsp_host, not chip cycles; no stalls modelled.
 
 | Effect | Worst, with trig splits | Worst, unsplit |
 |---|---|---|
-| Resonator | 247.81 (moving knobs, split at 1) | 246.62 |
+| Resonator 0.1.1 | 254.75 (moving knobs, split at 1) | 253.56 |
+| Resonator 0.1.0 | 247.81 (moving knobs, split at 1) | 246.62 |
 | SPRING REV (the reference) | 314.19 | 257.50 |
 | DARK REV | 242.38 | 193.25 |
 | DJ EQ (the dearest stock effect) | 330.94 | 293.38 |
 
-The stock figures reproduce `benchmark_stock_dsp.py` on the owner's OS 1.40C exactly (unsplit). Resonator is 0.79 of SPRING REV's worst. Its own gate (`verify.py`'s synthetic image, nine settings, no null subtraction) reads 250.8 at worst.
-- **Stress:** four Resonators per core behind DJ EQ, 2 s in dsp_host: no hang, no clobber, no write outside its own block (peak 2,308.6 instructions a sample per core for the whole chain).
+The stock figures reproduce `benchmark_stock_dsp.py` on the owner's OS 1.40C exactly (unsplit). Resonator 0.1.1 is 0.81 of SPRING REV's worst (0.1.0: 0.79), and its worst stays under the 256 executed instructions a sample its package declares (`--cycles 256 --cycles-kind executed`), by 1.25. Its own gate (`verify.py`'s synthetic image, nine settings, no null subtraction) reads 251.9 at worst (0.1.0: 250.8).
+- **Stress:** four Resonators per core behind DJ EQ, 2 s in dsp_host: no hang, no clobber, no write outside its own block (0.1.1: peak 2,336.3 instructions a sample per core for the whole chain; 0.1.0: 2,308.6).
 
 ## Memory
 
-From the native card build (`build_bus` on OS 1.40C, Resonator in the space of SPRING REV and PLATE REV: 1,511 of 1,657 words on each payload, 146 free), reconciled with the build map; `tests.qualification.memory` lists the same regions.
+0.1.1, from the native card build (`build_bus` on OS 1.40C, Resonator in the space of SPRING REV and PLATE REV: 1,540 of 1,657 words on each payload, 117 free; 0.1.0: 1,511, 146 free), reconciled with the build map; `tests.qualification.memory` lists the same regions.
 
 | Region | Space | Size | Scope |
 |---|---|---|---|
-| Program payload A: 667-word table and 844-word code | DSP P | 1,511 words (4,533 bytes) | once per core |
-| Program payload B: the same | DSP P | 1,511 words (4,533 bytes) | once per core |
-| Used and initialized X state, r7 + 0..0x58 | DSP X | 89 words (267 bytes) | per instance |
-| The rest of the 256-word X block an FX instance gets | DSP X | 167 words (501 bytes) | per instance, unused |
+| Program payload A: 667-word table and 873-word code | DSP P | 1,540 words (4,620 bytes) | once per core |
+| Program payload B: the same | DSP P | 1,540 words (4,620 bytes) | once per core |
+| Used and initialized X state, r7 + 0..0x5a | DSP X | 91 words (273 bytes) | per instance |
+| The rest of the 256-word X block an FX instance gets | DSP X | 165 words (495 bytes) | per instance, unused |
 | System stack: three entries of two words on each core (a `bsr` into the Colundi search and its `do`) | DSP X | 12 words (36 bytes) | shared |
 | Cloned FX descriptor (416 bytes), five label formatters for CHRD, COLUN, TYPE, VOIC and SCALE (1,372 bytes) and the wide-dial helper (116 bytes) | ColdFire flash | 1,904 bytes | shared |
 
-768 bytes per instance, 11,006 shared, 17,150 for the eight instances the slots allow. No allocator buffer, no Y memory, no scratch outside r7, no ColdFire code per frame. The USB package (764 bytes of code and data, no bss) replaces the card build's ColdFire share and is not counted on top. DSP sizes are logical 24-bit words.
+768 bytes per instance, 11,180 shared, 17,324 for the eight instances the slots allow (0.1.0: 11,006 and 17,150). No allocator buffer, no Y memory, no scratch outside r7, no ColdFire code per frame. The USB package (764 bytes of code and data, no bss) replaces the card build's ColdFire share and is not counted on top. DSP sizes are logical 24-bit words.

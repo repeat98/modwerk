@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "module": "resonator",
+  "version": "0.1.1-experimental",
+  "sourceSha256": "ee876f850dee338ff772be23a47935790acc9128ee895e2fdded501f109aa816",
+  "scanRevision": "cc7cffc1a675a763c5b8d6fbe1659f2b322cc540",
+  "model": "DSP56300FM Table A-1 cycles and the A.2 and 3.5 stalls on one steady block of each --sweep setting; a model, not a measurement",
+  "dearest": {
+    "setting": "COLUN=COLUN/max",
+    "settings": 8,
+    "instructions": 257.13,
+    "cycles": 370.81,
+    "stalls": 52.69,
+    "stallsByKind": {
+      "agu": 3.88,
+      "agu-lua": 3,
+      "arith": 45.56,
+      "arith-tcc": 0.19,
+      "transfer": 0.06
+    }
+  },
+  "defaults": {
+    "setting": "COLUN=NOTE/def",
+    "instructions": 251.69,
+    "cycles": 357.5,
+    "stalls": 51
+  },
+  "stock": {
+    "comparator": "SPRING REV",
+    "setting": "defaults/min",
+    "instructions": 261.13,
+    "cycles": 293.06,
+    "stalls": 5.94
+  }
+}
