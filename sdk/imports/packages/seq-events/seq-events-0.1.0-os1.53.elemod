@@ -809,6 +809,8 @@
  "requires": [
   "core"
  ],
- "conflicts": [],
+ "conflicts": [
+  "euclidean"
+ ],
  "signature": null
 }
