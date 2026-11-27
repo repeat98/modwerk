@@ -6,6 +6,10 @@ One FRACT owner may now use any T1–T8; two live readers and the Part ABI are u
 
 **New-build hardware stage 1 has not run.** Diagnostic base46 failed USB re-enumeration twice before the module was installed. Both attempts and the recovery readback are recorded locally. Prior 0.1.6 measurements below remain historical; they do not qualify 0.1.7. Listening, exact-version Keep/reboot and first-release approval remain pending.
 
+
+
+Shared SDK checks are separate contributions: #2283 removes stale reconstruction constants; #2294 checks the declared live-reader count. The qualification worktree includes those corrections, where the 52 SDK cases and nine runtime cases pass. On unmodified main the old checks reproduce their hardcoded three-reader/nine-copy failures; the module-only draft intentionally leaves shared gates unchanged and waits for those PRs to merge.
+
 ## Historical0.1.6 two-reader adoption —27 November2026
 
 Native inputs are committed at `0de973642fbd33e28f46de8f310419f74458dd5e`. [Exact-build preparation](release/qualification-20261127-iteration17.md) names release8c96 and development9b86. The normal development package passed20four-format windows (maxmean addition33.5points vsprice40),122.233s active MAIN+CUE4chUSB stress with22control windows/guard0→0,12settledPart transitions, and allowedT1–T4/second-owner refusal checks.

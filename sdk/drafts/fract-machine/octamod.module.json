@@ -7,7 +7,7 @@
   "category": "machines",
   "source": {
     "repository": "https://github.com/ex1010/modwerk",
-    "revision": "b4f53d5446517e76ec29ab99b510440c66cb6f43",
+    "revision": "afe5084a96f6a91f0fe727d1470eb9de5fa7bb2f",
     "path": "sdk/drafts/fract-machine"
   },
   "build": {
@@ -178,12 +178,12 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.7 source/host/module/runtime checks and isolated Linux byte reproduction pass. New-build hardware stage1 has not started: diagnostic base46 failed USB re-enumeration twice before module installation. Prior0.1.6 results remain historical. Listening/persistence/owner review pending.",
+    "summary": "0.1.7 source/module checks and isolated Linux byte reproduction pass. Qualification worktree SDK/runtime checks pass with separately submitted corrections#2283/#2294; unchanged main gates retain old hardcoded assumptions. New-build hardware stage1 pending USB recovery; prior0.1.6 results historical. Listening/persistence/owner review pending.",
     "hardwareStatus": "untested",
     "gates": [
       "modules/fract-machine/verify.py"
     ],
-    "evidenceRevision": "b4f53d5446517e76ec29ab99b510440c66cb6f43",
+    "evidenceRevision": "afe5084a96f6a91f0fe727d1470eb9de5fa7bb2f",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
