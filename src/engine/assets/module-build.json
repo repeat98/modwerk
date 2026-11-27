@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "545c3a7163908a3a9c0799f4cfde52e540f242ed",
+  "sourceCommit": "6a21971a3202fc7967a42a1dda3d36a288527c18",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "8e8f1f60b80863a1625d39db97463e725a54cc527373d51be94c9eecb40195cc",
-  "compilerSha256": "3bb3824f4e3f6f837b0f9854ca4bb78f67e499197d9eb0bd14237cbd73be5ee8",
+  "sourceTreeSha256": "25dbcd46b44937a169ab593fc932cefed0b6b90d4d5b8828397e80a4f9a19237",
+  "compilerSha256": "0e120e59bb70d770626e8f86fc68d6712ab2224c4287e5e204b0536148ac516c",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.9-experimental",
@@ -24,6 +24,7 @@
     "usb-audio-out-tracks-main-cue": "0.4.2-experimental",
     "quantizer": "0.1.5-experimental",
     "synth": "0.1.5-experimental",
+    "cx-osc": "0.1.0-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",
@@ -79,8 +80,8 @@
       "sha256": "6f4823e51ae30e79f387f2e83dc684c74c7547be223f2e4246c7d51096aa6df5"
     },
     "requested-packages.json": {
-      "bytes": 1362663,
-      "sha256": "02175a862b45011ea337caf9433e821ab187aa0484c9dbcdbfd2b441fa2da4d6"
+      "bytes": 1514616,
+      "sha256": "45ebff5d03555702f352d2edcf1475e1a026b495dcd00cd22237f0290eb7988e"
     },
     "utility-packages.json": {
       "bytes": 11735,

@@ -11,6 +11,9 @@ Prepared on branch `module/cx-osc` for catalog PR **#2293**.
 - `octamod.module.json`: qualification, functional hardware, PNG `media/`, tutorial
 - `evidence/performance.json` partial fill
 - Import pin paths updated
+- Docker `build-modules-isolated.sh` + `modules:import --development` (requested-packages baseline includes cx-osc)
+- `public/octatrack-modules/cx-osc/0.1.0-experimental.mwrm` (dev build f52815ad until `octatrack:module-packages` gets library layout/title from `modules:generate`)
+- `scripts/build-module-packages.py`: per-module workdirs and object keys (synth + cx-osc both use `poly.s`)
 
 ## Owner same window (not on module PR alone)
 

@@ -218,6 +218,21 @@
       "path": "octatrack-modules/synth/0.1.5-experimental.mwrm"
     },
     {
+      "id": "cx-osc",
+      "machine": true,
+      "abi": 8,
+      "features": 131,
+      "sites": 34,
+      "copies": 0,
+      "fills": 0,
+      "version": "0.1.0-experimental",
+      "name": "CX OSC",
+      "module": "117bbb1a",
+      "bytes": 32202,
+      "sha256": "f52815adb0d5cdb0f1926c519f8319ce4527f1adcc52313d502023fb306065ad",
+      "path": "octatrack-modules/cx-osc/0.1.0-experimental.mwrm"
+    },
+    {
       "id": "quantizer",
       "machine": true,
       "abi": 8,
