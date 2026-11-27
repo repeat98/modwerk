@@ -1,0 +1,1 @@
+Digitakt: Machine Pages, the shared code that draws the pages of added SRC machines, is now irpina's 1.2, ported to Modwerk's core. A machine can have up to seven more SRC values on a second page, so machines made for it, such as OB-1, can come to the library. STRING, SOPHIE, RAM Machines and Live Looper draw their pages exactly as before, and builds with Digi EQ keep working.
