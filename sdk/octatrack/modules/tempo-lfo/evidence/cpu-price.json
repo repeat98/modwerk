@@ -1,0 +1,68 @@
+{
+  "module": "tempo-lfo",
+  "version": "0.1.0-experimental",
+  "base": "dce64a781f8581b4 (development twin, Base draft index 63 + guard, after tip24 Keep PC)",
+  "scene": "Octatrack MKII, after tip24 Keep PC, Part 1, transport playing, stock FILTER/DELAY companions, empty twin inventory, Undo-only trial",
+  "inputs": {
+    "transport": "playing"
+  },
+  "seconds": 8,
+  "readings": 3,
+  "measuredAt": "2026-11-26T16:26:06.892Z",
+  "result": {
+    "id": "tempo-lfo",
+    "version": "0.1.0-experimental",
+    "packageSha256": "654530b1accbaa058768f36cc17f1e541680d31d0187d4f46191de2eb8751c96",
+    "before": {
+      "frame": 52.1,
+      "frameMax": 88.7,
+      "frames": 68407,
+      "skipped": 0,
+      "cpu": 62,
+      "dsp1to4": 41.1,
+      "dsp5to8": 53.9,
+      "dsp1to4Peak": 42.5,
+      "dsp5to8Peak": 55.1,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.6,
+        "dsp1to4": 0.5,
+        "dsp5to8": 0.4,
+        "frameMax": 1.7,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.6
+      }
+    },
+    "atRest": {
+      "frame": 52.1,
+      "frameMax": 87.7,
+      "frames": 68360,
+      "skipped": 0,
+      "cpu": 62,
+      "dsp1to4": 41.4,
+      "dsp5to8": 53.6,
+      "dsp1to4Peak": 42.5,
+      "dsp5to8Peak": 55.2,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 1,
+        "dsp1to4": 0.3,
+        "dsp5to8": 0.4,
+        "frameMax": 2.1,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.8
+      }
+    },
+    "atRestAdds": {
+      "frame": 0,
+      "cpu": 0,
+      "dsp1to4": 0.3,
+      "dsp5to8": -0.3,
+      "dsp1to4Peak": 0,
+      "dsp5to8Peak": 0.1
+    },
+    "rolledBack": true
+  }
+}

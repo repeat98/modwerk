@@ -3,74 +3,14 @@
   "sourceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "modules": [
     {
-      "id": "miniverb",
-      "version": "0.2.3-experimental",
-      "addedAt": "2026-10-01T06:53:41Z"
-    },
-    {
-      "id": "tapeecho",
-      "version": "0.1.9-experimental",
-      "addedAt": "2026-10-01T06:53:41Z"
-    },
-    {
-      "id": "euclid",
-      "version": "0.1.5-experimental",
-      "addedAt": "2026-10-01T06:53:41Z"
-    },
-    {
-      "id": "repitch",
-      "version": "0.2.1-experimental",
-      "addedAt": "2026-10-01T06:53:41Z"
-    },
-    {
-      "id": "tapehead",
-      "version": "0.1.2-experimental",
-      "addedAt": "2026-10-02T13:30:00Z"
-    },
-    {
       "id": "airwindows-chorus",
       "version": "0.1.3-experimental",
       "addedAt": "2026-10-08T21:00:00Z"
     },
     {
-      "id": "everb",
-      "version": "0.1.2-experimental",
-      "addedAt": "2026-10-09T18:16:15Z"
-    },
-    {
-      "id": "bbd",
-      "version": "0.1.2-experimental",
-      "addedAt": "2026-10-14T18:10:58Z"
-    },
-    {
-      "id": "lofi2",
-      "version": "0.1.1-experimental",
-      "addedAt": "2026-10-12T23:40:23Z"
-    },
-    {
-      "id": "ring-sc",
-      "version": "0.2.1-experimental",
-      "addedAt": "2026-10-20T12:00:00Z"
-    },
-    {
-      "id": "vibrato",
-      "version": "0.1.0-experimental",
-      "addedAt": "2026-11-17T19:20:00Z"
-    },
-    {
-      "id": "resonator",
-      "version": "0.1.0-experimental",
-      "addedAt": "2026-11-24T11:32:33Z"
-    },
-    {
-      "id": "mackity",
-      "version": "0.1.0-experimental",
-      "addedAt": "2026-11-25T08:23:53Z"
-    },
-    {
-      "id": "midiverb",
-      "version": "0.1.0-experimental",
-      "addedAt": "2026-11-25T20:15:00Z"
+      "id": "amiga",
+      "version": "0.3.0-experimental",
+      "addedAt": "2026-11-11T10:50:00Z"
     },
     {
       "id": "analog-bassdrum",
@@ -78,24 +18,34 @@
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
-      "id": "usb-audio-out-tracks-main-cue",
-      "version": "0.4.1-experimental",
-      "addedAt": "2026-10-01T09:19:37Z"
+      "id": "apply-scene",
+      "version": "0.2.0-experimental",
+      "addedAt": "2026-10-15T16:00:00Z"
     },
     {
-      "id": "quantizer",
-      "version": "0.1.5-experimental",
-      "addedAt": "2026-10-01T09:19:37Z"
+      "id": "arp-key-locks",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-26T12:00:00Z"
     },
     {
-      "id": "synth",
-      "version": "0.1.5-experimental",
-      "addedAt": "2026-10-06T08:00:28Z"
+      "id": "bar-led",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-05T13:00:00Z"
     },
     {
-      "id": "previewvol",
+      "id": "bbd",
       "version": "0.1.2-experimental",
-      "addedAt": "2026-10-02T00:00:00Z"
+      "addedAt": "2026-10-14T18:10:58Z"
+    },
+    {
+      "id": "beat-slicer",
+      "version": "0.1.68-experimental",
+      "addedAt": "2026-10-27T20:00:00Z"
+    },
+    {
+      "id": "butter-fingers",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-18T16:04:00Z"
     },
     {
       "id": "cc-map",
@@ -103,19 +53,59 @@
       "addedAt": "2026-10-02T00:00:00Z"
     },
     {
-      "id": "sidechain-compressor",
-      "version": "0.2.2-experimental",
-      "addedAt": "2026-10-05T12:00:00Z"
+      "id": "dejavu",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-24T15:30:00Z"
     },
     {
-      "id": "vector",
-      "version": "0.3.2-experimental",
-      "addedAt": "2026-10-06T08:02:00Z"
+      "id": "direct-jump-kyoti",
+      "version": "0.2.0-experimental",
+      "addedAt": "2026-10-24T12:00:00Z"
     },
     {
-      "id": "playmodes",
-      "version": "0.2.1-experimental",
-      "addedAt": "2026-10-07T20:00:00Z"
+      "id": "euclid",
+      "version": "0.1.5-experimental",
+      "addedAt": "2026-10-01T06:53:41Z"
+    },
+    {
+      "id": "everb",
+      "version": "0.1.2-experimental",
+      "addedAt": "2026-10-09T18:16:15Z"
+    },
+    {
+      "id": "grain",
+      "version": "0.1.3-experimental",
+      "addedAt": "2026-11-20T12:00:00Z"
+    },
+    {
+      "id": "kits",
+      "version": "0.1.1-experimental",
+      "addedAt": "2026-11-16T21:00:00Z"
+    },
+    {
+      "id": "lofi2",
+      "version": "0.1.1-experimental",
+      "addedAt": "2026-10-12T23:40:23Z"
+    },
+    {
+      "id": "mackity",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-25T08:23:53Z"
+    },
+    {
+      "id": "midi-scenes",
+      "version": "0.3.1-experimental",
+      "addedAt": "2026-11-16T20:00:00Z"
+    },
+    {
+      "id": "midiverb",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-25T20:15:00Z"
+    },
+    {
+      "id": "miniverb",
+      "version": "0.2.3-experimental",
+      "addedAt": "2026-10-01T06:53:41Z"
     },
     {
       "id": "mute-modes",
@@ -123,8 +113,18 @@
       "addedAt": "2026-10-07T20:00:00Z"
     },
     {
-      "id": "recorder-loop-fix",
-      "version": "0.1.0-experimental",
+      "id": "output-matrix",
+      "version": "0.1.1-experimental",
+      "addedAt": "2026-10-08T21:55:32Z"
+    },
+    {
+      "id": "pattern-sample-locks",
+      "version": "0.1.9-experimental",
+      "addedAt": "2026-11-10T12:00:00Z"
+    },
+    {
+      "id": "playmodes",
+      "version": "0.2.1-experimental",
       "addedAt": "2026-10-07T20:00:00Z"
     },
     {
@@ -133,9 +133,9 @@
       "addedAt": "2026-10-08T12:00:00Z"
     },
     {
-      "id": "output-matrix",
-      "version": "0.1.1-experimental",
-      "addedAt": "2026-10-08T21:55:32Z"
+      "id": "previewvol",
+      "version": "0.1.2-experimental",
+      "addedAt": "2026-10-02T00:00:00Z"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -143,94 +143,29 @@
       "addedAt": "2026-10-12T21:00:00Z"
     },
     {
-      "id": "apply-scene",
-      "version": "0.2.0-experimental",
-      "addedAt": "2026-10-15T16:00:00Z"
+      "id": "quantizer",
+      "version": "0.1.5-experimental",
+      "addedAt": "2026-10-01T09:19:37Z"
     },
     {
-      "id": "direct-jump-kyoti",
-      "version": "0.2.0-experimental",
-      "addedAt": "2026-10-24T12:00:00Z"
-    },
-    {
-      "id": "dejavu",
+      "id": "recorder-loop-fix",
       "version": "0.1.0-experimental",
-      "addedAt": "2026-10-24T15:30:00Z"
+      "addedAt": "2026-10-07T20:00:00Z"
     },
     {
-      "id": "arp-key-locks",
+      "id": "repitch",
+      "version": "0.2.1-experimental",
+      "addedAt": "2026-10-01T06:53:41Z"
+    },
+    {
+      "id": "resonator",
       "version": "0.1.0-experimental",
-      "addedAt": "2026-10-26T12:00:00Z"
+      "addedAt": "2026-11-24T11:32:33Z"
     },
     {
-      "id": "temp-save",
-      "version": "0.1.1-experimental",
-      "addedAt": "2026-10-28T12:00:00Z"
-    },
-    {
-      "id": "beat-slicer",
-      "version": "0.1.68-experimental",
-      "addedAt": "2026-10-27T20:00:00Z"
-    },
-    {
-      "id": "tuner",
-      "version": "0.1.0-experimental",
-      "addedAt": "2026-10-26T02:02:14Z"
-    },
-    {
-      "id": "slow-lfo",
-      "version": "0.1.0-experimental",
-      "addedAt": "2026-11-05T12:00:00Z"
-    },
-    {
-      "id": "bar-led",
-      "version": "0.1.0-experimental",
-      "addedAt": "2026-11-05T13:00:00Z"
-    },
-    {
-      "id": "stem-rec",
-      "version": "0.1.0-experimental",
-      "addedAt": "2026-11-05T15:55:00Z"
-    },
-    {
-      "id": "tiempos",
-      "version": "0.1.0-experimental",
-      "addedAt": "2026-10-30T12:00:00Z"
-    },
-    {
-      "id": "syntiz",
-      "version": "0.1.1-experimental",
-      "addedAt": "2026-10-29T21:00:00Z"
-    },
-    {
-      "id": "track-solo",
-      "version": "0.2.5-experimental",
-      "addedAt": "2026-11-04T17:16:39Z"
-    },
-    {
-      "id": "pattern-sample-locks",
-      "version": "0.1.9-experimental",
-      "addedAt": "2026-11-10T12:00:00Z"
-    },
-    {
-      "id": "amiga",
-      "version": "0.3.0-experimental",
-      "addedAt": "2026-11-11T10:50:00Z"
-    },
-    {
-      "id": "midi-scenes",
-      "version": "0.3.1-experimental",
-      "addedAt": "2026-11-16T20:00:00Z"
-    },
-    {
-      "id": "kits",
-      "version": "0.1.1-experimental",
-      "addedAt": "2026-11-16T21:00:00Z"
-    },
-    {
-      "id": "butter-fingers",
-      "version": "0.1.0-experimental",
-      "addedAt": "2026-11-18T16:04:00Z"
+      "id": "ring-sc",
+      "version": "0.2.1-experimental",
+      "addedAt": "2026-10-20T12:00:00Z"
     },
     {
       "id": "screen-off",
@@ -238,9 +173,14 @@
       "addedAt": "2026-11-19T14:20:00Z"
     },
     {
-      "id": "grain",
-      "version": "0.1.3-experimental",
-      "addedAt": "2026-11-20T12:00:00Z"
+      "id": "sidechain-compressor",
+      "version": "0.2.2-experimental",
+      "addedAt": "2026-10-05T12:00:00Z"
+    },
+    {
+      "id": "slow-lfo",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-05T12:00:00Z"
     },
     {
       "id": "songbook",
@@ -248,9 +188,74 @@
       "addedAt": "2026-11-24T09:10:19Z"
     },
     {
+      "id": "stem-rec",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-05T15:55:00Z"
+    },
+    {
+      "id": "synth",
+      "version": "0.1.5-experimental",
+      "addedAt": "2026-10-06T08:00:28Z"
+    },
+    {
+      "id": "syntiz",
+      "version": "0.1.1-experimental",
+      "addedAt": "2026-10-29T21:00:00Z"
+    },
+    {
+      "id": "tapeecho",
+      "version": "0.1.9-experimental",
+      "addedAt": "2026-10-01T06:53:41Z"
+    },
+    {
+      "id": "tapehead",
+      "version": "0.1.2-experimental",
+      "addedAt": "2026-10-02T13:30:00Z"
+    },
+    {
+      "id": "temp-save",
+      "version": "0.1.1-experimental",
+      "addedAt": "2026-10-28T12:00:00Z"
+    },
+    {
+      "id": "tempo-lfo",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-26T00:00:00Z"
+    },
+    {
+      "id": "tiempos",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-30T12:00:00Z"
+    },
+    {
+      "id": "track-solo",
+      "version": "0.2.5-experimental",
+      "addedAt": "2026-11-04T17:16:39Z"
+    },
+    {
+      "id": "tuner",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-26T02:02:14Z"
+    },
+    {
       "id": "ungemach",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-25T20:05:10Z"
+    },
+    {
+      "id": "usb-audio-out-tracks-main-cue",
+      "version": "0.4.1-experimental",
+      "addedAt": "2026-10-01T09:19:37Z"
+    },
+    {
+      "id": "vector",
+      "version": "0.3.2-experimental",
+      "addedAt": "2026-10-06T08:02:00Z"
+    },
+    {
+      "id": "vibrato",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-17T19:20:00Z"
     }
   ]
 }

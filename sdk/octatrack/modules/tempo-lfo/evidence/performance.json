@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "tempo-lfo",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 624,
+    "measured": 624,
+    "budget": 4790,
+    "method": "Static (MOP-213): 39 authored ×16 V4 = 624. Measured (MOP-255): private test/tempo-lfo remix BUILD=T5 under ot_emu --watch-pc on linked tm_on_store + tm_map_bpm24 (43 PCs); trampoline callAsMain at 0x40a98000 with high-byte 0/64/127 into tm_bpm_w[0] — 8/8 segments authored 39 → 624 cycles (matches static). OOR pointer (tm_bpm_w-2) early exit authored 9 → 144. Emulator instruction counts ≠ chip timing. Budget 4790 = 10% of 362.8 µs frame at 132 MHz (peer cite envelope; not a hard ceiling)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 287.8,
+    "moduleLongestUs": 287.8,
+    "stockIdlePercent": 0,
+    "moduleIdlePercent": 0,
+    "method": "MOP-255 cfmeter.py shape: ot_emu --dsp --watch-mem 0x80000a40,6; stock test/cfmeter-port vs module test/cfmeter-tempo-lfo (BUILD=T5) under identical mop179 load.midi flood on CFMLOAD card; page-2 publisher decode (N/REF/k). Longest ISR slot (k=4) 287.8 µs both images — TEMPO is LFO-store-driven and did not add measurable frame-ISR under this flood. Idle median 0.0 under dense flood (same CFMLOAD saturation shape as mop179). Emulator ≠ chip."
+  },
+  "stress": {
+    "floodMessagesPerSecond": 3000.1,
+    "clockBpm": 240,
+    "seconds": 62,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "MOP-255: ≥60 s ot_emu --dsp on cfmeter-tempo-lfo BUILD=T5; mop179 stress.midi (186008 three-byte + 5952 clocks); frames 170887 REACHED; midi queue 0 at end; no ILLEGAL; no Part callAsMain. stuckNotes not scored (no note-on accounting in this flood). Catalog SHUT."
+  }
+}

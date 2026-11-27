@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" class="signal-art" fill="none" role="img" aria-labelledby="title description">
+<title id="title">Tempo LFO — project BPM as LFO destination</title>
+<desc id="description">Project tempo marks feeding an LFO destination labelled TEMPO. Conceptual signal art, not a measured screen.</desc>
+<style>
+.signal-art{width:100%;height:calc(100% - 46px);overflow:visible;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
+.signal-grid{stroke:#ffffff;opacity:.035;stroke-width:.7}
+.signal-main{stroke:#c4a35a;stroke-width:2.3}
+.signal-secondary{stroke:#c4a35a;opacity:.45;stroke-width:1.7}
+.signal-ghost{stroke:#c4a35a;opacity:.2;stroke-width:1.3}
+.signal-dot{fill:#c4a35a}
+.signal-art text{fill:#c4a35a;opacity:.52;font:8px monospace;letter-spacing:.7px;stroke:none}
+</style>
+<rect width="320" height="192" fill="#1c1c22"/>
+<g class="signal-grid">
+  <path d="M20 52H300"/><path d="M20 97H300"/><path d="M20 142H300"/>
+  <path d="M64 33V163"/><path d="M128 33V163"/><path d="M192 33V163"/><path d="M256 33V163"/>
+</g>
+<g>
+  <text x="24" y="28">PROJECT BPM</text>
+  <text x="210" y="28">LFO PMTR</text>
+  <!-- tempo ladder (30..300 conceptual) -->
+  <path class="signal-ghost" d="M36 60V130"/>
+  <path class="signal-secondary" d="M36 60H48M36 78H56M36 96H72M36 114H88M36 130H100"/>
+  <circle class="signal-dot" cx="48" cy="60" r="2.2" opacity=".4"/>
+  <circle class="signal-dot" cx="56" cy="78" r="2.4" opacity=".55"/>
+  <circle class="signal-dot" cx="72" cy="96" r="2.8"/>
+  <circle class="signal-dot" cx="88" cy="114" r="2.4" opacity=".55"/>
+  <circle class="signal-dot" cx="100" cy="130" r="2.2" opacity=".4"/>
+  <!-- LFO wave into dest -->
+  <path class="signal-main" d="M112 96C128 70 140 122 156 96C172 70 184 122 200 96"/>
+  <path class="signal-secondary" d="M200 96H208"/>
+  <path class="signal-main" d="M202 91L208 96L202 101"/>
+  <rect class="signal-main" x="216" y="78" width="76" height="38" rx="3"/>
+  <text x="228" y="94" style="opacity:.9;font-size:11px">PMTR</text>
+  <text x="226" y="108" style="opacity:.95;font-size:11px">TEMPO</text>
+  <text x="24" y="172">BPM 30..300</text>
+  <text x="200" y="172">INDEX 39</text>
+</g>
+</svg>
