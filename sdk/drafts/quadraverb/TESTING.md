@@ -41,6 +41,18 @@ Checked on the host: `engine/verify_area.py` (each of the 48 programs, the gates
 interrupt's cost of `fill()` and `take()`, the base writing and switching a real area, the arena's room beside a Part's
 stock effects, the sound.
 
+### The bank fix (27 November 2026)
+
+The 22-reverb package `110a31f8` rang on the owner's MKII (twin5, T1 and T5). Its areas took the frame's host bank
+from r6 & $ffe000, but stock's dispatcher points r6 at its parameter copies (X:$25d-$3dc, read from the dispatcher in
+twin5's image), so they read their in-blocks from X:$1be0 and wrote their out-blocks to X:$1840, inside stock's X
+tables (a power cycle restores those). The areas now take the bank from X:$207 (ENGINE.md). Rebuilt from that
+package's commit (`b34305473`, which rebuilds `110a31f8` byte for byte) with only this change:
+`quadraverb-0.1.0-bankfix.mwrm`, 82,468 bytes, SHA-256 `5588e8e11884846e0eef40046736bdb0bea85df727c6bae1e240b8abceaf80c9`.
+`verify_area.py`'s stand-in now keeps the page outside the bank and the bank at X:$207: the old area fails it (program
+10 from frame 2106), the new one passes on all 22 (32 gates each); `test_qv_runtime.py` passes (12). The 48-program
+`gen/` is regenerated the same way but not yet run through `verify_area.py`. Not run on a unit, not heard.
+
 ### The 48 programs (27 November 2026)
 
 The owner allowed every program that plays bit for bit in the open form, 76, then chose 58 of them once the 76 did not
