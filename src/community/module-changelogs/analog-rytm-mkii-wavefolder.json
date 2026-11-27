@@ -5,8 +5,7 @@
     "changes": [
       "First library release, for Analog Rytm MKII OS 1.74 on the Modwerk base: a wavefolder on the send bus.",
       "Send each track from its SEND page (AMP twice); choose WAVEFOLDER on SEND FX (DELAY twice on the FX track, FUNC + A).",
-      "Eight controls, FOLD to BLND, lockable on the FX track; DYN makes loud hits fold more than ghost notes.",
-      "Not yet tested on a unit: this exact build."
+      "Eight controls, FOLD to BLND, lockable on the FX track; DYN makes loud hits fold more than ghost notes."
     ]
   }
 ]

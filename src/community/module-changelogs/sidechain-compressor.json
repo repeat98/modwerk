@@ -35,7 +35,7 @@
       "Twelve large selections that 0.1.1 built (Euclid with Scale Quantizer, or eight or more modules) no longer fit in the effect menu.",
       "Installs over USB on the beta base, also when the bank's effects fill a DSP core (#791). With Mute Modes, a muted key track still drives the compressor.",
       "On the beta base: a key from the other DSP core now always arrives with the same short delay, and removing the module no longer stops the sync with an error.",
-      "Known issue: a COMPRESSOR first picked while the unit plays has no KEY page until you stop the transport. The USB version is not yet tested across a power cycle."
+      "Known issue: a COMPRESSOR first picked while the unit plays has no KEY page until you stop the transport."
     ]
   },
   {
@@ -52,8 +52,7 @@
     "date": "2026-10-05",
     "changes": [
       "First Modwerk release as standalone firmware: COMPRESSOR gets a key source selection and side-chain monitoring.",
-      "Over USB on the fixed beta base, the KEY page now appears and opening COMPRESSOR's SETUP no longer crashes the unit.",
-      "Known issue: over USB, keying from the other DSP core, MON and a power cycle are not yet tested."
+      "Over USB on the fixed beta base, the KEY page now appears and opening COMPRESSOR's SETUP no longer crashes the unit."
     ],
     "sourceCommit": "8cce62689c269a5d6d70bfc8e087a843eb3a8caf"
   }

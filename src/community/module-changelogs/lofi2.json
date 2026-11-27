@@ -6,7 +6,7 @@
       "Fixes DOWN and UP sustaining themselves with FDBK near 127 after the input stops (octabam issue 825). You no longer need to keep FDBK at 120 or below.",
       "Upstream changed the module: Bryan T lowered SHIFT's feedback limit, so every FDBK setting feeds back a little less than in 0.1.0. RING, SRR, BRR, LPF and the knobs are unchanged.",
       "Known issue: four LOFI2 in SHIFT on T5-T8 with FX1 in use locked up an MKII (octabam issue 850). Over USB the base allows two per DSP core; in card builds avoid four on one core.",
-      "Known issue: a very faint SHIFT residue remains after the input stops, and reloads, power cycles and several instances are not yet tested on hardware with 0.1.1."
+      "Known issue: a very faint SHIFT residue remains after the input stops."
     ]
   },
   {

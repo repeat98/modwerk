@@ -12,6 +12,7 @@ typedef unsigned short u16;
 typedef unsigned int u32;
 #define U32(a) (*(volatile u32 *)(a))
 #define IMAGE __attribute__((section(".data"))) /* loader-owned data in the image, not bss */
+#define CUR_TRACK (*(const volatile u8 *)0x100b14ccu) /* the active track 0..7 (Play Modes reads it too) */
 
 extern const u8 __image_start[];
 static const volatile u8 *mv_page IMAGE;
@@ -22,26 +23,41 @@ static u8 mv_kill IMAGE;       /* the tracks STOP's tail kill holds this frame, 
 /* shortcut: finds the module's effect id through its page recipe, which the builder puts before this code (its
  * 'MWPG' head at the module's start) and in which the base keeps the page it installed (fxpage.c: recipe + 48;
  * the page's byte 3 is the id); upgrade when the loader hands a module its handle (dsp.c's note). */
+static u32 mv_installed(void);
 static int mv_id(void)
+{
+    u32 d = mv_installed();
+    return d ? ((const volatile u8 *)d)[3] : -1;
+}
+
+/* The page the base installed, or 0. */
+static u32 mv_installed(void)
 {
     if (!mv_page) {
         const volatile u8 *p = __image_start - 4;
         for (unsigned n = 0; n < 16384u && !mv_page; n += 4u, p -= 4)
             if (p[0] == 'M' && p[1] == 'W' && p[2] == 'P' && p[3] == 'G') mv_page = p;
-        if (!mv_page) return -1;
+        if (!mv_page) return 0;
     }
     u32 d = (u32)mv_page[48] << 24 | (u32)mv_page[49] << 16 | (u32)mv_page[50] << 8 | mv_page[51];
-    if (d < 0x40000000u || d >= 0x48000000u) return -1; /* no page installed yet */
-    return ((const volatile u8 *)d)[3];
+    return d < 0x40000000u || d >= 0x48000000u ? 0 : d; /* 0: no page installed yet */
 }
 
+/* PROG's values a bank uses: up to its last program (Midiverb and Midifex 63, Midiverb II 102). Past it the value map
+ * holds the last program, so the knob would turn with nothing changing (the owner's MKII, 27 November 2026). */
+static unsigned mv_count(unsigned bank)
+{
+    unsigned n = MV_VALUES;
+    while (n > 1u && mv_value[bank][n - 2u] == mv_value[bank][MV_VALUES - 1u]) --n;
+    return n;
+}
+
+/* PROG's value to the program: 0.1.0's values keep their programs (generate.mjs valueMap). */
 static unsigned mv_program(unsigned bank, unsigned prog)
 {
     if (bank > 2u) bank = 2u;
-    unsigned n = mv_bank_count[bank];
-    if (!n) return 0;
-    if (prog >= n) prog = n - 1u;
-    return mv_bank_first[bank] + prog;
+    if (prog >= MV_VALUES) prog = MV_VALUES - 1u;
+    return mv_value[bank][prog];
 }
 
 const char *mv_name(unsigned bank, unsigned prog)
@@ -89,6 +105,13 @@ void mv_frame(void)
     int id = mv_id();
     if (id < 0) return;
     volatile u8 *r = (volatile u8 *)(0x80000110u + (U32(0x800000e0u) & 1u) * 512u);
+    /* PROG's count follows the active track's BANK, so a whole turn of the knob runs from the bank's first program to its
+     * last on every bank (the step is 32768 / count). The stager reads it from the page (fxpage.s mw_knob_step). */
+    unsigned shown = CUR_TRACK;
+    volatile u8 *page = (volatile u8 *)mv_installed();
+    if (shown < 8u && r[64u * shown + 56u] == 0 && r[64u * shown + 57u] == (u8)id
+        && page[0x16] == 'P' && page[0x17] == 'R' && page[0x18] == 'O' && page[0x19] == 'G')
+        *(volatile u32 *)(page + 0x9a) = mv_count(r[64u * shown + 30u] > 2u ? 2u : r[64u * shown + 30u]);
     for (unsigned t = 0; t < 8u; ++t, r += 64) {
         if (r[56] != 0 || r[57] != (u8)id) { mv_g[t] = 0; continue; } /* FX2's id, halfword +56 */
         unsigned g = mv_program(r[30], r[24]);                     /* BANK is slot D, PROG slot A */
