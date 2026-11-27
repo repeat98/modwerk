@@ -80,7 +80,7 @@
     "limitations": [
       "Built for OS 1.74 on Modwerk's base only (it follows the base's AMP record for the trigs).",
       "The settings cannot be p-locked or reached over MIDI: they live outside the sound's parameters.",
-      "20 of the sound's 56 storage bits: a set whose sound fields need more will not link (Voice DAC takes 39).",
+      "34 of the sound's 56 storage bits: a set whose sound fields need more will not link (Voice DAC takes 39, LFO RND 16).",
       "A change reaches a playing voice within about 50 ms."
     ]
   },
@@ -89,12 +89,17 @@
     "core": "0.7",
     "build": "build.json",
     "events": [
-      "ev_tick",
-      "ev_amp_record"
+      "ev_amp_record",
+      "ev_draw",
+      "ev_enc",
+      "ev_key",
+      "ev_tick"
     ],
     "claims": [
-      "ui:SAMPLE key, third press: SMPL LAYER page (core_view_pages)",
-      "param:hidden ids 447-450",
+      "ui:FUNC + SMPL: SAMPLE ENGINE list (stock: sample list, still on knob D)",
+      "ui:UP, DOWN, YES, NO and knobs A-H while the SAMPLE ENGINE list is open",
+      "ui:SAMPLE pages with TRANSIENTS: one page, SMPL stays on it",
+      "param:hidden ids 447-451",
       "audio:sample stream before the voice mixer"
     ]
   },

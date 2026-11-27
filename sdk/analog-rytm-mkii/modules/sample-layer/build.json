@@ -14,6 +14,21 @@
       "order": 50
     },
     {
+      "event": "ev_key",
+      "fn": "sample_layer_key",
+      "order": 30
+    },
+    {
+      "event": "ev_enc",
+      "fn": "sample_layer_enc",
+      "order": 30
+    },
+    {
+      "event": "ev_draw",
+      "fn": "sample_layer_draw",
+      "order": 50
+    },
+    {
       "event": "ev_amp_record",
       "fn": "sample_layer_amp",
       "order": 60
@@ -21,14 +36,27 @@
   ],
   "contribute": [
     {
-      "to": "core_pages",
+      "to": "core_page_fns",
       "order": 14,
       "data": "00000000",
       "relocs": [
         [
           0,
           "abs32",
-          "sym:sample_layer_page",
+          "sym:sample_layer_page_fn",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_page_fns",
+      "order": 14,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:sample_layer_wave_fn",
           0
         ]
       ]
@@ -45,27 +73,16 @@
           0
         ]
       ]
-    },
-    {
-      "to": "core_view_pages",
-      "order": 30,
-      "data": "00000000",
-      "relocs": [
-        [
-          0,
-          "abs32",
-          "sym:sample_layer_view_page",
-          0
-        ]
-      ]
     }
   ],
   "collections": {},
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:SAMPLE key, third press: SMPL LAYER page (core_view_pages)",
-    "param:hidden ids 447-450",
+    "ui:FUNC + SMPL: SAMPLE ENGINE list (stock: sample list, still on knob D)",
+    "ui:UP, DOWN, YES, NO and knobs A-H while the SAMPLE ENGINE list is open",
+    "ui:SAMPLE pages with TRANSIENTS: one page, SMPL stays on it",
+    "param:hidden ids 447-451",
     "audio:sample stream before the voice mixer"
   ],
   "requires": [],
@@ -95,14 +112,14 @@
           "len": 4,
           "stockSha256": "e5f8fd36ae03422ed925d318765825b71c64a7feb414752c116568ef446b2119",
           "op": "ptr",
-          "target": "sample_layer_long_frq"
+          "target": "sample_layer_long_punch"
         },
         {
           "addr": "0x401c56c4",
           "len": 4,
           "stockSha256": "bed5bc611187b4e252e7f1cdb41ebb06d1d35bd1b7927ab3a555f70e619f2529",
           "op": "ptr",
-          "target": "sample_layer_short_frq"
+          "target": "sample_layer_short_punch"
         },
         {
           "addr": "0x401c56cc",
@@ -117,14 +134,14 @@
           "len": 4,
           "stockSha256": "a95a14579daca39a407c3c678c7f9ac8f4da80214ae81e05b6c41ea71307fd9c",
           "op": "ptr",
-          "target": "sample_layer_long_res"
+          "target": "sample_layer_long_dec"
         },
         {
           "addr": "0x401c56f8",
           "len": 4,
           "stockSha256": "f5854d69cab150b63b418528c3dd8449cbbd8d33c65577da68c2e71964c96325",
           "op": "ptr",
-          "target": "sample_layer_short_res"
+          "target": "sample_layer_short_dec"
         },
         {
           "addr": "0x401c5700",
@@ -139,14 +156,14 @@
           "len": 4,
           "stockSha256": "2c5ed57d74041ce334ae615a8082bb5b0c8efc8a75a47c15e99c4a3da8d6ad3b",
           "op": "ptr",
-          "target": "sample_layer_long_typ"
+          "target": "sample_layer_long_bas"
         },
         {
           "addr": "0x401c572c",
           "len": 4,
           "stockSha256": "817a418163c1998c9c3b2938a457f7b8daf3baf760f75f451a90dbb9a9d5fc84",
           "op": "ptr",
-          "target": "sample_layer_short_typ"
+          "target": "sample_layer_short_bas"
         },
         {
           "addr": "0x401c5734",
@@ -169,23 +186,50 @@
           "len": 4,
           "stockSha256": "9196b75b01b21e06c8fee129e13f231ca5147b94f714893f543c5d9a5cd2c907",
           "op": "ptr",
-          "target": "sample_layer_long_dec"
+          "target": "sample_layer_long_wid"
         },
         {
           "addr": "0x401c5760",
           "len": 4,
           "stockSha256": "3c2617ce41cd14dd0cc649c3b466feed919751a877b0f511bb8089d6a3e2a5e6",
           "op": "ptr",
-          "target": "sample_layer_short_dec"
+          "target": "sample_layer_short_wid"
+        },
+        {
+          "addr": "0x401c5768",
+          "len": 4,
+          "stockSha256": "390b36a09502b05d4f8c27aea2636c6b7fd05b27d742ed32074ffea1f888ebe4",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c578c",
+          "len": 4,
+          "stockSha256": "22399d21e0c132ac9a6be2d67089ca8d07c6af4fb0a63e47c1a19690d6135038",
+          "op": "ptr",
+          "target": "sample_layer_long_shf"
+        },
+        {
+          "addr": "0x401c5794",
+          "len": 4,
+          "stockSha256": "53d1770045a4eee0b7bd342ba6071c232b278181700fb03163a475bb906c8344",
+          "op": "ptr",
+          "target": "sample_layer_short_shf"
         }
       ]
     }
   },
   "storage": [
     {
-      "sym": "sample_layer_cfg",
+      "sym": "sample_layer_eng",
       "scope": "sound",
       "bits": 20
+    },
+    {
+      "sym": "sample_layer_flt",
+      "scope": "sound",
+      "bits": 14
     }
   ]
 }
