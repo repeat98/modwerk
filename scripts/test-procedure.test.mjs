@@ -61,6 +61,17 @@ describe('the steps', () => {
     expect(STEPS.filter(step => step.unit).map(step => step.id)).toEqual(['unit-read', 'unit-pass', 'soak', 'cost-unit', 'restore'])
   })
 
+  it('asks device:price for no curve when the package has no instances (USB Audio, a utility), and for one otherwise', async () => {
+    const price = async instances => {
+      const deps = { ...fakeDeps(), instances: () => instances }
+      await runProcedure(moduleCtx(), deps)
+      return deps.ran.find(line => line.startsWith('npm run device:price'))
+    }
+    expect(await price(false)).not.toContain('--curve')
+    expect(await price(false)).toMatch(/ \/out\/vibrato\.mwrm$/)
+    expect(await price(true)).toContain('--curve T1,T3,T6,T7')
+  })
+
   it('calls the existing tools: module:doctor, modules:compat, module:dev, device:test, device:price', async () => {
     const deps = fakeDeps()
     const steps = await runProcedure(moduleCtx(), deps)

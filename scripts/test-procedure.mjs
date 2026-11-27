@@ -41,6 +41,7 @@ import { parseArgs } from 'node:util'
 import { pathToFileURL } from 'node:url'
 import { emulatorArgs, sessionEnv, sessionSockets, startSession } from './octatrack-emulator/session.mjs'
 import { bankPrograms } from './octatrack-part-state.mjs'
+import { hasInstances } from './octatrack-price.mjs'
 
 export const ROOT = resolve(import.meta.dirname, '..')
 
@@ -237,9 +238,10 @@ export function plan(step, ctx) {
       // A module also reads its instance curve and runs the admission test (alone on the empty and the medium pattern: admitted,
       // nothing dropped), and device:price fails the step when either does not carry a release (owner, 23 November 2026).
       // --price-base names the base for the record: then the price and the curve land in the module's folder, a draft's too.
+      // Only an effect or a machine has instances to curve; another module (USB Audio, a utility) is priced at rest alone.
       return { commands: [npmRun('device:price', '--share', ctx.share, '--out', join(ctx.out, 'price.json'), '--scene', ctx.scene ?? DEFAULT_SCENE,
         ...(module && ctx.priceBase && ctx.source ? ['--write', '--base', ctx.priceBase] : []),
-        ...(module ? ['--curve', CURVE_TRACKS, ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), pkg] : ctx.priceModules ?? []))] }
+        ...(module ? [...(ctx.instances !== false ? ['--curve', CURVE_TRACKS] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), pkg] : ctx.priceModules ?? []))] }
     case 'restore':
       return { commands: [node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share), partRestore(ctx)], compare: 'unit-read', compareAt: 0, why: NOT_PUT_BACK }
     case 'by-hand': return { todo: BY_HAND[ctx.kind] }
@@ -328,6 +330,7 @@ export async function runSteps(ids, ctx, deps, results = []) {
         ctx.pkg ??= builtPackage(ctx)
         if (!deps.exists(ctx.pkg)) { code = 1; result.reason = 'no package at ' + ctx.pkg }
         else ctx.build.package = { path: ctx.pkg, sha256: deps.sha256(ctx.pkg) }
+        if (code === 0 && ctx.kind === 'module') try { ctx.instances = deps.instances?.(ctx.id, ctx.pkg) } catch { /* unread: step 9 still asks for the curve */ }
       }
       if (code === 0 && step.id === 'unit-read') { ctx.startInventory = reading(outputs.at(-1)); if (part?.banks) ctx.partStart = part }
       // The inventory is compared whenever its own command ran, also when the Part could not be put back after it.
@@ -595,6 +598,7 @@ function realDeps(root) {
     exists: path => existsSync(path),
     read: path => readFileSync(path, 'utf8'),
     sha256: path => createHash('sha256').update(readFileSync(path)).digest('hex'),
+    instances: (id, path) => hasInstances({ root, id, data: readFileSync(path) }),
     exec: async (argv, log, env) => { const { state } = launch(argv, log, env); const code = await state.done; return { code, output: state.output } },
     session: async (spec, log) => {
       const { package: pkg, ...own } = spec

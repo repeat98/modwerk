@@ -3,7 +3,7 @@
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
 import { frameCostTable } from '../src/engine/elekloader/set-package.ts'
-import { added, allocationReading, combined, curveFit, curveRunProblems, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, allowanceOf } from './octatrack-price.mjs'
+import { added, allocationReading, combined, curveFit, curveRunProblems, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, allowanceOf, hasInstances } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -178,6 +178,13 @@ it('reads the Part\'s CPU allowance from the session\'s cpu reply, so a curve ca
   expect(allowanceOf('error: this base does not answer CPU\n')).toBeUndefined() // then the curve leaves the allowance alone
 })
 
+
+it('tells which packages have instances to curve: an effect by its header, a machine by its descriptors', () => {
+  const header = slots => { const data = Buffer.alloc(68); data.write('MWRM', 0, 'ascii'); if (slots) { data.writeUInt32BE(1, 32); data[39] = slots } return data }
+  expect(hasInstances({ root: '.', id: 'no-such-module', data: header(1) })).toBe(true) // an FX1 effect
+  expect(hasInstances({ root: '.', id: 'grain', data: header(0) })).toBe(true) // a machine
+  expect(hasInstances({ root: '.', id: 'usb-audio-out-tracks-main-cue', data: header(0) })).toBe(false) // neither: priced at rest alone
+})
 
 it('fails a requested curve when an unpublished renamed file measured only its rest', () => {
   // Observed output: dev.mwrm was not resolved to a draft machine; old CLI exited0.

@@ -114,6 +114,8 @@ export function priceFileTarget(file, data, catalogue) {
   const version = row && createHash('sha256').update(data).digest('hex') === row.sha256 ? row.version : 'file'
   return { id, name, slots, version, file }
 }
+/** Whether --curve can read this package's instances, as curve() below tells them: an effect by its header's slots, a machine by its descriptors. */
+export const hasInstances = ({ root, id, data }) => !!priceFileTarget(id, data, []).slots || machineDescriptors({ root, id }).length > 0
 
 const OVERLOAD = 125 // percent of a frame: no skips up to ~115 on an MKII, drops from ~120 (22 Nov 2026)
 /** Readings a state by default (--readings): one 8-s reading could not tell a module's cost from the scene's own scatter
