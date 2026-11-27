@@ -77,11 +77,11 @@ export function ModelCyclesUnit({ device, header, request = browserMidi() }: { d
     <a className="button button-quiet" href={deviceHref(device.id)}>Open {device.name} page <Icon name="arrow" size={15} /></a>
   </div>
   return <div className="configuration-page octatrack-hub">
-    {header}
+    {header ?? <header className="hub-page-heading"><div><h1>Your {device.name}</h1></div></header>}
     <div className="hub-split">
       <header className="hub-hero">
         <DeviceImage device={device} eager />
-        <div><h1 className="hub-view-title">{device.name}</h1>
+        <div><h2 className="hub-view-title">{device.name}</h2>
           <p role="status"><span className={'unit-led is-' + (ready ? 'on' : status === 'connecting' ? 'load' : 'off')} aria-hidden="true" />{line}</p>
           {error && <p role="alert">{error}</p>}
         </div>
@@ -98,11 +98,11 @@ export function ModelCyclesUnit({ device, header, request = browserMidi() }: { d
       </nav>
       <div className="hub-pane">
         <section className="hub-view hub-view-status" aria-label="Status"><div className="hub-console">
-          <Meter area="hub-cell-cpu" title="Audio · working now" value={latest?.audio} note="Its share of the CPU, last half second" />
-          <Meter area="hub-cell-dsp1" title="Busiest block · now" value={latest?.block} note="The dearest audio block of that half second" />
-          <Meter area="hub-cell-dsp2" title="Busiest block · since switched on" value={ready ? tenths(load?.peakPercent) : null} note={load ? count(load.windows, 'window', 'windows') + ' measured' : undefined} />
+          <Meter area="hub-cell-cpu" title="Audio now" value={latest?.audio} note="Its share of the CPU, last half second" />
+          <Meter area="hub-cell-dsp1" title="Peak block now" value={latest?.block} note="The busiest audio block, last half second" />
+          <Meter area="hub-cell-dsp2" title="Peak since power-on" value={ready ? tenths(load?.peakPercent) : null} note={load ? count(load.windows, 'window', 'windows') + ' measured' : undefined} />
           <LoadChart points={points} now={now} series={SERIES} onClear={clear} off={off}
-            note={latest ? 'Every two seconds while this page is open. Audio is the share of the CPU the six tracks’ sound takes; the rest runs the screen and the sequencer.' : 'Waiting for the next reading.'} />
+            note={latest ? 'Every two seconds while this page is open. Audio is the six tracks’ share of the CPU.' : 'Waiting for the next reading.'} />
           <section className="hub-cell hub-cell-health" aria-labelledby="mc-base-cell">
             <h3 id="mc-base-cell">Base</h3>
             {!ready || !identity ? offCell : <>

@@ -39,6 +39,22 @@ function fakeDeps({ fail = [], inventories = [INVENTORY, INVENTORY], idents = ['
 const statuses = steps => Object.fromEntries(steps.map(step => [step.id, step.status]))
 const PREFLIGHT = 'python3 -B scripts/octatrack-preflight.py --pick-pattern 2'
 
+describe('a unit off USB for a moment', () => {
+  it('asks a reading again while the unit is away, never a step that presses keys', async () => {
+    const deps = fakeDeps(), exec = deps.exec
+    let away = 2, waited = 0
+    deps.wait = async () => { waited++ }
+    deps.exec = async (argv, log, env) => {
+      if (argv.join(' ').endsWith('do inventory --socket /tmp/share.sock') && away > 0) { away--; deps.ran.push(argv.join(' ')); return { code: 1, output: 'Error: Bench: err the unit is away' } }
+      return exec(argv, log, env)
+    }
+    const steps = await runProcedure(moduleCtx(), deps)
+    expect(waited).toBe(2)
+    expect(statuses(steps)['unit-read']).toBe('passed')
+    expect(deps.ran.filter(line => line.startsWith('npm run device:test')).length).toBe(1)
+  })
+})
+
 describe('the steps', () => {
   it('runs in the fixed order, the unit steps after the software, emulator and build steps', () => {
     expect(STEPS.map(step => step.id)).toEqual(['software', 'compat', 'build', 'cost-model', 'emulator', 'unit-read', 'unit-pass', 'soak', 'cost-unit', 'restore', 'by-hand', 'developer'])

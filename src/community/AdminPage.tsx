@@ -32,7 +32,7 @@ function PublishedModules({ onChange }: { onChange: () => void }) {
   useEffect(() => { void api<PublishedModule[]>('/catalog').then(setItems).catch(error => setError(error.message)).finally(() => setLoading(false)) }, [])
   async function withdraw() { setBusy(true); setError(''); try { await post('/admin/modules/' + selected + '/withdraw', { note }); setItems(await api<PublishedModule[]>('/catalog')); setSelected(''); setNote(''); onChange() } catch (error) { setError(error instanceof Error ? error.message : 'Unable to withdraw module.') } finally { setBusy(false) } }
   return <section className="configuration-section">
-    <div className="section-title"><h2>Approved contributions</h2>{!loading && !error && <span className="pill">{items.length}</span>}</div>
+    <div className="section-title"><h2>Approved contributions{!loading && !error && <span className="subtle">{items.length}</span>}</h2></div>
     <p className="service-note">Updates stay private until approved. Browser builds follow the pinned catalog.</p>
     {loading && <p role="status">Loading modules…</p>}
     {items.map(item => <article className="admin-contribution" key={item.module_id}>

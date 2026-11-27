@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c",
+    "src/hooks.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_settings",
+      "fn": "light_taps_settings",
+      "order": 50
+    },
+    {
+      "event": "ev_tick",
+      "fn": "light_taps_tick",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "settings:LIGHT TAPS",
+    "pad:panel pad event post (0x4008232c)",
+    "pad:panel key event post (0x40082492)",
+    "pad:panel task tick (0x40081944)"
+  ],
+  "storage": [
+    {
+      "sym": "light_taps_enabled",
+      "scope": "project",
+      "bits": 1
+    }
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {
+        "STRING_CTOR": "0x401bcff0"
+      },
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x4008232c",
+          "len": 6,
+          "stockSha256": "d10ca2a6bdcdf1414d90bd900235f6174ea690fdf7b9d1a9feb00fbde765f9c8",
+          "op": "jsr",
+          "target": "light_taps_post_pad"
+        },
+        {
+          "addr": "0x40082492",
+          "len": 6,
+          "stockSha256": "d10ca2a6bdcdf1414d90bd900235f6174ea690fdf7b9d1a9feb00fbde765f9c8",
+          "op": "jsr",
+          "target": "light_taps_post_key"
+        },
+        {
+          "addr": "0x40081944",
+          "len": 6,
+          "stockSha256": "5750ddc16f2c2e4c67ef6f2bb3ac5faabbcd04371fa90ee5097bb917d26a9e65",
+          "op": "jsr",
+          "target": "light_taps_ms"
+        }
+      ]
+    }
+  }
+}

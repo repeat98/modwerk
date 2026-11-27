@@ -38,8 +38,7 @@ export function ForumModeration({ reviewed }: { reviewed: boolean }) {
   return <>
     <AdminViews section="forum" views={reportViews} active={view}/>
     <section className="configuration-section">
-      <div className="section-title"><h2>{reviewed ? 'Reviewed reports' : 'Reports to review'}</h2>
-        {!loading && !loadError && <span className="pill">{items.length}</span>}
+      <div className="section-title"><h2>{reviewed ? 'Reviewed reports' : 'Reports to review'}{!loading && !loadError && <span className="subtle">{items.length}</span>}</h2>
       </div>
       {loading && <p role="status">Loading reports…</p>}
       {items.length === 100 && <p className="service-note">Showing the latest 100 matching reports.</p>}

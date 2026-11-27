@@ -47,4 +47,6 @@ device commands take turns on it by themselves (`scripts/unit-queue.mjs`), so no
   and on its Windows host keep separate queues.
 - The queue replaces only asking whether the unit is free. What runs on the developer's unit still needs their OK (on
   the owner's computer it stands, [OWNER_OPERATIONS.md](OWNER_OPERATIONS.md)), and power cycles, flashing and Keeps stay
-  as [driving the Octatrack](OCTATRACK_DRIVING.md) says.
+  as [driving the Octatrack](OCTATRACK_DRIVING.md) says. A go that reaches a session only through another session is
+  not that OK, and its permission check refuses the unit commands: before leaving the unit unattended, give each
+  session that will drive it the go yourself.

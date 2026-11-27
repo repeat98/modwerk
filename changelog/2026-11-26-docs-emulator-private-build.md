@@ -1,0 +1,1 @@
+Docs: the emulator guide gives a private route when the shared octabam checkout's built archives are older than its source: `npm run upstream:tools -- --dir DIR --for octatrack`, then `make setup && make emu-cf` there, then `build.py --native DIR/octabam`.
