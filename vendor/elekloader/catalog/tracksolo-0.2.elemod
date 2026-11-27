@@ -1,0 +1,571 @@
+{
+ "elemod": 2,
+ "id": "tracksolo",
+ "version": "0.2",
+ "title": "Track Solo",
+ "description": "Track Solo, after the Octatrack mod: hold TRK, then hold UP, and the active track plays alone until you let go of UP; TRK + DOWN latches the solo (again to unlatch, or on another track to move it). The other tracks' note trigs simply don't fire, so sounding notes ring out and the stock mutes are never touched. S and the track number show in the top-right corner. Needs seq-events.",
+ "category": "Performance",
+ "author": "Cere, made with Claude",
+ "license": "GPL-2.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.54",
+  "syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "section3_sha256": "5c58bf9e3949ef09977c5fc007a61e8d026931f67f1621238379dfb8ee4d31a2",
+  "section3_len": 2479680
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 652,
+   "parts": [
+    [
+     "hex",
+     "2f02720f202f0008b28065384aaf001067362239000000004a816d382239000000004a816d38b28056c141f90000000044811401118108004a026708206f001470fec190241f4e7541f9000000001430080060e42239000000004a816cc8420141f90000000011810800"
+    ],
+    [
+     "stock",
+     "0x4005f2d6",
+     8
+    ],
+    [
+     "hex",
+     "7402206f00102228000c20280010b48167507419760ec480b68166622239000000004a81660000a84ab900000000674653824a8266407401760f23c20000000020394197c6b4b68065022200700123c10000000023c000000000"
+    ],
+    [
+     "stock",
+     "0x4003f756",
+     8
+    ],
+    [
+     "hex",
+     "76117201c083"
+    ],
+    [
+     "stock",
+     "0x400d55f6",
+     8
+    ],
+    [
+     "hex",
+     "23c000000000"
+    ],
+    [
+     "stock",
+     "0x401295dc",
+     8
+    ],
+    [
+     "hex",
+     "760fb68166f22239000000004a8166644ab90000000067e053824a8266da20394197c6b4740fb48065022200203900000000760123c300000000b280674e700123c10000000023c0000000007001608e72117401c081b480678276ff700142b90000000023c30000000023c2000000006000ff6c7211c08153804a806700ff5e42b90000000070016000ff5472ff700123c10000000023c00000000060ae2039000000004a806d46203900000000b0b90000000067187201206f000423c00000000042b900000000114100204e754ab90000000067f67201206f000423c00000000042b9000000001141002060de203900000000b0b90000000066ba60d02f0a20390000"
+    ],
+    [
+     "stock",
+     "0x400a62ea",
+     8
+    ],
+    [
+     "hex",
+     "4a806d722479000000004a8a6d62"
+    ],
+    [
+     "stock",
+     "0x4002d292",
+     8
+    ],
+    [
+     "hex",
+     "006548780037487800572f024eb900000000"
+    ],
+    [
+     "stock",
+     "0x4002ccd2",
+     10
+    ],
+    [
+     "hex",
+     "006548780037487800572f024eb9000000004fef0030486a0001487900000000"
+    ],
+    [
+     "stock",
+     "0x400ac20e",
+     10
+    ],
+    [
+     "hex",
+     "00594879"
+    ],
+    [
+     "stock",
+     "0x40121046",
+     8
+    ],
+    [
+     "hex",
+     "00000000"
+    ],
+    [
+     "stock",
+     "0x4000cf22",
+     8
+    ],
+    [
+     "hex",
+     "4e75247900000000608c"
+    ],
+    [
+     "stock",
+     "0x4019a41e",
+     8
+    ],
+    [
+     "hex",
+     "ffffffffffff53256400"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 32
+  }
+ },
+ "symbols": {
+  "held": [
+   ".run",
+   644
+  ],
+  "silent": [
+   ".bss",
+   4
+  ],
+  "latched": [
+   ".run",
+   640
+  ],
+  "swallow_up": [
+   ".bss",
+   24
+  ],
+  "trk_held": [
+   ".bss",
+   28
+  ],
+  "redraw": [
+   ".bss",
+   0
+  ],
+  "swallow_down": [
+   ".bss",
+   20
+  ],
+  "shown": [
+   ".run",
+   636
+  ],
+  "solo_key": [
+   ".run",
+   110
+  ],
+  "solo_trig": [
+   ".run",
+   0
+  ],
+  "solo_tick": [
+   ".run",
+   398
+  ],
+  "solo_draw": [
+   ".run",
+   494
+  ]
+ },
+ "exports": [
+  "solo_draw",
+  "solo_key",
+  "solo_tick",
+  "solo_trig"
+ ],
+ "imports": [
+  "fw_fillrect",
+  "fw_font5",
+  "fw_framerect",
+  "fw_textf"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   20,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   30,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   44,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   74,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   86,
+   "abs32",
+   "sec:.run",
+   640
+  ],
+  [
+   ".run",
+   98,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   144,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   156,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   174,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   194,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   200,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   228,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   248,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   258,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   286,
+   "abs32",
+   "sec:.run",
+   640
+  ],
+  [
+   ".run",
+   294,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   306,
+   "abs32",
+   "sec:.run",
+   640
+  ],
+  [
+   ".run",
+   312,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   336,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   342,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   348,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   370,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   386,
+   "abs32",
+   "sec:.run",
+   640
+  ],
+  [
+   ".run",
+   392,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   400,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   410,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   416,
+   "abs32",
+   "sec:.run",
+   636
+  ],
+  [
+   ".run",
+   430,
+   "abs32",
+   "sec:.run",
+   636
+  ],
+  [
+   ".run",
+   436,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   448,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   462,
+   "abs32",
+   "sec:.run",
+   636
+  ],
+  [
+   ".run",
+   468,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   480,
+   "abs32",
+   "sec:.run",
+   640
+  ],
+  [
+   ".run",
+   486,
+   "abs32",
+   "sec:.run",
+   636
+  ],
+  [
+   ".run",
+   498,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   514,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   544,
+   "abs32",
+   "sym:fw_fillrect",
+   0
+  ],
+  [
+   ".run",
+   572,
+   "abs32",
+   "sym:fw_framerect",
+   0
+  ],
+  [
+   ".run",
+   586,
+   "abs32",
+   "sec:.run",
+   648
+  ],
+  [
+   ".run",
+   604,
+   "abs32",
+   "sym:fw_font5",
+   0
+  ],
+  [
+   ".run",
+   612,
+   "abs32",
+   "sym:fw_textf",
+   0
+  ],
+  [
+   ".run",
+   628,
+   "abs32",
+   "sec:.run",
+   640
+  ]
+ ],
+ "sites": [],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_fire_trig",
+   "order": 80,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:solo_trig",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_key",
+   "order": 20,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:solo_key",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_tick",
+   "order": 60,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:solo_tick",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_draw",
+   "order": 72,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:solo_draw",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "core": "4.1",
+  "names": [
+   "key:TRK+UP",
+   "key:TRK+DOWN"
+  ]
+ },
+ "requires": [
+  "core",
+  "seq-events"
+ ],
+ "conflicts": [],
+ "build": {
+  "sources": {
+   "tracksolo.c": "008bbe38b5e480e9cd925cfcf1a719522153b89041c8070c216a8f1184b86c76"
+  }
+ },
+ "signature": null
+}

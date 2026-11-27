@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/tracksolo.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-DACTIVE_TRACK_AT=0x4197c6b4"
+  ],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_fire_trig",
+      "fn": "solo_trig",
+      "order": 80
+    },
+    {
+      "event": "ev_key",
+      "fn": "solo_key",
+      "order": 20
+    },
+    {
+      "event": "ev_tick",
+      "fn": "solo_tick",
+      "order": 60
+    },
+    {
+      "event": "ev_draw",
+      "fn": "solo_draw",
+      "order": 72
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:any page:TRK+UP (hold)",
+    "ui:any page:TRK+DOWN"
+  ],
+  "requires": [
+    "seq-events"
+  ],
+  "derive": null,
+  "releases": {
+    "1.54": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}
