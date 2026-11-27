@@ -61,6 +61,17 @@ describe('the steps', () => {
     expect(STEPS.filter(step => step.unit).map(step => step.id)).toEqual(['unit-read', 'unit-pass', 'soak', 'cost-unit', 'restore'])
   })
 
+  it('asks device:price for no curve when the package has no instances (USB Audio, a utility), and for one otherwise', async () => {
+    const price = async instances => {
+      const deps = { ...fakeDeps(), instances: () => instances }
+      await runProcedure(moduleCtx(), deps)
+      return deps.ran.find(line => line.startsWith('npm run device:price'))
+    }
+    expect(await price(false)).not.toContain('--curve')
+    expect(await price(false)).toMatch(/ \/out\/vibrato\.mwrm$/)
+    expect(await price(true)).toContain('--curve T1,T3,T6,T7')
+  })
+
   it('calls the existing tools: module:doctor, modules:compat, module:dev, device:test, device:price', async () => {
     const deps = fakeDeps()
     const steps = await runProcedure(moduleCtx(), deps)
@@ -218,9 +229,10 @@ describe('the steps', () => {
     const files = {}
     files.onQueue = () => { files['/out/unit-steps.json'] = JSON.stringify([{ id: 'unit-read', title: 'Read the unit', unit: true, status: 'passed', commands: [], seconds: 3 }]) }
     const deps = fakeDeps({ files })
-    const steps = await runProcedure(moduleCtx({ tools: { unitQueue: true }, soak: { programs: '32-35', pcChannel: '11', autoChannel: '11' } }), deps)
+    const steps = await runProcedure(moduleCtx({ tools: { unitQueue: true }, soak: { programs: '32-35', pcChannel: '11', autoChannel: '11' }, priceBase: 'base 0.8.3, MKII', priceModules: ['/p/a.mwrm', '/p/b.mwrm'] }), deps)
     const queued = deps.ran.find(line => line.startsWith('npm run unit'))
     expect(queued).toContain('--soak-seconds 120 --soak-programs 32-35 --soak-pc-channel 11 --soak-auto-channel 11')
+    expect(queued).toContain('--price-base base 0.8.3, MKII --price-modules /p/a.mwrm,/p/b.mwrm') // step 9 writes the price in there
     expect(queued).toMatch(/^npm run unit -- run --note test:procedure vibrato e84798eb --expect 15m -- node scripts\/test-procedure.mjs vibrato --package \/out\/vibrato.mwrm --share \/tmp\/share.sock --out \/out .*--unit-phase \/out\/unit-steps.json$/)
     expect(deps.ran.some(line => line.startsWith('npm run device:test'))).toBe(false) // the inner run does that
     expect(steps.find(step => step.id === 'unit-read').status).toBe('passed')
