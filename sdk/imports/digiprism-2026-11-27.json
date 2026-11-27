@@ -11,7 +11,7 @@
   },
   "changes": [
     "DigiPrism 0.2 (tag v0.2, 0945617), imported unchanged: dsp.c, ui.c, dprism.h, tables.h. It patches no stock site: it adds itself to fxkit's effects list and core's Mod Menu, owns the audio through fxkit while active, and keeps its settings in the project (DCHR).",
-    "build.json is the author's mod.json with its buffer region; it requires fxkit, Modwerk's shared dependency built from irpina's source."
+    "build.json is the author's mod.json with its buffer region and -Wno-error=incompatible-pointer-types (GCC 16.2 refuses the source's int/int32_t function pointers); it requires fxkit, Modwerk's shared dependency built from irpina's source."
   ],
   "files": [
     {

@@ -9,6 +9,7 @@ Modwerk 0.2.0 is the author's released 0.2 files, unchanged. Its evidence tier i
 - **Files.** The author's released `digihoard-0.2.elemod` (`671b0d17…`), `digihoard-0.2-os1.44.elemod` (`2683e840…`), pinned unchanged in `sdk/imports/elekloader-digihoard-2026-11-27.json`. They match elekloader 0.11.0's catalog pins. `src/` is the author's source at `029a64e`, the revision the files were released from.
 - **Linked.** The author's released 0.2 files, pinned unchanged, linked locally with core 5.4 and Modwerk's fxkit 0.1.0: alone, beside each of the other five effect pedals, all six together, and beside DigiHealth and DigiTables on OS 1.43; on OS 1.44 every pair but KitBank (core 2.x only). Through the site's build path on the vendored kit 0.7.0, against stock OS files recognised by their hashes.
 - **Memory.** 27,163 B of the mods' RAM, no fast RAM, as the builder reads the files.
+- **Source compile.** Modwerk's GCC 16.2 refuses the source's function-pointer initialisations that mix `int` and `int32_t` (GCC 14 made them errors; the author's compiler accepted them), so `build.json` adds `-Wno-error=incompatible-pointer-types`. The library builds the author's released files, not this compile.
 
 ## Documentation capture — 27 November 2026
 

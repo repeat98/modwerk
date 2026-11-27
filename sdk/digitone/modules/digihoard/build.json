@@ -5,7 +5,9 @@
     "src/ui.c"
   ],
   "defsym": {},
-  "cflags": [],
+  "cflags": [
+    "-Wno-error=incompatible-pointer-types"
+  ],
   "weak": [],
   "subscribe": [
     {
