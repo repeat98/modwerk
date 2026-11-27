@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 3,
+  "id": "mono-synth",
+  "name": "Mono Synth",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "chevyone",
+    "credits": [
+      "chevyone"
+    ]
+  },
+  "maintainers": [
+    "chevyone"
+  ],
+  "presentation": {
+    "label": "MONO SYNTH",
+    "family": "Machine",
+    "summary": "SY MONO: a monophonic digital oscillator voice, saw and pulse with a sub, noise and a pitch LFO, through the Rytm's own analog filter and AMP.",
+    "overview": "An original take on a small monosynth's oscillator section, computed on the Rytm's ColdFire at 48 kHz. One band-limited oscillator gives a saw and a pulse, a sub one or two octaves down and white noise mix in, and a triangle LFO of the machine's own bends the pitch for vibrato, trills and wobbles. The track's own analog filter, AMP and OVR shape it.",
+    "highlights": [
+      "Band-limited saw and pulse, mixed.",
+      "A sub one or two octaves down on one knob.",
+      "A pitch LFO from 0.1 to 30 Hz, up to three octaves deep.",
+      "Tap encoder A for the range: 16', 8', 4', 2'."
+    ],
+    "usage": [
+      "Select the BD track, press FUNC + SRC, choose SY MONO and press YES.",
+      "Shape it with the FLTR and AMP pages, as any Rytm voice.",
+      "MOD 20 is a vibrato; raise LFO for a trill."
+    ]
+  },
+  "access": {
+    "location": "The machine list of any track on pads 1 to 8 (BD, SD, RS, CP, BT, LT, MT, HT): SY MONO, in the SY section. Its SYNTH page.",
+    "steps": [
+      "Select a track and press FUNC + SRC.",
+      "Choose SY MONO and press YES.",
+      "On the SYNTH page, tap encoder A to step the range."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, on the Modwerk base's digital voices.",
+      "Offered on pads 1 to 8 only: six of the Rytm's eight voices (BD, SD, RS/CP, BT, LT, MT/HT). Tracks that share a voice play one sound at a time. At about 4 % of the audio block a voice, six playing at once fill what the digital voices have; it is not offered on the hi-hats and cymbals.",
+      "A voice goes quiet once its AMP decay has surely ended (an estimate from the record sent to the amp, with margin); with AMP DEC at INF it keeps rendering."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": ["ev_amp_record"],
+    "claims": [
+      "machine:40",
+      "ui:SYNTH page of the SY MONO machine"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "About 3.3 % of the audio block a voice, 4.1 % at worst",
+      "method": "hardware",
+      "conditions": "The base's mw_voice_meter on one MKII, OS 1.74, build SM01 RAM-booted: one voice, 16 notes over MIDI, 43,344 blocks, mean 3.26 %, dearest block 4.12 % (27 November 2026). SM02, six voices left on the machine at rest: 2.04 % mean, 4.30 % dearest a voice; the voice renders as long as its track keeps the machine."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host: 31 checks of the oscillators, sub, noise, LFO, smoothing and clipping (tools/host_test.c). Not run on a unit or in rytm-emu."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by chevyone: no code, samples or tables from any instrument."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "SY MONO",
+      "alt": "A saw wave whose pitch a triangle LFO bends.",
+      "credit": "chevyone",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    }
+  ]
+}

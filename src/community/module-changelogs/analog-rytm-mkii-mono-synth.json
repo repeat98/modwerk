@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "First version, for Analog Rytm MKII OS 1.74: SY MONO, a digital mono voice with a saw, a pulse, a sub one or two octaves down and noise.",
+      "A pitch LFO from 0.1 to 30 Hz for vibrato, trills and wobbles; tap encoder A for the range (16', 8', 4', 2').",
+      "Plays through the track's own analog filter, AMP and OVR, on any track of pads 1 to 8."
+    ]
+  }
+]
