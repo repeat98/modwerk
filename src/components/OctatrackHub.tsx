@@ -113,7 +113,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const onUnit = sets.find(same), lastSync = lastSuccessfulSync(identity?.base ?? last?.base)
   const lastName = onUnit?.name ?? (last && lastSync && sameModules(last.moduleIds, lastSync.moduleIds) && matchesUsbAudio(lastSync.usbAudio, last) ? lastSync.name : undefined)
   const screenView = view === 'screen'
-  const connect = <button key="connect" className={'button ' + (screenView ? 'button-primary' : 'button-quiet')} onClick={() => void link?.connect()}>Connect</button>
+  const connect = <button key="connect" className="button button-primary" onClick={() => void link?.connect()}>Connect</button>
   // Screen puts the relevant connection action beside the preview.
   const [line, action]: [ReactNode, ReactNode] = !usb ? ['This browser can’t use USB', <CardSetButton key="card" set={selected && { name: selected.name, moduleIds: selected.moduleIds, removedStockFx: selected.removedStockFx, usbAudio: selected.usbAudio }} onInstall={onInstall} />]
     : busy ? [state.module || status !== 'testing' ? 'Syncing…' : 'Self-test running…', null]
