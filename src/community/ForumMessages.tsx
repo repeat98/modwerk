@@ -31,7 +31,7 @@ function InboxPage() {
   }
   return <>
     <BackLink href="#forum">All discussions</BackLink>
-    <div className="page-heading forum-heading"><div><span className="forum-eyebrow">Private</span><h1>Messages</h1><p>Conversations between you and one other member. Open a member's profile to start one.</p></div></div>
+    <div className="page-heading forum-heading"><div><h1>Messages</h1><p>Conversations between you and one other member. Open a member's profile to start one.</p></div></div>
     <MemberPrompt />
     {verified && (error ? <p className="file-error" role="alert">{error}</p> : !inbox ? <p role="status">Loading messages…</p> : <>
       {inbox.conversations.length ? <ul className="forum-dm-inbox" aria-label="Conversations">{inbox.conversations.map(item => <li key={item.id} data-unread={item.unread > 0 || undefined}>

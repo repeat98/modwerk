@@ -2,6 +2,12 @@
 #include "fract_machine.c"
 #undef main
 
+/* Capacity is the saved/native ABI. New engines may declare fewer live
+ * readers; older three-reader engines retain their original contract. */
+#ifndef OG_ENGINE_READERS
+#define OG_ENGINE_READERS OG_MAX_GRAINS
+#endif
+
 extern void cpu_reference_all(OgGrain *,uint32_t,const uint8_t *,int32_t *,unsigned,
                                void (*)(void *,uint32_t,int32_t *),void *);
 extern void cpu_reference_reset(OgGrain *,uint32_t);
@@ -20,7 +26,8 @@ static void reference_read(void *context,uint32_t frame,int32_t *pcm) {
 }
 
 int main(void) {
-    _Static_assert(OG_MAX_GRAINS==3 && sizeof(OgGrain)==128,"Three real heads");
+    _Static_assert(OG_MAX_GRAINS==3 && sizeof(OgGrain)==128,"Three storage slots");
+    _Static_assert(OG_ENGINE_READERS==2 || OG_ENGINE_READERS==3,"Supported live reader count");
     static const unsigned lengths[]={1,2,441,2047,2048,2049,3072};
     static const unsigned sizes[]={0,1,32,86,127};
     unsigned cases=0,max_live=0;uint64_t frames=0;
@@ -49,13 +56,15 @@ int main(void) {
             cpu_reference_all(&scalar,src.frames,p,want.audio,count,reference_read,&src);
             assert(!memcmp(&got,&want,sizeof got));
             assert(!memcmp(&native,&scalar,sizeof native));
-            unsigned live=0;for(unsigned g=0;g<3;++g) live+=native.head[g].length!=0;
+            unsigned live=0;for(unsigned g=0;g<OG_MAX_GRAINS;++g) live+=native.head[g].length!=0;
+            for(unsigned g=OG_ENGINE_READERS;g<OG_MAX_GRAINS;++g)
+                assert(!native.head[g].length);
             if(live>max_live)max_live=live;
             at+=count;frames+=count;
         }
         ++cases;
     }
-    assert(max_live==3);
+    assert(max_live==OG_ENGINE_READERS);
     /* Coincident full-scale grains: the sum must stay in int32 for every SHPE. */
     for(unsigned sign=0;sign<2;++sign) for(unsigned shape=0;shape<=32;++shape)
       for(unsigned i=0;i<=128;++i) {
@@ -64,7 +73,7 @@ int main(void) {
         int64_t sum=(sign?-32768:32767)*(int64_t)env*3;
         assert(sum>=INT32_MIN && sum<=INT32_MAX);
     }
-    printf("%u three-head optimized scalar/native cases, %llu stereo frames, three live readers; guards and all-shape full-scale bounds OK\n",
-           cases,(unsigned long long)frames);
+    printf("%u optimized scalar/native cases, %llu stereo frames, %s live readers; guards and all-shape full-scale bounds OK\n",
+           cases,(unsigned long long)frames,max_live==2?"two":"three");
     return 0;
 }

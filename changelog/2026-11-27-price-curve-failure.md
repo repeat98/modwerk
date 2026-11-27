@@ -1,0 +1,1 @@
+Cost checks now fail when a requested instance curve was not measured or could not produce a clean record. Partial at-rest readings remain available, and a skipped curve no longer lets the test procedure report success.

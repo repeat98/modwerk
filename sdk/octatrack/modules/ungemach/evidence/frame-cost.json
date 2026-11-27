@@ -1,22 +1,22 @@
 {
   "module": "ungemach",
   "version": "0.1.0-experimental",
-  "base": "4c7eb79b (development twin of the beta base, built with --dev from module/ungemach d0dc7166)",
-  "scene": "A scratch project, bank A, Part 1 saved. Picks on the empty pattern A02. The curve was read on A03 (only T1, a trig on every step, no sample): on the medium pattern A01 (T1-T7 with trigs on steps 1/5/9/13, samples on T2 and T3) the first instance read 102.2 % of a frame (+23.5 over 78.7), the overload rather than the module. The medium admission run is from that A01 run. One instance only: UNGEMACH admits one track a Part. Author's Octatrack MKI, OS 1.40C, release package a8bcdca3.",
+  "base": "46c30886 (0.8 development twin of main 48f4a9b9c, base 24e480c4)",
+  "scene": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples; the trigs placed again in the working copy on 26 November 2026, never saved: the card's copy of bank C had none), picks on empty C02, Part 1; owner's MKII",
   "seconds": 8,
-  "measuredAt": "2026-11-24T13:33:27.951Z",
+  "measuredAt": "2026-11-26T20:46:09.361Z",
   "tracks": [
     "T1"
   ],
   "rest": 0,
-  "first": 14.6,
-  "each": 14.6,
+  "first": 27.1,
+  "each": 27.1,
   "points": [
-    63.1,
-    77.7
+    80,
+    107.1
   ],
   "adds": [
-    14.6
+    27.1
   ],
   "admission": [
     {
@@ -25,24 +25,27 @@
       "track": "T1",
       "seconds": 8,
       "admitted": true,
-      "frameMax": 70.8,
-      "frame": 43.1,
+      "frameMax": 71.4,
+      "frame": 41.6,
       "dropped": 0,
       "stalls": 0
     },
     {
       "pattern": "medium",
-      "number": 1,
+      "number": 4,
       "track": "T1",
       "seconds": 8,
       "admitted": true,
-      "frameMax": 97.6,
-      "frame": 53.2,
+      "frameMax": 106.2,
+      "frame": 56.3,
       "dropped": 0,
       "stalls": 0
     }
   ],
   "notes": [
-    "Medium run on A01 (2026-11-24T13:31:06.173Z): points [78.7, 102.2], adds [23.5]."
+    "package sha256 37d7a278b8391e9307111a97745c444ca081528aebfc3f2bcf8ac7ff2012cbdd",
+    "the Part's CPU allowance at 400 % for the curve's picks, back to 45 % for the admission runs",
+    "Read again on the owner's decision of 26 November 2026 to price UNGEMACH correctly. An admission run the same evening read 106.3 % with stock alone at 82 % (+24.3; mean frame interrupt 36.1 -> 57.8 %). On a light pattern the same evening (C05, trigs on T1 only, 51.7 % stock alone) it read +19.6 (mean +12.7); the author's A03 run (63.1 %) read +14.6 and his A01 run (78.7 %) +23.5.",
+    "Its first instance passes 100 % on the medium pattern, so the release carries the owner's release-cost waiver (sdk/approvals/ungemach-build-approval.json)."
   ]
 }

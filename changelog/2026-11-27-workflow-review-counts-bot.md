@@ -1,0 +1,1 @@
+Development: a pull request review counts the maintenance bot's comments and reviews as its own, so it no longer reviews a pull request the bot has just answered. A bot answer still waiting for its window or an Approve doesn't count as posted. To carry out the owner's yes to one, the session posts the text itself.

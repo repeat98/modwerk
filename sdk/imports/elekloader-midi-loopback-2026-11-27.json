@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "midi-loopback-2026-11-27",
+  "about": "MIDI Loopback 1.6 for Digitakt OS 1.53 and 1.54: the author's released .elemod files, pinned unchanged, with needs_core 4.1 as its README states.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "midi-loopback-1.6-os1.53.elemod",
+      "sha256": "2e8ea38c370e8286012c68ae76377529823a692abe7052fe4bf45594d8c74e2a",
+      "id": "midi-loopback",
+      "version": "1.6",
+      "device": "digitakt-mk1",
+      "os": "1.53",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "ntrrptr/midi-loopback-dt",
+        "tag": "v1.6"
+      },
+      "title": "MIDI Loopback",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "cc-labels"
+      ],
+      "summary": "Software MIDI loopback cable for Digitakt mk1: MIDI tracks 9â€“16 feed audio tracks 1â€“8 and Master FX internally via CCs, p-locks, notes and the MIDI LFO; the FLTR page's CC labels are renamed to the internal parameter names, and it switches on/off in SETTINGS > MIDI LOOPBACK.",
+      "description": "Internal MIDI loopback: sequences and modulates audio tracks 1-8 and Master FX from MIDI tracks 9-16 using parameter locks, CCs, note triggers, and LFOs without external cables. Toggle ON/OFF in SETTINGS > MIDI LOOPBACK. Displays Digitakt parameter names on MIDI tracks' FLTR CC Select page.",
+      "category": "MIDI",
+      "on_unit": "Tested on a unit. The one I'm using currently is version 1.6.",
+      "needs_core": "4.1"
+    },
+    {
+      "file": "midi-loopback-1.6-os1.54.elemod",
+      "sha256": "2d63627d76dd81ecee33b5c4895478bd309fa6d74fc9f11cda823d9b5e6c901c",
+      "id": "midi-loopback",
+      "version": "1.6",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "ntrrptr/midi-loopback-dt",
+        "tag": "v1.6"
+      },
+      "title": "MIDI Loopback",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [
+        "cc-labels"
+      ],
+      "summary": "Software MIDI loopback cable for Digitakt mk1: MIDI tracks 9â€“16 feed audio tracks 1â€“8 and Master FX internally via CCs, p-locks, notes and the MIDI LFO; the FLTR page's CC labels are renamed to the internal parameter names, and it switches on/off in SETTINGS > MIDI LOOPBACK.",
+      "description": "Internal MIDI loopback: sequences and modulates audio tracks 1-8 and Master FX from MIDI tracks 9-16 using parameter locks, CCs, note triggers, and LFOs without external cables. Toggle ON/OFF in SETTINGS > MIDI LOOPBACK. Displays Digitakt parameter names on MIDI tracks' FLTR CC Select page.",
+      "category": "MIDI",
+      "on_unit": "Tested on a unit. The one I'm using currently is version 1.6.",
+      "needs_core": "4.1"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+wait 1000
+press FUNC
+tap SRC
+release FUNC
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+snap chooser
+tap YES
+tap YES
+wait 1000
+snap src

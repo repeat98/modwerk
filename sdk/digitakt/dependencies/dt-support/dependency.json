@@ -28,7 +28,8 @@
     "platform": {
       "build": "build.json",
       "events": [],
-      "claims": []
+      "claims": [],
+      "core": "2.1"
     }
   }
 }

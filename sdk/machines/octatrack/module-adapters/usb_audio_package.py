@@ -45,6 +45,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 MODULE = 'usb-audio-out-tracks-main-cue'
 INPUT_TRIM = HERE.parents[2] / 'octatrack/modules/usb-audio-out-tracks-main-cue/usb_audio_input_trim.c'  # the input stream's drift trim (usb_audio_configurable.input_trim)
+OUTPUT_TRIM = HERE.parents[2] / 'octatrack/modules/usb-audio-out-tracks-main-cue/usb_audio_output_trim.c'  # the recording's, while the host plays in (usb_audio_configurable.output_trim)
 TITLE = 'USB AUDIO'
 SUPPORTED = ('USB AUDIO OUT TRACKS MAIN CUE', 'USB AUDIO OUT TRACKS', 'USB AUDIO OUT MASTER', 'USB AUDIO OUT MAIN CUE',
              'USB AUDIO OUT MAIN', 'USB AUDIO OUT TRACKS POST')
@@ -475,8 +476,9 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
             subprocess.run([cross + 'gcc', *loader.CFLAGS, '-I', str(HERE.parent / 'include'), '-c',
                             str(settings), '-o', str(objects[-1])], check=True)
             if input_port:
-                objects.append(tmp / 'trim.o')
-                subprocess.run([cross + 'gcc', *loader.CFLAGS, '-c', str(INPUT_TRIM), '-o', str(objects[-1])], check=True)
+                for trim, name in ((INPUT_TRIM, 'trim.o'), (OUTPUT_TRIM, 'output_trim.o')):
+                    objects.append(tmp / name)
+                    subprocess.run([cross + 'gcc', *loader.CFLAGS, '-c', str(trim), '-o', str(objects[-1])], check=True)
         image, symbols, bss, offsets = loader.link_units(objects, cross, 0, tmp, anywhere=True)
     sites = []
     for address, guard, shim in usb.AUDIO_DETOURS:
@@ -491,7 +493,8 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
                dict(event='ev_usb_bus_end', fn='mwua_bus_end', order=50), dict(event='ev_usb_control', fn='mwua_control', order=50),
                dict(event='ev_usb_frame', fn='mwua_frame', order=50), dict(event='ot_settings', fn='mwua_setting', order=50)]
     hooks = loader.subscribe([loader.NONE] * len(loader.HANDLERS), entries, symbols)
-    # Inventory kind 9 is the configurable package with USB input on an adaptive
+    # Inventory kind 10 is the configurable package whose recording follows the host's
+    # clock while the host plays in (0.4.2), 9 the one with USB input on an adaptive
     # endpoint (0.4.1), 8 the one with an asynchronous input endpoint (0.4.0), 7 the
     # output-only one (0.3.0). Kinds 1-6 identify the older fixed layouts. The site
     # picks each one's exact Undo package by its kind.
@@ -503,7 +506,8 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
         for path in (HERE / 'usb_audio_settings.c', HERE.parent / 'include/modwerk_events.h'):
             sources[str(path.relative_to(ROOT))] = hashlib.sha256(path.read_bytes()).hexdigest()
         if input_port:
-            sources[str(INPUT_TRIM.relative_to(ROOT))] = hashlib.sha256(INPUT_TRIM.read_bytes()).hexdigest()
+            for trim in (INPUT_TRIM, OUTPUT_TRIM):
+                sources[str(trim.relative_to(ROOT))] = hashlib.sha256(trim.read_bytes()).hexdigest()
             sources['generatedSettings'] =hashlib.sha256(input_port.settings_source((HERE / 'usb_audio_settings.c').read_text()).encode()).hexdigest()
         preset = symbols['mwua_setting'] + 20
         if capture:
@@ -550,7 +554,7 @@ def build(layout, cross='m68k-elf-', *, release=False, capture=None, stock=None,
                 raise ValueError('The installed image differs from the compiled module.')
     data = loader.package(image, bss, hooks, offsets, sites, name=MODULE, hashed=True, title=TITLE, abi=8,
                           copies=copies, fills=fills,
-                          layout=(9 if input_port else 7) if layout is None else functions.AUDIO_LAYOUTS[layout] + 1)
+                          layout=(10 if input_port else 7) if layout is None else functions.AUDIO_LAYOUTS[layout] + 1)
     if release and stock:
         packages = load('usb_audio_package_scan', HERE.parent / 'elekloader/module_packages.py')
         scanner = load('usb_audio_image_scan', HERE.parent / 'elekloader/check_stock_free.py')

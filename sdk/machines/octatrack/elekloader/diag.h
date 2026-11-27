@@ -12,7 +12,7 @@
 #define DIAG_PAGE 244u        /* ep0.c's LOG reply: never a whole multiple of 64 bytes (OCTATRACK_HARDWARE_TRAPS.md) */
 #define DIAG_LOG_REQUEST 37u  /* bRequest of LOG (0xC1, wValue the page, wLength DIAG_PAGE); 31-36 are taken, 38 sets, 39 SLOTS (flash.h) */
 
-enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12, DIAG_RESTORE = 13, DIAG_FREEZE_PC = 14 };
+enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12, DIAG_RESTORE = 13, DIAG_FREEZE_PC = 14, DIAG_USB_GONE = 15 };
 /* After the log: crash.c's record (struct crash, 0x100ff800) and dsp.c's stall record (struct stall, 0x100ff900),
  * byte for byte, so the site uploads what a crash or a DSP stall left; each starts with its magic ("MWCR", "MWST"). */
 #define DIAG_CRASH_BYTES 180u
@@ -41,6 +41,30 @@ struct diag_lates { uint32_t magic, count; uint16_t late[8]; };
 #define DIAG_FREEZE_PC_SAMPLES 4u
 struct diag_freeze_pc { uint32_t magic, boot, pc[DIAG_FREEZE_PC_SAMPLES], tcb[DIAG_FREEZE_PC_SAMPLES]; uint16_t sr[DIAG_FREEZE_PC_SAMPLES]; };
 typedef char diag_trace_layout[sizeof(struct diag_trace) == DIAG_TRACE_BYTES ? 1 : -1];
+/* When the host's USB frames stopped ("MWUG", 0x100f9758, bases from 0.8.3; #2290): the frame interrupt watches
+ * FRINDEX, which a host's start-of-frame packets advance every millisecond (125 µs at high speed). When it stands still
+ * for three seconds while the base expects a host (one talked to it in the last ten seconds, it is configured, or the
+ * base's own reconnect is under way; never while a RAM boot is armed), the controller and the base's USB state at 3,
+ * 4, 5 and 6 s: what tells a host
+ * that left (OTGSC.BSV off: no VBUS), one that suspended the unit (PORTSC1.SUSP) and a pull-up that never came back
+ * (USBCMD.RS off) apart, and which code then owned the link. `ticks`, `ep0`, `uf`: how far the UI tick, ep0_tick and
+ * its call of the reconnect tick (usb_function.c) moved in those first three seconds, so a stuck tick shows.
+ * `stopped`: the reconnect's state when the frames stopped. Once an episode, at most four a boot; the tick adds it as
+ * the USB_GONE incident once its samples are in, or the next start does. */
+#define DIAG_USB_GONE_MAGIC 0x4d575547u
+#define DIAG_USB_GONE_SAMPLES 4u
+/* `uf_state` usb_function.c's state (0 settled, 1 wait, 2 off, 3 back), `uf_flags` its reset_seen (bit 0), retried
+ * (1), panel_reconnect (2); `wd_*` ep0.c's attach watchdog (usb_attach.h); `flags` bit 0 the watchdog's fresh, 1
+ * usbmidi_up (configured), 2 stock's USB DISK MODE, 3 an armed RAM boot, 4 the base's reconnect under way, 5 an upload
+ * receiving, 6 a host request in the last ten seconds. `uf_reconnects` counts the base's reconnects since the start. */
+struct diag_usb_sample {
+    uint32_t otgsc, portsc, usbcmd, deviceaddr, frindex;
+    uint16_t uf_timer, wd_off, wd_detached;
+    uint8_t uf_state, uf_off_ticks, uf_flags, wd_tries, flags, uf_reconnects;
+};
+struct diag_usb_gone { uint32_t magic, state, boot, second; uint16_t ticks, ep0, uf, stopped; struct diag_usb_sample sample[DIAG_USB_GONE_SAMPLES]; };
+typedef char diag_usb_sample_layout[sizeof(struct diag_usb_sample) == 32u ? 1 : -1];
+typedef char diag_usb_gone_layout[sizeof(struct diag_usb_gone) == 152u ? 1 : -1];
 
 /* Five minutes of the meters (status.c, per mille), sampled twice a second: `samples` of them, `playing` with the
  * sequencer running. `minute` counts from the start (`boot`). `frame_gap`: the longest time between two audio frames
@@ -78,6 +102,12 @@ struct diag_load {
  * was during that freeze (struct diag_freeze_pc): `a`, `screen`, `tempo24` the program counter at 5, 6 and 7 s,
  * `cpu`, `dsp0`, `dsp1` the status register then; `machine` the four current TCBs (big-endian, 16 bytes), then the
  * program counter at 8 s and its status register; 0 where the tick moved again before that sample.
+ * USB_GONE (bases from 0.8.3, with the boot and second its frames stopped plus three) the host's frames stopped while
+ * the base expected one (struct diag_usb_gone): `a` OTGSC, `screen` PORTSC1, `tempo24` USBCMD at 3 s, `cpu` the
+ * reconnect's timer, `dsp0` the watchdog's detached count, `dsp1` its off count; `machine`, `fx` and `keys` one run of
+ * 56 bytes, big-endian: DEVICEADDR and FRINDEX, then uf_state, uf_off_ticks, uf_flags, wd_tries, flags, `stopped`,
+ * `ticks`, `ep0` and `uf` (255 at most), uf_reconnects and two zero bytes, then at 4, 5 and 6 s 12 bytes each: OTGSC,
+ * PORTSC1, USBCMD's low byte, uf_state, flags, wd_tries (all 0 when the frames came back before that sample).
  * `machine`: each track's type byte and machine signature
  * (machine_registry.c), `fx` what each slot runs (FX1 T1-T8, then FX2), `keys` the last 16 key codes pressed,
  * oldest first (0xff none), `screen` stock's top input layer, `tempo24` the tempo times 24. */
@@ -114,6 +144,12 @@ int modwerk_diag_key(int code, int pressed);           /* ev_key: remembers pres
 void modwerk_diag_frame(void);                         /* dl_frame, in the frame interrupt */
 unsigned modwerk_diag_read(uint8_t *out, unsigned page); /* ep0.c LOG: DIAG_PAGE bytes of the log, then the records */
 void modwerk_diag_set(void);                           /* modset.c: the installed set changed (restore, Keep) */
+/* ep0.c, for the USB_GONE watch in the frame interrupt: reads only. */
+uint32_t modwerk_usb_frindex(void);
+int modwerk_usb_host_expected(void);
+unsigned modwerk_usb_reconnect_state(void);
+void modwerk_usb_sample(volatile struct diag_usb_sample *s);
+extern volatile uint32_t mw_ep0_runs, mw_uf_calls;    /* ep0_tick's runs and its calls of the reconnect tick */
 int32_t modwerk_boot_restore(void);                    /* status.s mw_boot_restore: the power-up's battery restore of
                                                        * the current bank (stock 0x40025770), in main's init */
 void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check); /* modset.c,

@@ -132,15 +132,34 @@ def session_socket(path):
 def session_address(path): return ('127.0.0.1', int(path)) if path.isdigit() else path
 
 
-def send(sequence):
-    log('>', sequence)
+def ask(sequence):
+    """One request to the session and its whole reply."""
     s = session_socket(SOCKET)
     s.settimeout(40)  # the session answers within 20 s; never wait for ever
     s.connect(session_address(SOCKET))
     s.sendall((sequence + '\n').encode())
-    reply = s.makefile().read()
-    if 'error:' in reply: raise RuntimeError(sequence + ': ' + reply.strip())
-    return reply
+    return s.makefile().read()
+
+
+# A package with a USB function (USB Audio) takes the unit off USB while the host enumerates it again, after an install
+# and a removal: a second, or ten after a detach that cut a transfer (base 0.8.3). A request then finds the unit away;
+# nothing of it was sent, so it waits and goes again. One cut off half way (went away) goes again only when it reads
+# and presses nothing, so no key is ever pressed twice.
+AWAY_SECONDS = 40
+READS = re.compile(r'^(?:mem:\S+|state|health|loader|crash|stall|stats|guard|late|inventory|saved|ui|w\d+)$')
+
+
+def send(sequence):
+    deadline = time.monotonic() + AWAY_SECONDS
+    while True:
+        log('>', sequence)
+        reply = ask(sequence)
+        away = 'the unit is away' in reply or ('the unit went away' in reply and all(READS.match(t) for t in sequence.split()))
+        if away and time.monotonic() < deadline:
+            time.sleep(2)
+            continue
+        if 'error:' in reply: raise RuntimeError(sequence + ': ' + reply.strip())
+        return reply
 
 
 def counters():

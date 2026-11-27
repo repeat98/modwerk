@@ -1,0 +1,1 @@
+Module tests on the Octatrack: the test procedure's cost step no longer fails a module that has no instances to measure, such as USB Audio or a utility. It prices such a module at rest alone and asks for the instance curve only from effects and machines, which still fail the step when their curve is missing (#2297).

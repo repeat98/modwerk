@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/irpina/elekloader",
+  "revision": "f20ffda0a9d3ac008b7285ab01ca4dd8da58341f",
+  "license": "GPL-2.0-or-later",
+  "upstreamVersion": "0.1",
+  "sources": {
+    "src/seq.s": "35dd85e888488211bdca92ec1575754323d1eaf67f51095dccac1400e13fd7ca",
+    "src/seq.c": "4f4b31b0958c307c5d05b5ad202656ed3185b97b2fc57663c421179a7e3ad475",
+    "src/dev.h": "8a9fc318eb9a1960c9caf91d033a760ebb889abf52cc97919c891c4a7bf57f1b",
+    "src/seq-events.h": "ba17dc0205794956125521c9346235649d7eb1ac828580066c94c3b4d10632b9",
+    "src/digitakt-mk1/seq.h": "2406e38cb7f64a763d38fd9ab0b17c8d029e9ffdc52beccd1f465572decbe538"
+  },
+  "adaptation": "Dracyr's seq-events 0.1 for the Digitakt mk1 from elekloader v0.11.0, source unchanged; its mod.json became build.json with each site's stock bytes replaced by a length and SHA-256 guard.",
+  "upstreamSourceBytesIdentical": true,
+  "sourcePath": "mods/seq-events-dt1, mods/seq-events/seq.c, elekloader/sdk/include/seq-events.h and digitakt-mk1/seq.h",
+  "path": "dependencies/seq-events"
+}

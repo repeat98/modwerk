@@ -81,11 +81,13 @@ unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most)
     out[0] = 'M', out[1] = 'W', out[2] = 'M', out[3] = (uint8_t)(listed + listed_machines);
     return 4u + 24u * (listed + listed_machines);
 }
-/* fxmap.c's lookup: handle 20 in bank C's saved Part 2 on T5, the others in bank A's working Part 1 on T2. */
-int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track)
+/* fxmap.c's lookup: handle 20 first in bank C's saved Part 2 on FX2 of T5 and in two more places, 21 only in bank B's
+ * working Part 4 on FX1 of T4 (the twelve slots past the first), the others in bank A's working Part 1 on FX1 of T2. */
+int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *slot, unsigned *places)
 {
-    if (id == 20u) { *bank = 2, *part = 1, *track = 4; return 2; }
-    *bank = 0, *part = 0, *track = 1;
+    if (id == 20u) { *bank = 2, *part = 1, *slot = 12, *places = 3; return 2; }
+    if (id == 21u) { *bank = 1, *part = 3, *slot = 3, *places = 13; return 1; }
+    *bank = 0, *part = 0, *slot = 1, *places = id < 20u + listed;
     return id < 20u + listed ? 1 : 0;
 }
 void modwerk_fxpage_missing(void) {}
@@ -369,10 +371,11 @@ int main(void)
     /* Each module's second line: where the project names it. */
     char where[32];
     CHECK(missing_at[0][0] == 2 && missing_at[1][0] == 1 && missing_at[4][0] == 1); /* looked up while it shows */
-    missing_where(where, missing_at[0], 0); CHECK(!strcmp(where, "BANK C SAVED PART 2 T5"));
-    missing_where(where, missing_at[0], 1); CHECK(!strcmp(where, "C SAVED PART 2 T5"));
-    missing_where(where, missing_at[1], 0); CHECK(!strcmp(where, "BANK A PART 1 T2"));
-    static const uint8_t nowhere[4];
+    missing_where(where, missing_at[0], 0); CHECK(!strcmp(where, "BANK C SAVED PART 2 T5 FX2 +2")); /* the slot, the others */
+    missing_where(where, missing_at[0], 1); CHECK(!strcmp(where, "C SAVED PART 2 T5 FX2 +2"));
+    missing_where(where, missing_at[1], 0); CHECK(!strcmp(where, "BANK B PART 4 T4 FX1 +12"));
+    missing_where(where, missing_at[2], 0); CHECK(!strcmp(where, "BANK A PART 1 T2 FX1"));        /* named once */
+    static const uint8_t nowhere[6];
     missing_where(where, nowhere, 0); CHECK(!where[0]);                /* named nowhere any more: an empty line */
     CHECK(!modwerk_status_key(STOP, 1) && !modwerk_status_key(STOP, 0) && open == MISSING); /* STOP reaches stock, it stays */
     CHECK(modwerk_status_key(YES, 1) && open == CLOSED && modwerk_status_key(YES, 0));
@@ -836,6 +839,55 @@ int main(void)
         memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs), memcpy(modwerk_test_live_fx, live, 16), map_module[27] = 0;
         test_dry = (fx_set){{0}}; }
       test_machines_booked = 0, transport_stopped = 1, mw_stock_reserve = RESERVE_ADAPTIVE; hush_playing = 0; }
+    /* A USB stream (#2251): while a computer streams, what the reserve predicts and what a pick adds are stretched by
+     * the stream's factor (the set's figures over the compiled ones), the box and the brake's notice name it, and the
+     * figure kept from a play is kept as it would be without the stream, so it gives its room back once the stream ends. */
+    { mw_stock_reserve = 600u, transport_stopped = 1, frame_played = 0, frame_newest = 0, frame_adjust = 0, played_pattern = 0xffffu;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0;
+      CHECK(modwerk_status_frame_load() == 600u && stream_factor() == 1000u);
+      modwerk_test_streams = 1u;                                                     /* recording: 1.65 times */
+      CHECK(stream_factor() == 1650u && modwerk_status_frame_load() == 990u);
+      modwerk_test_streams = 3u;                                                     /* and playing into it */
+      CHECK(stream_factor() == 1650u);
+      { uint8_t t[24] = {0xff, 0xff, 0xff, 0xe0, 0, 100u, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xe1, 0, 200u, 0, 0, 0, 0, 0, 0};
+        modwerk_machine_frame_costs(t, 2);                                           /* the set's: 1.1 and 1.2 times */
+        CHECK(stream_factor() == 1200u && (modwerk_test_streams = 1u, stream_factor() == 1100u));
+        memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs); }
+      /* by width, from the active profile's EP3 IN packet (4 bytes, 12 frames a channel): a figure for the width when
+       * the set has one, else the set's single one */
+      { uint8_t t[24] = {0xff, 0xff, 0xff, 0xe0, 0, 100u, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xe3, 1, 4u, 0, 0, 0, 0, 0, 0};
+        modwerk_machine_frame_costs(t, 2);                                           /* 1.1, and 1.26 up to 4 channels */
+        modwerk_test_streams = 1u, modwerk_test_stream_bytes = 192u;                 /* Main + Cue */
+        CHECK(stream_factor() == 1260u);
+        modwerk_test_stream_bytes = 768u;                                            /* 16 channels: none for it */
+        CHECK(stream_factor() == 1100u);
+        modwerk_test_stream_bytes = 0;                                               /* no EP3 IN in the profile */
+        CHECK(stream_factor() == 1100u);
+        memset(&modwerk_test_costs, 0, sizeof modwerk_test_costs); }
+      CHECK(modwerk_status_pick_busy(12, 0, "Echo", 200u, 0, 0) && refused_busy == WHY_USB && refused[4] == 330u); /* 80 % stretched: 132 */
+      CHECK(strstr(shows(), "ECHO NEEDS +30%|CPU|90%|USB AUDIO STREAM|"));
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      CHECK(modwerk_status_pick_busy(12, 0, "Echo", 600u, 0, 0) && refused_busy != WHY_USB); /* past the line without it */
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      modwerk_test_streams = 0;
+      CHECK(!modwerk_status_pick_busy(12, 0, "Echo", 200u, 0, 0));                  /* no stream: 80 % */
+      { fx_set f[2]; uint16_t ids[2];                                                 /* 60 + 23, stretched: 137 % */
+        test_machines_booked = 230u, transport_stopped = 0, hush_playing = 0, modwerk_test_streams = 1u;
+        CHECK(modwerk_status_hush(f, ids) == (32u << 24 | 2u << 16) && hush_usb && strstr(shows(), "USB AUDIO STREAM|FM SYNTH|"));
+        for (unsigned i = 0; i < 180u; ++i) memory_tick(), modwerk_status_hush(f, ids);
+        modwerk_test_streams = 0;
+        CHECK(!modwerk_status_hush(f, ids));                                          /* the stream ended: 83 % */
+        test_machines_booked = 0, transport_stopped = 1, hush_playing = 0; }
+      /* four seconds played while streaming: kept as without it, so the room comes back when it ends */
+      mw_stock_reserve = 0, transport_stopped = 0, play_readings = 0, modwerk_test_streams = 1u;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 825u;
+      for (unsigned r = 0; r < 8u; ++r) cpu_note_played();
+      CHECK(frame_played == 500u && modwerk_status_frame_load() == 825u);
+      transport_stopped = 1, modwerk_test_streams = 0;
+      CHECK(modwerk_status_frame_load() == 500u);
+      frame_played = 0, played_since = 0, played_pattern = 0xffffu, mw_stock_reserve = RESERVE_ADAPTIVE;
+      for (unsigned i = 0; i < 8u; ++i) frame_recent[i] = 0;
+      modwerk_test_streams = 0; }
     /* A pick adding 2 % or less is always made; a machine on a track that plays a sample takes its share off the
      * measured figure too. */
     { transport_stopped = 1, mw_stock_reserve = 0, frame_adjust = 0, frame_played = 0, frame_newest = 1095u;

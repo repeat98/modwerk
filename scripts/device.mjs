@@ -39,6 +39,7 @@
 // Each command is one whole transaction. A trial is rolled back unless --accept
 // is given; Ctrl-C rolls back early. If this process dies mid-trial, unplug USB:
 // the base rolls back any module that was not accepted.
+import { panelInput, panelKeys } from './device-panel.mjs'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync, crc32 } from 'node:zlib'
 import { basename, join, resolve } from 'node:path'
@@ -52,7 +53,7 @@ import * as formats from '../vendor/elekloader/kit/src/formats.ts'
 import { OCTATRACK } from '../vendor/elekloader/kit/src/devices.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, RuntimeFeature, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
-import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, freezeSamples, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
+import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, describeUsbGone, freezeSamples, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
 import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames, describeStallPackets } from '../src/community/octatrack-diagnostics-contract.ts'
 import { encodeModuleSet, frameCostTable } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
@@ -63,6 +64,8 @@ import { trialVerdict } from '../src/dev/trial-verdict.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 import { sequenceDrives, takeUnitTurn } from './unit-queue.mjs'
 import { bootOverPendingUpdate, stageRefusal } from './octatrack-step-base.mjs'
+import { describeDsp, describeStream, describeStreamRead, parseStreamReadReply, parseStreamReply, STREAM_DSP_BITS, STREAM_OPS, STREAM_READ_OPS,
+  STREAM_READ_REPLY_BYTES, STREAM_READ_REQUEST, STREAM_REPLY_BYTES, STREAM_REQUEST } from './stream-probe.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
   help: { type: 'boolean', short: 'h' },
@@ -146,19 +149,19 @@ const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x
   ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => ['TRIG' + (i + 1), i])),
   ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => ['T' + (i + 1), 0x10 + i])),
   ...Object.fromEntries(['A', 'B', 'C', 'D', 'E', 'F'].map((e, i) => ['PUSH' + e, 0x38 + i])) }
+const NOT_DEV = 'This base does not answer development requests: build it with --dev.'
 async function devIn(request, value, length) {
   const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request, value, index }, length)
   if (reply.status !== 'ok' || reply.data?.byteLength !== length) throw new Error(request === 16 ?
     'The base refused this MEM read: development bases read 0x40000400-0x40cfffff, 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and 0x100f0000-0x100fffff only (dev.c).' :
-    'This base does not answer development requests: build it with --dev.')
+    NOT_DEV)
   return new Uint8Array(reply.data.buffer, reply.data.byteOffset, reply.data.byteLength)
 }
 /** FUNC+PLAY: hold every key but the last, tap the last, release the held ones. */
 async function keys(spec) {
   const codes = spec.split('+').map(name => KEYS[name.toUpperCase()] ?? Number(name))
   if (codes.some(code => !Number.isInteger(code) || code < 0 || code > 63)) throw new Error('Unknown key in ' + spec + ': ' + Object.keys(KEYS).join(' '))
-  for (const code of codes) { await devIn(5, code | 0x100, 1); await wait(code === codes.at(-1) ? 80 : 30) }
-  for (const code of codes.reverse()) { await devIn(5, code, 1); await wait(30) }
+  await panelKeys(devIn, codes)
 }
 async function screen(png = values.png) {
   const frame = (await devIn(7, 0, 1028)).subarray(4)
@@ -355,9 +358,10 @@ const REPORT_HEX = new Set(['buffers', 'arenas', 'hostFlags', 'manager', 'used',
  * masks' second words and a pad at the end; fxids.h). The base answers only its own length. */
 async function reportView() {
   for (const words of [78, 81, 83, 85]) { // 32, 64, 96 or 128 ids
-    try { const bytes = await devIn(11, 0, 4 * words); return new DataView(bytes.buffer, bytes.byteOffset, 4 * words) } catch { /* the other length */ }
+    // Only a refusal means the other length; the unit away (USB Audio's reconnect) keeps its own message, which the test tools wait out.
+    try { const bytes = await devIn(11, 0, 4 * words); return new DataView(bytes.buffer, bytes.byteOffset, 4 * words) } catch (error) { if (error.message !== NOT_DEV) throw error }
   }
-  throw new Error('This base does not answer development requests: build it with --dev.')
+  throw new Error(NOT_DEV)
 }
 /** status.c's tail of the report (version 11 and up): word i of the first 78. */
 async function statusWords() {
@@ -382,6 +386,41 @@ async function missing() {
   return all.length ? JSON.stringify(all) : 'nothing missing'
 }
 
+/** Stream probe A (dev request 47; sdk/machines/octatrack/module-adapters/stream_probe.py): `stream` prints the ColdFire's
+ * counts and the block times since the last `stream`, `stream:on` starts sending, `stream:off` stops after one last block
+ * that asks for a snapshot, `stream:dsp` asks the next block for one and reads the core-0 checker's counts (a few seconds;
+ * after `stream:off`, the last snapshot's). */
+async function streamProbe(op) {
+  const ask = async code => parseStreamReply(await devIn(STREAM_REQUEST, code, STREAM_REPLY_BYTES))
+  if (op === 'on' || op === 'off') {
+    const r = await ask(op === 'on' ? STREAM_OPS.start : STREAM_OPS.stop)
+    if (!r.taken) throw new Error(op === 'off' ? 'The stream probe was not sending.' :
+      'The stream probe did not start: the watchdog stopped it after a transfer it gave up; RAM-boot the twin again.')
+    console.log(describeStream(r))
+    return
+  }
+  if (op !== 'dsp') return console.log(describeStream(await ask(STREAM_OPS.window)))
+  let r = await ask(STREAM_OPS.snapshot)
+  const busy = r => r.snapshotPending || r.snapshotWaiting || r.dspReadQueued
+  if (!r.taken && !busy(r) && r.dspBits === 0) throw new Error('No snapshot to read: start the stream first (stream:on).')
+  for (const until = Date.now() + 30000; busy(r) || r.dspBits < STREAM_DSP_BITS; r = await ask(STREAM_OPS.read)) {
+    if (Date.now() > until) throw new Error(`The checker's counts were not read within 30 s (${r.dspBits} of ${STREAM_DSP_BITS} bits).`)
+    await wait(250)
+  }
+  console.log(describeDsp(r))
+}
+
+/** Stream probe B (dev request 48; built with --stream-read N): `streamb` prints the reads' counts, the ColdFire's check of
+ * the blocks and the times since the last `streamb`; `streamb:on` starts reading (counts and times restart), `streamb:off`
+ * stops, `streamb:zero` zeroes the block counts. */
+async function streamRead(op) {
+  const code = op ? STREAM_READ_OPS[{ on: 'start', off: 'stop', zero: 'zero' }[op]] : STREAM_READ_OPS.window
+  const r = parseStreamReadReply(await devIn(STREAM_READ_REQUEST, code, STREAM_READ_REPLY_BYTES))
+  if (op && !r.taken) throw new Error(op === 'off' ? 'Stream probe B was not reading.' :
+    'Stream probe B did not start: the watchdog stopped it when it recovered the frame chain; RAM-boot the twin again.')
+  console.log(describeStreamRead(r))
+}
+
 /** One connection for a whole sequence: KEY or KEY+KEY (with *N to repeat), w300 (wait ms), encC+3, fader128, ui, screen, state,
  * stats (one line: CPU, each core's mean/peak per mille and idle passes a frame), png:FILE, mem:0xADDR:LEN, part1-4, pick:T1:FX2:NAME,
  * +KEY / -KEY (press, release), crash (the last crash's record), crashtest (development bases: crash on purpose),
@@ -393,6 +432,10 @@ async function missing() {
  * adopt / adopt:off (development bases: from the next start, restore the card's set another base wrote, writing none),
  * reload (the current Part from its saved copy, through the Part menu), savepart (SAVE there), gap (the longest time between frames since the last gap),
  * late, late:off, late:on (development bases: the late-entry wait's counts since the last read; switch it),
+ * stream, stream:on, stream:off, stream:dsp (stream probe twins, build_core.py --stream-probe N through
+ *   module-adapters/stream_probe.py: the block times since the last `stream`; start; stop; the core-0 checker's counts),
+ * streamb, streamb:on, streamb:off, streamb:zero (stream probe B twins, --stream-read N: the reads' counts, the ColdFire's
+ *   check of the blocks and the times since the last `streamb`; start; stop; zero the block counts),
  * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
  * dspmap (development bases: each core's code arena drawn, every block named with its slots), dspmap:watch:N (redrawn on change)
  * profile, profile:N (development bases: each UI tick hook's µs over N seconds, from the symbols of the build `boot` started)
@@ -406,14 +449,14 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
     let m
     if ((m = /^w(\d+)$/.exec(step))) await wait(Number(m[1]))
-    else if ((m = /^enc([A-F]|LEVEL)([+-]\d+)$/i.exec(step))) await devIn(8, 0x30 | ('ABCDEF'.indexOf(m[1].toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(m[1].toUpperCase()) : 6) | (Number(m[2]) & 0xff) << 8, 1)
-    else if ((m = /^fader(\d+)$/.exec(step))) await devIn(8, 0x40 | Number(m[1]) << 8, 1)
+    else if ((m = /^enc([A-F]|LEVEL)([+-]\d+)$/i.exec(step))) await panelInput(devIn, 8, 0x30 | ('ABCDEF'.indexOf(m[1].toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(m[1].toUpperCase()) : 6) | (Number(m[2]) & 0xff) << 8)
+    else if ((m = /^fader(\d+)$/.exec(step))) await panelInput(devIn, 8, 0x40 | Number(m[1]) << 8)
     else if (step === 'ui') await ui()
     else if (step === 'screen') await screen()
     else if ((m = /^([+-])([A-Z0-9]+)$/i.exec(step))) { // +BANK holds, -BANK lets go
       const code = KEYS[m[2].toUpperCase()]
       if (code === undefined) throw new Error('Unknown key in ' + step + ': ' + Object.keys(KEYS).join(' ')) // not TRIG1 (undefined | 0x100)
-      await devIn(5, code | (m[1] === '+' ? 0x100 : 0), 1)
+      await panelInput(devIn, 5, code | (m[1] === '+' ? 0x100 : 0))
     }
     else if ((m = /^png:(\S+)$/.exec(step))) await screen(m[1])
     else if ((m = /^mem:(0x[0-9a-f]+):(\d+)$/i.exec(step))) { // RAM, read-only, hex; any length (500-byte reads)
@@ -482,6 +525,8 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       // A machine's price is its track's two passes together, at its worst.
       console.log('guarded renders, longest since the last read (% of a frame, both passes): ' + [...Array(8).keys()].map(t => `T${t + 1} ${pc(b.readUInt32BE(12 + 4 * t) + b.readUInt32BE(44 + 4 * t))}`).join(', '))
     }
+    else if ((m = /^stream(?::(on|off|dsp))?$/.exec(step))) await streamProbe(m[1])
+    else if ((m = /^streamb(?::(on|off|zero))?$/.exec(step))) await streamRead(m[1])
     else if (step === 'gap') { const g = Buffer.from(await devIn(23, 0, 4)).readUInt32BE(0); console.log(`gap ${g} counts ${(g / 132).toFixed(0)} us`) } // since the last read
     // RELOAD from the Part menu, which keeps its cursor and stops at RENAME. Never PART+FUNC+PLAY: that is CLEAR.
     else if (step === 'reload') await partMenu('UP w150 UP w150 UP w150 DOWN w200 YES w1000')
@@ -530,6 +575,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
         console.log(`diaglog boot ${log.boot} seq ${log.seq}: ${log.incidents.length} incidents, ${log.loads.length} loads`)
         for (const r of log.incidents) if (r.kind === 'freeze_pc') console.log(`  #${r.seq} boot ${r.boot} +${r.second}s freeze_pc: ` +
           freezeSamples(r).map(s => `0x${s.pc.toString(16)}${withName(namesFor(identity.base), s.pc)} level ${s.level} in ${s.task}`).join('; '))
+        else if (r.kind === 'usb_gone') console.log(`  #${r.seq} boot ${r.boot} +${r.second}s usb_gone: ${describeUsbGone(r)}`)
         else console.log(`  #${r.seq} boot ${r.boot} +${r.second}s ${r.kind} a=${r.kind === 'base' ? r.a.toString(16).padStart(8, '0') : r.kind === 'set' ? r.a + ' [' + [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean).join(' ') + ']' : r.a} cpu ${r.cpu / 10}% T1-4 ${r.dsp1to4 / 10}% T5-8 ${r.dsp5to8 / 10}% ` +
           `${r.playing ? 'playing' : 'stopped'} tempo ${(r.tempo24 / 24).toFixed(1)} screen 0x${r.screen.toString(16)} keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(',')} ` +
           `fx ${r.fx.map(f => f.toString(16)).join(',')} machines ${r.machines.join(',')}`)
@@ -708,12 +754,12 @@ if (command === 'serve') {
     const [, name, delta] = /^([A-F]|LEVEL)([+-]\d+)$/i.exec(file) ?? []
     const encoder = 'ABCDEF'.indexOf(name?.toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(name.toUpperCase()) : name?.toUpperCase() === 'LEVEL' ? 6 : -1
     if (encoder < 0 || !Number(delta) || Math.abs(delta) > 127) throw new Error('Use enc A+3, enc F-1 or enc LEVEL+2.')
-    await devIn(8, 0x30 | encoder | (Number(delta) & 0xff) << 8, 1); process.exit(0)
+    await panelInput(devIn, 8, 0x30 | encoder | (Number(delta) & 0xff) << 8); process.exit(0)
   }
   if (command === 'fader') {
     const position = Number(file)
     if (!Number.isInteger(position) || position < 0 || position > 255) throw new Error('Use fader 0-255.')
-    await devIn(8, 0x40 | position << 8, 1); process.exit(0)
+    await panelInput(devIn, 8, 0x40 | position << 8); process.exit(0)
   }
   if (command === 'loader') {
     const bytes = await devIn(9, 0, 60), view = new DataView(bytes.buffer, bytes.byteOffset, 60)
