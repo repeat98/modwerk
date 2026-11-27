@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/mods/mutiny/mutiny.c",
+    "src/mods/mutiny/cmd.c",
+    "src/mods/mutiny/playback.c",
+    "src/mods/mutiny/commit.c",
+    "src/mods/mutiny/input.c",
+    "src/mods/mutiny/page.c",
+    "src/mods/mutiny/preview.c",
+    "src/mods/mutiny/port144.c",
+    "src/mods/mutiny/storage.c",
+    "src/mods/mutiny/tick.c",
+    "src/mods/mutiny/len.s",
+    "src/src/engine/engine.c",
+    "src/src/runtime/runtime.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-Os",
+    "-fno-tree-loop-distribute-patterns",
+    "-Wstrict-prototypes",
+    "-Wmissing-prototypes"
+  ],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_key",
+      "fn": "mut_key",
+      "order": 7
+    },
+    {
+      "event": "ev_enc",
+      "fn": "mut_enc",
+      "order": 7
+    },
+    {
+      "event": "ev_tick",
+      "fn": "mut_tick",
+      "order": 62
+    },
+    {
+      "event": "ev_draw",
+      "fn": "mut_draw",
+      "order": 92
+    },
+    {
+      "event": "ev_key_leds",
+      "fn": "mut_leds",
+      "order": 50
+    },
+    {
+      "event": "ev_gen_trig",
+      "fn": "mut_gen_trig",
+      "order": 50
+    },
+    {
+      "event": "ev_gen_notes",
+      "fn": "mut_gen_notes",
+      "order": 50
+    },
+    {
+      "event": "ev_fire_vel",
+      "fn": "mut_fire_vel",
+      "order": 50
+    },
+    {
+      "event": "ev_fire_cond",
+      "fn": "mut_fire_cond",
+      "order": 50
+    },
+    {
+      "event": "ev_fire_locks",
+      "fn": "mut_fire_locks",
+      "order": 50
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_menu",
+      "order": 39,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:mut_menu",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_projdata",
+      "order": 79,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:mut_projdata",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:TRIG page:TRIG PARAMETERS",
+    "projdata:MUT2"
+  ],
+  "requires": [
+    "seq-events"
+  ],
+  "derive": null,
+  "releases": {
+    "1.44": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x40094688",
+          "op": "jsr",
+          "target": "mut_site_len",
+          "len": 6,
+          "stockSha256": "d3c71e408c82397fbf827bb274554c18c198dac3917fc03d1bbec7999fc94de0"
+        }
+      ]
+    }
+  }
+}
