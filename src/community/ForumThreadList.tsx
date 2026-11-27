@@ -58,8 +58,9 @@ export function ForumThreadList({ threads, context = {} }: { threads: ForumThrea
                 {thread.media_kinds && <span className="forum-thread-media">{thread.media_kinds.includes('image') && <><Icon name="image" size={14} /><span className="sr-only">Includes images</span></>}{thread.media_kinds.includes('audio') && <><Icon name="wave" size={14} /><span className="sr-only">Includes sound clips</span></>}</span>}
                 {(thread.category === 'requests' || thread.votes > 0) && <span className="forum-votes" data-request={thread.category === 'requests'}><Icon name="heart" size={13} />{thread.votes} {thread.category === 'requests' ? (thread.votes === 1 ? 'vote' : 'votes') : <span className="sr-only">{thread.votes === 1 ? 'like' : 'likes'}</span>}</span>}
                 {thread.machine !== context.machine && <ForumMachineBadge machine={thread.machine} />}
-                {thread.module_id && <a className="forum-module-link" href={communityModule(thread.module_id)?.href ?? '#forum'}>{communityModule(thread.module_id)?.name ?? thread.module_id}</a>}
-                {(!context.author || thread.username !== context.author) && <span className="forum-thread-author"><ForumAuthorName username={thread.username} official={thread.official} /></span>}
+                {/* A module's home thread names the module in its title, and Modwerk's mark is its avatar. */}
+                {thread.module_id && thread.id !== 'module-' + thread.module_id && <a className="forum-module-link" href={communityModule(thread.module_id)?.href ?? '#forum'}>{communityModule(thread.module_id)?.name ?? thread.module_id}</a>}
+                {(!context.author || thread.username !== context.author) && <span className={'forum-thread-author' + (thread.official ? ' sr-only' : '')}><ForumAuthorName username={thread.username} official={thread.official} /></span>}
               </div>
             </div>
           </div>

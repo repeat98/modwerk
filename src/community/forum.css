@@ -33,8 +33,9 @@
 .forum-filters .button { min-height: 44px; padding: 0 16px; flex-shrink: 0; }
 .forum-filter-toggle, .forum-start-short { display: none; }
 .forum-search { display: flex; align-items: center; gap: 10px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--field); padding-left: 12px; color: var(--muted); font-size: var(--text-base); }
-.forum-search:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.forum-search:focus-within { border-color: var(--accent); outline: 2px solid var(--accent-soft); outline-offset: 0; }
 .forum-search input { width: 100%; min-width: 0; min-height: 44px; border: 0; background: transparent; color: var(--text); padding: 10px 12px 10px 0; outline: none; }
+.forum-search input:focus-visible { outline: none; }
 .forum-page select { width: 100%; min-height: 44px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background-color: var(--field); color: var(--text); padding: 10px 42px 10px 12px; font-size: 14px; }
 .forum-active-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -4px 0 22px; color: var(--muted); font-size: var(--text-xs); }
 .forum-active-filters > a { position: relative; display: inline-flex; align-items: center; gap: 7px; max-width: 100%; min-height: 32px; padding: 5px 10px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text-secondary); }
@@ -42,6 +43,12 @@
 .forum-active-filters > a:hover { background: var(--surface-hover); }
 .forum-active-filters > .forum-clear-filters { margin-left: 4px; border-color: transparent; background: transparent; color: var(--accent-hover); }
 .forum-active-filters > a:first-of-type:nth-last-of-type(2) + .forum-clear-filters { display: none; }
+/* Wide screens show the search, topic and machine in the toolbar's fields, so their chips would say it twice; phones fold
+   those fields away and keep the chips. */
+@media (min-width: 601px) {
+  .forum-active-filters > a[data-mirrored] { display: none; }
+  .forum-active-filters:not(:has(> a:not([data-mirrored], .forum-clear-filters))) { display: none; }
+}
 .forum-list-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; margin-bottom: 14px; }
 .forum-list-heading h2 { font-size: var(--text-md); }
 .forum-list-heading > span { color: var(--muted); font-size: var(--text-sm); }
@@ -80,7 +87,7 @@
 .forum-category-badge[data-category="modules"] { --category-color: #92bccd; }
 .forum-category-badge[data-category="issues"] { --category-color: #d2b18f; }
 .forum-category-badge[data-category="configs"] { --category-color: #9cc6b1; }
-.forum-category-badge > span { width: 6px; height: 6px; border-radius: 50%; background: var(--category-color); }
+.forum-category-badge > span:not(.forum-skeleton) { width: 6px; height: 6px; border-radius: 50%; background: var(--category-color); }
 .forum-thread-media { display: inline-flex; align-items: center; gap: 6px; color: #d1c48d; }
 .forum-state { display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; border: 1px solid var(--control-border); border-radius: var(--radius-xs); color: var(--muted); font-size: var(--text-xs); font-weight: 500; line-height: 1.5; white-space: nowrap; }
 .forum-state:is([data-resolved="true"], [data-request-status="shipped"]) { color: var(--issue-fixed); border-color: color-mix(in srgb, var(--issue-fixed) 40%, transparent); }
@@ -113,8 +120,9 @@
 .forum-meta a:hover { color: var(--accent-hover); }
 .forum-author { display: inline-flex; align-items: center; gap: 7px; }
 /* A member without a picture gets an orb: ForumAvatar picks two of these hues (in wheel order: the avatar tones plus the role
-   green, amber and blue-grey), an angle and a highlight from the username. The body runs from the second hue into its own dark. */
-.forum-avatar { --orb-0: #cec5ef; --orb-1: #b8d6ee; --orb-2: #92bccd; --orb-3: #b3dacf; --orb-4: #9cc6b1; --orb-5: #e3c27c; --orb-6: #eac4af; --orb-7: #e7bbd0; --orb-a: var(--orb-0); --orb-b: var(--orb-4); --orb-angle: 135deg; --orb-x: 32%; --orb-y: 28%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle at var(--orb-x) var(--orb-y), var(--orb-a), color-mix(in srgb, var(--orb-a) 55%, transparent) 20%, transparent 45%), linear-gradient(var(--orb-angle), var(--orb-b), color-mix(in srgb, var(--orb-b), var(--background) 55%)); font-size: var(--text-xs); font-weight: 600; letter-spacing: .3px; }
+   green, amber and blue-grey), an angle, a highlight corner and a depth from the username. The body runs from the second
+   hue into its own dark. */
+.forum-avatar { --orb-0: #cec5ef; --orb-1: #b8d6ee; --orb-2: #92bccd; --orb-3: #b3dacf; --orb-4: #9cc6b1; --orb-5: #e3c27c; --orb-6: #eac4af; --orb-7: #e7bbd0; --orb-a: var(--orb-0); --orb-b: var(--orb-4); --orb-angle: 135deg; --orb-x: 28%; --orb-y: 26%; --orb-depth: 55%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle at var(--orb-x) var(--orb-y), var(--orb-a), color-mix(in srgb, var(--orb-a) 55%, transparent) 28%, transparent 45%), linear-gradient(var(--orb-angle), var(--orb-b), color-mix(in srgb, var(--orb-b), var(--background) var(--orb-depth))); font-size: var(--text-xs); font-weight: 600; letter-spacing: .3px; }
 .forum-avatar:is([data-picture], [data-tone="official"]) { border: 1px solid var(--chrome-edge); }
 .forum-avatar[data-tone="official"] { background: var(--surface); }
 .forum-avatar[data-tone="neutral"] { background: #34343e; }
@@ -173,9 +181,11 @@
 .forum-page .forum-thread-heading { display: block; margin-bottom: 0; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
 .forum-thread-heading .forum-thread-tags { min-height: 24px; }
 .forum-thread-heading .forum-author .forum-avatar, .forum-thread-heading .forum-meta > .forum-avatar { width: 24px; height: 24px; }
-.forum-page .forum-thread-heading h1 { max-width: 740px; font-size: 24px; line-height: 1.3; margin: 10px 0 16px; letter-spacing: -.2px; text-wrap: balance; }
+.forum-page .forum-thread-heading h1 { max-width: 780px; font-size: clamp(1.75rem, 1.6vw + 1.1rem, 2.25rem); line-height: 1.15; margin: 12px 0 18px; letter-spacing: -.03em; text-wrap: balance; }
 .forum-thread-heading :is(.forum-category-badge, .forum-machine-badge, .forum-module-link) { font-size: var(--text-sm); }
 a.forum-category-badge:hover { color: var(--text); }
+/* As tall as the chips beside it, so the shared hit frame reaches 44px on a phone. */
+.forum-thread-heading a.forum-category-badge { min-height: 24px; }
 .forum-thread-heading .forum-state { min-height: 24px; padding: 0 8px; background: color-mix(in srgb, currentColor 12%, transparent); font-size: var(--text-sm); }
 .forum-thread-byline { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 16px; }
 .forum-thread-byline > .forum-meta { gap: 6px; }
@@ -198,7 +208,8 @@ a.forum-category-badge:hover { color: var(--text); }
 .forum-replies-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-top: 28px; }
 .forum-replies-heading::after { content: ""; flex: 1 1 40px; order: 1; border-top: 1px solid var(--line); }
 .forum-replies-heading h2 { margin: 0; color: var(--muted); font-size: var(--text-sm); font-weight: 500; }
-.forum-posts > * + * { border-top: 1px solid var(--line); }
+/* The hover tint reaches past the column; the hairline keeps to it, like the heading's and the composer's lines. */
+.forum-posts > * + .forum-post::before { content: ""; position: absolute; top: 0; inset-inline: 16px; border-top: 1px solid var(--line); }
 .forum-post { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 14px; scroll-margin-block: 56px; margin: 0 -16px; padding: 18px 16px 12px; transition: background .15s; }
 .forum-post[data-opening] { margin: 24px 0 0; padding: 0; }
 @media (hover: hover) {
@@ -208,7 +219,6 @@ a.forum-category-badge:hover { color: var(--text); }
 .forum-post[data-hidden] { background: var(--field); }
 .forum-new-marker { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--accent-hover); font-size: var(--text-xs); font-weight: 600; line-height: 1; }
 .forum-new-marker::after { content: ""; flex: 1; border-top: 1px solid var(--accent-line); }
-.forum-posts > .forum-new-replies { border-top: 0; }
 /* Opening post of a module home thread: one line until opened. */
 .forum-intro { margin-top: 24px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
 .forum-intro > .forum-post[data-opening] { margin: 0; padding: 16px; }
@@ -345,6 +355,13 @@ a.forum-category-badge:hover { color: var(--text); }
 .forum-join h2 { margin: 0; color: var(--text); font-size: var(--text-md); font-weight: 600; line-height: 1.4; }
 .forum-join p { margin: 2px 0 0; color: var(--muted); font-size: var(--text-base); line-height: 1.5; }
 .forum-join-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* On the forum home the invitation leads the side column; in the narrow column its actions go under the text. */
+.forum-overview-sidebar > .forum-join { margin: 0; }
+@media (min-width: 1101px) {
+  .forum-overview-sidebar > .forum-join { grid-template-columns: 40px minmax(0, 1fr); align-items: start; padding: 16px; }
+  .forum-overview-sidebar .forum-join-actions { grid-column: 1 / -1; }
+  .forum-overview-sidebar .forum-join-actions .button { flex: 1 1 auto; }
+}
 .forum-locked-note { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 14px; margin-top: 8px; padding: 18px 0 0; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
 .forum-locked-note > svg { justify-self: center; }
 /* With no replies the "No replies yet" line already closes the thread, so what follows needs no second line. */
@@ -529,8 +546,14 @@ a.forum-category-badge:hover { color: var(--text); }
   .forum-vote-button strong { padding-left: 0; border-left: 0; }
   .forum-request-status select, .forum-request-status input { min-height: 44px; }
   /* Post actions stay small to look at and get a 44px target from an invisible frame. */
-  .forum-post-action::after, .forum-post-more > summary::after { content: ""; position: absolute; inset: -7px -2px; }
-  .forum-post-more > summary { position: relative; }
+  .forum-post-action::after { content: ""; position: absolute; inset: -7px -2px; }
+  .forum-post-more > summary::after { content: ""; position: absolute; inset: -7px; }
+  .forum-unread-jump::after { content: ""; position: absolute; inset: -8px 0; }
+  .forum-post-more > summary, .forum-unread-jump { position: relative; }
+  /* Author names are the way to a profile from a thread. */
+  .forum-thread-byline > .forum-meta > a, .forum-post-author a { position: relative; }
+  .forum-thread-byline > .forum-meta > a::after, .forum-post-author a::after { content: ""; position: absolute; inset: -15px -4px; }
+  .forum-locked-note .text-button { min-height: 44px; }
   .forum-composer-footer { align-items: stretch; flex-direction: column; gap: 12px; }
   .forum-composer-footer > .button { min-height: 44px; }
   .forum-page input, .forum-page select, .forum-page .community-form input:not([type="checkbox"]), .forum-page .community-form textarea, .account-page input { font-size: 16px; }
@@ -794,9 +817,11 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
   .forum-topic-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
   .forum-activity-layout { grid-template-columns: minmax(0, 1fr); }
   .forum-overview-sidebar { display: contents; }
-  /* Under the list every section opens with the hairline; Online now is a compact card above the list. */
-  .forum-overview-sidebar > :not(.forum-online-now) { padding-top: 16px; border-top: 1px solid var(--line); }
-  .forum-overview-sidebar > .forum-online-now { order: -1; margin: 0 0 -8px; padding: 10px 14px 12px; border: 1px solid var(--line); border-radius: var(--radius-md); }
+  /* Under the list every section opens with the hairline; a guest's invitation and Online now are compact cards above
+     the list (and above a filled Showcase strip). */
+  .forum-overview-sidebar > :not(.forum-online-now, .forum-join) { padding-top: 16px; border-top: 1px solid var(--line); }
+  .forum-overview-sidebar > .forum-join { order: -3; }
+  .forum-overview-sidebar > .forum-online-now { order: -2; margin: 0 0 -8px; padding: 10px 14px 12px; border: 1px solid var(--line); border-radius: var(--radius-md); }
   .forum-overview-sidebar .forum-online-now .forum-list-heading { margin-bottom: 8px; }
   .forum-online-now h2 { font-size: var(--text-base); }
   .forum-overview-sidebar > .forum-directory { order: 1; }
@@ -850,6 +875,9 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
   .shout-actions:not([open]), .shout-actions[open] summary { top: 0; right: 0; }
   .shout-actions summary { width: 44px; min-height: 44px; }
   .shout-message .forum-meta { padding-right: 40px; }
+  .shout-actions .text-button { min-height: 44px; padding-inline: 6px; }
+  /* The archive is paged, so the page scrolls it instead of a box inside the page. */
+  .forum-shoutbox.is-archive .shoutbox-messages { max-height: none; overflow: visible; }
 }
 
 /* A YouTube link on its own line becomes the player; in chat it is a card that loads the player when played. */
@@ -883,11 +911,17 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
   .forum-thread-tags { gap: 4px 8px; }
   .forum-thread-tags a::after { content: ""; position: absolute; inset: -10px -4px; }
   .forum-active-filters > a::after, .forum-status-filter a::after { content: ""; position: absolute; inset: -6px 0; }
+  /* The statuses keep to one row and scroll; the padding holds their hit frames inside the scroller. */
+  .forum-status-filter { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-block: 6px; margin: -14px 0 14px; }
+  .forum-status-filter a { flex-shrink: 0; }
+  .forum-thread-row h3:has(.forum-thread-states:empty) { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .forum-online-now-stack a { position: relative; }
+  .forum-online-now-stack a::after { content: ""; position: absolute; inset: -8px 0; }
   .forum-last-active a { flex-direction: row; justify-content: flex-start; align-items: center; gap: 0; min-height: 20px; }
   .forum-last-active a::after { content: ""; position: absolute; inset: -12px -4px; }
   .forum-last-active a small { min-width: 0; max-width: none; }
   .forum-last-active a small::before { content: "·"; margin: 0 6px; }
-  .forum-page .forum-thread-heading h1 { font-size: 22px; }
+  .forum-page .forum-thread-heading h1 { font-size: 1.625rem; line-height: 1.2; }
   .forum-post-body { font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -918,9 +952,12 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
   .forum-list-heading { margin-bottom: 10px; }
 }
 
-/* Showcase strip: an invitation to share, followed by the newest images and sound clips, scrolled sideways. */
+/* Showcase strip: the newest images and sound clips scrolled sideways, with an invitation to share. */
 .forum-showcase { --topic-color: #d1c48d; margin: 4px 0 8px; }
-.forum-overview-sidebar .forum-showcase { margin: 0; }
+.forum-activity-layout .forum-showcase { margin: 0; }
+/* With shares to show, the strip runs across the page above the discussions and the side column. It follows the
+   discussions in the source, so they are read first. */
+.forum-activity-layout > .forum-showcase { grid-column: 1 / -1; order: -1; margin-bottom: -8px; }
 .forum-showcase-strip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(240px, 280px); gap: 12px; margin: 0; padding: 2px 2px 14px; list-style: none; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: var(--control-border) transparent; }
 .forum-showcase-strip > li { scroll-snap-align: start; }
 .forum-showcase-card { position: relative; display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); transition: border-color .15s; }
@@ -943,7 +980,7 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
 .forum-showcase-sound .audio-preview-dock { z-index: 2; }
 .forum-showcase-copy { display: flex; flex: 1; flex-direction: column; gap: 6px; padding: 11px 14px 13px; }
 .forum-showcase-caption { min-height: 18px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.forum-showcase-copy h3 { margin: 0; font-size: var(--text-base); font-weight: 600; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.forum-showcase-copy h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin: 0; font-size: var(--text-base); font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
 .forum-showcase-title { color: var(--text); }
 /* The title link covers the card; the play button, badges and author link sit above it. */
 .forum-showcase-title::after { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: var(--radius-md); }
@@ -972,27 +1009,28 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
 .forum-showcase-strip[data-empty] .forum-showcase-invite > a { align-items: center; text-align: center; }
 .forum-showcase-strip[data-empty] .forum-showcase-invite strong { font-size: var(--text-md); }
 .forum-showcase-strip[data-empty] .forum-showcase-invite > a > span:not(.forum-showcase-invite-icon) { max-width: 32ch; }
-.forum-showcase-invite small { color: var(--faint); font-size: 11px; }
-/* In the side column an empty Showcase is one warm row, not a card-sized box: nothing there waits on its height. */
-.forum-overview-sidebar .forum-showcase-strip[data-empty] { padding: 0; }
-.forum-overview-sidebar .forum-showcase-strip[data-empty] > .forum-showcase-ghost { display: none; }
-.forum-overview-sidebar .forum-showcase-strip[data-empty] .forum-showcase-invite > a { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 2px 14px; padding: 14px 16px; text-align: left; }
-.forum-overview-sidebar .forum-showcase-strip[data-empty] .forum-showcase-invite strong { font-size: var(--text-base); }
-.forum-overview-sidebar .forum-showcase-strip[data-empty] .forum-showcase-invite-icon { grid-row: span 2; }
-.forum-overview-sidebar .forum-showcase-invite small { grid-column: 2; }
-/* A desktop column stacks the invitation, as one slim row, over the two newest shares; Browse all leads to the rest. */
-@media (min-width: 1101px) {
-  .forum-overview-sidebar .forum-showcase-strip { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: minmax(0, 1fr); overflow: visible; padding: 0; }
-  .forum-overview-sidebar .forum-showcase-strip > li:nth-child(n+4) { display: none; }
-  .forum-overview-sidebar .forum-showcase-strip:not([data-empty]) .forum-showcase-invite > a { flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; padding: 8px 12px 8px 8px; }
-  .forum-overview-sidebar .forum-showcase-strip:not([data-empty]) .forum-showcase-invite > a > span:not(.forum-showcase-invite-icon) { display: none; }
-  .forum-overview-sidebar .forum-showcase-strip:not([data-empty]) .forum-showcase-invite-icon { width: 32px; height: 32px; }
-}
+.forum-showcase-invite small, .forum-showcase[data-layout="invite"] small { color: var(--faint); font-size: 11px; }
+/* The page's strip keeps its covers compact (artwork unchanged) and ends with a small invitation to add yours. */
+.forum-showcase[data-layout="strip"] .forum-showcase-cover { height: 132px; }
+.forum-showcase-strip:not([data-empty]) > .forum-showcase-invite:last-child { justify-self: start; width: 168px; }
+.forum-showcase-strip:not([data-empty]) > .forum-showcase-invite:last-child > a { align-items: center; text-align: center; padding: 12px; }
+.forum-showcase-strip:not([data-empty]) > .forum-showcase-invite:last-child > a > span:not(.forum-showcase-invite-icon) { display: none; }
+/* With nothing shared yet, one slim row after Topics, in the Topics rows' shape, invites the first share. */
+.forum-showcase-share { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-inline: -8px; padding: 8px; border-radius: var(--radius-md); color: var(--muted); font-size: var(--text-sm); line-height: 1.45; transition: background .15s; }
+.forum-showcase-share:is(:hover, :focus-visible) { background: var(--surface-hover); }
+.forum-showcase-share .forum-showcase-invite-icon { width: 28px; height: 28px; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--topic-color) 12%, transparent); }
+.forum-showcase-share-action { color: var(--accent-hover); font-weight: 500; }
+.forum-showcase[data-layout="invite"] small { display: block; margin-top: 4px; padding-left: 38px; }
 @media (prefers-reduced-motion: reduce) {
   .forum-showcase-loading .forum-showcase-cover { animation: none; }
 }
 @media (max-width: 600px) {
   .forum-showcase-strip { grid-auto-columns: 74%; }
+  /* The gallery scrolls sideways like the home strip, so the discussions start on the first screens. */
+  .forum-showcase[data-layout="grid"] .forum-showcase-strip:not([data-empty]) { grid-auto-flow: column; grid-template-columns: 168px; grid-auto-columns: 74%; overflow-x: auto; padding: 2px 2px 14px; }
+  /* Its invitation opens the strip as the same small card the home strip ends with. */
+  .forum-showcase-strip:not([data-empty]) .forum-showcase-invite > a { align-items: center; text-align: center; padding: 12px; }
+  .forum-showcase-strip:not([data-empty]) .forum-showcase-invite > a > span:not(.forum-showcase-invite-icon) { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .forum-showcase-card { transition: none; }
@@ -1007,6 +1045,7 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
   .forum-post-author { min-height: 32px; margin-bottom: 8px; }
   .forum-post-author > .forum-meta { flex-basis: 100%; }
   .forum-post[data-target], .forum-post[data-hidden] { margin-inline: -16px; padding-inline: 16px; }
+  .forum-posts > * + .forum-post:not([data-target], [data-hidden])::before { inset-inline: 0; }
   .forum-replies-heading { margin-top: 24px; }
   .forum-composer.forum-reply-composer { grid-template-columns: 32px minmax(0, 1fr); column-gap: 10px; padding: 16px 0 0; }
   .forum-reply-composer > .forum-composer-heading > .forum-avatar { grid-row: 1; width: 32px; height: 32px; }

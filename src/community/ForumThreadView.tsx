@@ -36,7 +36,7 @@ export function PostMenu({items,label='More actions for this post'}:{items:{labe
   useEffect(()=>{if(!open)return;const away=(event:PointerEvent)=>{if(!menu.current?.contains(event.target as Node))setOpen(false)};document.addEventListener('pointerdown',away);return()=>document.removeEventListener('pointerdown',away)},[open])
   return <details ref={menu} className="forum-post-more" open={open} onToggle={event=>setOpen(event.currentTarget.open)} onKeyDown={event=>{if(event.key==='Escape'&&open){setOpen(false);menu.current?.querySelector('summary')?.focus()}}} onBlur={event=>{if(event.relatedTarget&&!event.currentTarget.contains(event.relatedTarget))setOpen(false)}}>
     <summary aria-label={label} title="More"><Icon name="more" size={18}/></summary>
-    <div className="forum-post-more-menu">{items.map(item=><button key={item.label} type="button" onClick={()=>{if(menu.current)menu.current.open=false;setOpen(false);item.onSelect()}}>{item.label}</button>)}</div>
+    <div className="forum-post-more-menu">{items.map(item=><button key={item.label} type="button" onClick={()=>{menu.current?.querySelector('summary')?.focus();if(menu.current)menu.current.open=false;setOpen(false);item.onSelect()}}>{item.label}</button>)}</div>
   </details>
 }
 function PostCard({item,author,locked,opening,targeted,refresh,onQuote,onVisitor,children}:{item:ForumPost;author:string|null;locked:boolean;opening:boolean;targeted:boolean;refresh:()=>Promise<void>;onQuote:(value:string)=>void;onVisitor:(action:string)=>void;children?:ReactNode}){

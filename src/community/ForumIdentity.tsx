@@ -23,9 +23,10 @@ function avatarOrb(username: string) {
   for (const character of username) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619)
   // Mix the bits once more: plain FNV gives short, similar names the same low bits, and so the same colours.
   hash = Math.imul(hash ^ hash >>> 16, 0x85ebca6b); hash = Math.imul(hash ^ hash >>> 13, 0xc2b2ae35); hash = (hash ^ hash >>> 16) >>> 0
-  // The hues sit in wheel order, so index + 3..5 is always a far-away second colour.
+  // The hues sit in wheel order, so index + 3..5 is always a far-away second colour. A light, middle or deep body and the
+  // highlight in one of four corners tell discs with the same pair apart even at 22px.
   const first = hash % 8, second = (first + 3 + (hash >>> 3) % 3) % 8
-  return { '--orb-a': `var(--orb-${first})`, '--orb-b': `var(--orb-${second})`, '--orb-angle': (hash >>> 5) % 360 + 'deg', '--orb-x': 20 + (hash >>> 14) % 60 + '%', '--orb-y': 18 + (hash >>> 20) % 50 + '%' } as CSSProperties
+  return { '--orb-a': `var(--orb-${first})`, '--orb-b': `var(--orb-${second})`, '--orb-angle': (hash >>> 5) % 360 + 'deg', '--orb-x': [28, 72][hash >>> 26 & 1] + '%', '--orb-y': [26, 70][hash >>> 27 & 1] + '%', '--orb-depth': ['35%', '55%', '75%'][(hash >>> 24) % 3] } as CSSProperties
 }
 
 // A member's picture when they set one, otherwise their orb.
