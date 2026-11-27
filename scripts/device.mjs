@@ -146,11 +146,12 @@ const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x
   ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => ['TRIG' + (i + 1), i])),
   ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => ['T' + (i + 1), 0x10 + i])),
   ...Object.fromEntries(['A', 'B', 'C', 'D', 'E', 'F'].map((e, i) => ['PUSH' + e, 0x38 + i])) }
+const NOT_DEV = 'This base does not answer development requests: build it with --dev.'
 async function devIn(request, value, length) {
   const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request, value, index }, length)
   if (reply.status !== 'ok' || reply.data?.byteLength !== length) throw new Error(request === 16 ?
     'The base refused this MEM read: development bases read 0x40000400-0x40cfffff, 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and 0x100f0000-0x100fffff only (dev.c).' :
-    'This base does not answer development requests: build it with --dev.')
+    NOT_DEV)
   return new Uint8Array(reply.data.buffer, reply.data.byteOffset, reply.data.byteLength)
 }
 /** FUNC+PLAY: hold every key but the last, tap the last, release the held ones. */
@@ -355,9 +356,10 @@ const REPORT_HEX = new Set(['buffers', 'arenas', 'hostFlags', 'manager', 'used',
  * masks' second words and a pad at the end; fxids.h). The base answers only its own length. */
 async function reportView() {
   for (const words of [78, 81, 83, 85]) { // 32, 64, 96 or 128 ids
-    try { const bytes = await devIn(11, 0, 4 * words); return new DataView(bytes.buffer, bytes.byteOffset, 4 * words) } catch { /* the other length */ }
+    // Only a refusal means the other length; the unit away (USB Audio's reconnect) keeps its own message, which the test tools wait out.
+    try { const bytes = await devIn(11, 0, 4 * words); return new DataView(bytes.buffer, bytes.byteOffset, 4 * words) } catch (error) { if (error.message !== NOT_DEV) throw error }
   }
-  throw new Error('This base does not answer development requests: build it with --dev.')
+  throw new Error(NOT_DEV)
 }
 /** status.c's tail of the report (version 11 and up): word i of the first 78. */
 async function statusWords() {
