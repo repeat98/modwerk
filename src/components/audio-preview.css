@@ -31,7 +31,7 @@
 .audio-preview-player .audio-player-placeholder::before, .audio-preview-player .audio-player-fallback-progress { top: 16px; }
 .audio-preview-player .audio-player-hover > span { background: #1c1c22; }
 .module-audio-detail { grid-area: preview; min-width: 0; }
-.module-audio-art { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.module-audio-art { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); }
 .detail-hero .module-audio-art > .module-preview { height: auto; min-height: 210px; aspect-ratio: 2.18; }
 .module-audio-detail .audio-preview-dock { position: relative; z-index: 2; inset: auto; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: var(--field); backdrop-filter: none; box-shadow: none; }
 /* Detail previews have their own controls below the artwork; library covers keep the hover strip. */
