@@ -845,8 +845,8 @@
     {
       "id": "midiverb",
       "slots": "fx2",
-      "cycles": 398,
-      "cyclesKind": "executed",
+      "cycles": 632,
+      "cyclesKind": "hardware",
       "state": 32,
       "buffer": 15870,
       "version": "0.1.0-experimental",

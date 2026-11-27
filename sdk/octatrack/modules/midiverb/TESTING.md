@@ -39,7 +39,10 @@ Record what you ran, on which build and which unit, and what you saw. "Not teste
     - In use on T1 FX2: frame +1.5, CPU +2, DSP T1-4 +11. DSP T5-8 also read about +11, at rest and in use.
     - Curve: first 1.6, each 1.6. Admitted alone on the empty pattern (longest frame 39.5 %) and the medium one (81.6 %), nothing dropped, no stalls.
     - Module pool: 63,936 bytes.
-  - Not run yet: the test procedure and its edge cases, PROG and BANK by hand on each bank, a Part saved with 0.1.0, a listen.
+  - *PROG and BANK, package `1c2e43f6`* (a 300-s trial, transport stopped, T1 FX2; C04 Part 2 as the unit was left). Each value was set with the knobs and read back from the frame record; 30 of 30 passed.
+    - PROG 1, 30 and 59 on MV1, MV2 and FEX play the program 0.1.0 played at that value: MV1 1, 34, 63; MV2 4, 73, 99; FEX 1, 32, 63. The screen names them, e.g. "34 2.85 SMALL BRIGH".
+    - MV2 PROG 83 to 102 play MV2 50 to 69 in order. Two more turns past 102 stay on 102 ("69 FAST CHORUS 2").
+  - Not run yet: the test procedure, a Part saved with 0.1.0 and opened with 0.2.0 (the value map above is what it reads), a listen.
 
 - **Trial, 25 Nov 2026, the owner's Octatrack** on flashed base `eb6679620d0c`, from commit ede56e7b6: package `midiverb.mwrm`, SHA-256 `8184ae0826318eced0dd1053b638dd58db4eb09097fd8ed0fb30c48b87dea653`, built by `npm run module:dev -- midiverb --slots fx2 --cycles 400 --cycles-kind executed --state 32 --buffer 15870`. The base admitted it and ran it as a RAM trial. The owner reported it "working great" (reported, not observed by the agent). Not run: the test procedure, its edge cases, scenes, locks, LFOs, several instances.
 - The first attempts were refused at verify, loader refusal 6 (RUNTIME_CYCLES): 824 declared cycles, then the builder's placeholder. One instance must fit beside seven stock slots on a core: 3,120 − 7 × 342 = 726 chip cycles, a draft's figure charged at 7/4, so at most 414 declared.
