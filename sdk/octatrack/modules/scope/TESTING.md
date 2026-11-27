@@ -5,6 +5,29 @@ Draft Modwerk port of octabam `modules/scope` at
 
 ## Release procedure, 27 November 2026
 
+### Development-base window check
+
+Built a private development base from OS 1.40C with `--dev --dsp-loader
+--usb-midi --site-events` and RAM-booted it. The booted base identity was
+`43ac24652a89f28b…`; its private image SHA-256 was
+`e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd`.
+With B02 playing, `do gap` returned 428 µs before SCOPE. The exact
+`f8a1ffeb…` package ran for a 30-second RAM trial with its refusal counter
+steady at 3 and no logged crash, stall, freeze or skipped track; it rolled
+back. I then accepted a short install to read the open window. The author
+opened SCOPE with DOWN then TEMPO and confirmed B02 was audibly playing.
+Hardware LCD captures show a live trace (`media/scope-all-live.png`,
+`media/scope-live-trace.png`). With the window open and B02 playing, the
+development base reported CPU 95% and `do gap` 407 µs. These are readings
+at different times, not a matched worst-case comparison. YES closed the
+window; removal succeeded and inventory returned `[]`. The base remains
+RAM-booted until power cycle, which returns to the flashed base.
+
+The available USB device exposed no audio input on macOS, so the run did
+not capture MAIN/CUE or establish audio dropout counts. The unit's
+development stats give a frame-gap observation only. No worst-case
+ColdFire cycle or complete stack bound was measured.
+
 On the flashed 0.8.1 release base `eb6679620d0c9ed7…`, with B02 playing,
 the published-source USB package `f8a1ffeb984e…` ran as a 45-second RAM
 trial. The loader's verdict reported no crash, stall, freeze or skipped

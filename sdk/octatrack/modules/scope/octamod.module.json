@@ -36,7 +36,10 @@
       "Turn DATA ENTRY A (GAIN) and B (TIME). Press [UP] or [DOWN] to cycle OSC, XY and ALL.",
       "Press [TEMPO], [YES] or [NO] to close. Hold [DOWN] and press [TEMPO] again to reopen."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/scope-all-live.png",
+      "media/scope-live-trace.png"
+    ]
   },
   "controls": [
     {
@@ -135,7 +138,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "SCOPE 0.2.0 package f8a1ffeb ran on an MKII with Modwerk base 311bb670 on 27 November 2026. The B02 test procedure passed unit steps 6–10: inventory and Part read, scripted trial, 120-second soak, at-rest CPU price, and restoration. The transport state during pricing, audio continuity, UI captures, worst-case cycles, and complete memory accounting remain unverified.",
+    "summary": "SCOPE 0.2.0 package f8a1ffeb ran on an MKII on 27 November 2026. The B02 procedure on base 311bb670 passed unit steps 6–10. A 45-second trial on flashed base eb667962 and a 30-second trial on development base 43ac2465 both rolled back without a logged crash, stall, freeze or skipped track. On the latter base the author opened SCOPE while B02 played; hardware LCD captures show a live trace, and the measured frame gap was 407 us. Audio continuity, worst-case cycles and complete memory accounting remain unverified.",
     "hardwareStatus": "reported",
     "evidenceRevision": "befbf7433a255981385a047a53341e4f75bd1e3c",
     "gates": [
@@ -147,5 +150,40 @@
     "file": "LICENSE",
     "declaration": "Original SCOPE ColdFire source and documentation by ilia-murzinov under MIT. No Elektron firmware, extracted routines or tables."
   },
-  "media": []
+  "media": [
+    {
+      "path": "media/scope-all-live.png",
+      "captureType": "hardware",
+      "caption": "SCOPE open while B02 played, with a live trace and the SCOPE ALL toast visible.",
+      "alt": "Octatrack SCOPE window showing a live waveform, a center crosshair and a SCOPE ALL toast.",
+      "credit": "SCOPE by Ilia Murzinov; underlying Octatrack interface by Elektron Music Machines.",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SCOPE ALL",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd",
+        "setup": "Captured from the author's MKII over USB on 27 November 2026. Modwerk development base 43ac24652a89f28b, RAM-booted from the image hash above; SCOPE package f8a1ffeb installed. B02 playing, author held DOWN then pressed TEMPO. Original 128x64 LCD at integer scale 2; no image edits."
+      }
+    },
+    {
+      "path": "media/scope-live-trace.png",
+      "captureType": "hardware",
+      "caption": "SCOPE's waveform after pressing DOWN once from the ALL capture, while B02 played.",
+      "alt": "Octatrack SCOPE window showing a diagonal live waveform trace and the gain and peak readout.",
+      "credit": "SCOPE by Ilia Murzinov; underlying Octatrack interface by Elektron Music Machines.",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SCOPE waveform",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd",
+        "setup": "Same MKII, development base and SCOPE package as scope-all-live.png. B02 playing; pressed DOWN once with SCOPE open, then captured the original LCD at integer scale 2 without edits."
+      }
+    }
+  ]
 }

@@ -56,5 +56,9 @@ Banks), kept as [upstream/LICENSE](upstream/LICENSE).
 
 ## Screens and audio
 
-No Modwerk monochrome captures yet. Capture with
-`scripts/capture-module-ui.py` before listing.
+The author's MKII LCD captures from the 0.2.0 package on a RAM-booted
+development base show [SCOPE opening while B02 plays](media/scope-all-live.png)
+and [a live trace after pressing DOWN](media/scope-live-trace.png).
+The capture provenance is in the module manifest. No MAIN/CUE audio capture
+was available from that base, so audible continuity is not established by
+these screenshots.
