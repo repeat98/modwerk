@@ -43,13 +43,39 @@ models at the dearest setting.
 
 ## Test procedure
 
+### Test procedure: miniverb 0.2.4-experimental, 27 November 2026
+
+Build: revision `32901e0ae` (the owner's re-signed build approval of 27 November), package SHA-256
+`cf610384ad37447fbd9dc5fb59d326edeeafb0fb993f3caf376f3d46f55c5f84`, the same bytes as the 23 November unit run below.
+`npm run test:procedure -- miniverb --no-unit --no-emulator`, 8 s.
+
+| # | Step | Result |
+| --- | --- | --- |
+| 1 | Software checks (`npm run module:doctor -- miniverb`) | passed |
+| 2 | Beside every other module (`npm run modules:compat -- miniverb`) | passed |
+| 3 | Name the build (`npm run module:dev -- miniverb --build-only`) | passed: `cf610384` |
+| 4 | DSP cost model (`node scripts/cycle-scan.mjs check`) | passed; the unit reading (12.6 points = 571 cycles on T1 FX2) is 0.89 of the scan's 641, so the model over-charges |
+| 5-10 | Emulator rehearsal and the unit steps | not run in this run: left out with `--no-emulator` and `--no-unit` |
+| 11-12 | By hand, and the submitter's own stage | to do: the owner's |
+
+On the unit, 26 November 2026, outside the runner: `device:price --write --curve --memory` of `cf610384` on the owner's
+MKII (development twin `46c30886` of base 0.8.2, built from main `48f4a9b9c`; Dev17 C04, rebuilt in the working copy):
+at rest frame +0, in use on T1 FX2 frame +0 and DSP T1-4 +12.6 points, module pool 3,424 bytes; curve first 0, each 0
+(points 80.3, 78.7, 79, 79, 79.8 on T1, T3, T6, T7); admitted alone on the empty (52.2 %) and the medium (80.6 %)
+pattern, nothing dropped, no stalls; rolled back.
+
+Not tested on a unit for this record: the runner's scripted pass and soak (the 23 November run below is the last), a
+power cycle, a listen.
+
+### 23 November 2026
+
 Agent's run on the owner's MKII, 23 November 2026, through the unit queue: a development twin of main's base
 (`13fed04b`, `build_core.py --dev` with the beta flags) RAM-booted from the owner session's twin `9138bd29`, a private
 build of this source (`module:dev --build-only`, SHA-256 `cf610384ad37447fbd9dc5fb59d326edeeafb0fb993f3caf376f3d46f55c5f84`,
 declaring 402 modeled cycles), then `9138bd29` booted back. Nothing was kept and no Part was saved.
 
-Steps 1 to 5 were not run as the procedure runs them: `module:doctor`, `modules:generate` and the package import refuse
-0.2.4 until the owner's build approval (`sdk/approvals/miniverb-build-approval.json`) names this source. Step 4's scan
+Steps 1 to 5 were not run as the procedure runs them: `module:doctor`, `modules:generate` and the package import refused
+0.2.4 that day, because the owner's build approval did not name this source yet (it does since 27 November, above). Step 4's scan
 record is current. The unit steps ran one by one:
 
 | # | Step | Result |
