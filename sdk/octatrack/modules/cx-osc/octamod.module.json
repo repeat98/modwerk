@@ -169,7 +169,7 @@
     "report": "TESTING.md",
     "summary": "MKII dev twin 46c30886 (base 0.8.2): device:price curve, device:test and device:cx-stress passed; hardware PNG captures; host gates test_cx_osc_port.py and test_cx_osc_load.py. Listing needs owner build approval, compatibility.json relation merged with catalog, and base hooks before synth+cx can install together without detour clashes.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "7510bc68f019238d2b65f6b4b8b8c5fd35b68533",
+    "evidenceRevision": "7369a0785019238d2b65f6b4b8b8c5fd35b68533",
     "gates": [
       "test_cx_osc_port.py: import pins, runtime contribute, SETUP_ALL flags, compat relation, package build",
       "test_cx_osc_load.py: morph stress preset bytes",
@@ -231,7 +231,7 @@
         "model": "MKII",
         "testedOn": "2026-11-27",
         "tester": "ilia-murzinov",
-        "sourceRevision": "7510bc68f019238d2b65f6b4b8b8c5fd35b68533",
+        "sourceRevision": "7369a0785019238d2b65f6b4b8b8c5fd35b68533",
         "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
         "summary": "RAM-boot dev twin 46c30886 of base 0.8.2. device:test trial passed (CX on T1/T5, three simultaneous on T1-T3, T4-T8 refused). device:cx-stress morph presets with pattern trigs; SRC SETUP FDBK writable. Panel PNGs captured over USB.",
         "limitations": [
