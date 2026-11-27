@@ -445,8 +445,9 @@ CONTRACT = """proc:
 pcdry:
         rts
 """ % 0x7fb0
-# A proc that runs its record's area and echoes its in-block's two halfwords into its out-block, both at (r6 & $ffe000)
-# + the record's offsets (words 1 and 2), and touches neither while a word is 0.
+# A proc that runs its record's area and echoes its in-block's two halfwords into its out-block, both at the frame's host
+# bank (X:$207, as stock's bank take keeps it; never r6, which stock's dispatcher points at its parameter copies) + the
+# record's offsets (words 1 and 2), and touches neither while a word is 0.
 ECHO = """init:
         rts
 proc:
@@ -469,11 +470,7 @@ ppdry:
         move    x:(r1+2),b
         tst     b
         beq     ppdone
-        move    r6,x0
-        move    #>$ffe000,x1
-        move    x0,a1
-        and     x1,a
-        move    a1,x0
+        move    x:>$000207,x0
         move    x:(r1+1),a
         add     x0,a
         move    a1,r2
@@ -562,18 +559,18 @@ class DspProgramsReceiver(unittest.TestCase):
                 self.assertEqual(out[9], 'D x %d 0' % 0x7000)                # position 2 had none: dry
                 self.assertEqual(out[10], 'A 1')
                 self.assertEqual(out[12], 'D x %d %d' % (0x7000, 0x123456))  # ... until its record named one
-                # The stream's words: ECHO's proc echoes its in-block into its out-block at (r6 & $ffe000)
-                # + each offset, in either bank, and touches neither with a word unset.
+                # The stream's words: ECHO's proc echoes its in-block into its out-block at the bank X:$207 names
+                # + each offset, in either bank, with r6 on stock's parameter copies, and touches neither with a word unset.
                 probe, plabels2 = cls.packages.assemble(ECHO, 0x1780, str(work))
                 entry = plabels2['proc']
                 rec = 0x7fb0 + 4 * 5
                 steps = ['P %d %d' % (0x1780 + i, w) for i, w in enumerate(probe)] + ['FILL x 0 32768 5']
-                for r6, bank in ((0x2280, 0x2000), (0x4500, 0x4000)):
-                    steps += ['X %d 0' % rec, 'X %d %d' % (rec + 1, 0x1be0), 'X %d %d' % (rec + 2, 0x1840),
+                for bank in (0x2000, 0x4000):
+                    steps += ['X %d 0' % rec, 'X %d %d' % (rec + 1, 0x1be0), 'X %d %d' % (rec + 2, 0x1840), 'X %d %d' % (0x207, bank),
                               'X %d %d' % (bank + 0x1be0, 0xab1234), 'X %d %d' % (bank + 0x1be1, 0xcd5678),
-                              'R r 7 %d' % 0x6500, 'R r 6 %d' % r6, 'GO %d 1000 %d' % (entry, 0x1780),
+                              'R r 7 %d' % 0x6500, 'R r 6 %d' % 0x25d, 'GO %d 1000 %d' % (entry, 0x1780),
                               'DUMP x %d %d' % (bank + 0x1840, bank + 0x1842)]
-                steps += ['X %d 0' % (rec + 1), 'X %d 7' % (0x4000 + 0x1840), 'R r 7 %d' % 0x6500, 'R r 6 %d' % 0x4500,
+                steps += ['X %d 0' % (rec + 1), 'X %d 7' % (0x4000 + 0x1840), 'R r 7 %d' % 0x6500, 'R r 6 %d' % 0x25d,
                           'GO %d 1000 %d' % (entry, 0x1780), 'DUMP x %d %d' % (0x4000 + 0x1840, 0x4000 + 0x1841)]
                 echo = run(steps)
                 self.assertEqual(echo[1], 'D x %d %d %d' % (0x2000 + 0x1840, 0xab1234, 0xcd5678))
