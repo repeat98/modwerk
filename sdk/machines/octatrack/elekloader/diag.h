@@ -67,8 +67,10 @@ struct diag_load {
  * SET how many modules are installed, their ids in
  * `machine`, `fx` and `keys` read as one run of 56 bytes (14 ids of 4, after a restore from the card and each Keep); after a
  * restore that refused a package, `screen` its module, `tempo24` the refusal, `cpu` and `dsp0` the module pool then (bytes
- * used and the largest free run, in 16-byte units) and `dsp1` the loader's check that refused it (runtime_check: 1 the
- * pool, 2 claims, 3 metadata, 4 the DSP's limits); all three 0 on bases before 0.7.10.
+ * used and the largest free run, in 16-byte units: their low 16 bits) and `dsp1` the loader's check that refused it in
+ * its low byte (runtime_check: 1 the pool, 2 claims, 3 metadata, 4 the DSP's limits), then bits 16-19 of the bytes used in
+ * bits 8-11 and of the largest free run in bits 12-15 (0 below 1 MiB, so on every base before the 1.5 MiB pool); all
+ * three 0 on bases before 0.7.10.
  * RESTORE (bases from 0.8.2, right after the START it belongs to) the values stock's checks had to fix in the
  * battery copy of the current bank at power-up (diag.c modwerk_boot_restore), with `cpu` those in the project's
  * settings and arrangements, `dsp0` in the bank's Parts, `dsp1` in its patterns, `screen` the first record that
@@ -119,8 +121,9 @@ int32_t modwerk_boot_restore(void);                    /* status.s mw_boot_resto
 void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint32_t largest, uint32_t check); /* modset.c,
                                                        * before a restore's set record: its first refused package's module and the
                                                        * loader's refusal (screen, tempo24), the module pool when it was refused:
-                                                       * bytes used and the largest free run (cpu and dsp0, in 16-byte units), and
-                                                       * the loader's check that refused it (dsp1, loader.h runtime_check) */
+                                                       * bytes used and the largest free run (cpu and dsp0, in 16-byte units, their
+                                                       * bits 16-19 in dsp1's top nibbles), and the loader's check that refused it
+                                                       * (dsp1's low byte, loader.h runtime_check) */
 #ifdef MODWERK_DEV
 /* Development builds: what the base's own hooks cost, in DTIM3 counts (132 MHz), read over MEM. The tick chain is
  * stamped in its order (runtime_tick 1, ep0_tick 2 and its end 3, dl_ui 4, status_tick 5 and its end 6, crash_tick 7,
