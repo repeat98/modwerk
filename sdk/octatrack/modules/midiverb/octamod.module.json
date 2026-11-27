@@ -340,10 +340,9 @@
         "tutorial": {
           "title": "Quick tutorial",
           "steps": [
-            "Select an audio track with its TRACK key.",
-            "Hold FUNC and press FX2 to open FX2 SETUP.",
-            "Turn LEVEL to MIDIVRB I/II and press YES to assign it.",
-            "Press FX2 for the main page: PROG, LEVL, BANK and MIX."
+            "Load a drum loop on track 1, press FX2, then FUNC + FX2, scroll to MIDIVRB I/II with LEVEL, press YES, then FX2: the page shows PROG, LEVL, BANK and MIX.",
+            "Play the pattern and turn A slowly: the message box names each program, from short bright rooms to 20-second halls. Turn D to MV2 for the Midiverb II's programs (its flanges and choruses, 50 to 69 on the original, are the last twenty), or FEX for the Midifex's.",
+            "Turn F (MIX) up to hear more of the reverb. Turn it to 0, or press STOP three times, to get the dry loop back."
           ]
         },
         "screenshots": [
@@ -375,9 +374,9 @@
         "page": "FX2 SETUP (effect chooser)",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
-        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
       }
     },
     {
@@ -392,9 +391,9 @@
         "page": "FX2",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
-        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
       }
     },
     {
@@ -410,8 +409,8 @@
         "shows": "controls",
         "firmware": "1.40C",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
-        "setup": "Emulator capture, not hardware: ot_emu (Modwerk's adapted build of Octabam f7d7290, 26 Nov 2026) running development twin 46c30886 of Modwerk base 0.8.2 (main 48f4a9b9c; imageSha256 is its MAIN image), MKII panel, DSP cores on, a fresh scratch card. The module ran as a USB trial of the package named here (built by npm run module:dev from source 1d8289c01), driven by npm run device:emulator: pick:T2:FX2:DELAY; FUNC+FX2; pick:T2:FX2:MIDIVRB_I/II; FX2; knob A turned eight detents to the third program. The png step's LCD read: 128x64 at integer scale 2 (256x128), two grey levels, not edited."
+        "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
       }
     },
     {
@@ -426,9 +425,9 @@
         "page": "FX2",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
-        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
       }
     },
     {
@@ -443,9 +442,9 @@
         "page": "FX2",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
-        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+        "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
       }
     }
   ],
