@@ -1,21 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" class="signal-art" fill="none" role="img" aria-labelledby="title description">
-<title id="title">Scope waveform on DOWN + TEMPO</title>
-<desc id="description">A conceptual oscilloscope polyline and an XY blob on a dark panel. Not a measured screen.</desc>
-<style>.signal-art{ width: 100%; height: calc(100% - 46px); overflow: visible; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
-.signal-grid{ stroke: #ffffff; opacity: .035; stroke-width: .7; }
-.signal-main{ stroke: #7ec8e3; stroke-width: 2.3; }
-.signal-ghost{ stroke: #7ec8e3; opacity: .25; stroke-width: 1.4; }
-.signal-art text{ fill: #7ec8e3; opacity: .8; font: 10px monospace; letter-spacing: .7px; stroke: none; }
-.signal-art{ height: calc(100% - 55px); }</style>
-<rect width="320" height="192" fill="#1c1c22"/>
-<g class="signal-grid"><path d="M20 52H300"></path><path d="M20 97H300"></path><path d="M20 142H300"></path><path d="M64 33V163"></path><path d="M128 33V163"></path><path d="M192 33V163"></path><path d="M256 33V163"></path></g>
-<g>
-<text x="28" y="44">DOWN+TEMPO</text>
-<path class="signal-ghost" d="M28 97H180"></path>
-<path class="signal-main" d="M28 97 C40 60, 52 134, 64 97 S88 50, 100 97 S124 140, 136 97 S160 70, 172 97"></path>
-<circle class="signal-ghost" cx="246" cy="97" r="34"></circle>
-<path class="signal-main" d="M220 90 C230 70, 260 70, 270 95 S250 130, 230 120 S210 100, 220 90"></path>
-<text x="28" y="177">OSC</text>
-<text x="232" y="177">XY</text>
-</g>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192">
+  <rect width="320" height="192" fill="#111316"/>
+  <g stroke="#fff" stroke-opacity=".07" stroke-width="1">
+    <path d="M0 52h320M0 97h320M0 142h320M64 0v192M128 0v192M192 0v192M256 0v192"/>
+  </g>
+  <g fill="#f4f4f4" font-family="monospace" letter-spacing="1.4">
+    <text x="19" y="28" font-size="10" opacity=".65">LIVE SCOPE</text>
+    <text x="19" y="174" font-size="9" opacity=".48">OSC / XY / ALL</text>
+  </g>
+  <rect x="22" y="44" width="276" height="104" rx="2" fill="#111316" stroke="#f4f4f4" stroke-opacity=".42"/>
+  <path d="M24 96h272M160 46v100" stroke="#f4f4f4" stroke-opacity=".12" stroke-width="1"/>
+  <path d="M28 97 C34 97 36 62 44 62 S54 131 62 131 72 59 80 59 90 135 98 135 108 56 116 56 126 132 134 132 144 61 152 61 162 138 170 138 180 55 188 55 198 134 206 134 216 58 224 58 234 129 242 129 252 63 260 63 270 117 278 117 286 88 292 88" fill="none" stroke="#f4f4f4" stroke-width="1.8"/>
+  <path d="M28 103 C34 100 38 76 45 79 S54 119 62 121 72 86 80 83 90 112 98 115 108 78 116 76 126 111 134 114 144 82 152 80 162 114 170 117 180 78 188 76 198 112 206 115 216 85 224 82 234 110 242 112 252 80 260 79 270 103 278 105 286 96 292 95" fill="none" stroke="#f4f4f4" stroke-opacity=".62" stroke-width="1.2"/>
+  <path d="M28 92 C36 94 37 115 45 112 S54 82 62 81 72 104 80 108 90 90 98 88 108 105 116 108 126 92 134 91 144 106 152 109 162 94 170 93 180 107 188 109 198 92 206 91 216 104 224 107 234 93 242 92 252 105 260 106 270 94 278 93 286 99 292 100" fill="none" stroke="#f4f4f4" stroke-opacity=".32" stroke-width="1"/>
+  <circle cx="160" cy="98" r="2.5" fill="#f4f4f4" opacity=".8"/>
+  <path d="M30 158h44m-5-5 5 5-5 5M290 158h-44m5-5-5 5 5 5" fill="none" stroke="#f4f4f4" stroke-opacity=".55" stroke-width="1.2"/>
+  <path d="M78 158h164" stroke="#f4f4f4" stroke-opacity=".3" stroke-width="1"/>
 </svg>
