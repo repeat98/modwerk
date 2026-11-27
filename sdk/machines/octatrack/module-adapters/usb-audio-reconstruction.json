@@ -4,7 +4,7 @@
   "sources": {
     "generatedAssembly": "5b10045507818c7ecfa8addf0db483351854510e7ed61d3242e378b7a8c46095",
     "sdk/machines/octatrack/module-adapters/usb_audio_settings.c": "e893cec8f8054a39d53f96124667bd44639122e5c338d5f180d23ce9e0e97f89",
-    "sdk/machines/octatrack/include/modwerk_events.h": "8fadc06879a6ffc26d46d49aa7be0aba46282b655956eb9c384b269a97e0b1cd"
+    "sdk/machines/octatrack/include/modwerk_events.h": "e4d020294d11de32a9515ee7ad31ec121496ce24a3b68f94d1b6d2b1656b157f"
   },
   "copies": [
     {
