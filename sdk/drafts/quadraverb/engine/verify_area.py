@@ -7,9 +7,11 @@ qv_runtime.c's code() relocates it, with the stream named by the slot's record; 
 index: the program's place in manifest.PROGRAMS (what PROG stores). The test's proc is a stand-in for the base:
 - the slot's record at X:$7fb0 + 4 ((r7 >> 8) & 15) names the area (placed at AT, not where it was assembled) and the
   blocks' offsets in the frame's bank;
-- each frame's bank is X:$2000 or X:$4000, alternating; the stand-in puts the dispatcher's parameter page there (its
-  MIX copied), writes the frame's in-block at the bank + the in-offset before the frame's first call, and after its last
-  call keeps the out-block from the bank + the out-offset;
+- each frame's bank is X:$2000 or X:$4000, alternating, and its base is at X:$207, as stock's bank take keeps it; the
+  dispatcher's parameter page is outside the bank (PAGE, with MIX and PROG copied), as stock's r6 points at its
+  parameter copies (X:$25d-$3dc), so code that takes the bank from r6 fails here as it does on a unit (27 Nov 2026);
+  the stand-in writes the frame's in-block at the bank + the in-offset before the frame's first call, and after its
+  last call keeps the out-block from the bank + the out-offset;
 - the in-blocks are what qv_runtime.c sends: zeros until the program has run 3 frames, then qvs.ColdFire's.
 The program starts at the first call that begins a frame after its clear (qvc ASTATE); until then the output is the dry
 at its mix. From there the model is qvs.SplitEngine (LAT 3) on the samples from that frame on, and the out-blocks are
@@ -43,7 +45,7 @@ LAT = qvcf.LAT
 AT = (0x3400, 0x3C00)              # where the test puts each instance's area: neither of the assembly's origins
 IN_OFF = (0x1BE0, 0x1D40)          # each instance's in-block and out-block in a bank, as the base's channel has them
 OUT_OFF = (0x1840, 0x18E0)
-PAGE = 0x0C00                      # the parameter page in the bank (the stand-in's choice)
+PAGE = 0x02DD                      # the parameter page: in stock's parameter copies, outside both banks
 TABLE = (0x080000, 0x140000)       # in-blocks (X) and captured out-blocks (Y), test memory only
 H0 = 0xC0                          # the stand-in's words, r7 + $c0.. (above the engine's $00-$83)
 
@@ -66,9 +68,8 @@ proc:
         move    #>$002000,x0
         add     x0,b
         move    b1,{H(9)}
-        move    #>${PAGE:06x},x0
-        add     x0,b
-        move    b1,r1
+        move    b1,x:>$000207
+        move    #>${PAGE:06x},r1
         move    x:(r6+5),x0
         move    x0,x:(r1+5)
         move    x:(r6+0),x0
