@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include "analog-rytm-mk2/pages.h"
 #include "analog-rytm-mk2/store.h"
+#include "analog-rytm-mk2/load.h"
 #include "modwerk/dsp.h"
 #include "tables.h"
 
@@ -58,6 +59,20 @@
 #define IDX_LEV 24
 #define SLOT_LAST 130
 #define VOICE_TRACK_AT 0x40291138       // the track each voice plays, a byte a voice
+#define VOICE_REC_AT 0x80005b30         // stock's sample voices, 92 bytes each (as Pipo Loop reads
+                                        // them): +4 the play position in frames, +20 the sample's
+                                        // frames, +42 nonzero while it plays backward
+#define VPOS(v) (*(volatile int32_t *)(VOICE_REC_AT + (v) * 92 + 4))
+#define VFRAMES(v) (*(volatile uint32_t *)(VOICE_REC_AT + (v) * 92 + 20))
+#define VDOWN(v) (*(volatile uint8_t *)(VOICE_REC_AT + (v) * 92 + 42))
+#define WAVE_X0 2                       // stock's waveform: x 2 .. 124, rows 16 .. 47 from the top
+#define WAVE_W 123
+#define WAVE_TOP 16
+#define WAVE_BOT 47
+#define BRAIN_AT 0x419f28f8             // stock's UI brain: +32 its view manager (as Pipo Loop finds
+#define VT_SAMPLE_AT 0x401e3420         // the SAMPLE view by its vtable)
+#define VIEW_INVALIDATE_AT 0x40078580   // invalidate(view): the view draws again
+#define LOAD_SPAWN 220                  // core_audio_load (256ths) above which no grain starts
 #define ID_STOCK_FRQ 47                 // FILTER FRQ: its value text
 
 // ev_key and ev_enc events, ev_tick's controller (as the other Rytm mods read them)
@@ -100,8 +115,8 @@ enum { G_POS, G_SIZ, G_DEN, G_SPR, G_PIT, G_SPD, GS };
 #define DEN_DEF 36                      // 20 grains a second
 #define PIT_MID 32                      // 0 semitones; PIT keeps to -24 .. +24
 #define SPD_DEF 48                      // the position moves at 1x: (SPD - 32) / 16
-#define GRAINS 6                        // a voice's grains at once, at most
-#define GRAIN_BUDGET 12                 // all voices' grains at once, at most: stock takes about two
+#define GRAINS 3                        // a voice's grains at once, at most
+#define GRAIN_BUDGET 6                 // all voices' grains at once, at most: stock takes about two
                                         // thirds of the audio block already (Analog BD's README)
 #define GR_LIFE (10 * 48000)            // frames after a trig the cloud keeps making grains
 
@@ -242,6 +257,12 @@ static uint8_t page_any;        // an engine's page was drawn in this compose
 static uint8_t page_any_live;   // and in the last one: an engine's page is on screen
 static uint8_t wave_seen;       // GRANULAR's page was asked as the waveform page this compose
 static uint8_t wave_live;       // and in the last one: draw the grains over the waveform
+static uint8_t gran_seen;       // GRANULAR's values were drawn in this compose
+static uint8_t wave_page;       // the SMPL page GRANULAR was last asked for is the waveform
+static uint32_t load_peak;      // the audio block's highest load since the tick took it
+static uint32_t load_shown;     // the highest over the last second, for the waveform page
+static uint8_t load_ticks;
+static uint8_t wave_hold;       // composes left to draw the grains without a new sign of the page
 
 static const char *const ENGINE_NAME[ENGINES] = { "SAMPLER", "TRANSIENTS", "GRANULAR" };
 
@@ -431,6 +452,48 @@ static void write_set(int t, const struct sl_set *set)
     refresh(t);
 }
 
+static unsigned engine(void);
+
+// The SAMPLE view (SMPL's pages) in stock's view stack, or 0: the stack is a list from the top
+// view's node (+24 of the manager) back to its sentinel (+20), each node's view at +8.
+static char *sample_view(void)
+{
+    char *brain = *(char *volatile *)BRAIN_AT, *views, *node, *view;
+    int n;
+
+    views = brain ? *(char **)(brain + 32) : 0;
+    if (!views)
+        return 0;
+    node = *(char **)(views + 24);
+    for (n = 0; node && node != views + 20 && n < 32; n++) {
+        view = *(char **)(node + 8);
+        if (view && *(char **)view == (char *)VT_SAMPLE_AT)
+            return view;
+        node = *(char **)(node + 4);
+    }
+    return 0;
+}
+
+// TRANSIENTS has one page: when the selected track plays it, the SAMPLE view goes back from
+// the waveform (its second page) to the first, whichever way it got there (the engine list,
+// another track). The view holds its pages' ids at +124 (begin, end) and the page shown at +140;
+// a view that lists other than stock's two pages (another module's) is left alone.
+static void transients_first_page(void)
+{
+    char *view;
+    int *pages;
+
+    if (selected_track() >= TRACKS || engine() != ENG_TRANSIENTS || !(view = sample_view()))
+        return;
+    pages = *(int **)(view + 124);
+    if (*(int **)(view + 128) != pages + 2 || pages[0] != PAGE_SAMPLE || pages[1] != PAGE_WAVE)
+        return;
+    if (*(int *)(view + 140) != 1)
+        return;
+    *(int *)(view + 140) = 0;
+    ((void (*)(void *))VIEW_INVALIDATE_AT)(view);
+}
+
 // ev_tick, about 20 Hz: every track's settings from its live sound, so a kit or sound load, a
 // copy and paste and a reset reach the audio at the next tick.
 void sample_layer_tick(void *ctrl)
@@ -439,9 +502,15 @@ void sample_layer_tick(void *ctrl)
 
     for (t = 0; t < TRACKS; t++)
         refresh(t);
+    transients_first_page();
     if (list_open && selected_track() != list_track) {
         list_open = 0;
         list_redraw = 1;
+    }
+    if (++load_ticks >= 20) {                   // about a second
+        load_ticks = 0;
+        load_shown = load_peak;
+        load_peak = 0;
     }
     if (list_redraw || wave_live) {             // GRANULAR's waveform: its grains move
         list_redraw = 0;
@@ -579,6 +648,7 @@ static int text(struct core_text *t)
     read_set(selected_track(), &s);
     v = (int)*value(&s, k);
     if (k->eng == ENG_GRANULAR) {
+        gran_seen = 1;
         switch (k->i) {
         case G_SIZ:                     // milliseconds
             put_u(t->buf, (GR_SIZE[v] + 24) / 48);
@@ -657,7 +727,8 @@ static const struct core_page *sample_info(int32_t page)
         return 0;
     ids = (const int32_t *)(e + 1);
     if (eng == ENG_GRANULAR) {
-        if (page == PAGE_WAVE)
+        wave_page = page == PAGE_WAVE;
+        if (wave_page)
             wave_seen = 1;
         granular_page.ids[3] = ids[3];  // SMP
         granular_page.ids[7] = ids[7];  // LEV
@@ -770,6 +841,12 @@ int sample_layer_key(void *brain, char *ev)
         return 1;
     case KEY_FUNC:
         return 0;
+    case KEY_SMPL:                      // FUNC + SMPL again, or SMPL: closes the list, and only that
+        if (down) {
+            list_close();
+            swallow_key = KEY_SMPL;
+        }
+        return 1;
     default:
         if (down)
             list_close();
@@ -843,6 +920,18 @@ static int window_open(void)
                 return 1;
         }
     return 0;
+}
+
+// Stock blanks the whole screen while its screen saver is on, and still calls ev_draw: a screen
+// with no pixel lit gets nothing of ours either. Every page stock draws lights its header.
+static int screen_dark(void)
+{
+    int i, n = bm_stride * bm_w;
+
+    for (i = 0; i < n; i++)
+        if (bm_words[i])
+            return 0;
+    return 1;
 }
 
 static void bm_flip(int x0, int y0, int x1, int y1)
@@ -953,13 +1042,36 @@ void sample_layer_draw(void *bmp, void *ctrl)
         page_seen = page_any = 0;
         return;
     }
+    if (screen_dark()) {                // the screen saver: stock drew nothing, so draw nothing
+        page_seen = page_any = wave_seen = gran_seen = 0;
+        wave_hold = 0;
+        return;
+    }
     page_live = page_seen;
     page_any_live = page_any;
     page_any = 0;
-    wave_live = wave_seen;
-    wave_seen = 0;
-    if (wave_live && !list_open && !window_open())
+    // The waveform page: page_info and the values' text need not both come every compose, so
+    // either one keeps the grains for a few composes. The window test is skipped there: stock's
+    // waveform and its frame hold long horizontal runs of their own.
+    if (wave_seen || gran_seen)
+        wave_hold = 4;
+    else if (wave_hold)
+        wave_hold--;
+    wave_seen = gran_seen = 0;
+    wave_live = wave_hold && wave_page;
+    if (wave_live && !list_open) {
+        char b[12] = "CPU ";
+
         draw_grains();
+        // Test builds: the audio block's peak load over the last second, as a share of a block.
+        put_u(b + 4, (load_shown * 100 + 128) >> 8);
+        for (i = 4; b[i]; i++)
+            ;
+        b[i] = '%';
+        b[i + 1] = 0;
+        bm_fill(WAVE_X0 + 1, WAVE_TOP + 1, WAVE_X0 + 33, WAVE_TOP + 8, 0);
+        label(bmp, WAVE_X0 + 2, WAVE_TOP + 7, 0, b);
+    }
     if (page_seen && !list_open && !window_open())
         draw_band();
     page_seen = 0;
@@ -1100,6 +1212,7 @@ struct grain {
     uint32_t ph, phinc;         // its window's phase, Q16 of 256
     uint16_t frac;              // pos's fraction, Q16
     uint8_t on;
+    uint8_t start;              // the frame of this block it starts at (spawned mid-block)
 };
 
 static struct grain gr[VOICES][GRAINS];
@@ -1132,7 +1245,7 @@ static uint32_t rnd(int v)
 }
 
 // A new grain at the cloud's position: POS, plus how far SPD has moved it, plus SPR at random.
-static void spawn(const struct sl_coef *c, int v, uint32_t frames, uint32_t inc)
+static void spawn(const struct sl_coef *c, int v, uint32_t frames, uint32_t inc, int start)
 {
     struct grain *g = 0;
     int32_t head;
@@ -1141,7 +1254,7 @@ static void spawn(const struct sl_coef *c, int v, uint32_t frames, uint32_t inc)
     for (w = 0; w < VOICES; w++)
         for (i = 0; i < GRAINS; i++)
             total += gr[w][i].on;
-    if (total >= GRAIN_BUDGET)
+    if (total >= GRAIN_BUDGET || core_audio_load > LOAD_SPAWN)
         return;                                 // the CPU budget is spent: this one is skipped
     for (i = 0; i < GRAINS; i++)
         if (!gr[v][i].on) {
@@ -1161,6 +1274,7 @@ static void spawn(const struct sl_coef *c, int v, uint32_t frames, uint32_t inc)
     g->inc = inc;
     g->ph = 0;
     g->phinc = c->g_phinc;
+    g->start = (uint8_t)start;
     g->on = 1;
 }
 
@@ -1173,8 +1287,15 @@ static void granular(const struct sl_coef *c, int v, int t, int32_t *s, unsigned
     const volatile int16_t *data = 0;
     uint32_t frames = 0, rate = 0, inc;
     int slot = EFF(t, IDX_SMP) >> 8, n, i, any = 0, lev;
-    int32_t q, tv, l0, l1, lstep;
+    int32_t q, tv, l0, l1, lstep, acc[FRAMES];
+    const int16_t *d;
+    uint32_t vf = VFRAMES(v);
 
+    // Stock's own playback of the sample is not heard (the grains replace its stream), but it
+    // still costs its render and draws its playhead from the start: past its end it stops, so
+    // after a trig it plays one block. Forward only; a backward sample (END below STA) plays on.
+    if (vf > 1 && !VDOWN(v) && VPOS(v) < (int32_t)(vf - 1))
+        VPOS(v) = (int32_t)(vf - 1);
     if (slot >= 1 && slot <= SLOT_LAST) {
         data = SLOT_DATA(slot);
         frames = SLOT_FRAMES(slot);
@@ -1206,6 +1327,7 @@ static void granular(const struct sl_coef *c, int v, int t, int32_t *s, unsigned
             s[n] = 0;
         return;
     }
+    d = (const int16_t *)data;
     inc = (c->g_ratio * (rate >> 4)) / 3000;    // PIT times the sample's rate over 48 kHz, Q16
     // SMPL LEV as it plays (a lock, a scene), which stock applies in its own sample render: the
     // grains replace that render, so they take it here, ramped across the block.
@@ -1218,35 +1340,49 @@ static void granular(const struct sl_coef *c, int v, int t, int32_t *s, unsigned
     l0 = hit ? l1 : gr_lev[v];
     gr_lev[v] = l1;
     lstep = (l1 - l0) / FRAMES;
+    // The grains due this block start at their own frame; then each grain runs through the
+    // block in one go, its state in registers, summed into acc (Q27).
     for (n = 0; n < FRAMES; n++) {
-        int32_t acc = 0;
-
+        acc[n] = 0;
         if (gr_live[v] && --gr_next[v] <= 0) {
-            spawn(c, v, frames, inc);
+            spawn(c, v, frames, inc, n);
             gr_next[v] += (int32_t)c->g_interval;
         }
-        for (i = 0; i < GRAINS; i++) {
-            struct grain *g = &gr[v][i];
-            uint32_t j, f;
-            int32_t a, b, smp;
+    }
+    for (i = 0; i < GRAINS; i++) {
+        struct grain *g = &gr[v][i];
+        uint32_t pos, frac, ph, phinc, step, fstep;
 
-            if (!g->on)
-                continue;
-            j = g->pos + 1 < frames ? g->pos + 1 : 0;
-            a = data[g->pos];
-            b = data[j];
-            smp = a + (((b - a) * (int32_t)(g->frac >> 1)) >> 15);
-            acc += (smp * GR_WIN[g->ph >> 16]) >> 3;            // Q27
-            f = g->frac + (g->inc & 0xffff);
-            g->pos += (g->inc >> 16) + (f >> 16);
-            g->frac = (uint16_t)f;
-            while (g->pos >= frames)
-                g->pos -= frames;
-            g->ph += g->phinc;
-            if (g->ph >= WIN_END)
+        if (!g->on)
+            continue;
+        pos = g->pos;
+        frac = g->frac;
+        ph = g->ph;
+        phinc = g->phinc;
+        step = g->inc >> 16;
+        fstep = g->inc & 0xffff;
+        for (n = g->start; n < FRAMES; n++) {
+            int32_t a = d[pos], b = d[pos + 1 < frames ? pos + 1 : 0];
+
+            acc[n] += ((a + (((b - a) * (int32_t)(frac >> 1)) >> 15)) * GR_WIN[ph >> 16]) >> 3;
+            frac += fstep;
+            pos += step + (frac >> 16);
+            frac &= 0xffff;
+            while (pos >= frames)
+                pos -= frames;
+            ph += phinc;
+            if (ph >= WIN_END) {
                 g->on = 0;
+                break;
+            }
         }
-        s[n] = qmul(sshl(qmul(acc, c->g_norm), 4), l0);
+        g->pos = pos;
+        g->frac = (uint16_t)frac;
+        g->ph = ph;
+        g->start = 0;
+    }
+    for (n = 0; n < FRAMES; n++) {
+        s[n] = qmul(sshl(qmul(acc[n], c->g_norm), 4), l0);
         l0 += lstep;
     }
     q = c->g_speed * FRAMES + gr_tfrac[v];      // the position moves at SPD
@@ -1266,10 +1402,6 @@ static void granular(const struct sl_coef *c, int v, int t, int32_t *s, unsigned
 // a line at its place in the sample, as tall as its window is loud, and the cloud's position as a
 // dotted line, over stock's waveform (x 2 .. 124, rows 16 .. 47 from the top, the whole sample).
 // XORed, so the waveform shows through.
-#define WAVE_X0 2
-#define WAVE_W 123
-#define WAVE_TOP 16
-#define WAVE_BOT 47
 
 static int wave_x(uint32_t pos, uint32_t frames)
 {
@@ -1283,6 +1415,8 @@ static void draw_grains(void)
 
     if (t < 0 || t >= TRACKS || sl_c[t].eng != ENG_GRANULAR)
         return;
+    i = WAVE_X0 + sl_c[t].g_pos * (WAVE_W - 1) / 127;    // POS, playing or not
+    bm_flip(i, WAVE_TOP, i, WAVE_BOT);
     for (v = 0; v < VOICES; v++) {
         uint32_t frames = gr_frames[v], head;
 
@@ -1320,6 +1454,8 @@ void sample_layer_render(void)
     int v, n;
 
     sample_layer_trig = 0;
+    if (core_audio_load > load_peak)            // the last block's load, for the waveform page
+        load_peak = core_audio_load;
     for (v = 0; v < VOICES; v++, s += FRAMES) {
         unsigned t = map[v];
         const struct sl_coef *c;
