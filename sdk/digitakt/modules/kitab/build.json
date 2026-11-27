@@ -9,7 +9,8 @@
     "-DUI_STATE_AT=0x401389c4",
     "-DCUR_PAT_AT=0x40092890",
     "-DRELOAD_AT=0x40017c16",
-    "-DKIT_CHANGED_AT=0x4013c42c"
+    "-DKIT_CHANGED_AT=0x4013c42c",
+    "-fno-late-combine-instructions"
   ],
   "weak": [],
   "subscribe": [

@@ -9,6 +9,7 @@ The evidence tier is `author-hardware`, the author's own report below. Nothing h
 - **Files.** The author's released `kitab-0.2.elemod` (`e19f3c2f…`), pinned unchanged in `sdk/imports/elekloader-kitab-2026-11-27.json`. It matches elekloader 0.11.0's catalog pins. `src/` is the author's source at `e6a2aab`, the revision the file was released from.
 - **Linked.** The author's released 0.2 file, pinned unchanged, linked locally on OS 1.54 with core 4.4 beside every Digitakt mod in the library: it builds beside all of them except Digi EQ 1.0.2 (core 2.1 only). Through the site's build path on the vendored kit 0.7.0, against stock OS files recognised by their hashes.
 - **Memory.** 3,572 B of the mods' RAM, no fast RAM, as the builder reads the file.
+- **Source compile.** Modwerk's GCC 16.2 compiles `kitab.c`'s byte copies into `move.b (a0)+,(0,a0,d0.l)`, which stores one byte late on the ColdFire, and the build refuses it. `build.json` therefore adds `-fno-late-combine-instructions`. Disassembled, the author's released file has no such instruction; the library builds that file.
 
 ## Documentation capture — 27 November 2026
 

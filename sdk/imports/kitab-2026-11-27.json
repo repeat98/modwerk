@@ -11,7 +11,7 @@
   },
   "changes": [
     "Kit A/B 0.2 (FLEXMODS v1.0, e6a2aab), imported unchanged: kitab.c. It patches no site: it subscribes to ev_key, ev_tick and ev_draw and calls the stock kit reload and kit-changed routines, whose OS 1.54 addresses the cflags name.",
-    "build.json is the author's mod.json. The library builds the author's released kitab-0.2.elemod (sdk/imports/elekloader-kitab-2026-11-27.json)."
+    "build.json is the author's mod.json, plus -fno-late-combine-instructions: Modwerk's GCC 16.2 otherwise compiles kitab.c's byte copies into an instruction that stores one byte late on the ColdFire (sdk/runtime/m68k_codegen.py). The author's released file has no such instruction. The library builds the author's released kitab-0.2.elemod (sdk/imports/elekloader-kitab-2026-11-27.json)."
   ],
   "files": [
     {
