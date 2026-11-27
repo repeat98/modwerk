@@ -1,0 +1,1 @@
+Octatrack base: installing or removing USB Audio, or changing its layout or inputs, could freeze the Octatrack's screen and USB until a power cycle while the audio kept playing. A reconnect could leave a reply of the Octatrack's USB disk unfinished, and the next reply then waited for it forever. Every USB reset now clears those unfinished replies. Ships with the next base.

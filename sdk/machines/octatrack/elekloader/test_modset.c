@@ -5,7 +5,9 @@
  * trial's whole-set identity, and its save reports unsaved and failed until the card has it. A start that crashed,
  * stopped or hung while its restore ran leaves the package it was installing out, or holds the set once. A module
  * switched off on the unit is unloaded and waits on the shelf, across power cycles, until it is switched on or a host
- * installs or removes it; a refused switch changes nothing. */
+ * installs or removes it; a refused switch changes nothing. A file a start could not read is damaged, not absent, and
+ * the next save overwrites it before it counts as saved, so a Keep after such a start wins once the file reads again
+ * (test_modset_card.c cuts the power at every sector and fails reads sector by sector). */
 #define MODWERK_RUNTIME_VOLATILE_JOURNAL
 #include "sha256.c"
 #include "modset.c"
@@ -37,6 +39,7 @@ static unsigned failures;
 const uint8_t modwerk_base_digest[32] = {1, 2, 3};
 static uint8_t card[2][SET_BYTES], card_shelf[2][SET_BYTES];
 static int card_bytes[2], card_shelf_bytes[2];
+static int card_unread[2]; /* the file is there, but reading it fails */
 static int volatile_busy;
 static unsigned writes, write_fail;
 int modwerk_runtime_volatile_busy(void) { return volatile_busy; }
@@ -48,6 +51,7 @@ int modwerk_test_file(int op, const char *path, uint8_t *data, unsigned n)
     if (op == 1) card_shelf_bytes[which] = 0; /* a new file: the shelf follows, or none */
     if (op == 1 && write_fail) { ++writes; memcpy(card[which], data, n / 2); card_bytes[which] = (int)n; return 0; } /* torn */
     if (op == 1) { ++writes;memcpy(card[which], data, n); card_bytes[which] = (int)n; return 1; }
+    if (card_unread[which]) return -1;
     if (!card_bytes[which]) return 0;
     memcpy(data, card[which], (size_t)card_bytes[which]);
     return card_bytes[which];
@@ -85,7 +89,7 @@ static void accept(unsigned k, uint32_t n) { modwerk_modset_candidate(package[k]
 static void cut(void) /* RAM gone, the card and battery RAM kept: a crash restart or a power cycle */
 {
     memset(set, 0, sizeof set); restored = 0; pending = 0; slot = 0; keep_bytes = 0; prepared = installed = entered = 0; restore_tries = 0;
-    restore_count = 0; adopted = 0;
+    restore_count = 0; adopted = 0; unread = 0;
     modwerk_modset_result = 0; notice = 0; notice_after = 0; modwerk_test_ticks = 200;
     modwerk_modset_notice_tick(); /* the ticks before the restore */
 }
@@ -437,10 +441,39 @@ int main(void)
     boot(); modwerk_modset_service(); CHECK(adopted && modwerk_modset_result == RESTORED && installed == 1); /* the sync's set: 0x303 */
     accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVE_FAILED && pending && writes == written);
     modwerk_modset_adopt_test(0); boot(); modwerk_modset_service(); CHECK(!adopted && modwerk_modset_result == FOREIGN && !installed);
+
+    /* A file the start could not read. Three saves: 0x501 (slot 1), 0x502 too (slot 0), 0x501 replaced (slot 1, newest). */
+    memset(card_bytes, 0, sizeof card_bytes); memset(card_shelf_bytes, 0, sizeof card_shelf_bytes);
+    memset(&modwerk_test_guard, 0, sizeof modwerk_test_guard); memset(set, 0, sizeof set); off_bytes = 0;
+    cut(); restored = 1; make(3, 0x501u, 0); make(4, 0x502u, 0); make(2, 0x503u, 0); make(0, 0x503u, 1);
+    accept(3, 48); modwerk_modset_service(); accept(4, 48); modwerk_modset_service(); accept(3, 44); modwerk_modset_service();
+    CHECK(be32(card[1] + 8) == 3 && be32(card[0] + 8) == 2 && !pending);
+    /* Both unreadable at a start: DAMAGED, not "nothing saved". A Keep made then is written to both files before it
+     * counts as saved, so once they read again nothing of generation 3 is left to win over it. */
+    card_unread[0] = card_unread[1] = 1; boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == DAMAGED && !installed && used() == HEADER);
+    card_unread[0] = card_unread[1] = 0; written = writes;
+    accept(2, 48); modwerk_modset_service(); CHECK(pending && writes == written + 1 && modwerk_modset_due());
+    modwerk_modset_service(); CHECK(!pending && writes == written + 2 && modwerk_modset_result == SAVED && !memcmp(card[0], card[1], (size_t)card_bytes[0]));
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1 && ids[0] == 0x503u);
+    /* The newer unreadable, the older whole: the older restores and the Keep goes into the unreadable one, once. */
+    accept(3, 48); modwerk_modset_service(); accept(4, 48); modwerk_modset_service(); /* older {503, 501}, newer + 502 */
+    card_unread[slot] = 1; boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 2 && card_unread[slot ^ 1u]);
+    card_unread[0] = card_unread[1] = 0; written = writes;
+    accept(0, 36); modwerk_modset_service(); CHECK(!pending && writes == written + 1 && modwerk_modset_result == SAVED); /* 503 out */
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1 && ids[0] == 0x501u);
+    /* PROJ held at a start that read neither file: SKIPPED, and a Keep after it is written to both and wins. */
+    card_unread[0] = card_unread[1] = 1; HOLD(PROJ); boot(); modwerk_modset_service(); LET_GO();
+    CHECK(modwerk_modset_result == SKIPPED && !installed);
+    card_unread[0] = card_unread[1] = 0; written = writes;
+    accept(4, 48); modwerk_modset_service(); modwerk_modset_service(); CHECK(!pending && writes == written + 2);
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1 && ids[0] == 0x502u);
     if (failures) { fprintf(stderr, "%u module set checks failed\n", failures); return 1; }
     puts("Octatrack module set: saved in turn, removals dropped, the newest whole set restored, damaged and foreign sets and a held PROJ or FUNC refused, "
          "a Keep joined only as the trial's identity and reported unsaved until saved, a start that crashed or stopped while restoring guarded, "
          "modules switched off and on at once and kept off across power cycles, every package's restore outcome listed for a host, "
-         "and another base's set restored read-only on a development request.");
+         "another base's set restored read-only on a development request, "
+         "and a file a start could not read reported damaged and written before a save counted.");
     return 0;
 }

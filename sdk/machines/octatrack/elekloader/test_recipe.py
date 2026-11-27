@@ -301,6 +301,10 @@ class RuntimeSlotTests(unittest.TestCase):
     def test_module_set_on_the_host(self):
         self.host_test('test_modset.c')
 
+    def test_module_set_on_a_card_on_the_host(self):
+        # modset.c's own sector store and load: the power cut before every stock file call of a save, and failed reads.
+        self.host_test('test_modset_card.c', defines=('-DMODWERK_HOST_CARD',))
+
     def test_status_keys_on_the_host(self):
         self.host_test('test_status.c')
 
@@ -309,6 +313,9 @@ class RuntimeSlotTests(unittest.TestCase):
 
     def test_usb_attach_watchdog_on_the_host(self):
         self.host_test('test_usb_attach.c')
+
+    def test_usb_stock_sends_retired_at_a_reset_on_the_host(self):
+        self.host_test('test_usb_stock_sends.c')
 
     def test_the_base_at_128_effect_ids_on_the_host(self):
         # docs/OCTATRACK_MORE_EFFECT_IDS.md: the base behind MODWERK_FX_IDS works past 32 before the tables move.

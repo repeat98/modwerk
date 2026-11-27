@@ -12,6 +12,14 @@ type BaseRelease = {
 const releases: Record<'octatrack' | 'rytm' | 'zoom', [BaseRelease, ...BaseRelease[]]> = {
   octatrack: [
     {
+      version: '0.8.3', title: 'A point of CPU back in every frame', note: '2026-11-25-octatrack-part-read-sram',
+      changes: [
+        { area: 'CPU', detail: 'Every audio frame costs about one point of CPU less: the frame interrupt reads the playing Part from fast on-chip memory. On an MKII it fell from 37.0 to 36.0 % on a busy pattern and from 29.8 to 28.8 % stopped. Found and measured by Laslo.' },
+        { area: 'Saved modules', detail: 'A Keep after a start that could not read the card is no longer lost to an older saved set.', note: '2026-11-24-octatrack-saved-set-unreadable' },
+        { area: 'Knob names', detail: 'Knob names that change with a select, like Euclid’s TYPE, follow the track on screen instead of the track drawn last.', note: '2026-11-26-base-mode-names-per-track' },
+      ],
+    },
+    {
       version: '0.8.2', title: 'Recording costs less CPU', note: '2026-11-23-octatrack-recorder-cs1-skip',
       changes: [
         { area: 'Recording', detail: 'Tracks that record cost less CPU: the recorder leaves out two memory writes that would store what is already there.' },

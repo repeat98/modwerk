@@ -21,11 +21,11 @@
   "presentation": {
     "label": "ANALOG BD",
     "family": "Machine",
-    "summary": "BD ANALOG: repeat98's 808 and 909 bass drum models from Analog BD, as a Rytm machine on the BD, SD and BT tracks.",
+    "summary": "BD ANALOG: repeat98's 808 and 909 bass drum models from Analog BD, as a Rytm machine on the BD, SD and BT tracks. It starts on the 808: tap encoder B for the 909.",
     "overview": "Plays the 808 and 909 bass drums Jannik Aßfalg (repeat98) modelled for Analog BD on the Octatrack, computed on the Rytm's ColdFire at 48 kHz and sent through the voice's own filter, overdrive and amp. A tap of encoder B switches the sound between 808 and 909; each hit's velocity is the accent.",
     "highlights": [
+      "Starts on the 808: tap encoder B for the 909, and tap again to go back. The choice saves with the sound.",
       "The Octatrack Analog BD's 808 and 909 models, at 48 kHz.",
-      "Tap encoder B to switch 808 and 909; the choice saves with the sound.",
       "Accent follows each hit's velocity: soft hits rounder, hard ones snappier.",
       "Runs on the BD, SD and BT voices, through their stock filter, AMP and OVR."
     ],
