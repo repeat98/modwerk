@@ -6,11 +6,11 @@ core 0 (T7, T8), $38000 and $3c000 on core 1 (T3, T4). dsp_host hands each insta
 does. The ColdFire half that streams the programs does not run there, so a test driver placed before the engine (the
 engine itself unchanged) reads the instance's index from the low three bits of slot 11 and copies its own stream
 table's three words into the parameter block each call, as stream.c does.
-Each instance switches program every sixteenth at 120 BPM (the dearest, Midiverb #16, half the time), holds STOP's
-tail kill twice, runs three LFOs (LEVL sine, MIX triangle, slot E square) and gets a new value on every one of its
-twelve slots each sixteenth, with a trig split of its own. The run passes when dsp_host finishes (no hang), the guard
-counts no clobber, every instance sounds, and each instance's output equals its output rendered alone: the
-instances share nothing, the shared window included.
+Each instance switches program every sixteenth at 120 BPM (the dearest, Midiverb II #69 with its LFOs, half the
+time), holds STOP's tail kill twice, runs three LFOs (LEVL sine, MIX triangle, slot E square) and gets a new value on
+every one of its twelve slots each sixteenth, with a trig split of its own. The run passes when dsp_host finishes
+(no hang), the guard counts no clobber, every instance sounds, and each instance's output equals its output rendered
+alone: the instances share nothing, the shared window included.
 """
 import math
 import pathlib
@@ -41,7 +41,13 @@ proc:
         nop
         move    (r4)+n4
         move    p:(r4),x1
-        move    x:(r7+$1e),a
+        move    x:(r7+$40),a            ; the driver's call count, past the engine's 32 words (-dirty fills it)
+        move    #>$fab2e2,x0
+        cmp     x0,a
+        blt     mvqDRV1
+        clr     a
+mvqDRV1:
+        move    a,x:(r7+$40)
         move    a,b
         asl     b
         add     b,a
@@ -55,21 +61,21 @@ proc:
         move    x0,x:(r6+$d)
         move    p:(r4)+,x0
         move    x0,x:(r6+$e)
-        move    x:(r7+$1e),a
+        move    x:(r7+$40),a
         add     #>$1,a
         move    #>$fab2e2,x0
         cmp     x0,a
         blt     mvqDRV2
         clr     a
 mvqDRV2:
-        move    a,x:(r7+$1e)
+        move    a,x:(r7+$40)
         bra     mvqPROC
 """
 
 
 def plan(i, by, rnd):
     """Instance i's programs (from call, index) and tail kills over LOOP calls."""
-    dear = by[("MV1", 16)]
+    dear = by[("MV2", 69)]
     others = list(range(len(V.PROGRAMS)))
     out, kills = [], [(STEP * 2 + 40 + 11 * i, STEP * 2 + 70 + 11 * i), (STEP * 5 + 20, STEP * 5 + 60)]
     for s in range(LOOP // STEP):
