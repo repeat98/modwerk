@@ -1,0 +1,1 @@
+Development: `module:dev` now notices when a listed effect's committed page recipe no longer matches its manifest, for example when an update gives a control more values. It builds the development package with the manifest's page and says the recipe is stale. Before, the package kept the old page, and on the unit the control stopped at its old last value.
