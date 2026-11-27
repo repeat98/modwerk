@@ -25,7 +25,7 @@ The behaviour comes from Pad Thresh, a diagnostic never submitted (branch `pad-p
 
 Results below are recorded only as the developer reports them.
 
-- 22 November 2026, build LT01 (core-ar2 0.7 under the module, not the plain base), @filefolder's Rytm MKII, OS 1.74: "I've tested it and it all seems to work" (reported), against the list below. The final build, from the pinned package, is still to be tested.
+- 22 November 2026, build LT01 (core-ar2 0.7 under the module, not the plain base), @filefolder's Rytm MKII, OS 1.74: "I've tested it and it all seems to work" (reported), against the list below..
 - 22 November 2026, build LT02 (sha256 `bfeeed94bf23ac9fe3810d20dd563cc1be621436bccf4b3a8734f9dcefafc5a8`, the plain base under this module's source), @filefolder's Rytm MKII, OS 1.74: "it tests OK" (reported), against the list below. LT02 had the 4,096 ms bug fixed in LT03, so LT03, and then the pinned package's build, get the list again.
 - 23 November 2026, build LT03 (sha256 `72cad00cef4ec7908327a6828305341f54f90d668336b0b6c4e06f83387a6bf3`, the plain base under this module), @filefolder's Rytm MKII, OS 1.74 (reported): the list below passes, and after a firm hit, light taps on the same pad at uneven intervals for about 15 seconds all play, so the 4,096 ms case is gone.
 - 23 November 2026, load (reported): with the same project and pattern playing, light taps and firm hits for about 30 s, a throwaway readout (never committed) at `ev_render_out` order 254 showed core-ar2's `core_audio_load`, the busiest block per second (L) and since boot (P). Build LD0A, the plain base and the readout (sha256 `e844c5d5572c2d98e639ef2196baa4986a593ce4b1fbe0b8ac13ba57032dc44d`): L 71-73 %, P 76 %. Build LD0B, the same plus Light Taps with LIGHT TAPS ON (sha256 `6c3cfa2e3a10217d95ee4bb039f55b53844891e70d9383e543b8b53a26e06187`): L 71-73 %, P 75 %. No measurable difference: Light Taps runs in the panel task, not the audio interrupt.
@@ -33,7 +33,20 @@ Results below are recorded only as the developer reports them.
 - 25 November 2026, build LT05 (sha256 `3236f89ab606e919c8b19eea171a60a5d0be720d8b807287512596b672c0b233`, the plain base under this module, with the held-pad guard added at a maintainer's request on #1972), @filefolder's Rytm MKII, OS 1.74 (reported): all tests pass; a pad held lightly for 2-3 seconds gives one soft hit, a firm hit held gives the one strike and no soft hits, and repeated light taps on one pad each play. The host test `tests/test_tap_timing.py` covers the held cases, a panel that posts no releases, and tap, release, tap.
 - 25 November 2026, build LT06 (sha256 `6b396dae6ea0fe869c6be41c7ac14c611089f2d33d130ea4f479073dd1da486c`, the plain base under this module), @filefolder's Rytm MKII, OS 1.74: on LT05, a light tap with retrig kept the roll running more or less constantly, because the driver sends a pad release only after a real strike. LT06 posts that release when a light-tapped pad is let go. "yes that fixes it" (reported). The host test now also checks the release: one per light tap when let go, after its strike, none for a firm hit or with LIGHT TAPS off. RAM 1,728 bytes.
 
-To do on the unit, with the build named:
+- 27 November 2026, build LT07, the final build (sha256 `937c90064f7f5b10656b39e76e6c1e405e75cf981362ef81947ab7c1bddb44e6`): the plain base and the pinned package `sdk/imports/packages/light-taps/light-taps-0.1.0-experimental-os1.74.elemod`, which CI compiled (GCC 16.2.0) from this folder at `5fa1a9ced` (source tree `d5cbabb6ed5714c1ee29d993a80524d001f56a1cd6edf2c239365421a95c663d`), linked with `scripts/link-image.mjs`. @filefolder's Rytm MKII, OS 1.74, RAM-booted: "all the tests pass" (reported), against the list below, the setting after a project save and power cycle included. With the sequencer stopped, a light tap and a firm hit on a muted track behave the same: "yes light and firm are the same" (reported). RAM 1,700 bytes in this build. Duration not recorded.
+
+Test procedure, 27 November 2026, at `fd41bee5d` (`npm run test:procedure -- light-taps --stock … --elemod <plain base> --label LT07`): software checks passed and the build was named; the rest is not run here (no development link, no Rytm emulator cases, no soak or load gate for the Rytm yet), so the unit steps are the developer's, as below. Its image was compiled locally (sha256 `5f278999…`), not the tested LT07.
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| Wrap of the panel's 12-bit ms counter | The strike marker once used it | host test, own 32-bit count | passes |
+| Held pad | Key repeats could each post a tap | LT05, LT07 on the unit; host test | one soft hit (reported) |
+| Retrig roll after a light tap | The driver sends no pad release for it | LT06, LT07 on the unit; host test | stops on release (reported) |
+| Muted track, sequencer stopped | A tap must follow the stock rule | LT07 on the unit | same as a firm hit (reported) |
+| Beside Silent Pad+Trig Settings | Both act on pad presses | LS03 on the unit | passes (reported); not repeated on LT07 |
+| Saved setting | Project-scope storage | LT07: save, power cycle, reload | kept (reported) |
+
+The list each build was run against:
 
 - The row: GLOBAL, past SYSTEM, LIGHT TAPS: OFF; YES turns it ON and back.
 - OFF: light taps play nothing, as on stock.
