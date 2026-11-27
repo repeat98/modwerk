@@ -1,0 +1,224 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""The Octatrack source ports (firmware_builder.sdk.octabam) against the pinned upstream checkout's, on the same inputs:
+the module reader, refusals and members, every module of sdk/octabam converted with and without the hook bus and the
+intercepts, seeded byte mutations of the stock image under each converting module's sites, generated bus glue for
+random hooks, written package folders and, with m68k-elf binutils, the check of every built port.
+
+Needs the stock OS 1.40C at the owner's path (read only; the manifests' stock guards are given it in memory) and the
+upstream checkout. Notes, refusals and README text may say "the builder" where upstream names itself; nothing else
+may differ."""
+import copy
+import importlib
+import os
+from pathlib import Path
+import random
+import runpy
+import shutil
+import sys
+import tempfile
+import unittest
+
+ROOT = Path(__file__).resolve().parents[2]
+UPSTREAM = Path(os.environ.get('ELEKLOADER_UPSTREAM', Path.home() / '.cache/modwerk-upstream/elekloader'))
+STOCK = Path('/Users/jannikassfalg/Downloads/OCTATRACK_OS1.40C_dist/OCTATRACK_OS1.40C.bin')
+SDK = ROOT / 'sdk/octabam'
+HAVE = (UPSTREAM / 'elekloader/sdk/octabam.py').is_file()
+CROSS = bool(shutil.which('m68k-elf-as'))
+
+
+def _load():
+    sys.path.insert(0, str(ROOT / 'sdk'))
+    import firmware_codec
+    firmware_codec.use_elekloader(str(UPSTREAM))
+    import elekloader
+    for name in ('elemod', 'formats', 'link'):
+        # test-only: a core module not written yet (or failing) is the upstream one of the same name
+        try:
+            if os.environ.get('OWN_BUILDER_UPSTREAM_DEPS'):
+                raise ImportError
+            importlib.import_module('firmware_builder.' + name)
+        except Exception:
+            sys.modules['firmware_builder.' + name] = importlib.import_module('elekloader.' + name)
+            setattr(importlib.import_module('firmware_builder'), name, sys.modules['firmware_builder.' + name])
+    from elekloader.sdk import octabam as theirs
+    from firmware_builder.sdk import octabam as ours
+    return theirs, ours
+
+
+def norm(x):
+    """A comparable form that keeps dict key order and value types."""
+    if isinstance(x, dict):
+        return ('dict', [(norm(k), norm(v)) for k, v in x.items()])
+    if isinstance(x, (list, tuple)):
+        return (type(x).__name__, [norm(v) for v in x])
+    if isinstance(x, (set, frozenset)):
+        return ('set', sorted(repr(norm(v)) for v in x))
+    if isinstance(x, (bytes, bytearray)):
+        return (type(x).__name__, bytes(x).hex())
+    return (type(x).__name__, repr(x))
+
+
+def said(text):
+    """Upstream's wording of who protects a range, as the builder words it."""
+    return text.replace('elekloader.sdk.octabam', 'the builder').replace('elekloader', 'the builder')
+
+
+def plan_form(plan):
+    plan = dict(plan)
+    plan['notes'] = [said(n) for n in plan['notes']]
+    return norm(plan)
+
+
+def outcome(fn, *args, upstream=False, **kw):
+    try:
+        result = fn(*args, **kw)
+    except Exception as e:
+        return ('raised', type(e).__name__, said(str(e)) if upstream else str(e))
+    return ('ok', plan_form(result) if isinstance(result, dict) and 'notes' in result else norm(result))
+
+
+def reader(port):
+    ob = port.Octabam(str(SDK))
+    with port._in(ob.root):
+        midi = runpy.run_path(str(SDK / 'platform/usb-midi/manifest.py'))['MODULE']
+    ob.modules['usb-midi'] = midi          # as build_ports registers it
+    ob.by_key[midi.key] = 'usb-midi'
+    ob._ok.clear()
+    return ob
+
+
+@unittest.skipUnless(HAVE and STOCK.is_file(), 'needs the upstream checkout and the stock OS 1.40C')
+class OctabamParity(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.theirs, cls.ours = _load()
+        from elekloader import formats
+        st, cls.dev, _rel = formats.load(str(STOCK))
+        cls.image = formats.main_image(st, cls.dev)
+        cls.ob_t, cls.ob_o = reader(cls.theirs), reader(cls.ours)
+        from remix import stock_guard      # the manifests' guarded stock reads, served from memory
+        stock_guard._cache = bytes(cls.image)
+        cls.names = sorted(cls.ob_t.modules)
+
+    def both(self, fn, *args, **kw):
+        a = outcome(getattr(self.theirs, fn), self.ob_t, *args, upstream=True, **kw)
+        b = outcome(getattr(self.ours, fn), self.ob_o, *args, **kw)
+        return a, b
+
+    def test_reader(self):
+        t, o = self.ob_t, self.ob_o
+        self.assertEqual(list(t.modules), list(o.modules))
+        self.assertEqual((t.root, t.broken, t.by_key, t.commit), (o.root, o.broken, o.by_key, o.commit))
+        self.assertEqual(len(self.names), 51)
+        self.assertEqual(outcome(self.theirs.Octabam, str(ROOT)), outcome(self.ours.Octabam, str(ROOT)))
+
+    def test_refusal_members_category(self):
+        for n in self.names:
+            for hooks in (False, True):
+                self.assertEqual(said(self.theirs.refusal(self.ob_t, n, hooks=hooks) or ''),
+                                 self.ours.refusal(self.ob_o, n, hooks=hooks) or '', n)
+            self.assertEqual(self.theirs.members(self.ob_t, n), self.ours.members(self.ob_o, n), n)
+            self.assertEqual(self.theirs.category(self.ob_t.modules[n]), self.ours.category(self.ob_o.modules[n]))
+            self.assertEqual(self.ob_t.convertible(n), self.ob_o.convertible(n))
+
+    def test_convert_every_module(self):
+        converted = 0
+        for n in self.names:
+            for bus in (False, True):
+                for intercepts in (False, True):
+                    a, b = self.both('convert', n, self.image, self.dev, bus=bus, intercepts=intercepts)
+                    self.assertEqual(a, b, (n, bus, intercepts))
+                    converted += a[0] == 'ok'
+        self.assertGreaterEqual(converted, 4 * 30)
+
+    def test_convert_mutated_stock(self):
+        rng = random.Random(1789)
+        cases = 0
+        for n in self.names:
+            if not self.ob_t.convertible(n):
+                continue
+            sites = self.theirs.convert(self.ob_t, n, self.image, self.dev, bus=True)['json']['sites']
+            for _ in range(12):
+                image = bytearray(self.image)
+                if sites and rng.random() < 0.8:
+                    s = rng.choice(sites)
+                    at = int(s['addr'], 16) - self.dev.main_load + rng.randrange(len(s['stock']) // 2)
+                else:
+                    at = rng.randrange(len(image))
+                image[at] ^= 1 << rng.randrange(8)
+                for bus in (False, True):
+                    a, b = self.both('convert', n, bytes(image), self.dev, bus=bus, intercepts=rng.random() < 0.5)
+                    self.assertEqual(a, b, (n, at))
+                    cases += 1
+        self.assertGreater(cases, 600)
+
+    def test_bus_glue_random(self):
+        rng = random.Random(42)
+        word = lambda: ''.join(rng.choice('abcxyz_019') for _ in range(rng.randrange(1, 12)))
+        for _ in range(3000):
+            hooks = []
+            for _k in range(rng.randrange(4)):
+                kind = rng.choice(('call', 'stub', 'cc'))
+                h = dict(event=word(), kind=kind, entry=word(), site=rng.randrange(1 << 32), sym=word(), ret=word(),
+                         flag=word(), next=word(), name=word(), times=rng.randrange(4), skip=rng.choice((0, 2, 6)),
+                         pops=rng.choice((0, 4)))
+                hooks.append(h)
+            ob = type('Ob', (), {'commit': word()})()
+            mkey = word() + ', ' + word()
+            self.assertEqual(self.theirs._bus_glue(ob, mkey, hooks), self.ours._bus_glue(ob, mkey, hooks))
+
+    def test_write(self):
+        with tempfile.TemporaryDirectory() as t:
+            for n in self.names:
+                if not self.ob_t.convertible(n):
+                    continue
+                pa = self.theirs.convert(self.ob_t, n, self.image, self.dev, bus=True)
+                pb = self.ours.convert(self.ob_o, n, self.image, self.dev, bus=True)
+                da = self.theirs.write(self.ob_t, pa, os.path.join(t, 'a'))
+                db = self.ours.write(self.ob_o, pb, os.path.join(t, 'b'))
+                fa = {str(p.relative_to(da)): p.read_bytes() for p in sorted(Path(da).rglob('*')) if p.is_file()}
+                fb = {str(p.relative_to(db)): p.read_bytes() for p in sorted(Path(db).rglob('*')) if p.is_file()}
+                fa['README.md'] = said(fa['README.md'].decode()).encode()
+                self.assertEqual(fa, fb, n)
+
+    @unittest.skipUnless(CROSS and os.environ.get('OWN_BUILDER_CHECK', '1') != '0', 'needs m68k-elf binutils')
+    def test_check_every_port(self):
+        from elekloader.sdk import build
+        os.environ['ELEKLOADER_CROSS'] = 'm68k-elf-'     # as build_ports runs it
+        compared, seen = 0, []
+        with tempfile.TemporaryDirectory() as t:
+            core, _m = build.build(str(UPSTREAM / 'mods/core-ot'), str(STOCK), os.path.join(t, 'core'))
+            for n in self.names:
+                if not self.ob_t.convertible(n):
+                    continue
+                for intercepts in (False, True):
+                    out = os.path.join(t, '%s-%d' % (n, intercepts))
+                    try:
+                        plan = self.theirs.convert(self.ob_t, n, self.image, self.dev, bus=True, intercepts=intercepts)
+                    except self.theirs.Refused:
+                        continue           # compared in test_convert_every_module
+                    if intercepts and not plan['intercepts']:
+                        continue
+                    ours = self.ours.convert(self.ob_o, n, self.image, self.dev, bus=True, intercepts=intercepts)
+                    try:
+                        path, _mod = build.build(self.theirs.write(self.ob_t, plan, out), str(STOCK), out)
+                    except Exception as e:
+                        seen.append((n, 'build', str(e)[:80]))  # nothing to check; convert already compared
+                        continue
+                    icpt = None
+                    if plan['intercepts']:
+                        icpt, _m = build.build(str(UPSTREAM / 'mods/intercepts-ot'), str(STOCK), os.path.join(t, 'icpt'))
+                    a = outcome(self.theirs.check, self.ob_t, plan, path, core, str(STOCK),
+                                os.path.join(out, 'a.check'), None, icpt, upstream=True)
+                    b = outcome(self.ours.check, self.ob_o, ours, path, core, str(STOCK),
+                                os.path.join(out, 'b.check'), None, icpt)
+                    self.assertEqual(a, b, (n, intercepts))
+                    seen.append((n, intercepts, a[0], a[1] if a[0] == 'raised' else len(a[1][1])))
+                    compared += 1
+        if os.environ.get('OWN_BUILDER_VERBOSE'):
+            print(*seen, sep='\n')
+        self.assertGreater(compared, 25)
+
+
+if __name__ == '__main__':
+    unittest.main()
