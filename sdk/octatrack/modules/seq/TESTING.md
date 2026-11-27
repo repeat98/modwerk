@@ -1,6 +1,6 @@
 # SEQ testing
 
-Version **0.1.0-experimental** (draft `sdk/drafts/seq`). Results are separated by where they ran.
+Version **0.1.0-experimental** (`sdk/octatrack/modules/seq`). Results are separated by where they ran.
 
 ## CUE and trial rollback (fix36)
 
