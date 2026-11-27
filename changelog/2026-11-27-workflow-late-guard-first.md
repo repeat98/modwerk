@@ -1,0 +1,1 @@
+Development: the Octatrack driving guide now says to read `late guard` in the first 30 seconds of a trial that adds frame-interrupt code, and to stop at the first late frame before any long run. A ten-minute run had started on a build whose frames reached 125 %, and it had to be stopped by hand once the sequencer visibly held back (`docs/OCTATRACK_DRIVING.md`).
