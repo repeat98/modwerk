@@ -22,6 +22,40 @@ The author tested Track Solo 0.2 on a Digitakt MKI on OS 1.54 together with nine
 - Tested with elekloader's core and other FLEXMODS mods in the build, not with Modwerk's library mods.
 - Not tested in Modwerk on a unit.
 
+## Test procedure: tracksolo 0.2.0, 2026-11-27
+
+Build: revision `a52ff872527b`, package `imp-tracksolo.syx` SHA-256 `8cbf0f543a950cc935f5b60a0ddb936abdd3ad3e81b436c076f4e64e02194951`. `npm run test:procedure -- tracksolo --no-unit --package <private>/imp-tracksolo.syx --out <private>/procedure`, 5 s. Emulator results are not hardware evidence; only what ran on the unit is.
+
+| # | Step | Layer | Result | Command | Evidence |
+|---|---|---|---|---|---|
+| 1 | Software checks | host | passed | `npm run module:doctor -- tracksolo` | logs/01-software.log |
+| 2 | Beside every other module | contract | not run: modules:compat compares the Octatrack's modules only; Digitakt mk1 has no gate beside every other module yet: its link refuses two modules on one site, so link the image beside the modules it must work with |  |  |
+| 3 | Name the build | host | passed |  | logs/03-build.log |
+| 4 | DSP cost model | contract | not run: the DSP cycle scan models the Octatrack's DSP only |  |  |
+| 5 | Emulator rehearsal | emulator | not run: Digitakt mk1 has no scripted emulator rehearsal yet |  |  |
+| 6 | Read the unit | unit | not run: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 7 | Scripted unit pass | unit | not run: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 8 | Soak | unit | not run: no soak for Digitakt mk1 yet (scripts/octatrack-soak.mjs drives the Octatrack) |  |  |
+| 9 | Cost on the unit | unit | not run: no price on the unit for Digitakt mk1 yet (device:price reads the Octatrack's frame interrupt) |  |  |
+| 10 | Put back | unit | not run: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 11 | Agent by hand | unit | emulator only: the captures and checks above; no unit |  |  |
+| 12 | Submitter's own stage | unit | not run: no unit; the owner takes the author's hardware report |  |  |
+
+### Edge cases for this change
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| TRK + DOWN latches, S and the track show | a new key gesture | emulator, OS 1.54 | pass: S1 in the top bar |
+| Hold TRK + UP, release; unlatch; move to another track | held-key state per step | not run: no Digitakt unit here | not run: no Digitakt unit here |
+| A MIDI track | it answers the MIDI fire too | not run: no Digitakt unit here | not run: no Digitakt unit here |
+| Pattern change and stop while soloed | the decision is made once per step | not run: no Digitakt unit here | not run: no Digitakt unit here |
+| Beside every Digitakt library mod, with seq-events | the sequencer fire is a shared site | linked through the site build path, OS 1.54 | pass, except Digi EQ (core) and Euclidean (declared conflict) |
+
+### For the pull request
+
+Not tested on a unit: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands).
+Edge cases: the table above, one row a case (or "Edge cases: none, because …").
+
 ## Not tested
 
 - Any Modwerk build on a unit: behaviour, CPU, saving and reloading a project, a power cycle.
