@@ -129,7 +129,8 @@ class LoaderTests(unittest.TestCase):
             build.dsp_section(pkg, 'fx2', 382, 'executed', 133, 16384, 'E-Verb')
         with self.assertRaisesRegex(ValueError, 'display name'):
             build.dsp_section(pkg, 'fx2', 382, 'executed', 132, 16384, 'A' * 16)
-        for fx_id in (32, 127):  # past stock's 32 ids: the base has 128 (build_core.py FX_IDS)
+        self.assertEqual(build.FX_IDS, 128)  # elekloader/fx-ids.json, which build_core.py builds the base with
+        for fx_id in (32, 127):  # past stock's 32 ids
             self.assertEqual(build.dsp_section({**pkg, 'fxId': fx_id}, 'fx2', 382, 'executed', 132, 16384, 'E-Verb')['effect'], fx_id)
         for fx_id in (0, 128):
             with self.subTest(fx_id=fx_id), self.assertRaisesRegex(ValueError, 'an id of 1-127'):

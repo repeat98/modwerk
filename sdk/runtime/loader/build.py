@@ -61,7 +61,8 @@ SITE_BYTES, SITE_RELOCATIONS = 32, 8  # loader.h
 DSP_WORDS, DSP_RELOCATIONS, STATE_WORDS, BUFFER_WORDS = 4096, 256, 132, 16384
 CYCLE_KINDS = {'executed': 1, 'modeled': 2, 'hardware': 3}  # loader.h's runtime_cycles
 SLOTS = {'fx1': 1, 'fx2': 2, 'both': 3}
-FX_IDS = 128  # the base's effect ids (build_core.py FX_IDS, fxids.h; dsp.c choose): 1-127, 32 and up free from the start
+# The base's effect ids, FX1 and FX2 alike (fxids.h; dsp.c's choose hands out 32 and up from the start): one file sets them.
+FX_IDS = json.loads((Path(__file__).resolve().parents[2] / 'machines/octatrack/elekloader/fx-ids.json').read_text())['ids']
 CFLAGS = ['-mcpu=54455', '-Os', '-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
           '-fno-tree-loop-distribute-patterns', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
           '-Wall', '-Wextra', '-Werror', '-I', str(HERE)]

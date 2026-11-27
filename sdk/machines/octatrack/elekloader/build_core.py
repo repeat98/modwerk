@@ -318,8 +318,9 @@ STOCK_CYCLES = {4: 285, 5: 80, 8: 0, 12: 193, 13: 342, 16: 242, 17: 147, 18: 295
 # The dearest of them, DJ EQUALIZER (its 331 executed instructions in the emulator, stock_dsp_worst.py, run at about one a
 # cycle): what a machine's voice or engine still books each slot at, since a bank change may bring any stock effect.
 DSP_RESERVE = max(STOCK_CYCLES.values())
-# Effect ids the base handles (fxids.h MODWERK_FX_IDS; docs/OCTATRACK_MORE_EFFECT_IDS.md). 32 only to bisect.
-FX_IDS = 128
+# Effect ids the base handles, FX1 and FX2 alike (fxids.h MODWERK_FX_IDS; docs/OCTATRACK_MORE_EFFECT_IDS.md), set in
+# fx-ids.json alone: the runtime builder reads it too. 32 only to bisect.
+FX_IDS = BASE_FX_IDS = json.loads((HERE / 'fx-ids.json').read_text())['ids']  # main() may set FX_IDS to 32
 VALIDATOR_CLAMPS = (0x400023b6, 0x400023bc, 0x400023de, 0x400023e4)  # the Part validator's moveq #31, FX1 then FX2
 FX_WORDS = (FX_IDS + 31) // 32
 # Modules installed at once and their memory (loader.h; owner, 12 October 2026: up to 128 modules; 27 November 2026:
@@ -1649,7 +1650,7 @@ def main():
                         help='with --dev and --dsp-loader, a development twin only: machine voices and engines are admitted '
                              'without a cycle charge, so a voice with no hardware price yet can be measured with the meters '
                              'on a Part with NONE in every FX slot (#1542). Nothing guards the DSP: never for users.')
-    parser.add_argument('--fx-ids', type=int, choices=(32, 128), default=128,
+    parser.add_argument('--fx-ids', type=int, choices=(32, BASE_FX_IDS), default=BASE_FX_IDS,
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
     args = parser.parse_args()
