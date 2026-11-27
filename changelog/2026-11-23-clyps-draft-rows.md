@@ -1,1 +1,0 @@
-Octatrack CLYPS draft: ARR reopens after a stock popup interrupts Row Edit. The last confirmed row survives. Ordinary bank reads preserve the sixteen volatile rows. Stock project initialization clears them.

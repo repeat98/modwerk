@@ -41,7 +41,8 @@
     "changes": [
       "In the private MKII overlay, ARR alternates Row and Clip.",
       "In Row, YES advances through captured rows at the next supported boundary.",
-      "Capture and edit a volatile row through PAGE."
+      "Capture and edit a volatile row through PAGE.",
+      "A stock popup no longer throws you out of Row edit, and your rows survive ordinary bank reads."
     ]
   }
 ]
