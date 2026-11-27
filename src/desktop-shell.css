@@ -24,7 +24,7 @@
 :root[data-shell='desktop'] :is(img, svg, a) { -webkit-user-drag: none; }
 
 .desktop-menu-button { display: none; }
-:root[data-shell='desktop'] .desktop-menu-button { display: inline-grid; place-items: center; width: var(--control-h-sm); height: var(--control-h-sm); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted); }
+:root[data-shell='desktop'] .desktop-menu-button { display: inline-grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); }
 :root[data-shell='desktop'] .desktop-menu-button:hover { background: var(--surface-hover); color: var(--text); }
 
 /* The desktop through the sidebar (data-material: Mica on Windows 11, vibrancy on macOS): the window is see-through,
