@@ -1,6 +1,6 @@
 # Digitone SDK
 
-**Platform:** elemod · **OS:** 1.43 and 1.44 (mk1 and Digitone Keys share one file) · **Core:** 2.2 · **Modules:** [`sdk/digitone/modules/`](../../digitone/modules/) · **Status:** preview
+**Platform:** elemod · **OS:** 1.43 and 1.44 (mk1 and Digitone Keys share one file) · **Core:** 5.4 (elekloader's; mods use interface 2.2) · **Modules:** [`sdk/digitone/modules/`](../../digitone/modules/) · **Status:** preview
 
 Digitone mods are linkable objects. One core patches the OS once at a few shared sites and calls every subscribed mod's handler, in order, from tables the linker builds. So any set of mods that fits the budgets combines. Modwerk builds them with its own TypeScript linker and OS writer, interoperable with the `.elemod` format. Building firmware in Modwerk is in development, so the machine is in preview.
 
