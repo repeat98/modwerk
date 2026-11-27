@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
- * The stream channel (stream_channel.c; stream_probe.py --stream-channel, development twins only). */
+ * The stream channel (stream_channel.c; build_core.py --stream-channel, the beta base). */
 #ifndef MODWERK_STREAM_CHANNEL_H
 #define MODWERK_STREAM_CHANNEL_H
 #include <stdint.h>

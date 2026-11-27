@@ -248,6 +248,8 @@ CODEGEN = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(CODEG
 # The stock OS fixes every base carries (stock-fixes/README.md): their sources and guarded stock sites.
 _spec = importlib.util.spec_from_file_location('modwerk_stock_fixes', HERE / 'stock-fixes/stock_fixes.py')
 STOCK_FIXES = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(STOCK_FIXES)
+# module-adapters/stream_probe.py sets itself here for its probe builds (development twins only); --stream-channel imports it.
+STREAM_PROBE = None
 # Catalogue modules allowed to patch what this base owns, and why (docs/OCTATRACK_ELEKLOADER_MIGRATION.md).
 BASE_OWNS = {'usb-audio-out-tracks-main-cue': 'the base owns the USB configuration',
              'midi-scenes': 'its writes meet Elekloader\'s own sites; it needs a port',
@@ -1602,6 +1604,10 @@ def main():
                         help='Offline staging only: source-link all six outputs and off, with --usb-audio as the explicit initial profile. No host settings/recovery or catalogue admission.')
     parser.add_argument('--usb-input', action='store_true',
                         help='Include the optional USB input transfer for a duplex USB Audio package.')
+    parser.add_argument('--stream-channel', action='store_true',
+                        help="The stream channel (module-adapters/stream_channel.c): an FX effect's ColdFire half and its DSP "
+                             'code exchange blocks every frame (events.json ot_dsp_effects stream_in, stream_out), beside '
+                             'USB AUDIO IN; needs --resident-on-demand (the slot records) and --site-events.')
     parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
                         help="with --dsp-loader: the state-7 entry, guard (default); usbin, pretend, noflags, long: hardware bisect variants")
     parser.add_argument('--dsp-probe', choices=('A', 'B', 'S', 'W', 'M', 'X'),
@@ -1670,6 +1676,10 @@ def main():
         parser.error('--measure-voices is for a development twin: it needs --dev and --dsp-loader.')
     if args.resident_on_demand and not args.resident_stock_hooks:
         parser.error('--resident-on-demand needs --resident-stock-hooks.')
+    if args.stream_channel and (not args.dsp_loader or not args.site_events or not args.resident_on_demand
+                                or args.dsp_hook != 'guard' or args.dsp_probe or args.dsp_burn):
+        parser.error('--stream-channel needs --dsp-loader, --site-events, --resident-on-demand and the guarded transfer, '
+                     'without a DSP probe or burn.')
     if args.resident_stock_hooks and not args.resident_on_demand:
         parser.error('--resident-stock-hooks needs --resident-on-demand: Analog BD\'s engine is its package\'s (ABI 10), placed on demand.')
     if bool(args.controller_policies) != bool(args.controller_layout) or (args.controller_policies and not args.resident_stock_hooks):
@@ -1814,6 +1824,12 @@ def main():
     spec = importlib.util.spec_from_file_location('modwerk_base_art', APP / 'sdk/runtime/startup/base_art.py')
     base_art = importlib.util.module_from_spec(spec); spec.loader.exec_module(base_art)
     (source / 'boot_art.h').write_text(base_art.header(VERSION.split('-')[0]))
+    stream = STREAM_PROBE
+    if args.stream_channel and not stream:
+        sys.path.insert(0, str(APP / 'sdk/machines/octatrack/module-adapters'))
+        import stream_probe as stream
+    if stream:
+        stream.prepare(args, source)
     usb_input = None
     if args.usb_input:
         if not (args.dsp_loader and args.dsp_hook == 'guard' and args.resident_stock_hooks
@@ -1842,7 +1858,10 @@ def main():
                 return resident_dsp.place_resident(
                     resident_ob, tag, end, str(source), dsp_packages.assemble,
                     resident_dsp.ALLOWED[tag] if args.resident_on_demand else 0)
-            resident_bundles[tag] = usb_input.place_receiver(place, dsp_packages.assemble, tag, hi, str(source)) if usb_input else place(hi)
+            # P:$88 is USB AUDIO IN's alone: the channel has no frame-head code, and the probes refuse --usb-input.
+            resident_bundles[tag] = (usb_input.place_receiver(place, dsp_packages.assemble, tag, hi, str(source)) if usb_input
+                                     else stream.place_receiver(args, place, dsp_packages.assemble, tag, hi, str(source)) if stream
+                                     else place(hi))
             return resident_bundles[tag]
         if args.resident_on_demand:  # the ColdFire side (docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md)
             import resident_engines
@@ -1904,6 +1923,8 @@ def main():
                 text = zero_state.unit(name, text, preserved_dynload)
             if usb_input and name == 'hooks.s':
                 text = usb_input.scheduler(text)
+            if stream and name == 'hooks.s':  # after USB AUDIO IN's block, before the loader's packet
+                text = stream.scheduler(text, args, usb=bool(usb_input))
             (source / ('dsp_hooks.s' if name == 'hooks.s' else name)).write_text(text)
         if args.resident_stock_hooks:
             for name in ('stock_hooks.c', 'stock_hooks.h', 'stock_hook_driver.c', 'stock_hook_driver.h', 'stock_hook_resources.c', 'stock_hook_resources.h',
@@ -1948,7 +1969,11 @@ def main():
                 '        modwerk_usb_input_dma_failed();\n'
                 '    }\n'
                 '    dl_phase = dl_c1_phase = 0;'))
+        if stream:
+            (source / 'dsp.c').write_text(stream.dsp_c((source / 'dsp.c').read_text(), args, usb=bool(usb_input)))
         shutil.copyfile(HERE / 'dsp_core1.s', source / 'dsp_core1.s')
+        if stream:
+            (source / 'dsp_core1.s').write_text(stream.core1((source / 'dsp_core1.s').read_text(), args))
         for name in ('dsp_journal.h', 'dsp_journal_manager.h', 'fxmap.h', 'fxpage.h', 'fxmap.c', 'fxmap.s', 'fxpage.c', 'fxpage.s', 'status.c', 'status.s', 'status.h', 'load_wire.h', 'selftest.h', 'diag.c', 'diag.h'):
             shutil.copyfile(HERE / name, source / name)
         if args.resident_on_demand:
@@ -1962,6 +1987,8 @@ def main():
                                                   **({'resident': resident_factory} if args.resident_stock_hooks else {}))
         if args.resident_stock_hooks:
             extra = usb_input.mailbox_initialization(image, device, dsp) if usb_input else None
+            if stream:
+                extra = stream.mailbox_initialization(image, device, dsp, args, extra)
             resident_boot_prepared = resident_boot_helper.prepare(image, device, dsp, dsp_layout, extra=extra)
             (source / 'resident-dsp-boot.s').write_text(resident_boot_prepared['assembly'])
             bootstrap = (source / 'core-ot.s').read_text()
@@ -2095,6 +2122,8 @@ def main():
     if args.table_owners:  # the owners list and every package, declaration and recipe it names
         _, _, reviewed_inputs = reviewed_table_owners(args.table_owners.resolve())
         inputs.update(reviewed_inputs)
+    if stream:
+        inputs.update(stream.inputs(args))
     source_hash = sha(json.dumps(inputs, sort_keys=True, separators=(',', ':')).encode())
     chooser = json.loads((APP/'src/engine/assets/chooser-metadata.json').read_text())
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
@@ -2240,6 +2269,8 @@ modwerk_retained_end:
          for key, field in (('TABLE', 'table'), ('WORDS', 'tableWords'), ('MISS', 'miss'), ('METER', 'meter'))] if args.dsp_loader else [])
     if args.measure_voices:  # dsp.c: voices admitted uncharged
         recipe['cflags'].append('-DMODWERK_MEASURE_VOICES')
+    if stream:
+        recipe['cflags'] += stream.cflags(args)
     if args.cached_modules:  # loader.c, runtime.c, fxpage.c, controller_board.c
         recipe['cflags'].append('-DMODWERK_CACHED_MODULES')
     if args.module_sets:
@@ -2378,6 +2409,8 @@ modwerk_retained_end:
             if sha(stock) != guard:
                 raise ValueError('Stock bytes at %#x are not the ones the DSP loader hooks.' % addr)
             recipe['sites'].append(dict(addr=hex(addr), stock=stock.hex(), op='jmp', target=label))
+        if stream:  # the channel's state 0 and state 1, probe B's state 0
+            recipe['sites'] += stream.sites(image, device, args)
         recipe['sites'] += [] if args.dsp_probe == 'S' else dsp_sites
         recipe['sites'] += [dict(addr=hex(ROOT_MENU), stock=image[ROOT_MENU - device.main_load:][:4].hex(), op='bytes', kind='data',
                                  new='00000005'),
@@ -2505,6 +2538,8 @@ modwerk_retained_end:
             raise ValueError('Saved file hash differs.')
     if args.dsp_loader and any(mapping[name] % 16 for name in ('dl_tx', 'dl_rx')):
         raise ValueError('The DSP loader packet buffers must be 16-byte aligned for eDMA channel 0.')
+    if stream:
+        stream.check_link(mapping, args)
     (out/'symbols.json').write_text(json.dumps(mapping, indent=2)+'\n')
     if args.controller_layout and json.loads(args.controller_layout.read_text()) != mapping:
         raise ValueError('Controller trust rows moved a linked symbol: their packages name the other layout.')

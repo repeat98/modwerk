@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Probes A and B of a module-owned DSP stream: development twins only, never for users.
+"""Probes A and B of a module-owned DSP stream (development twins only, never for users), and the stream channel's build
+side (build_core.py --stream-channel, the beta base).
 
 Probe A measures whether the base can push N more halfwords a frame to DSP core 0 through stock's host-port chain,
 probe B whether it can pull N more from core 0, how safely and how fast. A build carries A, B or both (the real
@@ -9,10 +10,10 @@ through this file:
 
     python3 -B sdk/machines/octatrack/module-adapters/stream_probe.py --stream-probe 64 --stream-read 64 --stock OS.bin ... --dev
 
-It runs build_core.py with the seams below (BUILD_EDITS) applied in memory, as resident_source.py runs the patched
-loader; build_core.py and every file a base's identity hashes stay untouched, so every other build is byte-identical.
-The probes' own files enter the identity (`inputs`), both N included. The build refuses --usb-input beside either:
-both take the frame-head site (P:$88) that USB AUDIO IN's receiver uses, and A its block's place.
+It runs build_core.py with the probes' flags and refusal (BUILD_EDITS) added in memory, as resident_source.py runs the
+patched loader; build_core.py's own seams (`stream`) call this file's steps. The probes' own files enter the identity
+(`inputs`), both N included. The build refuses --usb-input beside either: both take the frame-head site (P:$88) that
+USB AUDIO IN's receiver uses, and A its block's place.
 
 Probe A (--stream-probe N, ColdFire -> core 0):
 - ColdFire: the shared state-7 scheduler (dsp_hooks.s) sends one block of N halfwords before the loader's packet, as
@@ -54,11 +55,15 @@ Why the regions are free in this build (`claims`, `proof`, `chain_proof`, `mailb
   transfer reaches past $x83f (TRANSFERS, from the stock chain whose bytes `chain_proof` guards).
 Any other writer shows on the unit: as bad blocks on the DSP's checker (A) or the ColdFire's (B).
 
-The channel (--stream-channel, stream_channel.c): A's and B's paths carry the blocks of the slots that stream (events.json
-ot_dsp_effects stream_in, stream_out) instead of a pattern, from A's wide region X:$x1be0 (in) and B's X:$x1840 (out),
-as many minor loops a frame as the open lanes cover; no frame-head code. dsp_programs.c names each slot's blocks in its
-slot record. Development twins only, no --usb-input, beside the base's program areas.
-- Core 0 (T5-T8): A's send at state 7 and B's read at stock's state 0, as above.
+The channel (build_core.py --stream-channel, stream_channel.c; in the beta base since 0.8.4): A's and B's paths carry the
+blocks of the slots that stream (events.json ot_dsp_effects stream_in, stream_out) instead of a pattern, from A's wide
+region X:$x1be0 (in) and B's X:$x1840 (out), as many minor loops a frame as the open lanes cover. dsp_programs.c names
+each slot's blocks in its slot record. It has no frame-head code: the module's DSP code reads and writes its blocks at
+X:$207 + the record's word, so P:$88 stays USB AUDIO IN's alone and its cycles are the same with the channel or without.
+- Core 0 (T5-T8): A's send at state 7 and B's read at stock's state 0, as above. Beside USB AUDIO IN (`scheduler`, usb)
+  state 7 sends USB AUDIO IN's block first (phases 3, 4, as without the channel), then the channel's (5, 6), then the
+  loader's packet: one transfer at a time on TCD0, each started from the completion of the one before, never more than
+  one channel block a frame. Its in-region X:$x1be0-$x1f7f is clear of USB AUDIO IN's X:$x360-$x3ff (USB_INPUT, `proof`).
 - Core 1 (T1-T4), host-tested only: only at the times stock itself talks to core 1 (dsp_core1.s's trap). Its in-blocks
   go at state 3 right after the loader's packet to core 1 (`core1`), to X:$x1be0-$x1f5f: 896 words, because payload B's
   frame routine writes X:$3f7f-$3fbf every frame (CORE1_FRAME_WORDS). Its out-blocks are read at state 1's entry
@@ -73,7 +78,7 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from usb_audio_input import DSP_FRAME_SITE, STOCK_FRAME_GUARD  # noqa: E402  payload A's frame-head site P:$88, its guard
+from usb_audio_input import DESTINATION as USB_DESTINATION, DSP_FRAME_SITE, STOCK_FRAME_GUARD  # noqa: E402  P:$88, its guard
 APP = HERE.parents[3]
 LEDGER = HERE.parent / 'dsp-sites.json'
 SOURCE = HERE / 'stream_probe.c'
@@ -112,6 +117,8 @@ CHAIN_GUARDS = ((0x40004840, 0x40004bd2, 'ab08f384c1560140749d616e58be273b632df1
 TRANSFERS = ((0x600, 512, 'read', 'frame entry, channels 1, 6, 7'), (0x080, 672, 'write', 'state 1'),
              (0x800, 64, 'write', 'state 3'), (0x000, 128, 'write', 'state 5'), (0x400, 512, 'write', 'state 6'),
              (0x320, 64, 'write', "the DSP loader's packet, state 7 (scheduler checks it)"))
+# USB AUDIO IN's block at state 7 (usb_audio_input.py: 3 or 5 minor loops of 64 bytes to $6360), which the channel runs beside.
+USB_INPUT = (USB_DESTINATION & 0x0fff, 160, 'write', "USB AUDIO IN's block, state 7")
 # Core 1's, from the same bytes: state 0's pull, state 2's and state 4's pushes, the loader's packet at state 3.
 CORE1_TRANSFERS = ((0x600, 256, 'read', 'state 0'), (0x080, 672, 'write', 'state 2'),
                    (0x320, 64, 'write', "the DSP loader's packet, state 3 (dsp_core1.s)"), (0x000, 128, 'write', 'state 4'))
@@ -170,7 +177,7 @@ def claims(a_words=0, b_words=0):
     return found
 
 
-def proof(ledger=LEDGER, a_words=160, b_words=0):
+def proof(ledger=LEDGER, a_words=160, b_words=0, transfers=TRANSFERS):
     """No base feature's X region on core 0 meets a claimed range in either bank, no stock or base transfer to core 0
     meets one, and B and wide A stay in the free run; -> how many ledger X regions were checked."""
     regions = json.loads(Path(ledger).read_text())['regions']
@@ -178,7 +185,7 @@ def proof(ledger=LEDGER, a_words=160, b_words=0):
     for at, words, who in spans:
         if at >= 0x800 and not (FREE_RUN[0] <= at and at + words <= FREE_RUN[1]):
             raise ValueError(who + ' leaves the free run X:$x%x-$x%x.' % FREE_RUN)
-        for start, count, _, where in TRANSFERS:
+        for start, count, _, where in transfers:
             if start < at + words and at < start + count:
                 raise ValueError('%s meets a host transfer to core 0 (%s).' % (who, where))
     for (a, n, who), (b, m, other) in ((x, y) for i, x in enumerate(spans) for y in spans[i + 1:]):
@@ -448,9 +455,9 @@ def place_receiver(args, place, assemble, tag, end, work):
     return bundle
 
 
-def mailbox_initialization(image, device, dsp, args):
+def mailbox_initialization(image, device, dsp, args, extra=None):
     """No stock X record of payload A loads into a claimed range in either bank; every block's magic word starts
-    clear, so a cold DSP's garbage reads as no block."""
+    clear, so a cold DSP's garbage reads as no block. `extra`: USB AUDIO IN's words, which the channel keeps."""
     cores = (('A', claims(*widths(args))),) + ((('B', core1_claims()),) if getattr(args, 'stream_channel', False) else ())
     for tag, spans in cores:
         for space, at, count, _ in dsp.records(image, device, tag):
@@ -458,7 +465,7 @@ def mailbox_initialization(image, device, dsp, args):
                 if space == 1 and any(at < bank + offset + words and bank + offset < at + count for bank in BANKS):
                     raise ValueError('The %s block overlaps a stock DSP record of payload %s.' % (who, tag))
     if getattr(args, 'stream_channel', False):  # nothing reads a block before its slot record names it (dsp_programs.c)
-        return {'A': []}
+        return extra if extra is not None else {'A': []}
     spans = cores[0][1]
     return {'A': [dict(space='x', address=bank + offset, words=[0], owner=0) for offset, _, _ in spans for bank in BANKS]}
 
@@ -468,33 +475,11 @@ def widths(args):
     return (A_WIDE_CAPACITY, READ_CAPACITY) if getattr(args, 'stream_channel', False) else (args.stream_probe, args.stream_read)
 
 
-def scheduler(text, args):
-    """dsp_hooks.s. A: the block first, then the loader's packet (USB AUDIO IN's phases 3 and 4). B: stock's state 0
-    comes to mw_stream_state0 (sites); the times are kept before the unmask, the block checked after it."""
-    if text.count('move.w #0x6320,%d0') != 1 or text.count('move.w #63,%d0') != 1:
-        raise ValueError('The loader packet no longer ends below the stream probe block ($x320-$x35f).')
-    words, read_words = widths(args)
-    if words:
-        text = replace(text, '        jsr dl_frame\n        tst.l %d0', '''        jsr dl_frame
-        move.l %d0,%d7
-        jsr mw_stream_block     | stream_probe.c: the block's minor loops, 0 none
-        tst.l %d0
-        bne dl_send_stream
-        move.l %d7,%d0
-        tst.l %d0''')
-        text = replace(text, 'dl_next:\n', '''dl_next:
-        cmpi.l #3,%d2
-        bcs dl_next_loader
-        jsr mw_stream_complete  | the block's completion (C keeps d2)
-        cmpi.l #3,%d2
-        beq dl_complete
-        moveq #1,%d2
-        move.l %d2,dl_phase
-        bra dl_write
-dl_next_loader:
-''')
-        text = replace(text, 'dl_write:\n', f'''dl_send_stream:
-        moveq #3,%d2
+def send_stream(words, phase):
+    """State 7's send of A's block (d0 its minor loops) from dl_send_stream, phase `phase` or one more with the loader's
+    packet waiting (d7), or from dl_stream_phase with d2 set."""
+    return f'''dl_send_stream:
+        moveq #{phase},%d2
         tst.l %d7
         beq dl_stream_phase
         addq.l #1,%d2
@@ -525,8 +510,65 @@ dl_stream_phase:
         move.b %d1,mw_stream_pin_start
         bra dl_return
 
-dl_write:
+'''
+
+
+def scheduler(text, args, usb=False):
+    """dsp_hooks.s. A: the block first, then the loader's packet (USB AUDIO IN's phases 3 and 4). B: stock's state 0
+    comes to mw_stream_state0 (sites); the times are kept before the unmask, the block checked after it. With `usb`
+    (the channel in a base with USB AUDIO IN, whose scheduler has edited `text` already): USB AUDIO IN's block first, as
+    without the channel, then the channel's (phases 5 and 6), then the loader's packet."""
+    if text.count('move.w #0x6320,%d0') != 1 or text.count('move.w #63,%d0') != 1:
+        raise ValueError('The loader packet no longer ends below the stream probe block ($x320-$x35f).')
+    words, read_words = widths(args)
+    if usb and not getattr(args, 'stream_channel', False):
+        raise ValueError('Only the stream channel runs beside USB AUDIO IN: the probes take its frame-head site.')
+    if usb:
+        text = replace(text, '        bne dl_send_usb_input\n        move.l %d7,%d0\n', '''        bne dl_send_usb_input
+        jsr mw_stream_block     | stream_channel.c: the in-region's minor loops, 0 none (USB AUDIO IN sends none now)
+        tst.l %d0
+        bne dl_send_stream
+        move.l %d7,%d0
 ''')
+        text = replace(text, 'dl_next:\n        cmpi.l #3,%d2\n        beq dl_complete\n', '''dl_next:
+        cmpi.l #5,%d2
+        bcs dl_next_input
+        jsr mw_stream_complete  | 5, 6: the channel's block is done (C keeps d2)
+        subq.l #2,%d2           | on as after USB AUDIO IN's block: 3 done, 4 the loader's packet
+        bra dl_next_usb
+dl_next_input:
+        cmpi.l #3,%d2
+        bcs dl_next_usb         | 1: the loader's packet is done
+        jsr mw_stream_block     | 3, 4: USB AUDIO IN's block is done; the channel's next, if a lane is open
+        tst.l %d0
+        beq dl_next_usb
+        addq.l #2,%d2           | 5, or 6 with the loader's packet waiting
+        bra dl_stream_phase
+dl_next_usb:
+        cmpi.l #3,%d2
+        beq dl_complete
+''')
+    elif words:
+        text = replace(text, '        jsr dl_frame\n        tst.l %d0', '''        jsr dl_frame
+        move.l %d0,%d7
+        jsr mw_stream_block     | stream_probe.c: the block's minor loops, 0 none
+        tst.l %d0
+        bne dl_send_stream
+        move.l %d7,%d0
+        tst.l %d0''')
+        text = replace(text, 'dl_next:\n', '''dl_next:
+        cmpi.l #3,%d2
+        bcs dl_next_loader
+        jsr mw_stream_complete  | the block's completion (C keeps d2)
+        cmpi.l #3,%d2
+        beq dl_complete
+        moveq #1,%d2
+        move.l %d2,dl_phase
+        bra dl_write
+dl_next_loader:
+''')
+    if words:
+        text = replace(text, 'dl_write:\n', send_stream(words, 5 if usb else 3) + 'dl_write:\n')
     text = replace(text, 'dl_complete:\n', 'dl_complete:\n        jsr mw_stream_account   | TCD0 back, the times kept\n')
     if not read_words:
         return text
@@ -738,10 +780,26 @@ dl_c1_phase: .long 0                    | 1 while our packet runs, 2 the stream'
     return text
 
 
-def dsp_c(text, args):
+def probes(args):
+    """(--stream-probe N, --stream-read N), 0 for each a build_core.py run without this file's flags lacks."""
+    return getattr(args, 'stream_probe', 0), getattr(args, 'stream_read', 0)
+
+
+def dsp_c(text, args, usb=False):
     """dsp.c: A's recovery core select and give-up, as USB AUDIO IN's, and A's snapshot read ahead of the meter's; B's
-    give-up in the same recovery."""
-    if args.stream_probe or getattr(args, 'stream_channel', False):
+    give-up in the same recovery. With `usb`, USB AUDIO IN's edits are in: the select is core 0's already, and its
+    give-up is for its own phases (3, 4), the channel's for 5 and 6."""
+    words, read_words = probes(args)
+    channel = getattr(args, 'stream_channel', False)
+    if usb:
+        text = replace(text, '    if (dl_phase >= 3u) {\n        extern void modwerk_usb_input_dma_failed(void);',
+                       '    if (dl_phase == 3u || dl_phase == 4u) {\n        extern void modwerk_usb_input_dma_failed(void);')
+        text = replace(text, '    dl_phase = dl_c1_phase = 0;', '''    if (dl_phase >= 5u || dl_c1_phase == 2u) { /* the channel's block was on its way */
+        extern void mw_stream_dma_failed(void);
+        mw_stream_dma_failed();
+    }
+    dl_phase = dl_c1_phase = 0;''')
+    elif words or channel:
         text = replace(text, 'DSP_SELECT = dl_c1_phase ? 1u : (uint8_t)(dl_phase - 1u);',
                        'DSP_SELECT = dl_c1_phase ? 1u : 0u; /* state 7 always targets core 0 */')
         text = replace(text, '    dl_phase = dl_c1_phase = 0;', '''    if (dl_phase >= 3u || dl_c1_phase == 2u) { /* a stream block was on its way */
@@ -749,7 +807,7 @@ def dsp_c(text, args):
         mw_stream_dma_failed();
     }
     dl_phase = dl_c1_phase = 0;''')
-    if args.stream_probe:
+    if words:
         text = replace(text, '        if (peeking < 0 && meter_wanted >= 0 && probing < 0',
                        f'''        {{ /* the stream probe's published copy (stream_probe.c), ahead of the status page's meter reads */
             extern volatile int32_t mw_stream_dsp_wanted;
@@ -764,7 +822,7 @@ def dsp_c(text, args):
             }}
         }}
         if (peeking < 0 && meter_wanted >= 0 && probing < 0''')
-    if args.stream_read or getattr(args, 'stream_channel', False):
+    if read_words or channel:
         text = replace(text, '    dl_abort();\n    dl_residency_enabled = 0;\n', '''    { extern void mw_stream_read_failed(void); mw_stream_read_failed(); } /* stream probe B: read no more */
     dl_abort();
     dl_residency_enabled = 0;
@@ -795,9 +853,9 @@ def dev_c(text, args):
 
 def check_args(args):
     if getattr(args, 'stream_channel', False):
-        if args.stream_probe or args.stream_read or not args.resident_on_demand:
+        if any(probes(args)) or not args.resident_on_demand:
             raise ValueError('--stream-channel takes no probe beside it, and needs --resident-on-demand (its slot records).')
-        proof(a_words=A_WIDE_CAPACITY, b_words=READ_CAPACITY)
+        proof(a_words=A_WIDE_CAPACITY, b_words=READ_CAPACITY, transfers=TRANSFERS + (USB_INPUT,))
         core1_proof()
         return
     if not (args.stream_probe or args.stream_read):
@@ -823,7 +881,7 @@ def prepare(args, source):
 def sites(image, device, args):
     """Probe B takes stock's state 0 (its first 8 bytes, guarded), the channel state 1 too; A takes no stock site."""
     chain_proof(image, device.main_load)
-    if not (args.stream_read or getattr(args, 'stream_channel', False)):
+    if not (probes(args)[1] or getattr(args, 'stream_channel', False)):
         return []
     found = []
     for at, guard, target in ((STATE0, STATE0_GUARD, 'mw_stream_state0'),) + (
@@ -836,11 +894,12 @@ def sites(image, device, args):
 
 
 def inputs(args):
-    """What the probes add to the base's source identity: their files and both N, so no other base shares its identity."""
-    found = {p.relative_to(APP).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in (Path(__file__).resolve(), SOURCE)}
-    if getattr(args, 'stream_channel', False):
-        found.update({p.relative_to(APP).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in CHANNEL})
-        found['stream-probe:channel'] = hashlib.sha256(b'1').hexdigest()
+    """What the probes or the channel add to the base's source identity: this file (its seams, regions and proofs) and the
+    C the build compiles, with the probes' N, so no other base shares its identity."""
+    channel = getattr(args, 'stream_channel', False)
+    found = {p.relative_to(APP).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+             for p in (Path(__file__).resolve(),) + (CHANNEL if channel else (SOURCE,))}
+    if channel:
         return found
     found['stream-probe:words'] = hashlib.sha256(str(args.stream_probe).encode()).hexdigest()
     if args.stream_read:  # absent for an A-only build, so its identity is the one before probe B
@@ -871,50 +930,22 @@ def check_link(mapping, args):
             raise ValueError('The stream probe buffer %s must be 16-byte aligned for its eDMA channel (16-byte bursts).' % name)
 
 
-# build_core.py's seams, each found exactly once (else the build stops): the probes' flags and refusals, then their
-# hooks into the steps USB AUDIO IN uses, and B's stock site beside the DSP loader's.
+# build_core.py's seams for the probes, each found exactly once (else the build stops): their flags and refusal. Their
+# steps run through build_core.py's own `stream` seams, which a --stream-channel build takes too.
 BUILD_EDITS = (
     ("    parser.add_argument('--usb-input', action='store_true',\n",
      "    parser.add_argument('--stream-probe', type=int, default=0, metavar='N',\n"
      "                        help='stream_probe.py, probe A: N halfwords to core 0 every frame (32-160 by 32, or 192-928) and a frame-head checker.')\n"
      "    parser.add_argument('--stream-read', type=int, default=0, metavar='N',\n"
      "                        help='stream_probe.py, probe B: N halfwords from core 0 every frame (32-928 by 16), written at its frame head.')\n"
-     "    parser.add_argument('--stream-channel', action='store_true',\n"
-     "                        help='stream_probe.py: the stream channel (stream_channel.c), probes A and B carrying the blocks of the slots that stream.')\n"
      "    parser.add_argument('--usb-input', action='store_true',\n"),
     ("        parser.error('--measure-voices is for a development twin: it needs --dev and --dsp-loader.')\n",
      "        parser.error('--measure-voices is for a development twin: it needs --dev and --dsp-loader.')\n"
-     "    if (not args.dev or not args.dsp_loader or not args.site_events or not args.resident_stock_hooks or args.usb_input\n"
-     "            or args.dsp_hook != 'guard' or args.dsp_probe or args.dsp_burn or not (args.stream_probe or args.stream_read or args.stream_channel)):\n"
+     "    if (args.stream_probe or args.stream_read) and (not args.dev or not args.dsp_loader or not args.site_events\n"
+     "            or not args.resident_stock_hooks or args.usb_input or args.dsp_hook != 'guard' or args.dsp_probe or args.dsp_burn):\n"
      "        parser.error('--stream-probe and --stream-read are for a development twin: --dev, --dsp-loader, --site-events, '\n"
      "                     '--resident-stock-hooks, the guarded transfer, no DSP probe or burn, no --usb-input (the probes take '\n"
-     "                     'its frame-head site), and at least one of the two.')\n"),
-    ('    usb_input = None\n    if args.usb_input:\n',
-     '    STREAM_PROBE.prepare(args, source)\n    usb_input = None\n    if args.usb_input:\n'),
-    ("            resident_bundles[tag] = usb_input.place_receiver(place, dsp_packages.assemble, tag, hi, str(source)) if usb_input else place(hi)\n",
-     "            resident_bundles[tag] = STREAM_PROBE.place_receiver(args, place, dsp_packages.assemble, tag, hi, str(source))\n"),
-    ("            if usb_input and name == 'hooks.s':\n                text = usb_input.scheduler(text)\n",
-     "            if usb_input and name == 'hooks.s':\n                text = usb_input.scheduler(text)\n"
-     "            if name == 'hooks.s':\n                text = STREAM_PROBE.scheduler(text, args)\n"),
-    ("        if saved_set_wiring:\n            (source / 'dsp.c').write_text(saved_set_wiring.dsp((source / 'dsp.c').read_text()))\n",
-     "        if saved_set_wiring:\n            (source / 'dsp.c').write_text(saved_set_wiring.dsp((source / 'dsp.c').read_text()))\n"
-     "        (source / 'dsp.c').write_text(STREAM_PROBE.dsp_c((source / 'dsp.c').read_text(), args))\n"),
-    ('            extra = usb_input.mailbox_initialization(image, device, dsp) if usb_input else None\n',
-     '            extra = STREAM_PROBE.mailbox_initialization(image, device, dsp, args)\n'),
-    ('    source_hash = sha(json.dumps(inputs, sort_keys=True, separators=(\',\', \':\')).encode())\n',
-     '    inputs.update(STREAM_PROBE.inputs(args))\n'
-     '    source_hash = sha(json.dumps(inputs, sort_keys=True, separators=(\',\', \':\')).encode())\n'),
-    ("        recipe['cflags'].append('-DMODWERK_MEASURE_VOICES')\n",
-     "        recipe['cflags'].append('-DMODWERK_MEASURE_VOICES')\n    recipe['cflags'] += STREAM_PROBE.cflags(args)\n"),
-    ("        recipe['sites'] += [] if args.dsp_probe == 'S' else dsp_sites\n",
-     "        recipe['sites'] += STREAM_PROBE.sites(image, device, args)\n"
-     "        recipe['sites'] += [] if args.dsp_probe == 'S' else dsp_sites\n"),
-    ("        shutil.copyfile(HERE / 'dsp_core1.s', source / 'dsp_core1.s')\n",
-     "        shutil.copyfile(HERE / 'dsp_core1.s', source / 'dsp_core1.s')\n"
-     "        (source / 'dsp_core1.s').write_text(STREAM_PROBE.core1((source / 'dsp_core1.s').read_text(), args))\n"),
-    ("        raise ValueError('The DSP loader packet buffers must be 16-byte aligned for eDMA channel 0.')\n",
-     "        raise ValueError('The DSP loader packet buffers must be 16-byte aligned for eDMA channel 0.')\n"
-     "    STREAM_PROBE.check_link(mapping, args)\n"),
+     "                     'its frame-head site).')\n"),
 )
 
 
@@ -926,8 +957,8 @@ def build_core_module():
         text = replace(text, before, after)
     module = types.ModuleType('modwerk_stream_probe_build_core')
     module.__file__ = str(BUILD_CORE)
-    module.STREAM_PROBE = sys.modules[__name__]
     exec(compile(text, str(BUILD_CORE), 'exec'), module.__dict__)
+    module.STREAM_PROBE = sys.modules[__name__]  # after its own `STREAM_PROBE = None`
     return module
 
 

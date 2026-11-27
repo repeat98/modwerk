@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
- * The stream channel, its frame side (stream_probe.py --stream-channel: development twins only).
+ * The stream channel, its frame side (build_core.py --stream-channel, in the beta base beside USB AUDIO IN).
  * Probes A and B carry the blocks of the slots that stream (events.json ot_dsp_effects stream_in, stream_out) instead
  * of a pattern: every frame, state 7 sends the in-region X:$x1be0.. of the next bank to core 0 (probe A's path) and
  * state 0 reads the out-region X:$x1840.. that core 0 wrote in the bank before (probe B's path); after state 7's unmask
- * each lane's take() gets the blocks just read and its fill() writes the next ones. dsp_programs.c opens and closes
+ * each lane's take() gets the blocks just read and its fill() writes the next ones. Beside USB AUDIO IN, state 7 sends its
+ * block first and this one at its completion (stream_probe.py scheduler). dsp_programs.c opens and closes
  * the lanes on the UI tick and names their blocks in the slot records only once they are filled.
  * Core 1 the same way at the times stock talks to it (dsp_core1.s): its in-region goes at state 3, right after the
  * loader's packet to core 1, and its out-region is read at state 1's entry, right after stock's own pull from core 1.
@@ -179,7 +180,8 @@ unsigned mw_stream_block(void)
 
 void mw_stream_complete(void) { if (flight[0]) flight[0] = flight[0] | 4u; }
 
-/* dl_complete, every frame, right before the unmask: TCD0 as stock left it. */
+/* dl_complete, every frame, right before the unmask: TCD0 as it was before the block (stock's, or USB AUDIO IN's block's
+ * beside it; stock's state 1 rewrites all four before anything reads them). */
 void mw_stream_account(void)
 {
     if (!flight[0]) return;
