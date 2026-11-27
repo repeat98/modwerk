@@ -28,6 +28,9 @@ void modwerk_usb_function_frame(void);
  * 3 back on the bus and waiting for the host to reset it and reach this interface; [1] 1 while the configuration the host reads holds a function; [2] 1 while a
  * module contributes one; [3] reconnects made, modulo 256; [4] of them, those that did not wait for an idle
  * control endpoint; [5]-[7] 0. */
+/* diag.c's USB_GONE sample (ep0.c), from the frame interrupt: the state (as USB FUNCTION's [0]), and where not 0 the
+ * reconnect's timer, off_ticks, flags (reset_seen bit 0, retried 1, panel_reconnect 2) and reconnects. Reads only. */
+unsigned modwerk_usb_function_peek(uint16_t *timer, uint8_t *off, uint8_t *flags, uint8_t *count);
 #define MODWERK_USB_FUNCTION_STATUS_BYTES 8u
 unsigned modwerk_usb_function_status(uint8_t *out);
 /* What the host streams now: bit 0 to it (EP3 IN), bit 1 from it (EP3 OUT); status.c books it (#2251). */

@@ -420,6 +420,14 @@ int modwerk_usb_function_tick(int quiet)
  * otherwise count as a pulled cable and undo an open trial. */
 void modwerk_usb_function_host(void) { if (state == UF_BACK && reset_seen) state = UF_SETTLED; }
 int modwerk_usb_reconnecting(void) { return state == UF_OFF || state == UF_BACK; }
+unsigned modwerk_usb_function_peek(uint16_t *at, uint8_t *off, uint8_t *flags, uint8_t *count)
+{
+    if (at) *at = timer;
+    if (off) *off = off_ticks;
+    if (flags) *flags = (uint8_t)((reset_seen ? 1u : 0u) | (retried ? 2u : 0u) | (panel_reconnect ? 4u : 0u));
+    if (count) *count = reconnects;
+    return state;
+}
 void modwerk_usb_function_isr(void) { (void)uf_raise(MODWERK_EV_USB_ISR); }
 void modwerk_usb_function_bus_end(void)
 {
