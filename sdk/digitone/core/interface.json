@@ -48,6 +48,16 @@
       "name": "ev_hold",
       "when": "a track key held on its own",
       "handler": "int f(brain, event, track); none taken opens the Mod Menu"
+    },
+    {
+      "name": "ev_midi_cc",
+      "when": "each MIDI CC the unit receives on a track's channel or the auto channel, before the stock applies it, at the CC router's track check (OS 1.43 0x400ed96e, 1.44 0x400edbe2); a task, not an interrupt; elekloader core 3.2 and newer",
+      "handler": "int f(track, cc, value, flags); nonzero takes the CC"
+    },
+    {
+      "name": "ev_note_queue",
+      "when": "each event a note source queues for the render (the sequencer's fires a step ahead, with the step's p-locks), with the time it plays, at the queue's entry (OS 1.43 0x400fff04, 1.44 0x40100178); elekloader core 4.1 and newer",
+      "handler": "void f(event, time)"
     }
   ],
   "proposed": [
@@ -98,6 +108,11 @@
       "name": "core_menu",
       "entry": 4,
       "purpose": "Mod Menu entries: a name and an open function each."
+    },
+    {
+      "name": "core_audio",
+      "entry": 4,
+      "purpose": "Exclusive or insert audio owners. Each block the core takes the first record whose on is set: the master stage stops (or, with CORE_AUDIO_INSERT, runs first) and the owner's render(out, in) writes the output; CORE_AUDIO_MUTE_VOICES also skips the voices' filter loop. Elekloader core 3.2 and newer; insert from 4.0."
     }
   ],
   "exports": [
