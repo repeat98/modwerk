@@ -90,7 +90,7 @@ export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 export interface DiagnosticLive { samples: number; cpu?: [number, number]; dsp1to4?: [number, number]; dsp5to8?: [number, number] }
 export const DIAGNOSTIC_UNRESPONSIVE = ['usb', 'ui'] as const
 /** `device_log`: records from the unit's own log (diag.h), uploaded at the next connection. */
-export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu', 'brake', 'usb', 'late', 'restore', 'freeze_pc'] as const
+export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu', 'brake', 'usb', 'late', 'restore', 'freeze_pc', 'usb_gone'] as const
 /** `frameGap`: the window's longest time between two audio frames, µs (log version 2); `tickGap` its longest run of
  * frames without a UI tick. */
 export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [number, number]; dsp1to4: [number, number]; dsp5to8: [number, number]; samples: number; playing: number; frameGap?: number; tickGap?: number }
@@ -290,4 +290,34 @@ export function freezeSamples(r: DeviceIncident): { pc: number; sr: number; leve
   const pcs = [r.a, r.screen, r.tempo24, long(16)], srs = [r.cpu, r.dsp5to8, r.dsp1to4, r.machines[20] << 8 | r.machines[21]]
   return pcs.map((pc, i) => ({ pc, sr: srs[i], level: srs[i] >> 8 & 7, tcb: long(4 * i), task: TASKS.get(long(4 * i)) ?? 'TCB 0x' + long(4 * i).toString(16) }))
     .filter(s => s.pc || s.sr || s.tcb)
+}
+/** One USB_GONE sample: the controller's OTGSC, PORTSC1 and USBCMD (its low byte after the first), the base's reconnect
+ * state (usb_function.c, 0-3), the watchdog's tries and diag.h's flags; the first also DEVICEADDR, FRINDEX and the rest. */
+export interface UsbGoneSample { otgsc: number; portsc: number; usbcmd: number; ufState: number; flags: number; wdTries: number
+  deviceaddr?: number; frindex?: number; ufTimer?: number; ufOff?: number; ufFlags?: number; wdOff?: number; wdDetached?: number }
+/** A USB_GONE record (diag.h, bases from 0.8.3; #2290): the host's USB frames stood still three seconds while the base
+ * expected a host. `samples` at 3, 4, 5 and 6 s, without those the frames came back before; `stopped` the reconnect's
+ * state when they stopped; `ticks`, `ep0`, `uf` how far the UI tick, ep0_tick and the reconnect tick moved in those 3 s. */
+export function usbGone(r: DeviceIncident): { stopped: number; ticks: number; ep0: number; uf: number; reconnects: number; samples: UsbGoneSample[] } {
+  const run = [...r.machines, ...r.fx, ...r.keys]
+  const long = (i: number) => (run[i] << 24 | run[i + 1] << 16 | run[i + 2] << 8 | run[i + 3]) >>> 0
+  const first: UsbGoneSample = { otgsc: r.a, portsc: r.screen, usbcmd: r.tempo24, ufState: run[8], flags: run[12], wdTries: run[11],
+    deviceaddr: long(0), frindex: long(4), ufTimer: r.cpu, ufOff: run[9], ufFlags: run[10], wdOff: r.dsp1to4, wdDetached: r.dsp5to8 }
+  const later = [20, 32, 44].map(at => ({ otgsc: long(at), portsc: long(at + 4), usbcmd: run[at + 8], ufState: run[at + 9], flags: run[at + 10], wdTries: run[at + 11] }))
+    .filter(s => s.otgsc || s.portsc || s.usbcmd || s.ufState || s.flags || s.wdTries)
+  return { stopped: run[13], ticks: run[14], ep0: run[15], uf: run[16], reconnects: run[17], samples: [first, ...later] }
+}
+const UF_STATES = ['settled', 'reconnect due', 'off the bus', 'back on the bus']
+const USB_FLAGS = ['fresh', 'configured', 'USB DISK', 'RAM boot armed', 'reconnecting', 'receiving', 'host heard <10 s']
+/** One line a person reads: which side gave up (no VBUS: the host's port; SUSP: suspended; pull-up off: the unit). */
+export function describeUsbGone(r: DeviceIncident): string {
+  const g = usbGone(r)
+  const sample = (s: UsbGoneSample) => [s.otgsc & 0x800 ? 'VBUS' : 'no VBUS', s.usbcmd & 1 ? 'pull-up on' : 'pull-up off',
+    s.portsc & 0x80 ? 'suspended' : s.portsc & 1 ? 'attached' : 'not attached', UF_STATES[s.ufState] ?? 'state ' + s.ufState,
+    ...USB_FLAGS.filter((_, i) => s.flags >> i & 1)].join(', ') + ` (OTGSC 0x${s.otgsc.toString(16)}, PORTSC1 0x${s.portsc.toString(16)})`
+  const [first, ...later] = g.samples
+  return `the host's USB frames stopped (${UF_STATES[g.stopped] ?? 'state ' + g.stopped} then); in 3 s the UI tick ran ${g.ticks}, ep0_tick ${g.ep0}, ` +
+    `the reconnect tick ${g.uf} times; ${g.reconnects} reconnects; at 3 s: ${sample(first)}, USBCMD 0x${first.usbcmd.toString(16)}, ` +
+    `address ${(first.deviceaddr ?? 0) >>> 25}, reconnect timer ${first.ufTimer}, watchdog off ${first.wdOff} detached ${first.wdDetached} tries ${first.wdTries}` +
+    later.map((s, i) => `; at ${4 + i} s: ${sample(s)}`).join('')
 }

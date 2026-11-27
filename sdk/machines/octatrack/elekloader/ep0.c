@@ -26,6 +26,7 @@
 #include "vendor.h"
 #include "usb_base.h"
 #include "usb_attach.h"
+#include "usb_stock_sends.h"
 #ifdef MODWERK_USB_FUNCTIONS
 #include "usb_function.h"
 #endif
@@ -59,6 +60,7 @@ void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile of the b
 #define PORTSC1 REG(0xfc0b0184u)
 #define OTGSC REG(0xfc0b01a4u)
 #define DEVICEADDR REG(0xfc0b0154u) /* USBADR in bits 31-25: 0 until a host addresses the unit, and after a bus reset */
+#define FRINDEX REG(0xfc0b014cu)    /* the frame number of the host's last start-of-frame packet */
 /* Stock EP0 state: 10 while an IN stage is pending, 11 when idle. */
 #define EP0_STATE REG(0x460bb3ecu)
 /* Stock's awaited OUT descriptor; null unless one of its own OUT stages runs. */
@@ -619,6 +621,8 @@ void modwerk_ep0_bus_reset(void)
 {
     struct mv_transport *t = vendor();
     ++resets;
+    /* Stock's USB DISK replies left ACTIVE by the reset would spin the next one forever (usb_stock_sends.h). */
+    usb_stock_sends_retire((volatile uint32_t *)0x4ec95000u, &ENDPTFLUSH);
     remaining_plus_one = 0;
     track_receive = 0;
 #ifdef MODWERK_USB_FUNCTIONS
@@ -652,6 +656,61 @@ int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open 
 /* usb_attach.h: how often the unit offered itself again because the host never enumerated it, and OTGSC (high half)
  * and PORTSC1 (low half) the last time; diag.c logs each. */
 volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs;
+/* What counts as enumerated for the watchdog: the host configured the unit since the last bus reset (USB MIDI's
+ * usbmidi_up: set at SET_CONFIGURATION, cleared at a bus reset and the session's end), not just addressed it. A Mac that
+ * failed an enumeration after addressing the unit left it addressed and never configured: the address passed for
+ * enumerated, no re-offer came, and the unit stayed off USB until a power cycle (owner's MKII, 26 November 2026: after
+ * a RAM boot, a USB Audio install and a layout change, four times, the unit running on with no `usb` incident logged). */
+#ifdef MODWERK_USB_FUNCTIONS
+extern volatile uint8_t usbmidi_up;
+static unsigned enumerated(void) { return usbmidi_up; }
+#else
+static unsigned enumerated(void) { return DEVICEADDR >> 25; }
+#endif
+/* A host's first request after 10 s of quiet: the unit says a host is linked (owner, 11 October 2026). */
+static uint8_t host_heard;
+static uint32_t host_quiet = HOST_TIMEOUT_TICKS;
+/* #1985: a unit the host never enumerated, after a RAM boot or any start, offers itself again (usb_attach.h). */
+static struct usb_attach attach;
+volatile uint32_t mw_ep0_runs, mw_uf_calls; /* diag.c's USB_GONE: whether this tick, and its reconnect tick, still run */
+#ifdef MODWERK_DSP_LOADER
+/* diag.c's USB_GONE watch, from the frame interrupt: register and state reads only, nothing locked (a snapshot). */
+uint32_t modwerk_usb_frindex(void) { return FRINDEX; }
+int modwerk_usb_host_expected(void)
+{
+    if (modwerk_boot_pending()) return 0; /* an armed RAM boot takes the unit off the bus itself */
+    if (host_quiet < HOST_TIMEOUT_TICKS || enumerated()) return 1;
+#ifdef MODWERK_USB_FUNCTIONS
+    if (modwerk_usb_reconnecting()) return 1;
+#endif
+    return 0;
+}
+unsigned modwerk_usb_reconnect_state(void)
+{
+#ifdef MODWERK_USB_FUNCTIONS
+    return modwerk_usb_function_peek(0, 0, 0, 0);
+#else
+    return 0;
+#endif
+}
+void modwerk_usb_sample(volatile struct diag_usb_sample *s)
+{
+    s->otgsc = OTGSC, s->portsc = PORTSC1, s->usbcmd = USBCMD, s->deviceaddr = DEVICEADDR, s->frindex = FRINDEX;
+    s->wd_off = attach.off, s->wd_detached = attach.detached, s->wd_tries = attach.tries;
+    unsigned flags = (attach.fresh ? 1u : 0u) | (enumerated() ? 2u : 0u) | (modwerk_machine_usb_disk() ? 4u : 0u) |
+        (modwerk_boot_pending() ? 8u : 0u) | (receiving ? 32u : 0u) | (host_quiet < HOST_TIMEOUT_TICKS ? 64u : 0u);
+#ifdef MODWERK_USB_FUNCTIONS
+    uint16_t timer;
+    uint8_t off_ticks, uf_flags, reconnects;
+    s->uf_state = (uint8_t)modwerk_usb_function_peek(&timer, &off_ticks, &uf_flags, &reconnects);
+    s->uf_timer = timer, s->uf_off_ticks = off_ticks, s->uf_flags = uf_flags, s->uf_reconnects = reconnects;
+    if (modwerk_usb_reconnecting()) flags |= 16u;
+#else
+    s->uf_state = 0, s->uf_timer = 0, s->uf_off_ticks = 0, s->uf_flags = 0, s->uf_reconnects = 0;
+#endif
+    s->flags = (uint8_t)flags;
+}
+#endif
 void modwerk_ep0_tick(void);
 static void ep0_tick(void);
 void modwerk_ep0_tick(void)
@@ -660,6 +719,7 @@ void modwerk_ep0_tick(void)
 }
 static void ep0_tick(void)
 {
+    mw_ep0_runs = mw_ep0_runs + 1u;
     modwerk_modset_notice_tick();
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
     if(volatile_started && modwerk_volatile_tick(VOLATILE_SERVICE,modwerk_runtime_ticks)) wake();
@@ -667,21 +727,17 @@ static void ep0_tick(void)
 #ifdef MODWERK_SAVED_SET_EXPORT
     msx_session_tick(SAVED_SET); /* only export traffic renews this independent lease */
 #endif
-    /* A host's first request after 10 s of quiet: the unit says a host is linked (owner, 11 October 2026). */
-    static uint8_t heard;
-    static uint32_t quiet = HOST_TIMEOUT_TICKS;
     uint8_t activity = vendor()->activity;
-    if (activity != heard) {
-        if (quiet >= HOST_TIMEOUT_TICKS) ((void (*)(const char *, unsigned))0x4005a2b8u)("MODWERK CONNECTED", 0x60);
-        heard = activity, quiet = 0;
+    if (activity != host_heard) {
+        if (host_quiet >= HOST_TIMEOUT_TICKS) ((void (*)(const char *, unsigned))0x4005a2b8u)("MODWERK CONNECTED", 0x60);
+        host_heard = activity, host_quiet = 0;
         modwerk_flash_host = 1; /* a computer talks to this base: flash.c may confirm its slot */
 #ifdef MODWERK_USB_FUNCTIONS
         modwerk_usb_function_host(); /* and it is back after the base's own reconnect */
 #endif
-    } else if (quiet < HOST_TIMEOUT_TICKS) ++quiet;
-    /* #1985: a unit the host never enumerated, after a RAM boot or any start, offers itself again (usb_attach.h). A link
-     * stock's USB DISK MODE, the base's own reconnect or an armed RAM boot owns is theirs, also at the end of a drop. */
-    static struct usb_attach attach;
+    } else if (host_quiet < HOST_TIMEOUT_TICKS) ++host_quiet;
+    /* The attach watchdog (above): a link stock's USB DISK MODE, the base's own reconnect or an armed RAM boot owns is
+     * theirs, also at the end of a drop. */
     {
         int busy = modwerk_machine_usb_disk() || modwerk_boot_pending();
 #ifdef MODWERK_USB_FUNCTIONS
@@ -689,7 +745,7 @@ static void ep0_tick(void)
 #endif
         uint32_t lock = modwerk_machine_lock(); /* the controller's registers with the USB interrupt held off */
         uint32_t portsc = PORTSC1, otgsc = OTGSC;
-        enum usb_attach_action act = usb_attach_tick(&attach, USBCMD, portsc, otgsc, DEVICEADDR >> 25, busy);
+        enum usb_attach_action act = usb_attach_tick(&attach, USBCMD, portsc, otgsc, enumerated(), busy);
         if (act == USB_ATTACH_DROP) {
             USBCMD = USBCMD & ~USB_ATTACH_RS;
             mw_usb_reoffer_regs = (otgsc & 0xffffu) << 16 | (portsc & 0xffffu), mw_usb_reoffers = mw_usb_reoffers + 1u;
@@ -699,6 +755,7 @@ static void ep0_tick(void)
 #ifdef MODWERK_USB_FUNCTIONS
     /* ot_usb_functions changed: the base reconnects by itself (usb_function.c). A host that does not reach the
      * vendor interface again is handled as unplugged; until then its silence is not counted. */
+    mw_uf_calls = mw_uf_calls + 1u;
     if (modwerk_usb_function_tick(!receiving) && mv_reset(vendor())) wake();
     if (!modwerk_usb_reconnecting())
 #endif

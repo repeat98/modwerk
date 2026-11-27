@@ -86,6 +86,16 @@ describe('one module-set offer', () => {
     expect(own[0].use).toBe(Math.round(shipped.stock.trackStock * 10)); expect(own[1].use).toBe(Math.round(shipped.stock.line * 10))
     expect(own.slice(2, 11).map(c => c.use)).toEqual(shipped.stock.reserveBySteps.map((f: number) => Math.round(f * 10)))
     expect([own[11].use, own[12].use, own[13].use, own[14].use]).toEqual([shipped.stock.reserveMargin, shipped.stock.reserveFloor, shipped.stock.trackPlay, shipped.stock.measuredMargin].map((f: number) => Math.round(f * 10)))
+    // what an open USB stream adds to the frame's work, just below the other stock figures so the ids stay ascending (#2251)
+    expect(table.slice(-17, -15)).toEqual([{ module: 0xffffffe0, use: Math.round(shipped.stock.stream * 10), wake: 0, rest: 0 },
+      { module: 0xffffffe1, use: Math.round(shipped.stock.streamDuplex * 10), wake: 0, rest: 0 }])
+    const { stream, streamDuplex, ...older } = shipped.stock
+    expect(stream && streamDuplex).toBeTruthy()
+    expect(frameCostTable({}, older).map(c => c.module)).toEqual(Array.from({ length: 15 }, (_, i) => 0xfffffff1 + i)) // a table without them still encodes
+    // and one per stream width, up to 2, 4, 8, 16 and 20 channels, after those two
+    expect(frameCostTable({}, { ...older, streamByWidth: [10, 20, 30, 40, 50] }).slice(0, 5)).toEqual(
+      [10, 20, 30, 40, 50].map((figure, n) => ({ module: 0xffffffe2 + n, use: figure * 10, wake: 0, rest: 0 })))
+    expect(() => frameCostTable({}, { ...older, streamByWidth: [10, 20] })).toThrow('20 channels')
     expect(frameCostTable({ x: { first: 1, each: 1 } }, null)).toHaveLength(1) // no stock: the base's compiled figures
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], [{ module: 5, use: 0, wake: 0, rest: 0 }])).not.toThrow() // measured free

@@ -29,6 +29,10 @@ uint32_t modwerk_test_tables[4][MODWERK_FX_IDS];
 #define ADDR(pointer) ((uint32_t)((const uint8_t *)(pointer) - modwerk_test_memory))
 static uint8_t (*const pages)[0x1a0] = (uint8_t (*)[0x1a0])(modwerk_test_memory + 0x10000);
 #define MISSING_PAGE (modwerk_test_memory + 0x30000)
+extern const volatile uint8_t *modwerk_test_part_store(unsigned part);
+void modwerk_test_format(uint32_t code, char *line, uint32_t value);
+#define PART_STORE(part) modwerk_test_part_store(part)
+#define FORMAT(code, line, value) modwerk_test_format((code), (line), (value))
 #else
 /* The base's copies of FX1_IDS, FX2_IDS, FX1_ID2POS and ID2POS, MODWERK_FX_IDS long (dsp_loader.py choosers: stock's
  * 18 lea operands name them instead of stock's own). */
@@ -42,6 +46,12 @@ static volatile uint32_t *const tables[4] = {modwerk_fx1_ids, modwerk_fx2_ids, m
 static uint8_t pages[MODWERK_FX_IDS][0x1a0] __attribute__((aligned(4)));
 static uint8_t missing_page[0x1a0] __attribute__((aligned(4)));
 #define MISSING_PAGE missing_page
+/* The working Part's store in the current bank (sidechain-compressor's patch_sidechain.s, stock's drawers 0x4004d948
+ * and 0x4003792c): 6322 bytes a Part from bank + 0x8ed80. 0 before a project. */
+#define PART_STORE(part) (*(volatile uint32_t *)0x46c82456u ? \
+    (const volatile uint8_t *)(uintptr_t)(*(volatile uint32_t *)0x46c82456u + 0x8ed80u + (part) * 6322u) : 0)
+/* A formatter as the panel calls it: f(line, value). */
+#define FORMAT(code, line, value) (((void (*)(char *, uint32_t))(uintptr_t)(code))((line), (value)))
 #endif
 /* A module handle no installed module serves but a project can still name (dsp.c's MISSING list): stock's NONE
  * page with its names changed, so the track's FX page and footer say MISSING rather than NONE (owner, 23 October
@@ -50,6 +60,7 @@ static uint8_t missing_page[0x1a0] __attribute__((aligned(4)));
 static int missing_built;
 static uint32_t unlisted(void) { return missing_built ? ADDR(MISSING_PAGE) : modwerk_fx1_list[0]; }
 static uint8_t serves[MODWERK_FX_IDS]; /* the slots each id's page is listed in: 1 FX1, 2 FX2 */
+static const uint8_t *built_recipe[MODWERK_FX_IDS]; /* the recipe each listed page was built from (its formatters) */
 static const uint8_t *checked_recipe[MODWERK_FX_IDS];
 static uint32_t checked_bytes[MODWERK_FX_IDS];
 static uint8_t checked_digest[MODWERK_FX_IDS][MU_DIGEST_BYTES];
@@ -131,6 +142,7 @@ int modwerk_fxpage_build(unsigned id, uint8_t *recipe, uint32_t bytes, unsigned 
     put32(recipe + 48, ADDR(d));
     modwerk_machine_invalidate_code(); /* the fixups changed formatter code */
     serves[id] = (uint8_t)(slots & 3u);
+    built_recipe[id] = recipe;
     rows();
     checked_recipe[id] = recipe; checked_bytes[id] = bytes;
     if (!page_stamp(id, recipe, bytes, slots, checked_digest[id])) checked_recipe[id] = 0;
@@ -152,8 +164,41 @@ void modwerk_fxpage_drop(unsigned id)
 {
     if (id >= MODWERK_FX_IDS || !serves[id]) return;
     serves[id] = 0;
+    built_recipe[id] = 0;
     checked_recipe[id] = 0; checked_bytes[id] = 0;
     rows();
+}
+
+/* MODE renames follow the track being drawn (issue #2042). A select that renames its neighbours (Euclid's TYPE:
+ * FREQ RES DEPTH, or LEVEL -- AMT for AMP) writes the names into its module's page, which every track running the
+ * module shares, and the panel calls it only when it draws that select. TYPE sits on FX SETUP, so the names TYPE
+ * set on one track's SETUP page stayed on every other track's main page until that track's SETUP page was drawn.
+ * fxpage.s calls this before the main page or the SETUP page draws its six names: `page` the descriptor the drawer
+ * resolved, `fx` 0 for FX1 and 1 for FX2. Every formatter that holds descriptor-relative words (the renaming ones; a
+ * plain label formatter holds none) runs with this track's own value, as the panel calls it, into a scratch line,
+ * so the names drawn next are this track's. Stock's pages, and a page no module serves, are left alone. */
+void modwerk_fxpage_names(uint32_t page, uint32_t track, uint32_t part, uint32_t fx)
+{
+    if (track > 7u || part > 3u || fx > 1u || page < ADDR(pages[0])) return;
+    uint32_t id = (page - ADDR(pages[0])) / sizeof pages[0];
+    if (id >= MODWERK_FX_IDS || page != ADDR(pages[id]) || !(serves[id] >> fx & 1u) || !built_recipe[id]) return;
+    const volatile uint8_t *store = PART_STORE(part);
+    if (!store) return;
+    /* Each track's main FX1 and FX2 values (0x4004d948's audio arm: AMP, LFO, FX1, FX2, six each) and its SETUP
+     * values (0x4003792c and its FX2 twin: SRC, AMP, FX1, FX2, LFO, six each). */
+    const volatile uint8_t *knobs = store + 0x126u + 24u * track + 6u * fx, *setup = store + 0x2feu + 30u * track + 6u * fx;
+    const uint8_t *p = built_recipe[id];
+    uint32_t at = 52u + 8u * p[42];
+    for (unsigned i = 0; i < p[43]; ++i) at += (4u + p[at + 3] + 3u) & ~3u;
+    for (unsigned i = 0; i < p[44]; ++i) {
+        const uint8_t *f = p + at;
+        if (f[1] && f[0] < 12u) {
+            char line[64];
+            int8_t value = (int8_t)(f[0] < 6u ? knobs[f[0]] : setup[f[0] - 6u]); /* stock reads them signed */
+            FORMAT(be32(f + 4), line, (uint32_t)(int32_t)value);
+        }
+        at += (12u + 2u * f[1] + 3u) & ~3u;
+    }
 }
 
 /* Walk the entire recipe, including each padded record, before either path

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, freezeSamples, parseDeviceLog } from './device-log'
+import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, describeUsbGone, freezeSamples, parseDeviceLog, usbGone } from './device-log'
 import { DSP_REPORT_NAMES, describeStallFrames, describeStallPacket, describeStallPackets, stallLateness } from '../../community/octatrack-diagnostics-contract'
 import { validateDiagnostic } from '../../../server/octatrack-diagnostics'
 
@@ -50,6 +50,26 @@ describe('the unit’s diagnostics log', () => {
     expect(freezeSamples(parsed.incidents[0])).toEqual([0x40a9fea6, 0x40a9feb4, 0x40a9feb4, 0x40a9feb4].map(pc =>
       ({ pc, sr: 0x2000, level: 0, tcb: 0x46c7bed8, task: 'UI task 0x40061a94, priority 1' })))
     expect(freezeSamples(parsed.incidents[1])).toEqual([{ pc: 0x40015526, sr: 0x2500, level: 5, tcb: 0x460ddde4, task: 'engine task 0x4008445c (card jobs), priority 1' }])
+  })
+  it('reads which side gave up when the host’s USB frames stopped (USB_GONE, #2290)', () => {
+    const parsed = parseDeviceLog(log(view => {
+      const i = INCIDENTS
+      view.setUint32(i, 4); view.setUint32(i + 4, 1145); view.setUint32(i + 8, 300); view.setUint32(i + 12, 0x00000f20) // OTGSC: VBUS on
+      view.setUint16(i + 16, 15); view.setUint16(i + 18, 1100)
+      // DEVICEADDR, FRINDEX, uf_state, off_ticks, uf_flags, tries, flags, stopped, ticks, ep0, uf, reconnects, 0, 0, then the 4 s sample
+      ;[8, 0, 0, 0, 0, 0, 0x12, 0x34, 2, 0, 1, 0, 0x12, 2, 179, 179, 0, 9, 0, 0, 0, 0, 0x0f, 0x20, 0x18, 0, 0x08, 0x85, 0, 2, 0x12, 0]
+        .forEach((b, j) => view.setUint8(i + 24 + j, b))
+      view.setUint32(i + 80, 0x18000885); view.setUint32(i + 84, 0x00080000) // PORTSC1, USBCMD: the pull-up off
+    }))!
+    const [r] = parsed.incidents
+    expect(r.kind).toBe('usb_gone')
+    const gone = usbGone(r)
+    expect(gone).toMatchObject({ stopped: 2, ticks: 179, ep0: 179, uf: 0, reconnects: 9 })
+    expect(gone.samples).toHaveLength(2)
+    expect(gone.samples[0]).toMatchObject({ otgsc: 0xf20, portsc: 0x18000885, usbcmd: 0x80000, deviceaddr: 0x08000000, frindex: 0x1234, ufState: 2, ufTimer: 1100, flags: 0x12 })
+    expect(gone.samples[1]).toEqual({ otgsc: 0xf20, portsc: 0x18000885, usbcmd: 0, ufState: 2, flags: 0x12, wdTries: 0 })
+    expect(describeUsbGone(r)).toContain('VBUS, pull-up off, suspended, off the bus, configured, reconnecting')
+    expect(describeUsbGone(r)).toContain('the reconnect tick 0 times')
   })
   it('refuses another magic or version and a short read', () => {
     expect(parseDeviceLog(log(view => view.setUint32(4, 3)))).toBeUndefined()
