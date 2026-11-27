@@ -948,7 +948,7 @@
       "id": "repitch",
       "key": "REPITCH",
       "name": "Repitch",
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "category": "playback",
       "access": {
         "location": "STATIC or FLEX track SRC SETUP: TSTR = RPCH. The sample attribute route also offers TIMESTRETCH = REPITCH.",

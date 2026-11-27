@@ -1,6 +1,85 @@
 # Repitch testing
 
-Version: 0.2.1-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+Version: 0.2.2-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+
+## 0.2.2: rests while no track uses REPITCH (released 26 November 2026 as an owner-approved update)
+
+Repitch answers `ev_in_use` (`repitch_in_use`: REPITCH in force on a track of the live Part, by the same `rp_find` the
+increment builder uses) and marks `rate_gate` and `pitch_gate` `"rests"`. While it answers 0 its `ev_play_increment`
+handler leaves the frame and those two detours hold stock's bytes; `tstr_resolve` stays patched, since it keeps the
+voice renderer away from TSTR 4, a value only Repitch adds. Needs a base with `ev_in_use` (0.7.8 on).
+
+- **Why:** 0.2.1 installed on no track added 1.4 points of the frame interrupt with seven FLEX tracks playing (MKII,
+  OS 1.40C, development build of base 0.7.10 `acc111da`, `npm run device:price`, 20 November 2026). A development
+  twin of 0.7.8 measured the same idea at 0.1 points (17 November 2026, #1694).
+- **Built:** `build.py --octabam repitch` gives module `5c49f0f0`, 708 bytes, two hooks (`ev_play_increment`,
+  `ev_in_use`), `rate_gate` and `pitch_gate` flagged resting.
+- **Part changes:** the answer also sweeps every Part of the project, working and saved, half a Part a UI tick (all 128
+  within about four seconds; trimmed 25 November 2026, below), for a STATIC or FLEX track whose SRC SETUP TSTR is REPITCH (the Part's byte at
+  0x1da + 30 * track + 6 * pool + 4, as POLY8's registration writes it), so a Part, pattern or bank change while
+  playing finds Repitch awake. Built: module `5c49f0f0`, 872 bytes, 8 of bss.
+- **Known gap, narrower:** a track on TSTR AUTO whose sample carries REPITCH as its own TIMESTRETCH is seen only on the
+  live Part (`rp_find`): the Part names the slot, not the attribute, and the sample-slot tables are not mapped in the
+  repository. Such a track brought in by a Part or bank change while playing plays up to one UI tick at stock speed,
+  rendered dry, until Repitch wakes. A track set to REPITCH directly is covered, and so is a change made a sweep
+  (about four seconds) before it plays.
+- **Sweep trimmed (25 November 2026):** installed alone on the owner's MKII (development twin `493c9cc5` of base
+  0.8.1, stopped, `profile:3`), the first sweep added about 20 µs to every UI tick (178.9 against 159.1 for 0.2.1): one
+  Part a tick was 8 type bytes and up to 8 TSTR bytes of the banks, which the base reads uncached. Now half a Part a
+  tick, its four type bytes in two word reads: at most 6 bank reads a tick instead of 16. While the live Part uses
+  REPITCH there is no sweep at all (the answer is 1 anyway); the sweep then restarts from the first Part and the answer
+  stays 1 until it ends, so a Part with REPITCH elsewhere is never missed. Module `5c49f0f0`, 912 bytes, 8 of bss
+  (`module:dev --build-only`, `e3c37df6`).
+  - **Emulator** (ot_emu, the same twin, the package in a trial, `call` on `repitch_in_use` with `poke`; the base's own
+    rest poll calls it each tick too): nothing anywhere, 300 calls answer 0; REPITCH poked into T6 of bank C's saved
+    Part 2, 1 after 29 calls (a sweep is 256); that byte restored, still 1 at once, 0 after 114 calls (at most two
+    sweeps); T1's SETUP TSTR on REPITCH with a bound voice, 1 at once, the sweep back at the first Part and holding 1;
+    T1 cleared, still 1 at once, 0 after 62 calls. All five pass. Not measured on the unit yet: the tick's µs.
+- **Released package:** `e3c37df6` (1,872 bytes), built in the pinned toolchain from this source
+  (`build-modules-isolated.sh`, then `octatrack:module-packages`); it is the build the emulator checks above ran. The
+  owner approved it on 26 November 2026 (`sdk/approvals/repitch-build-approval.json`), waiving hardware qualification of
+  this exact build, chip worst-case cycles and complete memory bounds; 0.1.2's captures stay, as the screens are unchanged.
+- **On the unit, with the build before the sweep trim** (package `c97b00a4`, the owner's MKII, OS 1.40C, every trial
+  rolled back): at rest +0.2 and +0.1 points of the frame interrupt against +2.2 for 0.2.1 (development twin `be86323a`
+  of base 0.7.11, A01 on Part 4, seven FLEX tracks triggered, 20 November 2026); it woke when T1 was set to TSTR RPCH
+  while playing and rested again after; Undo restored the empty inventory. On 21 November: 12 Part switches and Undo;
+  T1 and T5 on RPCH together, 5,855 frames with zero skipped renders, T1 to OFF left T5 on RPCH; with Euclid and Tape
+  Echo beside it, Part Reload, project Save and Reload kept every assignment, then 42.0 % over 5,858 frames with zero
+  skipped renders. On 22 November (twin `9203cdf6` of base 0.7.14), in a scene where T5's loop resolves REPITCH, 0.2.1
+  and 0.2.2 both added +2.7 points. In the ColdFire interpreter that build passed 3,072 stored Part and track cases,
+  5,760 sample lookups and 288 increment cases (longest sweep 489 instructions, longest handler 28).
+- **Not run on the released package:** the test procedure (`device:qualify`, a power cycle, removal), the trimmed
+  sweep's UI tick on the unit, a listen to a REPITCH track, an MKI.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Installed, no track on REPITCH | must cost about nothing | `device:price` at rest, two paired windows | pass on `c97b00a4` (+0.2, +0.1 points); pass on `e3c37df6` (+0.0 and +0.0 points of the frame interrupt, twin `46c30886` of base 0.8.2, 26 November 2026) |
+| A track switched to TSTR REPITCH while playing | the first tick plays at stock speed | USB capture across the switch, increment read before and after | woke on `c97b00a4`; the first tick's increment not captured |
+| A sample with TSMODE REPITCH on a TSTR AUTO track | `rp_find` must see it | set AUTO, read the increment | not run: AUTO on a populated sample slot was not confirmed on the unit |
+| A Part change bringing a REPITCH track in while playing | the sweep must have seen it | capture across the Part change | emulator pass (five `repitch_in_use` checks); live switch not captured on the unit |
+| A REPITCH sample without a tempo | Repitch does nothing there, so it may rest | read the increment | interpreter pass on `c97b00a4`; not run on the unit |
+| Undo of the trial over a resting Repitch | its resting sites go back | whole-set trial and Undo | pass on `c97b00a4` (empty inventory, next window 51.4 %); pass on `e3c37df6` (two rolled-back trials, empty inventory after) |
+
+### Test procedure: repitch 0.2.2-experimental, 26 November 2026
+
+Build: revision `0bc26a00c96c`, package SHA-256 `e3c37df63692c4a91675f0e8741d47837929ea6256fecb03d082d059c94b02b7`, the
+released package byte for byte. `npm run test:procedure -- repitch --no-unit --no-emulator`, 12 s.
+
+| # | Step | Result |
+| --- | --- | --- |
+| 1 | Software checks (`npm run module:doctor -- repitch`) | passed |
+| 2 | Beside every other module (`npm run modules:compat -- repitch`) | passed |
+| 3 | Name the build (`npm run module:dev -- repitch --build-only`) | passed: `e3c37df6` |
+| 4 | DSP cost model (`node scripts/cycle-scan.mjs check`) | passed |
+| 5-10 | Emulator rehearsal and the unit steps | not run in this run: left out with `--no-emulator` and `--no-unit` |
+| 11-12 | By hand, and the submitter's own stage | to do: the owner's |
+
+On the unit the same evening, outside the runner: two rolled-back `npm run device:price -- --memory` trials of
+`e3c37df6` on the owner's MKII (development twin `46c30886` of base 0.8.2, built from main `48f4a9b9c`; Dev17 C02):
+installed alone, used nowhere, +0.0 points of the frame interrupt both times, module pool 2,720 bytes (the loader
+extent of base 0.8's module record, #2284), inventory empty after each.
+
+Not tested on a unit: the runner's unit steps (scripted pass, soak, cost and curve, put back), a power cycle, a listen.
 
 0.2.1 makes the idle case cheaper and nothing else; 0.2.0 changed the runtime package only (REPITCH subscribes to `ev_play_increment`, order 50, on a base that owns 0x40004100). The historical evidence below is retained. 0.2.1's only unit result is its cost at rest, so no new hardware or DSP qualification is claimed.
 

@@ -850,7 +850,7 @@
     {
       "label": "repitch",
       "moduleId": "repitch",
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "key": "REPITCH",
       "author": "repeat98",
       "nativeAuthor": "repeat98",
@@ -859,7 +859,7 @@
       "caveAddress": null,
       "source": "modules/repitch/repitch.s",
       "sources": {
-        "modules/repitch/repitch.s": "ceb484ac3e3ae4c5d192982c83f94f5a62516d17b4b551fd3ca5945a9ae09c16",
+        "modules/repitch/repitch.s": "75075157e10f56f8a569582bf741fd8c507689c1b86c5b1fe151ab0a51555386",
         "modules/repitch/manifest.py": "52c9c6e81ec38764237baf8470ad34f5747bc3af519e026d8ad96b3251e252c7"
       },
       "bytes": 2200,

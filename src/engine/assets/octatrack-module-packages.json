@@ -161,12 +161,12 @@
       "sites": 14,
       "copies": 0,
       "fills": 0,
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "name": "Repitch",
       "module": "5c49f0f0",
-      "bytes": 1428,
-      "sha256": "4b9278462747c87b0d25040a759773c1fff0425804d3f940ced69a475c2a70c9",
-      "path": "octatrack-modules/repitch/0.2.1-experimental.mwrm"
+      "bytes": 1872,
+      "sha256": "e3c37df63692c4a91675f0e8741d47837929ea6256fecb03d082d059c94b02b7",
+      "path": "octatrack-modules/repitch/0.2.2-experimental.mwrm"
     },
     {
       "id": "poly8",
