@@ -373,10 +373,10 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
   .catalog-navigation .catalog-chevron.is-next { right: 12px; }
 }
 
-.module-issue-action { min-height: var(--control-h); font-size: var(--text-base); background: color-mix(in srgb, var(--issue-confirmed) 14%, transparent); border-color: color-mix(in srgb, var(--issue-confirmed) 38%, transparent); color: var(--issue-confirmed); }
+.module-issue-action { min-height: 44px; font-size: 12px; background: color-mix(in srgb, var(--issue-confirmed) 14%, transparent); border-color: color-mix(in srgb, var(--issue-confirmed) 38%, transparent); color: var(--issue-confirmed); }
 .module-issue-action:hover:not(:disabled) { background: color-mix(in srgb, var(--issue-confirmed) 14%, transparent); border-color: var(--issue-confirmed); }
 .module-page-buttons { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
-.module-page-buttons .button { height: var(--control-h); min-height: var(--control-h); padding: 0 12px; font-size: var(--text-base); line-height: 1; }
+.module-page-buttons .button { height: 44px; min-height: 44px; padding: 0 13px; font-size: 12px; line-height: 1; }
 .share-control { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .share-notice { color: #bcd7c5; font-size: 12px; }
 .detail-hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 34px; align-items: center; margin-bottom: 29px; }
@@ -1797,13 +1797,13 @@ h1 { font-size: var(--text-xl); }
   .status-bar a[href="#configuration"] { font-size: 12px; }
 
   .module-page-actions { margin-bottom: 16px; }
-  .module-page-buttons .button { border-radius: var(--radius-md); }
+  .module-page-buttons .button { border-radius: 8px; }
   .detail-hero { gap: 18px; margin-bottom: 22px; }
   .detail-hero > .module-preview { height: 180px; }
   .detail-intro h1 { font-size: var(--text-xl); margin-bottom: 4px; }
   .detail-intro > p { margin: 12px 0 8px; }
   .detail-rating { margin-bottom: 16px; }
-  .detail-intro > .button, .module-update-subscription > .button { width: 100%; min-height: 46px; font-size: 14px; }
+  .detail-intro > .button, .module-update-subscription > .button { width: 100%; min-height: 46px; border-radius: 8px; font-size: 14px; }
 
   .configuration-section { margin-bottom: 16px; }
   .configuration-heading { flex-wrap: wrap; }
@@ -2088,7 +2088,7 @@ h1 { font-size: var(--text-xl); }
 .creator-support-editor { margin-top: 14px; }
 .creator-support-editor .service-note { margin: 0; }
 .creator-support-editor input { min-width: 0; }
-.module-update-subscription > .button { width: 100%; max-width: 280px; min-height: var(--control-h); white-space: normal; }
+.module-update-subscription > .button { width: 100%; max-width: 280px; min-height: 44px; white-space: normal; }
 .module-tab-count-slot { display: inline-flex; justify-content: center; min-width: 3.5ch; margin-left: 6px; }
 .module-tab-count-slot > .tab-count { height: 22px; min-width: 3ch; text-align: center; font-variant-numeric: tabular-nums; }
 
@@ -2138,7 +2138,7 @@ h1 { font-size: var(--text-xl); }
 .module-works-action:hover:not(:disabled) { background: var(--line); border-color: var(--line-hover); }
 .module-works-reported:disabled { border-color: #83c7ae; background: #83c7ae08; color: #a0dfc6; opacity: 1; }
 .module-feedback .module-issue-action { grid-area: issue-action; }
-.detail-hero-with-resources .detail-intro .button { min-width: 0; min-height: var(--control-h); height: auto; font-size: var(--text-base); padding: 6px 12px; }
+.detail-hero-with-resources .detail-intro .button { min-width: 0; min-height: 44px; height: auto; font-size: 13px; padding: 10px 12px; }
 .detail-hero-with-resources .module-feedback > .button { width: auto; white-space: normal; padding-inline: 8px; }
 .detail-hero-with-resources > .module-resource-summary { grid-area: resources; display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 0; border: 0; }
 .detail-hero-with-resources .module-resource-summary > h2 { grid-column: 1; grid-row: 1; align-self: center; margin: 0; text-align: left; font-size: 12px; }
@@ -2158,7 +2158,7 @@ h1 { font-size: var(--text-xl); }
   }
   .detail-hero-with-resources .module-add-region { margin: 0 0 10px; }
   .detail-hero-with-resources .detail-intro .module-update-compact > .button { justify-self: start; }
-  .detail-hero-with-resources .detail-intro .button { font-size: 14px; }
+  .detail-hero-with-resources .detail-intro .button { border-radius: 8px; font-size: 14px; }
   .module-feedback { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "feedback-prompt feedback-prompt" "works works" "works-action issue-action" "works-error works-error"; gap: 12px 10px; margin-top: 14px; }
   .detail-hero-with-resources .module-feedback > .button { font-size: 13px; padding-inline: 4px; }
   .detail-hero-with-resources .resource-evidence-panel { position: static; grid-column: 1 / -1; max-height: none; }
@@ -2169,7 +2169,6 @@ h1 { font-size: var(--text-xl); }
 @media (max-width: 600px) {
   .detail-hero-with-resources .detail-description { margin: 12px 0 8px; font-size: 14px; }
   .detail-hero-with-resources .detail-intro h1 { font-size: var(--text-xl); }
-  .detail-hero-with-resources .detail-intro .button { min-height: 44px; }
   :is(.detail-page, .module-dialog-bar) .share-button-label { display: none; }
   :is(.detail-page, .module-dialog-bar) .share-control > .button { width: 44px; padding: 0; }
   .detail-page .catalog-position { display: none; }
@@ -2363,7 +2362,7 @@ h1 { font-size: var(--text-xl); }
   .library-subheading .subtle, .library-total, .card-proof { font-size: var(--text-sm); }
   .detail-tabs { flex-wrap: wrap; gap: .25rem 1.25rem; }
   .detail-tabs button { min-height: var(--control-h); padding-block: .375rem; }
-  .discovery-tools .sidebar-device strong, .detail-hero-with-resources .detail-intro .button { font-size: var(--text-base); }
+  .discovery-tools .sidebar-device strong, .detail-hero-with-resources .detail-intro .button { font-size: .875rem; }
 }
 @media (min-width: 601px) and (max-width: 1150px) {
   .app-toolbar:has(> .search) .breadcrumb-home:not([aria-current]) > span { display: none; }
