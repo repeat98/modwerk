@@ -347,6 +347,12 @@ int main(void)
     written = writes;
     modwerk_test_playing = 1; CHECK(modwerk_modset_switch(0x202u, 0)); modwerk_modset_service(); modwerk_test_playing = 0;
     CHECK(modwerk_modset_switch_result == MODSET_SWITCH_PLAYING);
+    /* Paused, or stopped by MIDI: stopped for the base, but the card gate waits for a panel STOP, so the page says so. */
+    modwerk_test_paused = 1, modwerk_test_gate = 0; CHECK(modwerk_modset_switch(0x202u, 0)); modwerk_modset_service();
+    modwerk_test_paused = 0, modwerk_test_gate = 1;
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCH_PLAYING);
+    modwerk_test_gate = 0; CHECK(modwerk_modset_switch(0x202u, 0)); modwerk_modset_service(); modwerk_test_gate = 1;
+    CHECK(modwerk_modset_switch_result == MODSET_SWITCH_CARD); /* rewound, and still the card's gate: named apart */
     modwerk_test_host_busy = 1; CHECK(modwerk_modset_switch(0x202u, 0)); modwerk_modset_service(); modwerk_test_host_busy = 0;
     CHECK(modwerk_modset_switch_result == MODSET_SWITCH_BUSY);
     refuse_id = 0x202u; CHECK(modwerk_modset_switch(0x202u, 0)); modwerk_modset_service(); refuse_id = 0;

@@ -919,6 +919,7 @@ static const char *switch_why(uint32_t result)
     if (result == MODSET_SWITCH_PLAYING) return "STOP PLAYBACK FIRST";
     if (result == MODSET_SWITCH_PARTIAL) return "RESTART FIRST";
     if (result == MODSET_SWITCH_SYNC) return "SYNC ON THE SITE FIRST";
+    if (result == MODSET_SWITCH_CARD) return "CARD BUSY: TRY AGAIN";
     if (result == MODSET_SWITCH_FULL || result == MODSET_SWITCH_REFUSED + RUNTIME_FULL) return "NO ROOM FOR IT";
     if (result == MODSET_SWITCH_REFUSED + RUNTIME_IN_USE) return "IN USE ON A TRACK";
     if (result == MODSET_SWITCH_REFUSED + RUNTIME_MEMORY) return "NO MEMORY FOR IT";

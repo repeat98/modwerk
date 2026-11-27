@@ -1,0 +1,1 @@
+Octatrack base: PROJ > MODWERK > MODULES answered BUSY: TRY AGAIN to every switch after the transport was paused or stopped by MIDI, until you pressed STOP on the unit. It now says STOP PLAYBACK FIRST, and CARD BUSY: TRY AGAIN when the card is what blocks the switch. Ships with the next base.
