@@ -8,12 +8,11 @@
 // out is repacked under a new generation, and any layout change gives the lockfile a new ID (a hash of the layout),
 // the old ID kept as an ancestor so older projects still load. Deterministic throughout.
 //
-// The lockfile's shape, its key names and its messages are fixed: builds carry it (trailer), and owners keep theirs.
+// The lockfile's shape and key names are fixed: builds carry it (trailer), and owners keep theirs.
+// shortcut: its format key is the one existing lockfiles carry; rename it with a reader that accepts both.
 import { sha } from './bytes.ts'
 import { dumps as pyDumps, repr, str } from './py.ts'
-// shortcut: the module-file reader's error type and number helpers still come from the vendored kit; switch these
-// imports when Modwerk's own module reader replaces kit/src/elemod.ts.
-import { ModError, cmpVersions, int } from '../../../vendor/elekloader/kit/src/elemod.ts'
+import { ModError, cmpVersions, int } from './module-package.ts'
 
 export const FORMAT = 1
 export const SCOPES = ['sound', 'kit', 'global', 'track', 'pattern', 'project'] as const
@@ -122,8 +121,8 @@ export function fresh(devKey: string): Lock {
 export function checkLock(lock: unknown, devKey: string): asserts lock is Lock {
   if (!isObject(lock)) throw new ModError('lockfile: not a JSON object')
   const format = get(lock, 'elekloader_store')
-  if (!isInt(format)) throw new ModError('lockfile: not an elekloader storage lockfile')
-  if (format > FORMAT) throw new ModError(`lockfile: format ${format} is newer than this elekloader (${FORMAT}): update elekloader`)
+  if (!isInt(format)) throw new ModError('lockfile: not a module storage lockfile')
+  if (format > FORMAT) throw new ModError(`lockfile: format ${format} is newer than this builder (${FORMAT}): reload the page for the newest builder`)
   if (format < 1) throw new ModError(`lockfile: format ${repr(format)}`)
   const device = get(lock, 'device')
   if (device !== devKey) throw new ModError(`lockfile: made for the ${device === null ? 'None' : str(device)}, not the ${devKey}`)
