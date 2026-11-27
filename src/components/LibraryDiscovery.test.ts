@@ -164,7 +164,7 @@ describe('live library selection details', () => {
     expect(details.textContent).toContain('Estimated memory')
     expect(details.querySelector('a[href="#digitakt/configuration"]')).not.toBeNull()
     details.open = true
-    await render(['digislicer', 'digineighbor', 'digisophie', 'digihealth'])
+    await render(['digislicer', 'cc-names', 'midi-expression', 'euclidean', 'digineighbor', 'digistring'])
     expect(details.open).toBe(true)
     expect(details.textContent).toContain('Over the shared memory limit')
     expect(details.textContent).not.toContain('Digi Mono and STRING')
