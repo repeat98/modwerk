@@ -53,6 +53,31 @@ package's commit (`b34305473`, which rebuilds `110a31f8` byte for byte) with onl
 10 from frame 2106), the new one passes on all 22 (32 gates each); `test_qv_runtime.py` passes (12). The 48-program
 `gen/` is regenerated the same way but not yet run through `verify_area.py`. Not run on a unit, not heard.
 
+### The program's name when PROG turns (27 November 2026)
+
+Turning PROG on Quadraverb's FX2 page shows the program in stock's message box for 1.2 s: its number on the original
+as the dial shows it, then its ROM name upper-cased (`gen/qv_names.h`, for example "15 CONCERT HALL 1"). The base's
+`ev_knob_store` take (`runtime.json`, order 68, before Midiverb's 69) is claimed only for slot A of the page the base
+installed for this module (`qv_page`: the descriptor itself, not its slot name), so another module's PROG never shows
+these names. The entry (`runtime/qv_entry.s`) replays the site's three instructions; their bytes hash to the site's
+stock guard. Locks, LFOs and scenes do not store there.
+
+Checked on the developer's computer only: `test_qv_runtime.py` (15 tests: every PROG value 0-255 names the program
+`qv_program` picks, by the dial's label and the ROM name; `gen/qv_names.h` is current; the page finder; the unit
+assembled as the builder does), in this branch and in the 22-reverb staging copy; `verify_area.py` on the 22
+(all 22 pass every gate). `qv_tables.h` regenerates byte for byte in both, so the areas are unchanged. Packages in
+`~/.cache/modwerk-local/quadraverb/pkg/`:
+
+| Package | Programs | Bytes | SHA-256 |
+| --- | --- | --- | --- |
+| `quadraverb-0.1.0-bankfix-names.mwrm` | the 22 reverbs: the bank-fix staging copy (which rebuilds `5588e8e1` byte for byte, `--cycles 355`) with only this change | 83,276 | `0b2535f00c01a71f06bdb5d20eeac432a0277190ec35dda9adc5eeca17fc91cb` |
+| `quadraverb-0.1.0-48-names.mwrm` | this branch's 48 | 172,912 (172,296 of code and data: past the 128 KiB a module may take today) | `af7c6a529c32213677138ce5d0f14a1ad91f94f578588c3b9fd4e0f67aef6862` |
+
+Not done: a unit run, and an emulator capture of the box (docs/MODULE_UI_CAPTURES.md: an `encoder` step on A, then
+`capture` within the 1.2 s, on a twin that takes the package). Not known: whether a MIDI CC to PROG stores through the
+knob handler. With Scale Quantizer or FM Synth installed the names do not show (they take the knob store first, as
+Midiverb's TESTING.md says).
+
 ### The 48 programs (27 November 2026)
 
 The owner allowed every program that plays bit for bit in the open form, 76, then chose 58 of them once the 76 did not

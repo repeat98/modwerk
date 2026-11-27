@@ -34,7 +34,7 @@
       "name": "PROG",
       "default": 4,
       "count": 48,
-      "doc": "the factory program, by its number on the original Quadraverb (10 SMALL ROOM by default)",
+      "doc": "the factory program, by its number on the original Quadraverb (10 SMALL ROOM by default); its number and name show in a message box when it turns",
       "labels": [
         "00",
         "01",

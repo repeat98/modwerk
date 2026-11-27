@@ -12,7 +12,7 @@ Nobody has compared it with a real Quadraverb: there was none to hand. Every cla
 
 | Knob | Name | Range | Default | What it does |
 | --- | --- | --- | --- | --- |
-| A | PROG | 00-89 (48 programs) | 10 | The factory program, by its number on the original: for example 10-12 rooms, 13-16 halls, 17-19 plates, 20-22 chambers, 04 and 33 choruses, 34-36 chorus with room, reverb or delay, 44 and 46-48 echoes, 66 HOLMES' Plate. Programs not in this release are skipped. |
+| A | PROG | 00-89 (48 programs) | 10 | The factory program, by its number on the original: for example 10-12 rooms, 13-16 halls, 17-19 plates, 20-22 chambers, 04 and 33 choruses, 34-36 chorus with room, reverb or delay, 44 and 46-48 echoes, 66 HOLMES' Plate. Programs not in this release are skipped. When it turns, a message box shows the program's number and name for about a second, for example 15 CONCERT HALL 1. |
 | F | MIX | 0-127 | 40 | Dry and wet: 0 is exactly dry, 127 wet only. |
 
 Both are ordinary FX2 knobs, so parameter locks, LFOs and scenes reach them as any effect's (not tried on a unit). A new program starts from silence; the dry signal keeps playing at its MIX level meanwhile.
