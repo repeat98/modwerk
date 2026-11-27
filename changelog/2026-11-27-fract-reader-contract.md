@@ -1,0 +1,1 @@
+FRACT's native regression fixtures distinguish the three-slot storage ABI from an engine's declared two or three live readers. They still compare all audio and state, require the declared count to become live, reject activity in reserved slots, and check that a failed launch leaves state unchanged. Older engines keep the original three-reader expectation.

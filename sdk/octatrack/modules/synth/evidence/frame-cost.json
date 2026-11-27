@@ -1,10 +1,10 @@
 {
   "module": "synth",
   "version": "0.1.5-experimental",
-  "base": "2f0dcfa3 (0.8 development twin of main 6f31dd3c4)",
-  "scene": "Laslo's MKII, project CPUCURVE2 at 120 BPM: curve on A03 (trigs on steps 1/5/9/13 of T1 T3 T6 T7, no sample track plays; stock alone 63.8 %), admission on medium A01 (the same trigs plus T2 and T4 playing a sample; stock alone 78.4 %), picks on empty A02 (40.3 %)",
+  "base": "46c30886 (0.8 development twin of main 48f4a9b9c, base 24e480c4)",
+  "scene": "Dev17 C04 at 126 BPM, trigs on steps 1/5/9/13 of T1-T4, T6, T7 (T2 and T4 play samples; the trigs placed again in the working copy on 26 November 2026, never saved: the card's copy of bank C had none), picks on empty C02, Part 1; owner's MKII",
   "seconds": 8,
-  "measuredAt": "2026-11-24T11:13:11.712Z",
+  "measuredAt": "2026-11-26T20:34:46.282Z",
   "tracks": [
     "T1",
     "T3",
@@ -12,20 +12,20 @@
     "T7"
   ],
   "rest": 0,
-  "first": 20.4,
-  "each": 0.2,
+  "first": 32.8,
+  "each": 0.5,
   "points": [
-    64.2,
-    81,
-    84.8,
-    85,
-    83.7
+    80.4,
+    110.3,
+    113.7,
+    111.7,
+    112.2
   ],
   "adds": [
-    16.8,
-    20.6,
-    20.8,
-    19.5
+    29.9,
+    33.3,
+    31.3,
+    31.8
   ],
   "admission": [
     {
@@ -34,14 +34,14 @@
       "track": "T1",
       "seconds": 8,
       "admitted": true,
-      "frameMax": 54,
-      "frame": 34,
+      "frameMax": 64.5,
+      "frame": 32.3,
       "dropped": 0,
       "stalls": 0
     },
     {
       "pattern": "medium",
-      "number": 1,
+      "number": 4,
       "track": "T1",
       "seconds": 8,
       "admitted": false
@@ -49,7 +49,9 @@
   ],
   "notes": [
     "package sha256 791e26c59c7223232a1a6b420078697e8bcc4020deec9bbb3b8fe2bea2a5c1c9",
-    "Read with the fixed device:price of repeat98/modwerk#2110 (STOP before PLAY, the reference read playing: 27.8 % frame, 64.2 % longest). A first run the same hour on the same scene read +17.3, +18.6, +20.5, +19.4 (first 17.3, each 1.9); this record is the second, the higher first.",
-    "The medium admission run was judged by the cost table of the last set synced to the unit (battery RAM), which still booked 31.3: a single-package trial sends no table, so it shows nothing about these figures."
+    "the Part's CPU allowance at 400 % for the curve's picks, back to 45 % for the admission runs",
+    "Read again on the owner's decision of 26 November 2026 to price FM Synth correctly. It agrees with the C04 curve of 22 November (81 -> 107.9, 112.8, 113.3, 112.1: first 31.3, each 0.5). A re-read on CPUCURVE2 A03, a lighter pattern (64.2 % stock alone), had read +16.8 (first 20.4, each 0.2).",
+    "Four FM Synth tracks took the medium pattern to 112.2 % with no render skipped, so a further track costs about 0.5 on the longest frame. The medium admission run was refused, judged by FM Synth's booked 31.3.",
+    "Its whole-track mean the same evening (T1 on FM Synth against T1 on STATIC, the same trigs, 6-s guard readings): 52.0 % against 35.5 % of a frame in the frame interrupt, +16.5. Its descriptor price (reserved[0]) is 4."
   ]
 }
