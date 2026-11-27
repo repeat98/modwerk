@@ -26,7 +26,7 @@ Kits and MIDI Scenes implement project-local work/stored files, writeback and re
 
 ### Host reference codec and lifecycle experiment (23 November)
 
-Run `python3.12 -B -m unittest discover -s sdk/drafts/clyps -v`.
+Run `python3.12 -B -m unittest discover -s sdk/octatrack/modules/clyps -v`.
 `offline/bank_codec.py` encodes one 2,212-byte big-endian archive. A
 32-byte header stores CLYP, version 1, total size, a 16-byte opaque project
 incarnation and a nonzero 64-bit generation. Sixteen six-byte descriptors

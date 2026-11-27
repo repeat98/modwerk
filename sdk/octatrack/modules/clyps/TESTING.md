@@ -1,6 +1,6 @@
 # Testing the public source
 
-Run `python3 -B sdk/drafts/clyps/test_renderer.py`. A host C compiler runs the actual input and display routines against synthetic adapter state. With m68k-elf-gcc installed the suite also compiles both translation units for MCF54455. There is no installable public module.
+Run `python3 -B sdk/octatrack/modules/clyps/test_renderer.py`. A host C compiler runs the actual input and display routines against synthetic adapter state. With m68k-elf-gcc installed the suite also compiles both translation units for MCF54455. There is no installable public module.
 
 The frame oracle comes from transmitted MKII emulator frames on OS 1.40C. Two checks cover all 1,024 bytes of Panorama at home and following a T2 override. The third covers all six CLYPS-owned bands in SRC when T2 plays A01 with A03 queued. The synthetic fixture never embeds the stock screen. The input fixture checks down/up in both dispatch phases, track focus, row focus, explicit launch and stock routing after exit.
 
@@ -73,7 +73,7 @@ Track Solo (both orders), panel, Grain, POLY8, VECTOR, stock popup priority, nat
 
 ## 23 November · contributor regressions
 
-Run `python3.12 -B -m unittest discover -s sdk/drafts/clyps -v`. The host fixture compiles the production callbacks; lifecycle delivery follows the candidate subscription JSON. The bank fixture reads a one-byte grid marker from a temporary file and exercises a short read at EOF. On the previous implementation the popup path failed when ARR did not reopen, and the unrelated bank request removed an already confirmed R04. Both failed independently when linked to the previous handlers. The previous MKII package also reproduced the ARR re-entry failure after opening a real timed stock message during Row Edit. On the corrected candidate all four discovered host/ColdFire tests pass. Standalone linked image 5,596 bytes, BSS 176 bytes, 248 relocations.
+Run `python3.12 -B -m unittest discover -s sdk/octatrack/modules/clyps -v`. The host fixture compiles the production callbacks; lifecycle delivery follows the candidate subscription JSON. The bank fixture reads a one-byte grid marker from a temporary file and exercises a short read at EOF. On the previous implementation the popup path failed when ARR did not reopen, and the unrelated bank request removed an already confirmed R04. Both failed independently when linked to the previous handlers. The previous MKII package also reproduced the ARR re-entry failure after opening a real timed stock message during Row Edit. On the corrected candidate all four discovered host/ColdFire tests pass. Standalone linked image 5,596 bytes, BSS 176 bytes, 248 relocations.
 
 UI-01/02/03/04 cover the home case and three repeated interruptions with a foreign lane playing, a different confirmed row queued and an unconfirmed third source held down. Check encoder, modal query, stock YES, owned release, popup-owned ARR repeat/release, row bytes and next wrap. A separate stock YES/NO dialog handle used by Temp Save reproduced the same ownership failure before its addition to the stock-window check. UI-05 includes the existing TRACK and SRC ownership fixtures.
 

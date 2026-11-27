@@ -4,7 +4,7 @@ import subprocess
 import tarfile
 import tempfile
 
-root = Path(__file__).resolve().parents[1]
+root = Path(__file__).resolve().parents[4]
 with tempfile.TemporaryDirectory() as tmp:
     export = Path(tmp) / "alpha.tar"
     with export.open("wb") as output:

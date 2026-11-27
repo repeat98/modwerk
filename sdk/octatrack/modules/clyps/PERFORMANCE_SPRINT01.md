@@ -12,7 +12,7 @@ NO returns to the native surface. At home, Native mode retains direct TRIG launc
 
 ## Build and replay
 
-Use the developer's private contributor SDK, a disposable GATE3 card and the MKII emulator specified in NATIVE_REPLAY.md. Run from the module checkout. Set D to sdk/drafts/clyps, BASE to the contributor checkout, OUT to a new private directory, OCTABAM to the Octabam source, and EMU to the MKII emulator. Keep firmware, cards and MWRM files outside Git.
+Use the developer's private contributor SDK, a disposable GATE3 card and the MKII emulator specified in NATIVE_REPLAY.md. Run from the module checkout. Set D to sdk/octatrack/modules/clyps, BASE to the contributor checkout, OUT to a new private directory, OCTABAM to the Octabam source, and EMU to the MKII emulator. Keep firmware, cards and MWRM files outside Git.
 
 ```sh
 python3.12 -B -m unittest discover -s "$D" -v

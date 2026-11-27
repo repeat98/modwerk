@@ -7,7 +7,7 @@ Private performance overlay (25 November 2026): [controls, limits and reproducti
 **Build the eight-track engine.** From the repository root run:
 
 ```sh
-python3.12 -B -m unittest discover -s sdk/drafts/clyps -p 'test_*.py' -v
+python3.12 -B -m unittest discover -s sdk/octatrack/modules/clyps -p 'test_*.py' -v
 ```
 
 Use host cc, Python 3.12 and m68k-elf GCC/binutils (tested with GCC 16.2). This compiles the actual SRC/ARR, sequencer and edit-lock callbacks, checks ColdFire instructions, and links the relocatable image in a temporary directory. The stock-memory inputs in host tests are synthetic. For the public candidate based on the cumulative Octatrack branch, follow [the MKII build and replay recipe](NATIVE_REPLAY.md). The shared contract is under maintainer review.
