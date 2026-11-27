@@ -3,12 +3,17 @@
 #include "fract_machine.c"
 #undef main
 
+#ifndef OG_ENGINE_READERS
+#define OG_ENGINE_READERS OG_MAX_GRAINS
+#endif
+
 static uint32_t wrap(int64_t coordinate,uint32_t frames) {
     coordinate%=frames;
     return (uint32_t)(coordinate<0?coordinate+frames:coordinate);
 }
 int main(void) {
     _Static_assert(sizeof(OgGrain)==128 && OG_MAX_GRAINS==3,"Retain grain ABI");
+    _Static_assert(OG_ENGINE_READERS==2 || OG_ENGINE_READERS==3,"Supported live reader count");
     const uint32_t sources[]={1,2,17,440,441,2048,88200,441000,44860416};
     unsigned cases=0;
     for(unsigned n=0;n<sizeof sources/sizeof *sources;++n)
@@ -30,8 +35,8 @@ int main(void) {
                ==wrap(first,frames));
         ++cases;
       }
-    /* SIZE cannot perturb SPRD/PAN/REVS draws, for any of the three heads. */
-    for(unsigned g=0;g<3;++g) for(unsigned spread=1;spread<128;++spread)
+    /* SIZE cannot perturb SPRD/PAN/REVS draws, for any configured live head. */
+    for(unsigned g=0;g<OG_ENGINE_READERS;++g) for(unsigned spread=1;spread<128;++spread)
       for(unsigned mode=0;mode<2;++mode) {
         OgGrain a={0},b={0};og_reset(&a,1);og_reset(&b,1);
         a.spread_mode=b.spread_mode=(uint8_t)mode;
@@ -53,6 +58,15 @@ int main(void) {
         retime(&a,0,og_size(127));
         assert(x->phase==phase && x->cursor==cursor && x->start==start);
       }
+    /* A failed launch must leave state and reserved slots unchanged. */
+    OgGrain full={0};og_reset(&full,1);
+    for(unsigned g=0;g<OG_ENGINE_READERS;++g)full.head[g].length=88200;
+    OgGrain before=full;
+    uint8_t params[OG_PARAMS]={127,86,18,64,127,127,64,127};
+    unsigned born=OG_ENGINE_READERS;
+    birth(&full,441000,params,&born);
+    assert(born==OG_ENGINE_READERS && !memcmp(&full,&before,sizeof full));
+    for(unsigned g=OG_ENGINE_READERS;g<OG_MAX_GRAINS;++g)assert(!full.head[g].length);
     printf("%u centred native births: POS, SIZE, wrap, reverse; RNG and live continuity OK\n",cases);
     return 0;
 }
