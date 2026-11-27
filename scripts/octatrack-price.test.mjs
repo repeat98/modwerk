@@ -3,7 +3,7 @@
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
 import { frameCostTable } from '../src/engine/elekloader/set-package.ts'
-import { added, allocationReading, combined, curveFit, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, allowanceOf } from './octatrack-price.mjs'
+import { added, allocationReading, combined, curveFit, curveRunProblems, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, allowanceOf } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -176,4 +176,35 @@ it('reads the Part\'s CPU allowance from the session\'s cpu reply, so a curve ca
   expect(allowanceOf('allowance 45 %, booked 35 %, refused -\nguarded renders, longest since the last read: T1 53.2\n')).toBe(45)
   expect(allowanceOf('allowance 400 %, booked 0 %, refused T3\n')).toBe(400)
   expect(allowanceOf('error: this base does not answer CPU\n')).toBeUndefined() // then the curve leaves the allowance alone
+})
+
+
+it('fails a requested curve when an unpublished renamed file measured only its rest', () => {
+  // Observed output: dev.mwrm was not resolved to a draft machine; old CLI exited0.
+  const result = { id: 'dev', version: 'file', before: { frameMax: 68 }, atRest: { frameMax: 73.3 },
+    atRestAdds: { frame: 0 }, rolledBack: true, curve: { error: 'not an effect or a machine: no curve' } }
+  expect(curveRunProblems([result], 4)).toEqual(['dev: not an effect or a machine: no curve'])
+  expect(curveRunProblems([])).toEqual(['no curve measurement completed'])
+  expect(curveRunProblems([{ ...result, curve: undefined }])).toEqual(['dev: no curve measurement completed'])
+})
+
+it('requires the same clean curve as the record, preserving single-track and overload rules', () => {
+  const run = pattern => ({ pattern, admitted: true, frameMax: 80, dropped: 0, stalls: 0, seconds: 8 })
+  const result = { id: 'echo', version: 'file', before: { frameMax: 30 }, atRest: { frameMax: 31 }, rolledBack: true,
+    curve: { first: 10, each: 5, adds: [10, 15, 20], tracks: ['T1', 'T3', 'T6'], notes: [], points: [80, 90, 95, 100], admission: [run('empty'), run('medium')] } }
+  expect(curveRunProblems([result], 4)).toEqual([])
+  const one = { ...result, curve: { ...result.curve, tracks: ['T1'], adds: [10], points: [80, 90] } }
+  expect(curveRunProblems([one], 1)).toEqual([])
+  expect(curveRunProblems([one], 4)[0]).toContain('fewer than three')
+  const firstOver = { ...one, curve: { ...one.curve, first: 95, each: 95, adds: [46], points: [80, 126], notes: ['stopped after T1: longest frame126%,0 renders skipped'] } }
+  expect(curveRunProblems([firstOver], 4)[0]).toContain('first instance')
+  expect(curveRunProblems([{ ...result, curve: { ...result.curve, points: [31, 41, 46, 51] } }], 4)[0]).toContain('stock alone took 31 %') // a light pattern
+  const laterOver = { ...result, curve: { ...result.curve, first: 10, each: 85, tracks: ['T1', 'T3'], adds: [10, 46], points: [80, 90, 126], notes: ['stopped after T3: longest frame126%,0 renders skipped'] } }
+  expect(curveRunProblems([laterOver], 4)).toEqual([])
+  for (const change of [{ rolledBack: false }, { restore: 'Part differs' }, { notPlayed: 'transport stopped' }])
+    expect(curveRunProblems([{ ...result, ...change }])[0]).toContain('run was not clean')
+  for (const change of [{ admitted: false, why: 'CPU FULL' }, { dropped: 1 }, { stalls: 1 }]) {
+    const failed = { ...result, curve: { ...result.curve, admission: [run('empty'), { ...run('medium'), ...change }] } }
+    expect(curveRunProblems([failed])).toHaveLength(1)
+  }
 })

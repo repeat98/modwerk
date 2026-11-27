@@ -1,0 +1,605 @@
+{
+ "elemod": 2,
+ "id": "light-taps",
+ "version": "0.1.0-experimental",
+ "title": "Light Taps",
+ "description": "Plays the light pad taps the Rytm normally ignores, as a soft hit.",
+ "category": "system",
+ "author": "filefolder",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1000,
+   "parts": [
+    [
+     "hex",
+     "2039000000002f0a43f900000000e98845ef000b41f1080013920800116f00130008216f000c0004227c8000fe542151000c2f082f39402859804eb9400013b2508f203900000000721f5280c280245f23c1000000004e7542804e752f0a2f02243c0000000042a742a72f0245f9000000004e924a8057c0710044802f0042a742a72f024eb90000000042a742a72f024e924fef0028241f4a8056c0245f7100448023c0000000004e752f0a2f02206f000c2279000000001010666a20280004720b0680ffffff70b28065541228000b41f90000000008010000670000d44a300800660000b872011181080041f9000000004a300800671241f9000000007403220992b00c00b4816416720141f90000000021890c0041f90000000011810800241f245f4e75710057804a8066f2428073c024280004247940285968b4b21c00671a5280720cb28067d673c024280004247940285968b4b21c0066e6420145f9000000001581080045f9000000001581080045f90000000015810800720145f90000000025890c0045f900000000158108005280720cb28066b0608445f9000000004a3208006700ff3e241f245f4e75420272011182080041f9000000001181080041f9000000004a300800671041f90000000011810800241f245f4e7541f9000000004a3008006700ff3642021182080042a72079402859682f300c00487800044ebafdfc4fef000c241f245f4e754fefffd848d77c7c263900000000528323c300000000428247f90000000045f90000000049f9000000004df9000000004bfafdbe4a33280067182003720341f90000000090b02c00b28064064200178028004a322800674c2003720290b42c00b28064404200158028004ab900000000674471c22079402859682c300c004a866d34487800082f06487800034e954fef000c4a3628006630720141f900000000118128005282700cb08266884cd77c7c4fef00284e754201700c1d8128005282b0826600ff7060e442001d802800528242a72f06487800044e954fef000c700cb0826600ff5060c442a742a74879000000004eb9000000004fef000c4a8056c0710044804e754879000000002f2f00084eb900000000508f4e7542a742a74879000000004eb9000000004fef000c4a8056c07100448023c0000000004e7500002f2f00084eb900000000588f4ef9400013b22f2f00084eb900000000588f4ef9400013b252b942f921144eb9000000004e754e56fffc2f0224084eb90000000043fa00264a80670443fa002e486effff2f092f024eb9401bcff04fef000c2002242efff84e5e4e754c4947485420544150533a204f4646004c4947485420544150533a204f4e000000000000000000000000000000000000"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 692
+  }
+ },
+ "symbols": {
+  "post": [
+   ".run",
+   0
+  ],
+  "next_tap": [
+   ".bss",
+   0
+  ],
+  "taps": [
+   ".bss",
+   4
+  ],
+  "nothing": [
+   ".run",
+   88
+  ],
+  "toggle": [
+   ".run",
+   92
+  ],
+  "on": [
+   ".bss",
+   688
+  ],
+  "ms": [
+   ".bss",
+   684
+  ],
+  "held": [
+   ".bss",
+   552
+  ],
+  "recent": [
+   ".bss",
+   612
+  ],
+  "struck_at": [
+   ".bss",
+   564
+  ],
+  "pressed_at": [
+   ".bss",
+   624
+  ],
+  "waiting": [
+   ".bss",
+   672
+  ],
+  "release_due": [
+   ".bss",
+   516
+  ],
+  "tapped": [
+   ".bss",
+   528
+  ],
+  "releases_seen": [
+   ".bss",
+   540
+  ],
+  "row": [
+   ".run",
+   984
+  ],
+  "STRING_CTOR": [
+   "abs",
+   1075564528
+  ],
+  "light_taps_off_text": [
+   ".run",
+   952
+  ],
+  "light_taps_on_text": [
+   ".run",
+   968
+  ],
+  "light_taps_post_key": [
+   ".run",
+   866
+  ],
+  "light_taps_post_pad": [
+   ".run",
+   848
+  ],
+  "light_taps_tick": [
+   ".run",
+   810
+  ],
+  "light_taps_poll": [
+   ".run",
+   528
+  ],
+  "light_taps_label": [
+   ".run",
+   898
+  ],
+  "light_taps_on": [
+   ".run",
+   760
+  ],
+  "light_taps_ms": [
+   ".run",
+   884
+  ],
+  "light_taps_event": [
+   ".run",
+   170
+  ],
+  "light_taps_settings": [
+   ".run",
+   790
+  ]
+ },
+ "exports": [
+  "light_taps_event",
+  "light_taps_label",
+  "light_taps_ms",
+  "light_taps_on",
+  "light_taps_poll",
+  "light_taps_post_key",
+  "light_taps_post_pad",
+  "light_taps_settings",
+  "light_taps_tick"
+ ],
+ "imports": [
+  "core_additem",
+  "core_store_get",
+  "core_store_set",
+  "light_taps_enabled"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   2,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   10,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   68,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   82,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   98,
+   "abs32",
+   "sym:light_taps_enabled",
+   0
+  ],
+  [
+   ".run",
+   110,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   134,
+   "abs32",
+   "sym:core_store_set",
+   0
+  ],
+  [
+   ".run",
+   164,
+   "abs32",
+   "sec:.bss",
+   688
+  ],
+  [
+   ".run",
+   180,
+   "abs32",
+   "sec:.bss",
+   684
+  ],
+  [
+   ".run",
+   210,
+   "abs32",
+   "sec:.bss",
+   552
+  ],
+  [
+   ".run",
+   238,
+   "abs32",
+   "sec:.bss",
+   612
+  ],
+  [
+   ".run",
+   250,
+   "abs32",
+   "sec:.bss",
+   564
+  ],
+  [
+   ".run",
+   270,
+   "abs32",
+   "sec:.bss",
+   624
+  ],
+  [
+   ".run",
+   280,
+   "abs32",
+   "sec:.bss",
+   672
+  ],
+  [
+   ".run",
+   352,
+   "abs32",
+   "sec:.bss",
+   672
+  ],
+  [
+   ".run",
+   362,
+   "abs32",
+   "sec:.bss",
+   516
+  ],
+  [
+   ".run",
+   372,
+   "abs32",
+   "sec:.bss",
+   528
+  ],
+  [
+   ".run",
+   384,
+   "abs32",
+   "sec:.bss",
+   564
+  ],
+  [
+   ".run",
+   394,
+   "abs32",
+   "sec:.bss",
+   612
+  ],
+  [
+   ".run",
+   414,
+   "abs32",
+   "sec:.bss",
+   540
+  ],
+  [
+   ".run",
+   442,
+   "abs32",
+   "sec:.bss",
+   540
+  ],
+  [
+   ".run",
+   452,
+   "abs32",
+   "sec:.bss",
+   672
+  ],
+  [
+   ".run",
+   464,
+   "abs32",
+   "sec:.bss",
+   516
+  ],
+  [
+   ".run",
+   480,
+   "abs32",
+   "sec:.bss",
+   528
+  ],
+  [
+   ".run",
+   538,
+   "abs32",
+   "sec:.bss",
+   684
+  ],
+  [
+   ".run",
+   546,
+   "abs32",
+   "sec:.bss",
+   684
+  ],
+  [
+   ".run",
+   554,
+   "abs32",
+   "sec:.bss",
+   612
+  ],
+  [
+   ".run",
+   560,
+   "abs32",
+   "sec:.bss",
+   672
+  ],
+  [
+   ".run",
+   566,
+   "abs32",
+   "sec:.bss",
+   624
+  ],
+  [
+   ".run",
+   572,
+   "abs32",
+   "sec:.bss",
+   516
+  ],
+  [
+   ".run",
+   592,
+   "abs32",
+   "sec:.bss",
+   564
+  ],
+  [
+   ".run",
+   636,
+   "abs32",
+   "sec:.bss",
+   688
+  ],
+  [
+   ".run",
+   684,
+   "abs32",
+   "sec:.bss",
+   528
+  ],
+  [
+   ".run",
+   766,
+   "abs32",
+   "sym:light_taps_enabled",
+   0
+  ],
+  [
+   ".run",
+   772,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   792,
+   "abs32",
+   "sec:.run",
+   984
+  ],
+  [
+   ".run",
+   802,
+   "abs32",
+   "sym:core_additem",
+   0
+  ],
+  [
+   ".run",
+   816,
+   "abs32",
+   "sym:light_taps_enabled",
+   0
+  ],
+  [
+   ".run",
+   822,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   840,
+   "abs32",
+   "sec:.bss",
+   688
+  ],
+  [
+   ".run",
+   854,
+   "abs32",
+   "sec:.run",
+   170
+  ],
+  [
+   ".run",
+   872,
+   "abs32",
+   "sec:.run",
+   170
+  ],
+  [
+   ".run",
+   892,
+   "abs32",
+   "sec:.run",
+   528
+  ],
+  [
+   ".run",
+   908,
+   "abs32",
+   "sec:.run",
+   760
+  ],
+  [
+   ".run",
+   984,
+   "abs32",
+   "sec:.run",
+   898
+  ],
+  [
+   ".run",
+   988,
+   "abs32",
+   "sec:.run",
+   92
+  ],
+  [
+   ".run",
+   992,
+   "abs32",
+   "sec:.run",
+   88
+  ],
+  [
+   ".run",
+   996,
+   "abs32",
+   "sec:.run",
+   88
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4008232c",
+   "len": 6,
+   "stock_sha256": "d10ca2a6bdcdf1414d90bd900235f6174ea690fdf7b9d1a9feb00fbde765f9c8",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:light_taps_post_pad",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40082492",
+   "len": 6,
+   "stock_sha256": "d10ca2a6bdcdf1414d90bd900235f6174ea690fdf7b9d1a9feb00fbde765f9c8",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:light_taps_post_key",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40081944",
+   "len": 6,
+   "stock_sha256": "5750ddc16f2c2e4c67ef6f2bb3ac5faabbcd04371fa90ee5097bb917d26a9e65",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:light_taps_ms",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_settings",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:light_taps_settings",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_tick",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:light_taps_tick",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "storage": [
+  {
+   "sym": "light_taps_enabled",
+   "scope": "project",
+   "bits": 1
+  }
+ ],
+ "resources": {
+  "regions": [],
+  "names": [
+   "settings:LIGHT TAPS",
+   "pad:panel pad event post (0x4008232c)",
+   "pad:panel key event post (0x40082492)",
+   "pad:panel task tick (0x40081944)"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

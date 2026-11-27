@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "light-taps",
+  "moduleVersion": "0.1.0-experimental",
+  "imageSha256": "bfeeed94bf23ac9fe3810d20dd563cc1be621436bccf4b3a8734f9dcefafc5a8",
+  "firmware": "1.74",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "LT02: the plain Modwerk Rytm base (modwerk-base-analog-rytm-mkii-1c14b6b0) plus this module, linked by scripts/link-image.mjs with m68k-linux-gnu-gcc; full image remains private.",
+  "emulator": "rytm-emu 2ac0f1f09e0c126d314b87de494f8da2848cfa8b, dtboot, 3x PNG without interpolation",
+  "capturedAt": "2026-11-22",
+  "setup": "Cold boot of build LT02 on a fresh card image; four held NO presses clear the calibration notices. DTBOOT_STEPS=1; DTBOOT_PNG_DIR points outside Git. Screen documentation only.",
+  "captures": [
+    {
+      "path": "media/light-taps-off.png",
+      "sha256": "aa22c029ab94f29320be54d780a60e32c2af279465f64f8b8bd4bc01458216d5",
+      "plan": "dtboot <local LT02 image> --card <fresh card image> --instr 12500M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press GLOBAL@11303M:60M --press DOWN@11503M:40M --press DOWN@11583M:40M --press DOWN@11663M:40M --press DOWN@11743M:40M --press DOWN@11823M:40M --press DOWN@11903M:40M --press YES@12103M:40M",
+      "frame": "DTBOOT_STEPS after the fourth DOWN release (the row is the menu's last, so the fifth and sixth DOWN leave it selected); visually reviewed before inclusion."
+    },
+    {
+      "path": "media/light-taps-on.png",
+      "sha256": "4776db49ef4b6fceb3d6d548ca2d20c1af91ccfdf03629cd0d8f17110356171f",
+      "plan": "dtboot <local LT02 image> --card <fresh card image> --instr 12500M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press GLOBAL@11303M:60M --press DOWN@11503M:40M --press DOWN@11583M:40M --press DOWN@11663M:40M --press DOWN@11743M:40M --press DOWN@11823M:40M --press DOWN@11903M:40M --press YES@12103M:40M",
+      "frame": "DTBOOT_STEPS after the YES release; visually reviewed before inclusion."
+    }
+  ]
+}
