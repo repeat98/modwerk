@@ -148,6 +148,9 @@ const volatile struct modwerk_setting mwua_setting = {MODWERK_SETTING_PRESET_ABI
     (const char *const *)(const void *)&pages, audio_apply, 0};
 
 uint8_t mwua_post, mwua_off, mwua_fs_sum = 1, mwua_fs_pair = SUM, mwua_pairs = 10, mwua_direct;
+/* The ring words a high-speed packet sends (bits 2p and 2p+1 for pair p): the recording's drift trim
+ * (usb_audio_output_trim.c) interpolates only those. */
+uint32_t mwua_sent_words = 0xfffffu;
 static uint8_t route[10];
 static uint32_t last;
 void mwua_begin_frame(void)
@@ -160,14 +163,17 @@ void mwua_begin_frame(void)
     mwua_pairs = widths[profile];
     mwua_post = l <= TRACKS && ((w >> 5) & 1u);
     mwua_off = mode == 1u;
+    uint32_t sent = 0;
     for (unsigned i = 0; i < mwua_pairs; ++i) {
         unsigned pick = outbox(w) ? assignment(w,i) : i+1;
         unsigned source = pick && pick <= counts[l] ? first[l]+pick-1 : SILENCE;
         route[i] = mode == 2u && source < 8u ? SILENCE : source;
+        if (route[i] < SILENCE) sent |= 3u << (2u * route[i]);
     }
     mwua_fs_pair = outbox(w) || l >= MAIN_CUE ? route[0] : SUM;
     mwua_fs_sum = mwua_fs_pair == SUM;
     mwua_direct = profile == USB20 && mode == 0;
+    mwua_sent_words = mwua_direct ? 0xfffffu : sent;
 }
 /* Source words already have the UAC2 byte order. The assembly reader splits
  * a wrapped ring into two straight runs and calls this for each. */

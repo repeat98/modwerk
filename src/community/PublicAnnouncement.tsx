@@ -32,7 +32,7 @@ export function PublicAnnouncementCard({ line, signup, onDismiss, onOpen }: { li
     {moduleLink && !previewGuide && <span className="public-announcement-kicker">Module news</span>}
     <h2 id={titleId}>{line.text}</h2>
     {line.excerpt && <p>{line.excerpt}</p>}
-    {supportLink && <a className="public-announcement-credits" href="#credits" onClick={() => onOpen()}>Credits &amp; acknowledgements<Icon name="arrow" size={14} /></a>}
+    {supportLink && <a className="public-announcement-credits" href="#credits" onClick={() => onOpen()}>Credits<Icon name="arrow" size={14} /></a>}
     {discordLink && signup ? <div className="public-announcement-actions">{action}<a className="public-announcement-action" href={signup} onClick={() => onOpen('signup')}>Create account<Icon name="arrow" size={16} /></a></div> : action}
   </section>
 }

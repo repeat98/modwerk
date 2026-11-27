@@ -92,10 +92,18 @@ export function judgeRecord(record, options = {}) {
     const frame = positive(load.frameUs) ? load.frameUs : limits.frameUs
     if (![load.stockLongestUs, load.moduleLongestUs, load.stockIdlePercent, load.moduleIdlePercent].every(present) || !text(load.method, 10)) row('stock benchmark', 'fail', 'stockLongestUs, moduleLongestUs, stockIdlePercent, moduleIdlePercent and method are required', 'python3 tools/harness/cfmeter.py on a capture of the stock image and of the image with the module, under the same flood')
     else {
-      const added = (load.moduleLongestUs - load.stockLongestUs) / frame, idle = load.stockIdlePercent - load.moduleIdlePercent
+      // A module that takes over a function the base can also build in (USB Audio and its built-in layouts) is judged
+      // against that built-in under the same load, as a DSP module is against the stock effect closest in function: the
+      // stock image alone never does the work. load.builtIn names it and gives its longest frame and idle; the stock
+      // figures stay required and are reported beside it.
+      const builtIn = load.builtIn && text(load.builtIn.name, 10) && [load.builtIn.longestUs, load.builtIn.idlePercent].every(present) ? load.builtIn : null
+      const overStock = (load.moduleLongestUs - load.stockLongestUs) / frame
+      const added = builtIn ? (load.moduleLongestUs - builtIn.longestUs) / frame : overStock
+      const idle = (builtIn ? builtIn.idlePercent : load.stockIdlePercent) - load.moduleIdlePercent
       const state = added > limits.loadFail || idle > limits.idleFail ? 'fail' : added > limits.loadNote || idle > limits.idleNote ? 'note' : 'ok'
       const priced = limits.cpuPrice ? ', judged against the ' + limits.cpuPrice + '% of a frame the base books for this machine' : ''
-      row('stock benchmark', state, 'under the same flood the longest frame interrupt grows by ' + (load.moduleLongestUs - load.stockLongestUs).toFixed(1) + ' us (' + (100 * added).toFixed(1) + '% of the ' + frame.toFixed(1) + ' us frame) and idle time falls by ' + idle.toFixed(1) + ' points vs stock' + priced + (state === 'ok' ? '' : state === 'note' ? '; say what it costs' : ''), state === 'fail' ? 'move work out of the interrupt, or do it once per event and not per message' : undefined)
+      if (builtIn) row('stock benchmark', state, 'under the same load the longest frame interrupt is ' + (load.moduleLongestUs - builtIn.longestUs).toFixed(1) + ' us (' + (100 * added).toFixed(1) + '% of the ' + frame.toFixed(1) + ' us frame) from ' + builtIn.name + "'s and idle time " + (idle > 0 ? 'falls by ' : 'rises by ') + Math.abs(idle).toFixed(1) + ' points against it; over the stock image alone it grows by ' + (100 * overStock).toFixed(1) + '%')
+      else row('stock benchmark', state, 'under the same flood the longest frame interrupt grows by ' + (load.moduleLongestUs - load.stockLongestUs).toFixed(1) + ' us (' + (100 * added).toFixed(1) + '% of the ' + frame.toFixed(1) + ' us frame) and idle time falls by ' + idle.toFixed(1) + ' points vs stock' + priced + (state === 'ok' ? '' : state === 'note' ? '; say what it costs' : ''), state === 'fail' ? 'move work out of the interrupt, or do it once per event and not per message' : undefined)
     }
   }
 
