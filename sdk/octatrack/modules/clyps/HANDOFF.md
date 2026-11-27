@@ -36,7 +36,7 @@ otherwise keep selection suspended with the old generation recoverable.
 
 # CLYPS contributor checkpoint · 23 November 2026
 
-[Authoritative Bank and copy/paste requirements](../../../docs/CLYPS_BANKS_COPY_PASTE_REQUIREMENTS.md) · artist decision, 23 November 2026.
+[Authoritative Bank and copy/paste requirements](BANKS_COPY_PASTE_REQUIREMENTS.md) · artist decision, 23 November 2026.
 
 PR #1997 remains an experimental source draft. See [testing](TESTING.md) for per-build results. The 22 November checkpoint below is historical. The final module reproduced byte-for-byte (SHA-256 32ebca98345840f4e107550683f4fd14f2be35e5355df3d8933b7132f324aea9). On the pinned MKII base it passed popup re-entry, the matched T2 wrap, stock Arranger restoration, fail-closed admission and a real transition from GATE3/A to GATE4/B with the module installed.
 
