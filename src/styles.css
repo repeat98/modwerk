@@ -815,10 +815,11 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .module-grid { grid-template-columns: 1fr; gap: 18px; }
     .status-bar { font-size: 12px; padding: 0 13px; gap: 8px; }
   .detail-hero > .module-preview { height: 215px; }
-  .back-link { margin-bottom: 18px; }
+  .back-link { min-height: 44px; margin-bottom: 4px; }
   .module-page-actions { margin-bottom: 18px; }
   .detail-hero { gap: 21px; }
-  .detail-tabs { gap: 27px; }
+  .detail-tabs { gap: 20px; scroll-padding-inline: 4px; }
+  .detail-tabs button { min-height: 44px; padding-bottom: 8px; }
   .inline-preview { flex-direction: column; align-items: flex-start; padding: 14px; }
   .inline-preview > .module-preview { width: 100%; height: 145px; }
   .inline-preview .preview-label { font-size: 12px; height: 23px; padding: 12px 13px 0; }
@@ -852,6 +853,8 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .firmware-drop .button { width: 100%; margin-left: 0; }
   .file-copy { min-width: calc(100% - 40px); }
   .section-title { flex-wrap: wrap; }
+  .section-title > .text-button { min-height: 44px; }
+  .selected-list .icon-button { min-width: 44px; min-height: 44px; margin-right: -9px; }
   .resource-section .subtle { font-size: 12px; }
   .risk-note, .quality-note { padding: 17px; }
   .app-dialog { padding: 20px; }
@@ -2271,13 +2274,12 @@ h1 { font-size: var(--text-xl); }
   .library-sheet-periods button[aria-pressed="true"] { border-color: transparent; background: var(--accent-soft); color: var(--text); }
   .library-sheet-periods button:active { background: var(--surface-hover); }
 
-  /* A bar attached to the bottom edge, like an app's tab bar: no floating box with the page showing under it. */
-  .library-dock { position: fixed; z-index: 28; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); border-top: 1px solid var(--line); background: var(--sidebar); animation: sheet-in .22s ease-out; }
-  .library-dock-icon { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; color: var(--accent-hover); }
+  .library-dock { position: fixed; z-index: 28; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 8px; min-height: 64px; padding: 8px 8px 8px 14px; border: 1px solid var(--control-border); border-radius: 16px; background: #2b2b32; box-shadow: 0 12px 36px #0009; animation: sheet-in .22s ease-out; }
+  .library-dock-icon { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; margin-left: -2px; border-radius: 10px; background: var(--accent-soft); color: #c1c7ff; }
   .library-dock-copy { display: grid; flex: 1 1 auto; gap: 1px; min-width: 0; }
   .library-dock-copy strong { color: var(--text); font-size: 14px; font-weight: 600; }
   .library-dock-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 12px; }
-  .library-dock .button { flex-shrink: 0; min-height: 46px; font-size: 14px; }
+  .library-dock .button { flex-shrink: 0; min-height: 46px; border-radius: 11px; font-size: 14px; }
   .app-shell.has-library-dock .phone-footer { padding-bottom: calc(148px + env(safe-area-inset-bottom)); }
 }
 @media (prefers-reduced-motion: reduce) { .library-dock { animation: none; } }
@@ -2433,7 +2435,7 @@ h1 { font-size: var(--text-xl); }
 @media (max-width: 600px) {
   .your-module-sets .configuration-browser-heading { flex-wrap: wrap; }
   .live-use-notice { left: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); }
-  .app-shell.has-library-dock .live-use-notice { bottom: calc(80px + env(safe-area-inset-bottom)); }
+  .app-shell.has-library-dock .live-use-notice { bottom: calc(88px + env(safe-area-inset-bottom)); }
   .live-use-toggle { justify-content: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
   .live-use-toggle span { display: none; }
   .live-use-panel .icon-button { min-width: 44px; min-height: 44px; }
