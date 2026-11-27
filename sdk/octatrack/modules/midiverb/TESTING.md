@@ -42,7 +42,28 @@ Record what you ran, on which build and which unit, and what you saw. "Not teste
   - *PROG and BANK, package `1c2e43f6`* (a 300-s trial, transport stopped, T1 FX2; C04 Part 2 as the unit was left). Each value was set with the knobs and read back from the frame record; 30 of 30 passed.
     - PROG 1, 30 and 59 on MV1, MV2 and FEX play the program 0.1.0 played at that value: MV1 1, 34, 63; MV2 4, 73, 99; FEX 1, 32, 63. The screen names them, e.g. "34 2.85 SMALL BRIGH".
     - MV2 PROG 83 to 102 play MV2 50 to 69 in order. Two more turns past 102 stay on 102 ("69 FAST CHORUS 2").
-  - Not run yet: the test procedure, a Part saved with 0.1.0 and opened with 0.2.0 (the value map above is what it reads), a listen.
+  - Not run: a Part saved with 0.1.0 and opened with 0.2.0 (the value map above is what it reads), a listen.
+
+### Test procedure: midiverb 0.2.0-experimental, 27 November 2026
+
+On the owner's MKII, through the unit queue: development twin `ed5474c6` of base 0.8.3 (main `80ea1e584`, `build_core.py` with the beta flags plus `--dev`), RAM-booted from twin `46c30886`. Package `public/octatrack-modules/midiverb/0.2.0-experimental.mwrm`, SHA-256 `1c2e43f69e96e82b…`: the shipped package, rebuilt from source with the isolated build. It is byte-identical to the package timed and priced on `46c30886` above. Dev17 bank C, C04, Part 2 (working copy equal to its saved one), transport stopped.
+
+`npm run test:procedure -- midiverb --package public/octatrack-modules/midiverb/0.2.0-experimental.mwrm --share /tmp/modwerk-share.sock --no-emulator` stopped at step 1. The release doctor refuses an update until its qualification record names the new version, and that record is written from this run. Steps 2 to 10 were run one by one with the runner's own commands (`--plan`), as Mini Verb's 23 November run did:
+
+| # | Step | Result |
+| --- | --- | --- |
+| 1 | module:doctor | refused: the qualification record and its `moduleVersion` are still 0.1.0's. After the packages were rebuilt, its packages, USB package, CPU price, cost at rest and frame cost lines passed |
+| 2 | modules:compat | passed: 48 active modules, 1,128 pairs and the whole set, 0 problems |
+| 3 | name the build | `1c2e43f6`, as above |
+| 4 | `cycle-scan.mjs check` | passed: 10 records current. Midiverb has no scan record yet (its stream is not a static program) |
+| 5 | emulator | left out (`--no-emulator`) |
+| 6 | status, Part state, inventory | twin `ed5474c6`, empty inventory, C04 Part 2 clean |
+| 7 | `device:test` | passed: self-test (longest frame 383 µs). T1 admitted in 115 ms (peak 516 per mille), T5 in 115 ms (552). All at once, 6 of 8 placed and 2 refused by admission (CPU 554, core peaks 714 and 746 per mille). Part switches 12 of 12. Rolled back |
+| 8 | soak | passed: 2,400 operations in 122 s inside a 420-s trial (health p95 21 ms, CPU at most 481 per mille). No pattern changed: the program changes on channel 1 did not switch patterns in this project. Part 2 restored, trial rolled back |
+| 9 | `device:price --curve T1,T3,T6,T7` | at rest frame +0, CPU +0.1. In use on T1 FX2: frame +1.2, CPU +1.4, DSP T1-4 +9.7, T5-8 +0 (0.8.2's +11 on the other core is gone). Admitted alone on the empty and the medium pattern, nothing dropped, no stalls. **The curve was refused**: on 0.8.3 the medium pattern C01 reads 35.6 % of a frame with stock alone (81.6 % on 0.8.2 this morning), under the 75 % its rule needs. Read twice, on Part 2 and on Part 1: first 1.6 / 2.4, each 0.4 / 0. The released curve stays the 0.8.2 one above |
+| 10 | inventory, Part state | unchanged, empty; C04 Part 2 reloaded, working = saved |
+| 11 | by hand | PROG and BANK above (on `46c30886`). Not run: the other screens, MAIN and CUE recorded over USB |
+| 12 | the owner's own stage | not run yet |
 
 - **Trial, 25 Nov 2026, the owner's Octatrack** on flashed base `eb6679620d0c`, from commit ede56e7b6: package `midiverb.mwrm`, SHA-256 `8184ae0826318eced0dd1053b638dd58db4eb09097fd8ed0fb30c48b87dea653`, built by `npm run module:dev -- midiverb --slots fx2 --cycles 400 --cycles-kind executed --state 32 --buffer 15870`. The base admitted it and ran it as a RAM trial. The owner reported it "working great" (reported, not observed by the agent). Not run: the test procedure, its edge cases, scenes, locks, LFOs, several instances.
 - The first attempts were refused at verify, loader refusal 6 (RUNTIME_CYCLES): 824 declared cycles, then the builder's placeholder. One instance must fit beside seven stock slots on a core: 3,120 − 7 × 342 = 726 chip cycles, a draft's figure charged at 7/4, so at most 414 declared.
