@@ -1,7 +1,7 @@
 import { spawnSync, execFileSync } from 'node:child_process'
-import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import { expect, it } from 'vitest'
 
 const runner = new URL('../../scripts/check.mjs', import.meta.url)
@@ -21,6 +21,19 @@ function writeRunner(folder: string) {
   return path
 }
 
+// The runner looks for the ColdFire tools on PATH; these tests run it as on a computer that has none, whatever this one has.
+// Homebrew keeps them in the folder that also holds the Python the runner requires, so that one command stays reachable.
+const hasCompiler = (dir: string) => existsSync(join(dir, 'm68k-elf-gcc')) || existsSync(join(dir, 'm68k-elf-gcc.exe'))
+const folders = (process.env.PATH ?? '').split(delimiter).filter(Boolean)
+const python = folders.find(dir => existsSync(join(dir, 'python3')))
+const reachable = folders.filter(dir => !hasCompiler(dir))
+if (python && hasCompiler(python) && process.platform !== 'win32') {
+  const shim = mkdtempSync(join(tmpdir(), 'octamod-check-python.'))
+  symlinkSync(join(python, 'python3'), join(shim, 'python3'))
+  reachable.unshift(shim)
+}
+const PATH = reachable.join(delimiter)
+
 function check(failure = '', buildOnly = false, args: string[] = [], env: Record<string, string> = {}) {
   const folder = mkdtempSync(join(tmpdir(), 'octamod-check-test.'))
   const log = join(folder, 'scripts.log')
@@ -30,6 +43,9 @@ function check(failure = '', buildOnly = false, args: string[] = [], env: Record
     const name = process.argv[3]
     appendFileSync(process.env.CHECK_TEST_LOG, JSON.stringify(process.argv.slice(3)) + '\\n')
     process.exitCode = process.env.CHECK_TEST_FAIL === name ? 1 : 0
+    // A failed check prints its error far above the verdict, with a passing test's expected error after it.
+    if (process.exitCode && name === 'sdk:check') console.log('test_a ... ok\\nSDK checks FAILED: test_base_bound.py\\nError: an expected error a passing test printed')
+    if (process.exitCode && name === 'lint') console.log('/repo/src/a.ts\\n  12:3  error  Unexpected any  no-explicit-any')
     // CHECK_TEST_FLAKY: the full Vitest run fails one file; rerun alone, it passes ('alone') or fails again.
     const args = process.argv.slice(5)
     if (name === 'test' && process.env.CHECK_TEST_FLAKY && !args.includes('-t')) {
@@ -55,7 +71,7 @@ function check(failure = '', buildOnly = false, args: string[] = [], env: Record
     copyFileSync(new URL('../' + packages, runner), join(folder, packages))
     const result = spawnSync(process.execPath, [entry, ...(buildOnly ? ['--build'] : []), ...args], {
       encoding: 'utf8',
-      env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0', ...env },
+      env: { ...process.env, PATH, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0', ...env },
     })
     if (result.error) throw result.error
     const calls: string[][] = readFileSync(log, 'utf8').trim().split('\n').map(line => JSON.parse(line))
@@ -95,6 +111,37 @@ it.each(['sdk:check', 'lint', 'test', 'build:bundle', ''])('keeps every independ
   // The module doctor's draft test copies a draft under sdk/octatrack/modules/, so it runs alone once the parallel stage is done.
   expect(result.scripts.at(-1)).toBe('test')
 })
+
+it('names what failed, and each one\'s first error, in the last lines of the run', () => {
+  // This test also runs inside GitHub Actions, where the runner writes annotations instead: ask for each form by name.
+  const plain = { GITHUB_ACTIONS: '' }
+  const sdk = check('sdk:check', false, [], plain).stdout.trim().split('\n').slice(-3)
+  expect(sdk[0]).toMatch(/^Check FAILED in /)
+  expect(sdk.slice(1)).toEqual(['Failed: sdk:check', '  sdk:check: SDK checks FAILED: test_base_bound.py'])
+  expect(check('lint', false, [], plain).stdout.trim().split('\n').at(-1)).toBe('  lint: 12:3 error Unexpected any no-explicit-any')
+  // The draft doctor's test passes after the suite failed: the suite is still named.
+  expect(check('', false, [], { ...plain, CHECK_TEST_FLAKY: 'again' }).stdout).toMatch(/\nFailed: test\n {2}test: .*FAIL.* src\/a\.test\.ts > waits out a reply timer\n/)
+  expect(check('', false, [], plain).stdout).not.toContain('Failed:')
+  expect(check('', false, [], { ...plain, CHECK_TEST_FLAKY: 'alone' }).stdout).not.toContain('Failed:')
+  // On GitHub Actions each failure is an error annotation, which the pull request's checks page shows.
+  expect(check('sdk:check', false, [], { GITHUB_ACTIONS: 'true' }).stdout.trim().split('\n').slice(-2))
+    .toEqual(['Failed: sdk:check', '::error title=sdk:check failed::SDK checks FAILED: test_base_bound.py'])
+}, 20_000) // Six runs of the runner: over the default 5 s on a busy computer.
+
+it('stops in its first stage on a ColdFire compiler without its binutils, before the suites that sdk:check runs after', () => {
+  const shims = mkdtempSync(join(tmpdir(), 'octamod-check-shims.'))
+  try {
+    writeFileSync(join(shims, 'm68k-elf-gcc'), '')
+    const result = check('', false, [], { GITHUB_ACTIONS: '', PATH: shims + delimiter + PATH })
+    expect(result.status).toBe(1)
+    expect(result.scripts).toEqual(['prepare'])
+    expect(result.stderr).toContain('m68k-elf-gcc is on PATH (' + shims + ') but m68k-elf-as')
+    expect(result.stdout.trim().split('\n').at(-2)).toBe('Failed: ColdFire toolchain')
+    // CI's parts and a build run no SDK suite here, so they do not look.
+    expect(check('', false, ['--part', 'contract'], { PATH: shims + delimiter + PATH }).status).toBe(0)
+    expect(check('', true, [], { PATH: shims + delimiter + PATH }).status).toBe(0)
+  } finally { rmSync(shims, { recursive: true, force: true }) }
+}, 20_000)
 
 it.each([['alone', 0], ['again', 1]])('reruns a failed test file alone on one worker and passes only when it passes there (%s)', (mode, status) => {
   const result = check('', false, [], { CHECK_TEST_FLAKY: mode })

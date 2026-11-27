@@ -1,14 +1,16 @@
 {
   "kind": "owner-approved-update",
   "id": "midi-scenes",
-  "version": "0.3.0-experimental",
+  "version": "0.3.1-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-16",
+  "approvedOn": "2026-11-26",
   "waived": [
     "chip-worst-case-cycles",
-    "current-build-hardware"
+    "current-build-hardware",
+    "release-documentation"
   ],
-  "sourceSha256": "ba777e735fe55d863e11dce3868cbaf330a1468692924a1ae9b811bc0d48e2c2",
-  "ownerStatement": "Release MIDI Scenes 0.3.0-experimental. I waive the static cycle bound and the hardware qualification of this exact build for this version.",
-  "reason": "A port of Sam Banks' octabam rewrite (MIT, his OK on 13 November 2026) onto base 0.7.4's hooks. On the owner's MKII (development twins of 0.7.4 from RAM, 16 November 2026) it installed and ran as trials, the owner hand-tested it (\"ok, worked\"), and its CPU price read +0.2 points of the frame interrupt at rest; with 480 locks and the crossfader sweeping it stayed within noise, alone and beside 14 other modules, with no skipped render, crash or stall (TESTING.md). No static cycle count was made, and device:qualify did not run on the exact release package and base."
+  "sourceSha256": "e725e5481d29e0844e9aca13c1b73b1af0c564a25ea8ad31805e03be65773687",
+  "ownerStatement": "Release MIDI Scenes 0.3.1-experimental. I waive the static cycle bound, the hardware qualification of this exact build and fresh UI captures for this version; keep 0.3.0's captures.",
+  "reason": "0.3.1 keeps lock tables for 24 Parts instead of 64, so it takes 126,768 bytes of the 768 KiB module pool instead of about 272 KB, and a typical beta set plus a new effect fits again (#2202). On the owner's MKII (development twin 8fd6d456 from RAM, 26 November 2026, trials rolled back) the scene A/B locks, clearing, the crossfader morph, the battery copy over a reinstall and 16 locks on all 8 tracks worked; the frame interrupt read 28.5 % with no module, 28.6 % installed without locks and 28.5 % with 16 locks and the crossfader sweeping, and device:price read +0 points at rest (TESTING.md, evidence/cpu-price.json). No static cycle count was made, CC output was not measured at a MIDI port, the owner's power-cycle check was not run, and device:qualify did not run on the exact release package and base. Its screens are those of 0.3.0 apart from the new message at the 24-Part cap, so 0.3.0's two captures stay.",
+  "retainedUiVersion": "0.3.0-experimental"
 }

@@ -1,4 +1,5 @@
 import { DEVICE_INCIDENTS, type DeviceCrash, type DeviceIncident, type DeviceLoad, type DeviceStall } from '../../community/octatrack-diagnostics-contract.ts'
+export { freezeSamples } from '../../community/octatrack-diagnostics-contract.ts'
 
 /** The unit's diagnostics log (sdk/machines/octatrack/elekloader/diag.h), as the ColdFire stores it: big-endian. */
 export const DEVICE_LOG_REQUEST = 37
@@ -40,12 +41,12 @@ function crash(view: DataView, at: number): DeviceCrash | undefined {
     a: words(view, at + 48, 7), sp: view.getUint32(at + 76), stack: words(view, at + 80, 8), code: words(view, at + 116, 8), memory: words(view, at + 148, 8) }
 }
 /** dsp.c's struct stall: magic, count, reason, ticks, report_words, 96 report words, then each core's last packet header
- * (eight 16-bit words a core), the live FX ids and the host ports' status, which are not read here. */
+ * (eight 16-bit words a core), the live FX ids (not read here) and the host ports' status (two 16-bit words). */
 function stall(view: DataView, at: number): DeviceStall | undefined {
   if (view.getUint32(at) !== 0x4d575354) return undefined
   const n = Math.min(view.getUint32(at + 16), 96), header = (core: number) => Array.from({ length: 8 }, (_, i) => view.getUint16(at + 404 + 16 * core + 2 * i))
   return { count: view.getUint32(at + 4), reason: view.getUint32(at + 8), ticks: view.getUint32(at + 12), report: words(view, at + 20, n),
-    ...frames(view, at + STALL_BYTES, view.getUint32(at + 4)), packets: [header(0), header(1)] }
+    ...frames(view, at + STALL_BYTES, view.getUint32(at + 4)), packets: [header(0), header(1)], host: [view.getUint16(at + 452), view.getUint16(at + 454)] }
 }
 /** The trace kept with stall record `count`, in µs, without the frames never written (a stall soon after the start). */
 function frames(view: DataView, at: number, count: number): { frames?: number[] } {
@@ -65,6 +66,7 @@ function incident(view: DataView, at: number): DeviceIncident | undefined {
 }
 /** The written records, oldest first; undefined for anything but a version 1 or 2 log. A record still being written
  * has seq 0 and is left out. A version 2 log carries the crash and stall records when their magic is there. */
+
 export function parseDeviceLog(data: Uint8Array): DeviceLog | undefined {
   if (data.byteLength < 8) return undefined
   const head = new DataView(data.buffer, data.byteOffset, 8), version = head.getUint32(4)

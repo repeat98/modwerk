@@ -1,112 +1,68 @@
 {
   "module": "mute-modes",
-  "version": "0.2.2-experimental",
-  "base": "8850f5399c453b9c (development twin, ef6099b0a)",
-  "scene": "Octatrack MKII, owner scratch bank A pattern A01, saved Part 4, trigs on audio tracks 1–7, stock effects on both slots and an empty starting inventory",
+  "version": "0.2.4-experimental",
+  "base": "493c9cc5dbcb6351 (development twin of base 0.8.1 eb667962 with --dev, admitting Mute Modes 0.2.2, 0.2.3 and this package 7542f10c as table owners)",
+  "scene": "Octatrack MKII, OS 1.40C, the owner's project as the twin booted it, pattern C04 playing, MUTE MODE OT (the installed default); package 7542f10c on a rolled-back trial",
+  "inputs": {
+    "transport": "playing"
+  },
   "seconds": 8,
-  "measuredAt": "2026-11-21T07:48:47.968Z",
+  "readings": 3,
+  "measuredAt": "2026-11-25T12:03:11.462Z",
   "result": {
     "id": "mute-modes",
-    "version": "0.2.2-experimental",
-    "packageSha256": "d8b871e39733ca38101c5fc42b37f3984c38a577eab393d85e3f3a6fa1f1dd00",
+    "version": "file",
+    "packageSha256": "7542f10c56b431761bdd9b4f44a7a3ccb6d4851f31e2c4bb519281dd5d0b6b8c",
     "before": {
-      "frame": 32.7,
-      "frameMax": 70.8,
-      "frames": 22256,
+      "frame": 32.2,
+      "frameMax": 82,
+      "frames": 67206,
       "skipped": 0,
-      "cpu": 45.5,
-      "dsp1to4": 43.6,
-      "dsp5to8": 41,
-      "allocation": {
-        "modulePoolBytes": 1456,
-        "dspProgramWordsT1to4": 1504,
-        "dspProgramWordsT5to8": 702
+      "cpu": 51.6,
+      "dsp1to4": 33.7,
+      "dsp5to8": 41.8,
+      "dsp1to4Peak": 35.7,
+      "dsp5to8Peak": 42.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0.1,
+        "cpu": 0.8,
+        "dsp1to4": 1.2,
+        "dsp5to8": 0,
+        "frameMax": 0.8,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
       }
     },
     "atRest": {
-      "frame": 33.9,
-      "frameMax": 71.8,
-      "frames": 22258,
+      "frame": 32.2,
+      "frameMax": 82.1,
+      "frames": 67432,
       "skipped": 0,
-      "cpu": 46.3,
-      "dsp1to4": 47.3,
-      "dsp5to8": 41,
-      "allocation": {
-        "modulePoolBytes": 3312,
-        "dspProgramWordsT1to4": 1504,
-        "dspProgramWordsT5to8": 702
+      "cpu": 51.8,
+      "dsp1to4": 33.3,
+      "dsp5to8": 41.8,
+      "dsp1to4Peak": 35.8,
+      "dsp5to8Peak": 42.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0.1,
+        "cpu": 0.5,
+        "dsp1to4": 0.5,
+        "dsp5to8": 0,
+        "frameMax": 1,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 0.9
       }
     },
     "atRestAdds": {
-      "frame": 1.2,
-      "cpu": 0.8,
-      "dsp1to4": 3.7,
-      "dsp5to8": 0
+      "frame": 0,
+      "cpu": 0.2,
+      "dsp1to4": -0.4,
+      "dsp5to8": 0,
+      "dsp1to4Peak": 0.1,
+      "dsp5to8Peak": 0
     },
-    "rolledBack": true,
-    "repetitions": [
-      {
-        "measuredAt": "2026-11-21T07:48:47.968Z",
-        "before": {
-          "frame": 32.7,
-          "frameMax": 70.8,
-          "frames": 22256,
-          "skipped": 0,
-          "cpu": 45.5,
-          "dsp1to4": 43.6,
-          "dsp5to8": 41,
-          "allocation": {
-            "modulePoolBytes": 1456,
-            "dspProgramWordsT1to4": 1504,
-            "dspProgramWordsT5to8": 702
-          }
-        },
-        "atRest": {
-          "frame": 33.9,
-          "frameMax": 71.8,
-          "frames": 22258,
-          "skipped": 0,
-          "cpu": 46.3,
-          "dsp1to4": 47.3,
-          "dsp5to8": 41,
-          "allocation": {
-            "modulePoolBytes": 3312,
-            "dspProgramWordsT1to4": 1504,
-            "dspProgramWordsT5to8": 702
-          }
-        }
-      },
-      {
-        "measuredAt": "2026-11-21T07:49:19.120Z",
-        "before": {
-          "frame": 32.7,
-          "frameMax": 70.4,
-          "frames": 22259,
-          "skipped": 0,
-          "cpu": 45.2,
-          "dsp1to4": 45.9,
-          "dsp5to8": 41,
-          "allocation": {
-            "modulePoolBytes": 3312,
-            "dspProgramWordsT1to4": 1504,
-            "dspProgramWordsT5to8": 702
-          }
-        },
-        "atRest": {
-          "frame": 33.9,
-          "frameMax": 72.7,
-          "frames": 22271,
-          "skipped": 0,
-          "cpu": 46.7,
-          "dsp1to4": 48.3,
-          "dsp5to8": 41.5,
-          "allocation": {
-            "modulePoolBytes": 3312,
-            "dspProgramWordsT1to4": 1504,
-            "dspProgramWordsT5to8": 702
-          }
-        }
-      }
-    ]
+    "rolledBack": true
   }
 }

@@ -10,6 +10,10 @@
 // runs now (--lock-in): with it, every field stays where that build's projects keep it. --lock-out writes this build's
 // lockfile for the next one.
 //
+// A Digitakt II set is built as the website builds it (src/engine/elekloader/dt2-link.ts): the kit's build, then the
+// step that adds the base's and the modules' sound-chip parts, so the image is the one a musician's browser makes from
+// the same stock file, packages and version.
+//
 // Needs the cross toolchain (MODWERK_CROSS, default m68k-elf-). Your firmware is read and the result written where you
 // say; neither enters Git. The result is a local test image: whether it is safe on a unit is for hardware to show.
 // It prints the image's sha256, the flash left (flashHeadroom) and the shared mod RAM and fast RAM the set leaves free
@@ -19,9 +23,10 @@ import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { basename, dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { materializeElemodRecipe } from '../src/catalog/elemod-recipe.ts'
+import { linkDt2Image } from '../src/engine/elekloader/dt2-link.ts'
 import { ELE3_DEVICES, mainImage, packMain, readEle3Syx, verifyEle3Build, writeEle3Syx } from '../src/engine/elektron/ele3.ts'
 import { linkMods, parseElemod } from '../src/engine/elektron/elemod.ts'
 import { sendFxRoom } from '../src/engine/elekloader/rytm-fx-room.ts'
@@ -35,9 +40,10 @@ if (!stockPath || !out || !version || !prebuilt.length || modules.some(id => !/^
   throw new Error('Usage: link-image.mjs --stock STOCK.syx --version XX01 --out OUT.syx --elemod CORE.elemod [--elemod MORE.elemod] [--module machine:id ...] [--lock-in OLD.lock.json] [--lock-out NEW.lock.json]')
 
 const json = async path => JSON.parse(await readFile(resolve(path), 'utf8'))
-const stock = readEle3Syx(new Uint8Array(await readFile(resolve(stockPath))))
-const mods = []
-for (const path of prebuilt) mods.push(parseElemod(await json(path), path))
+const stockBytes = new Uint8Array(await readFile(resolve(stockPath)))
+const stock = readEle3Syx(stockBytes)
+const mods = [], documents = []
+for (const path of prebuilt) { const document = await json(path); documents.push({ name: basename(path), document }); mods.push(parseElemod(document, path)) }
 const machine = mods[0].device.machine
 const device = ELE3_DEVICES[machine]
 if (!device) throw new Error('No firmware container for ' + machine)
@@ -51,9 +57,24 @@ if (modules.length) {
     for (const id of modules) {
       const [moduleMachine, name] = id.split(':')
       const plan = await json(resolve(tmp, moduleMachine, name, mods[0].release.version + '.json'))
-      mods.push(parseElemod(await materializeElemodRecipe({ ...plan.module, ...plan, sites: plan.sites }, image), id))
+      const document = await materializeElemodRecipe({ ...plan.module, ...plan, sites: plan.sites }, image)
+      documents.push({ name: id, document })
+      mods.push(parseElemod(document, id))
     }
   } finally { await rm(tmp, { recursive: true, force: true }) }
+}
+
+// The Digitakt II's OS file carries a seal only the kit's writer redoes: build it as the website does (the kit, then the
+// composition step that adds the base's and the modules' sound-chip parts), so both make the same image.
+if (machine === 'digitakt-ii') {
+  const files = await Promise.all(documents.map(async ({ name, document }, index) => ({ name: name.endsWith('.elemod') ? name : name.replace(':', '-') + '.elemod',
+    bytes: index < prebuilt.length ? new Uint8Array(await readFile(resolve(prebuilt[index]))) : new TextEncoder().encode(JSON.stringify(document)) })))
+  const result = await linkDt2Image(stockBytes, files, version, lockIn ? await json(lockIn) : null)
+  if (lockOut && !result.store) throw new Error('--lock-out: this set has no mod storage, so there is no lockfile to write')
+  if (lockOut) await writeFile(resolve(lockOut), JSON.stringify(result.store, null, 1) + '\n')
+  await writeFile(resolve(out), result.syx)
+  console.log(JSON.stringify({ out: resolve(out), sha256: createHash('sha256').update(result.syx).digest('hex'), files: files.map(file => file.name), soundChip: result.composed ? 'composed' : 'stock' }, null, 1))
+  process.exit(0)
 }
 
 const linked = await linkMods(mods, image, lockIn ? await json(lockIn) : null)

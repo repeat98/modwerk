@@ -127,9 +127,12 @@ export const KEY_BUS_BASES: readonly string[] = [...new Set([baseBinding.identit
 const DSP_CLAIMS = 16, HOOK_ENTRIES = 8, INIT_WORDS = 4096
 /** The base's module pool (build_core.py RUNTIME_POOL_BYTES), and the loader's records in it on the ColdFire: loader.h's
  * runtime_module, runtime_site, runtime_dsp_claim and runtime_dsp_entry, as the unit's pool readings confirm
- * (docs/verification/2026-11-21-octatrack-module-pool-allocation.json). */
+ * (docs/verification/2026-11-*-octatrack-module-pool-allocation.json). runtime_module holds 9 bytes a hook (hook[],
+ * order[], runtime_dsp's hook_offset[]) on 187 others, 2-byte aligned on the ColdFire: 736 with base 0.7's 57 site
+ * events, 754 with base 0.8's 59. */
 export const OCTATRACK_POOL_BYTES = 768 * 1024
-const MODULE_RECORD = 736, SITE_RECORD = 74, CLAIM_RECORD = 12, ENTRY_RECORD = 8
+const MODULE_RECORD = (187 + 9 * (4 + SITE_EVENTS) + 1) & ~1
+const SITE_RECORD = 74, CLAIM_RECORD = 12, ENTRY_RECORD = 8
 function requirements(entry: RuntimePackage, group = false) {
   const abi = entry.abi ?? ('octabam' in entry && entry.octabam ? 7 : 6), sites = entry.sites ?? 0, copies = entry.copies ?? 0, fills = entry.fills ?? 0
   const requires = entry.requires ?? 0, claims = entry.claims ?? 0, entries = entry.entries ?? 0
@@ -154,7 +157,7 @@ type DspClaim = { space: number; core: number; address: number; words: number }
 const claimsMeet = (a: DspClaim, b: DspClaim) => (a.address >= 0x30000 && b.address >= 0x30000 ||
   (a.core === b.core || a.core === 2 || b.core === 2) && a.space === b.space) && a.address < b.address + b.words && b.address < a.address + a.words
 /** The manifest and fetched header must agree before anything is staged, including retained Undo packages. */
-function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, variant?: MachineVariant, layout?: number) {
+function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, variant?: MachineVariant, layout?: number, moduleRecord = MODULE_RECORD) {
   const fail = () => { throw invalidPackage() }, want = requirements(entry, !!variant)
   if (data.length !== entry.bytes || sha(data) !== entry.sha256 || data.length < 68) fail()
   const view = new DataView(data.buffer, data.byteOffset, data.byteLength), abi = view.getUint16(4)
@@ -276,11 +279,12 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   }
   // What the loader takes from the pool for it (loader.c prepare: head + code + tail, each in whole 16-byte lines).
   const lines = (n: number) => Math.ceil(n / 16) * 16
-  return lines(MODULE_RECORD + SITE_RECORD * want.sites) + lines(image + bss) +
+  return lines(moduleRecord + SITE_RECORD * want.sites) + lines(image + bss) +
     lines(((4 * dspWords + 2 * dspRelocations + 3) & ~3) + CLAIM_RECORD * want.claims + ENTRY_RECORD * want.entries + 4 * initWords)
 }
-/** The bytes of the base's module pool a published package takes once installed. */
-export const poolExtent = (entry: RuntimePackage & { id: string }, data: Uint8Array) => checkPackage(entry, data, entry.id)
+/** The bytes of the base's module pool a published package takes once installed; `moduleRecord` for an older base's layout. */
+export const poolExtent = (entry: RuntimePackage & { id: string }, data: Uint8Array, moduleRecord = MODULE_RECORD) =>
+  checkPackage(entry, data, entry.id, undefined, undefined, moduleRecord)
 
 /** Expand known machine groups for display, while planning replacements from their exact inventory layouts. */
 export function createRuntimeCatalogue(document: RuntimePackageManifest) {
@@ -467,6 +471,18 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       if (total > OCTATRACK_POOL_BYTES) {
         const largest = priced.sort((a, b) => b.bytes - a.bytes).slice(0, 3).map(item => `${item.name} (${kB(item.bytes)} kB)`)
         throw new ModuleSetError(`This set needs ${kB(total)} kB of module memory, and the Octatrack has ${kB(OCTATRACK_POOL_BYTES)} kB. Take out ${kB(total - OCTATRACK_POOL_BYTES)} kB or more. The largest here are ${list(largest)}.`)
+      }
+      // A sync is one transaction: the loader places every new package while the modules it takes out or replaces still
+      // run, and frees them only once the whole set is in, so a refused set rolls back (loader.c set_prepare_context,
+      // set_end). The pool holds both at once. A module switched off on the unit waits on the shelf, not in the pool.
+      const live = (step: Step) => step.group ? !!current.runtimeGroups?.some(item => item.id === step.id) : current.moduleIds.includes(step.id)
+      const leaving = steps.flatMap(step => step.undo && live(step) ? [{ name: step.name, bytes: extents.get(step.undo)!, removed: !step.add }] : [])
+      const peak = total + leaving.reduce((sum, item) => sum + item.bytes, 0)
+      if (peak > OCTATRACK_POOL_BYTES) {
+        const removed = leaving.filter(item => item.removed).map(item => item.name)
+        const adding = steps.filter(step => step.add && !(step.undo && live(step))).map(step => step.name)
+        throw new ModuleSetError(`The Octatrack keeps the modules a sync takes out until the new ones are in, so this sync needs ${kB(peak)} kB of module memory at once, and the Octatrack has ${kB(OCTATRACK_POOL_BYTES)} kB. ` +
+          (removed.length && adding.length ? `First sync with ${list(removed)} taken out and ${list(adding)} left out, then add ${list(adding)} and sync again.` : `Take out ${kB(peak - OCTATRACK_POOL_BYTES)} kB or more.`))
       }
       // A removal, or a machine package replacing the one on the unit (it has the previous one as its undo), changes what a
       // track may be using; a new module cannot be in use yet.

@@ -1,0 +1,1 @@
+Octatrack diagnostics: when a sync's USB transfer fails, the shared record now also says how the unit's last data transfer ended (cut short, or a memory or bus error), so failures like those in #1596 can be told apart. Nothing changes for syncing itself.

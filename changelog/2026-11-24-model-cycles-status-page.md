@@ -1,0 +1,1 @@
+Beta members can open Your Model:Cycles from its machine page: with the unit connected over USB, it shows the Modwerk base it runs, the modules loaded on it and its audio load, read every two seconds. It needs a base with the USB link, today a development base.

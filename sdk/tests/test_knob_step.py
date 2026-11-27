@@ -39,7 +39,7 @@ class KnobStep(unittest.TestCase):
                             '-lpthread', '-o', str(work / 'fixture')], check=True, capture_output=True)
             result = subprocess.run([str(work / 'fixture'), stock, str(work / 'knob.bin')], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
-            self.assertIn('5 checks passed', result.stdout)
+            self.assertIn('8 checks passed', result.stdout)
 
 
 if __name__ == '__main__':

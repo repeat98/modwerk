@@ -731,6 +731,8 @@ static void registration_checks(void) {
     }
     assert(!m->defaults[10]);
     assert(page_value(0xd2 + 32) == 2 && !page_value(0xd2 + 40) && !page_value(0xd2 + 44));
+    assert(page_value(0x132 + 32) == MODWERK_PAGE_SWITCH);
+    assert(page_value(0x132) == MODWERK_PAGE_KNOB);
     assert(page_value(0x1c2) == 0x1);
     char range[6]; range_text(range, 1); assert(!strcmp(range, "LOCAL"));
     range_text(range, 0); assert(!strcmp(range, "FULL"));
