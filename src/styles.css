@@ -1739,10 +1739,17 @@ h1 { font-size: var(--text-xl); }
 .disclosure-content > .service-note { margin-bottom: 8px; }
 .disclosure-content .detail-section { padding-bottom: 16px; }
 .disclosure-content .detail-section > p { line-height: 1.7; }
-.disclosure-content .resource-card { padding: 12px; }
-.disclosure-content .resource-card > strong { font-size: 16px; margin: 7px 0; }
-.disclosure-content .quality-note, .disclosure-content .risk-note { padding: 0; margin-bottom: 12px; border: 0; background: none; }
-.disclosure-content .risk-note { margin-bottom: 0; }
+.disclosure-content .resource-section .section-title { flex-direction: column; align-items: flex-start; gap: 2px; margin-bottom: 12px; }
+.disclosure-content .resource-section .subtle { color: var(--faint); font-size: var(--text-sm); }
+.disclosure-content .resource-grid { gap: 10px; }
+.disclosure-content .resource-card { padding: 14px 16px; background: color-mix(in srgb, var(--text) 4%, transparent); }
+.disclosure-content .resource-card > strong { margin: 4px 0 6px; color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.4; letter-spacing: 0; }
+.disclosure-content .resource-card p { font-size: var(--text-sm); line-height: 1.6; }
+.disclosure-content :is(.resource-note, .quality-note p, .risk-note p) { max-width: 72ch; color: var(--text-secondary); line-height: 1.6; }
+.disclosure-content .quality-note { margin: 16px 0 0; padding: 16px 0 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; }
+.disclosure-content .risk-note { margin: 16px 0 0; padding: 12px 14px; border: 1px solid var(--warn-line); background: var(--warn-soft); }
+.disclosure-content .risk-note strong { color: var(--warn); }
+.disclosure-content .risk-note p:last-child { margin-bottom: 0; }
 .disclosure-content .usage-list, .disclosure-content .module-access ol { display: flex; flex-direction: column; gap: 6px; max-width: 72ch; margin: 0; padding-left: 22px; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 .disclosure-content :is(.usage-list, .module-access ol) > li { margin: 0; padding-left: 6px; }
 .disclosure-content :is(.usage-list, .module-access ol) > li::marker { color: var(--faint); font-variant-numeric: tabular-nums; }
