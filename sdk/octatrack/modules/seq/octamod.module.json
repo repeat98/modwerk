@@ -49,7 +49,7 @@
       "screen:SEQ"
     ],
     "limitations": [
-      "OS 1.40C on the Modwerk base, over USB. Tested on the author's MKII with RAM-booted development twin 4c7eb79b; emulator rollback cases are recorded in TESTING.md.",
+      "OS 1.40C on the Modwerk base, over USB. Tested on the author's MKII with RAM-booted twin 43ac24652a89f28b (release base eb667962); emulator rollback cases are recorded in TESTING.md.",
       "The octabam module's FX page-2 destinations and CX OSC SETUP destinations are left out: D offers page-1 parameters only. A seq.work from octabam keeps them and loads here unchanged.",
       "Keep SEQ installed while you save, reload or copy a project that uses it: without it, seq.work is not saved or reloaded with the project.",
       "A seq.work SEQ cannot read is left as it is and SEQ starts from its defaults; the next save copies it to seq.bak before writing a new one."
@@ -102,13 +102,13 @@
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
       "date": "2026-11-27",
-      "conditions": "author's project, A02 pattern 2, Part 1, stopped; base development twin 43ac2465, MKII, OS 1.40C; 3 readings of 8 s a state. Frame interrupt 24.1 % before, 24.1 % installed and used nowhere; CPU meter 36.2 % before, 36.2 % at rest.",
+      "conditions": "author's project, bank A pattern 2, Part 1, stopped (release base eb667962 via RAM twin); base Octatrack release base eb6679620d0c9ed7, RAM-booted twin 43ac24652a89f28b, MKII, OS 1.40C; 3 readings of 8 s a state. Frame interrupt 29.4 % before, 29.4 % installed and used nowhere; CPU meter 44.1 % before, 44.1 % at rest.",
       "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "MKII over USB, 27 November 2026: development twin 43ac2465, package 5c88a76b, CPU price 0.0 at rest, hardware LCD capture; earlier twin 4c7eb79b procedure and by-hand rows in TESTING.md.",
+    "summary": "MKII over USB, 27-28 November 2026: twin 43ac24652a89f28b (release base eb667962), package 5c88a76b, test:procedure steps 1-10, CUE Undo, save and power-cycle persistence, CPU price 0.0 at rest, LCD capture; MKI, KITS and Track Solo beside SEQ not tested.",
     "hardwareStatus": "reported",
     "evidenceRevision": "faff374b9d136f48d4e0159fe480f8f65d27cacc",
     "gates": [
@@ -118,7 +118,7 @@
     ],
     "qualification": {
       "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "8a368a0630641da96f74c7b668aa95944e0280106447bb8ce1df046cae889b33",
+      "sourceSha256": "cfbc5ab76c211cdd585fea80f6e0b286c5bb36d51c2614c3b0599becc534c2bc",
       "cycles": [
         {
           "processor": "coldfire",
@@ -165,13 +165,11 @@
         "tester": "ilia-murzinov",
         "sourceRevision": "faff374b9d136f48d4e0159fe480f8f65d27cacc",
         "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
-        "summary": "On an MKII with RAM-booted development twin 4c7eb79b: test:procedure passed unit steps 6 to 10; by-hand checks wrote Euclidean trigs, PLCK lanes and FUNC+BANK clear; fix36 emulator and hardware rolls back after CUE-on-track navigation. Project save and power cycle with seq.work, MKI paths, and release-base trial are not yet recorded.",
+        "summary": "MKII, twin 43ac24652a89f28b RAM-booted from release base eb6679620d0c9ed7: catalog test:procedure steps 1-10, CUE tap Undo and project save with power-cycle reload on package 5c88a76b; earlier 4c7eb79b rows in TESTING.md.",
         "limitations": [
-          "CPU price and procedure steps 6 to 10 used the development twin, not the flashed release base.",
-          "seq.work save, reload and power-cycle survival are not yet checked on the unit.",
-          "No monochrome UI captures in media/ yet.",
-          "Static cycle count is disassembly only, not ot_emu executed instructions on [YES].",
-          "Procedure log package 880a54b; listing build is 5c88a76b unless re-measured on the same bytes."
+          "USB development work RAM-booted a twin of eb667962; the flashed release image itself does not serve development USB.",
+          "MKI, KITS beside SEQ on MKI, and Track Solo beside SEQ are not tested on hardware.",
+          "Static cycle count is disassembly only, not ot_emu executed instructions on [YES]."
         ],
         "report": "TESTING.md"
       },

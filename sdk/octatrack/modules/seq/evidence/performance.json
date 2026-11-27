@@ -2,7 +2,7 @@
   "schema": 1,
   "module": "seq",
   "version": "0.1.0-experimental",
-  "sourceSha256": "cdda4ad8bb3a208cd22ff89319c2fc3773b8c91f0418cd22cb57ed57e0d827bc",
+  "sourceSha256": "c4d331626e9e922bd59cd36d1872589e6b7ff4e1c1342e4b52f9372d39557afa",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",

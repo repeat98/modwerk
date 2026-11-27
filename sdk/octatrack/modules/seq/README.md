@@ -76,7 +76,7 @@ files, and saved with the project.
 
 ## Compatibility and limitations
 
-- OS 1.40C on the Modwerk base, over USB. MKII results use the author's unit and RAM-booted development twin `4c7eb79b`. Emulator rollback cases are listed in [TESTING.md](TESTING.md).
+- OS 1.40C on the Modwerk base, over USB. MKII results use the author's unit and RAM-booted twin `43ac24652a89f28b` (release base `eb667962`); earlier rows used `4c7eb79b`. Emulator rollback cases are listed in [TESTING.md](TESTING.md).
 - D offers page-1 parameters only. The octabam module's FX page-2 destinations
   (through PLOCKS P2) and CX OSC SETUP destinations are left out, because
   Modwerk has neither module.
