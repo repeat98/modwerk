@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.2.0",
+    "date": "2026-11-27",
+    "changes": [
+      "First release in Modwerk for the Digitone mk1 on OS 1.43 and 1.44: DigiReel, by irpina.",
+      "A time-warp pedal for the Digitone's inputs: a tape that always listens, played back at -2x to +2x, reversed, held and stuttered in time with the tempo.",
+      "While it is on, the synths are silent: it is a pedal for the inputs.",
+      "The author's own 0.2 files, unchanged."
+    ]
+  }
+]

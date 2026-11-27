@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/dsp.c",
+    "src/ui.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_key",
+      "fn": "dhoard_key",
+      "order": 10
+    },
+    {
+      "event": "ev_enc",
+      "fn": "dhoard_enc",
+      "order": 10
+    },
+    {
+      "event": "ev_hold",
+      "fn": "dhoard_hold",
+      "order": 10
+    },
+    {
+      "event": "ev_midi_cc",
+      "fn": "dhoard_cc",
+      "order": 59
+    },
+    {
+      "event": "ev_render_in",
+      "fn": "dhoard_rin",
+      "order": 54
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "dhoard_rout",
+      "order": 54
+    },
+    {
+      "event": "ev_tick",
+      "fn": "dhoard_tick",
+      "order": 65
+    },
+    {
+      "event": "ev_draw",
+      "fn": "dhoard_draw",
+      "order": 95
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_menu",
+      "order": 35,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dhoard_menu",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "fx_effects",
+      "order": 64,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dhoard_effect",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_projdata",
+      "order": 74,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dhoard_projdata",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [
+    {
+      "name": "digihoard memory",
+      "lo": "0x46200000",
+      "hi": "0x47300000"
+    }
+  ],
+  "claims": [
+    "projdata:DHAB"
+  ],
+  "requires": [
+    "fxkit"
+  ],
+  "derive": null,
+  "releases": {
+    "1.43": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    },
+    "1.44": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "module": "digitone/digireel",
+  "version": "0.2.0",
+  "date": "2026-11-27",
+  "upstream": {
+    "repository": "https://github.com/irpina/digireel",
+    "revision": "71b6aad5746fd5f6f6b56e8e7923c33975f0815f",
+    "path": ".",
+    "license": "GPL-2.0-or-later"
+  },
+  "changes": [
+    "DigiReel 0.2 (tag v0.2, 71b6aad), imported unchanged: dsp.c, ui.c, dreel.h, pedal.h, pedal_dsp.inc, pedal_ui.inc, tables.h. It patches no stock site: it adds itself to fxkit's effects list and core's Mod Menu, owns the audio through fxkit while active, and keeps its settings in the project (DTEN).",
+    "build.json is the author's mod.json with its buffer region; it requires fxkit, Modwerk's shared dependency built from irpina's source."
+  ],
+  "files": [
+    {
+      "from": "dsp.c",
+      "to": "src/dsp.c",
+      "sha256": "3910c94549a6d4814cb8ceefc282cb55822dbafa44e210737e9b16c48f5d97ab"
+    },
+    {
+      "from": "ui.c",
+      "to": "src/ui.c",
+      "sha256": "35f0cd1d5106462c717c58d4b33a562993ed423c3103b3e78c61b314e3e67698"
+    },
+    {
+      "from": "dreel.h",
+      "to": "src/dreel.h",
+      "sha256": "1fa16d42c188ac9cd40b87433b7dbd8884478bb62981080862706c644026ecaf"
+    },
+    {
+      "from": "pedal.h",
+      "to": "src/pedal.h",
+      "sha256": "9967a6f50ce251ef26d96f2063bea29051d696e86dfcf264968edc3aa1c6bd41"
+    },
+    {
+      "from": "pedal_dsp.inc",
+      "to": "src/pedal_dsp.inc",
+      "sha256": "4b824590e12536c17ed7d36afdf07860b681da826be2bb74e86afc901b7f2917"
+    },
+    {
+      "from": "pedal_ui.inc",
+      "to": "src/pedal_ui.inc",
+      "sha256": "4b078ddb65900825ba142836b8b58faabfb3eea20545503d416041240a423ba4"
+    },
+    {
+      "from": "tables.h",
+      "to": "src/tables.h",
+      "sha256": "edae7b538c129bc54de30969c822e386ee88326385199b3edd5ca1394062287b"
+    },
+    {
+      "from": "elekloader fxkit-v0.1: elekloader/sdk/include/digitone-mk1/core3.h",
+      "to": "src/digitone-mk1/core3.h",
+      "sha256": "e8a146f4c47e816a3a38543309ad8f09563c15b433008f8eaaec471b9485871b"
+    },
+    {
+      "from": "elekloader fxkit-v0.1: elekloader/sdk/include/digitone-mk1/fxkit.h",
+      "to": "src/digitone-mk1/fxkit.h",
+      "sha256": "e314aa1d7494afa7ae1b2044fd1e5033b02ac4d51c27c36e8036924a404c1fa7"
+    },
+    {
+      "from": "README.md",
+      "to": "upstream/README.md",
+      "sha256": "0939af3084af561806b520f457ec8eb332018a235a81b0ae0b347bee0b6fa28a"
+    },
+    {
+      "from": "LICENSE",
+      "to": "LICENSE",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    }
+  ],
+  "excluded": [
+    "mod.json",
+    "docs/",
+    "gentables.py and pedal_tables.py (the generators of tables.h, which is included)"
+  ],
+  "transformations": [
+    "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json."
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata.",
+  "evidence": "sdk/digitone/modules/digireel/TESTING.md",
+  "requires": [
+    "fxkit"
+  ]
+}

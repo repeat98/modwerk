@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "module": "digitone/digihoard",
+  "version": "0.2.0",
+  "date": "2026-11-27",
+  "upstream": {
+    "repository": "https://github.com/irpina/digihoard",
+    "revision": "029a64e354caf1a0da524302b0ec108d5d28710a",
+    "path": ".",
+    "license": "GPL-2.0-or-later"
+  },
+  "changes": [
+    "DigiHoard 0.2 (tag v0.2, 029a64e), imported unchanged: dsp.c, ui.c, dhoard.h, pedal.h, pedal_dsp.inc, pedal_ui.inc, tables.h. It patches no stock site: it adds itself to fxkit's effects list and core's Mod Menu, owns the audio through fxkit while active, and keeps its settings in the project (DHAB).",
+    "build.json is the author's mod.json with its buffer region; it requires fxkit, Modwerk's shared dependency built from irpina's source."
+  ],
+  "files": [
+    {
+      "from": "dsp.c",
+      "to": "src/dsp.c",
+      "sha256": "c4aa2d5feaf5ec884865cb97dcbe785c0d0853bb7c79b302cf6ba530ca702fb1"
+    },
+    {
+      "from": "ui.c",
+      "to": "src/ui.c",
+      "sha256": "39523a41cd52121ad1e1a9ceac3978e366885a57d77b4926d9dbba08ae3f7893"
+    },
+    {
+      "from": "dhoard.h",
+      "to": "src/dhoard.h",
+      "sha256": "e61f8fbbd91f6138a4db2bf251987cc1d80d394bc160158d912748f7bc0ae90b"
+    },
+    {
+      "from": "pedal.h",
+      "to": "src/pedal.h",
+      "sha256": "9967a6f50ce251ef26d96f2063bea29051d696e86dfcf264968edc3aa1c6bd41"
+    },
+    {
+      "from": "pedal_dsp.inc",
+      "to": "src/pedal_dsp.inc",
+      "sha256": "4b824590e12536c17ed7d36afdf07860b681da826be2bb74e86afc901b7f2917"
+    },
+    {
+      "from": "pedal_ui.inc",
+      "to": "src/pedal_ui.inc",
+      "sha256": "4b078ddb65900825ba142836b8b58faabfb3eea20545503d416041240a423ba4"
+    },
+    {
+      "from": "tables.h",
+      "to": "src/tables.h",
+      "sha256": "6a142356898c89cef8c981699f94bf17944aac9e3eee3198415321a860a3a5d1"
+    },
+    {
+      "from": "elekloader fxkit-v0.1: elekloader/sdk/include/digitone-mk1/core3.h",
+      "to": "src/digitone-mk1/core3.h",
+      "sha256": "e8a146f4c47e816a3a38543309ad8f09563c15b433008f8eaaec471b9485871b"
+    },
+    {
+      "from": "elekloader fxkit-v0.1: elekloader/sdk/include/digitone-mk1/fxkit.h",
+      "to": "src/digitone-mk1/fxkit.h",
+      "sha256": "e314aa1d7494afa7ae1b2044fd1e5033b02ac4d51c27c36e8036924a404c1fa7"
+    },
+    {
+      "from": "README.md",
+      "to": "upstream/README.md",
+      "sha256": "be7a40d0caef196878e00365fd5811a698e02825bdb47f1b0dfcc8dc0e044bc2"
+    },
+    {
+      "from": "LICENSE",
+      "to": "LICENSE",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    }
+  ],
+  "excluded": [
+    "mod.json",
+    "docs/",
+    "gentables.py and pedal_tables.py (the generators of tables.h, which is included)"
+  ],
+  "transformations": [
+    "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json."
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata.",
+  "evidence": "sdk/digitone/modules/digihoard/TESTING.md",
+  "requires": [
+    "fxkit"
+  ]
+}

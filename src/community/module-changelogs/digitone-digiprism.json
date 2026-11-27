@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.2.0",
+    "date": "2026-11-27",
+    "changes": [
+      "First release in Modwerk for the Digitone mk1 on OS 1.43 and 1.44: DigiPrism, by irpina.",
+      "An effects pedal for the Digitone's inputs: four reorderable modules (Color, Motion, Ambience, Grit) with five effects each, gestures and a 30-second capture.",
+      "While it is on, the synths are silent: it is a pedal for the inputs.",
+      "The author's own 0.2 files, unchanged."
+    ]
+  }
+]
