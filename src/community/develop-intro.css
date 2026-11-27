@@ -3,7 +3,7 @@
 .start-developing { --path: #e6cfa8; max-width: 720px; }
 .start-developing ::selection { background: var(--path); color: #19191c; }
 .developer-hero { margin: 8px 0 48px; }
-.developer-hero h1 { font-size: clamp(34px, 6vw, 48px); line-height: 1.08; letter-spacing: -.03em; text-wrap: balance; overflow-wrap: anywhere; }
+.developer-hero h1 { font-size: clamp(34px, 6vw, 48px); line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; overflow-wrap: anywhere; }
 .developer-hero h1 span { display: block; color: var(--path); }
 .developer-intro { max-width: 34ch; margin-top: 18px; color: var(--text-secondary); font-size: 20px; line-height: 1.45; text-wrap: pretty; }
 
@@ -12,35 +12,35 @@
 .developer-path > li::before { content: counter(step); position: absolute; left: 0; top: -4px; display: grid; place-items: center; width: 40px; height: 40px; border: 1.5px solid var(--path); border-radius: 50%; background: var(--background); color: var(--path); font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .developer-path > li:not(:last-child)::after { content: ''; position: absolute; left: 19.5px; top: 44px; bottom: 4px; width: 1px; background: var(--line); }
 .developer-path > li:last-child { padding-bottom: 0; }
-.developer-path h2 { margin: 0 0 10px; font-size: 26px; line-height: 1.2; letter-spacing: -.02em; }
+.developer-path h2 { margin: 0 0 10px; font-size: 26px; line-height: 1.2; letter-spacing: -.2px; }
 .developer-lead { max-width: 48ch; margin: 0 0 20px; color: var(--text-secondary); font-size: 17px; line-height: 1.5; }
 .developer-hint { max-width: 52ch; margin: 16px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
 
 .start-developing .copy-button { min-height: 40px; padding: 8px 14px; font-size: 14px; }
-.start-developing .copy-button.button-primary { min-height: 52px; padding: 12px 24px; border-radius: 10px; font-size: 17px; }
+.start-developing .copy-button.button-primary { min-height: 52px; padding: 12px 24px; border-radius: var(--radius-sm); font-size: 17px; }
 .developer-path details { margin-top: 6px; }
 .developer-path .developer-hint + details { margin-top: 14px; }
 .developer-path summary { width: fit-content; padding: 6px 0; cursor: pointer; color: var(--accent); font-size: 15px; }
 .developer-path summary:hover { color: var(--accent-hover); }
 .developer-path summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
 .start-developing .starter-prompt { border: 0; border-radius: 0; background: transparent; overflow: visible; }
-.start-developing .starter-prompt pre, .start-developing .start-code pre { max-height: 320px; margin-top: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; }
+.start-developing .starter-prompt pre, .start-developing .start-code pre { max-height: 320px; margin-top: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; }
 .developer-setup p { max-width: 56ch; margin: 8px 0 16px; color: var(--muted); font-size: 15px; line-height: 1.55; }
 .developer-setup a:not(.button) { color: var(--accent); }
 .developer-setup .start-code { margin: 14px 0 12px; }
 .developer-setup-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* New or update: one segmented control instead of two cards. */
-.developer-task-choice { display: inline-flex; margin: 6px 0 22px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); }
-.developer-task-choice button { min-height: 44px; padding: 8px 18px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 16px; font-weight: 550; }
+.developer-task-choice { display: inline-flex; margin: 6px 0 22px; padding: 4px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--field); }
+.developer-task-choice button { min-height: 44px; padding: 8px 18px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted); font-size: 16px; font-weight: 500; }
 .developer-task-choice button:hover { color: var(--text); }
-.developer-task-choice button[aria-pressed="true"] { background: var(--surface-hover); color: var(--text); box-shadow: 0 1px 2px #0006; }
+.developer-task-choice button[aria-pressed="true"] { background: var(--surface-hover); color: var(--text); }
 .starter-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; }
 .starter-field-wide { grid-column: 1 / -1; }
 .start-developing .starter-field { gap: 8px; color: var(--text-secondary); font-size: 15px; }
 .start-developing .starter-field small { font-size: 13px; }
 /* 16px fields also keep iPhone Safari from zooming in on focus. */
-.start-developing .starter-field input, .start-developing .starter-field textarea, .start-developing .starter-field select { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: 10px; background-color: var(--field); color: var(--text); font: inherit; font-size: 16px; }
+.start-developing .starter-field input, .start-developing .starter-field textarea, .start-developing .starter-field select { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background-color: var(--field); color: var(--text); font: inherit; font-size: 16px; }
 .start-developing .starter-field select { padding-right: 42px; }
 .start-developing .starter-field textarea { min-height: 96px; line-height: 1.5; }
 .developer-prompt-actions { display: flex; flex-direction: row-reverse; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px 18px; margin: 22px 0 8px; }
@@ -54,7 +54,7 @@
 
 /* Reference, below the path: quieter than the steps, no boxes. */
 .developer-more { margin-top: 72px; padding-top: 40px; border-top: 1px solid var(--line); }
-.developer-more h2 { margin: 0 0 14px; font-size: 20px; letter-spacing: -.01em; }
+.developer-more h2 { margin: 0 0 14px; font-size: var(--text-lg); letter-spacing: -.2px; }
 .developer-skills { margin: 0 0 48px; padding: 0; border-top: 1px solid var(--line); list-style: none; }
 .developer-skills li { display: grid; grid-template-columns: minmax(0, 15em) minmax(0, 1fr); align-items: baseline; gap: 2px 20px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .developer-skills code { color: var(--text); font-size: 14px; overflow-wrap: anywhere; }
@@ -69,7 +69,10 @@
   .developer-path > li { padding: 0 0 44px 46px; }
   .developer-path > li::before { top: -2px; width: 32px; height: 32px; font-size: 15px; }
   .developer-path > li:not(:last-child)::after { left: 15.5px; top: 36px; }
-  .developer-path h2 { font-size: 22px; }
+  .developer-path h2 { font-size: 21px; margin-bottom: 8px; }
+  .developer-lead { margin-bottom: 16px; font-size: 16px; }
+  .developer-hint, .developer-path summary, .developer-setup p, .developer-prompt-actions > span { font-size: 14px; }
+  .developer-path summary { padding-block: 12px; line-height: 20px; }
   .start-developing .copy-button.button-primary { width: 100%; }
   .developer-task-choice { display: flex; }
   .developer-task-choice button { flex: 1; padding: 8px 10px; font-size: 15px; }
