@@ -2318,7 +2318,6 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .sidebar { box-shadow: inset -1px 0 var(--chrome-edge); }
   .app-toolbar { background: var(--background); border: 0; box-shadow: inset 0 -1px var(--chrome-edge); }
   .app-toolbar :is(.search, .configuration-button) { border: 0; box-shadow: none; }
-  .app-toolbar:has(> .search) .breadcrumb-home:not([aria-current]) > span { display: none; }
   .app-toolbar .search { background: var(--surface); box-shadow: inset 0 0 0 1px var(--chrome-edge); }
   .app-toolbar .search:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
   .app-toolbar .configuration-button:hover { background: var(--surface-hover); }
@@ -2388,6 +2387,9 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .detail-tabs { flex-wrap: wrap; gap: .25rem 1.25rem; }
   .detail-tabs button { min-height: 2.75rem; padding-block: .5rem; }
   .discovery-tools .sidebar-device strong, .detail-hero-with-resources .detail-intro .button { font-size: .875rem; }
+}
+@media (min-width: 601px) and (max-width: 1150px) {
+  .app-toolbar:has(> .search) .breadcrumb-home:not([aria-current]) > span { display: none; }
 }
 @media (600px < width <= 1024px) {
   .app-shell { --sidebar-width: 0px; grid-template-columns: minmax(0, 1fr); }
