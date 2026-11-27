@@ -73,7 +73,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .module-tile.is-add a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 100%; min-height: 168px; border: 1px dashed var(--control-border); border-radius: var(--radius-md); color: var(--muted); font-size: 11px; }
 .module-tile.is-add a:hover { border-color: var(--accent-line); color: var(--accent); }
 .module-tile.is-add strong { color: var(--text); font-size: 13px; }
-.module-tile.is-add small { padding-inline: 10px; font-size: var(--text-sm); line-height: 1.45; text-align: center; }
+@media (max-width: 600px) { .module-tile.is-add small { padding-inline: 10px; font-size: var(--text-sm); line-height: 1.45; text-align: center; } }
 .module-grid-save { margin-top: 14px; }
 @media (pointer: coarse), (max-width: 600px) { .module-tile-action.icon-button, .module-tile-action.text-button { min-width: 44px; height: 44px; } }
 /* Full width while a unit with the base is connected: the grid, then the sticky sync bar. */

@@ -144,7 +144,7 @@
   .device-facts { grid-template-columns: 1fr; gap: 2px; }
   .device-facts dd { margin-bottom: 10px; }
   /* The embedded hero's name is the only visible title here: the library's h1 is for screen readers on a phone. */
-  .device-hero-copy > h2 { font-size: var(--text-xl); line-height: 1.1; overflow-wrap: anywhere; }
+  .device-hero-copy > h2 { font-family: var(--display); font-size: var(--text-xl); font-weight: 800; line-height: 1.1; letter-spacing: -.03em; overflow-wrap: anywhere; }
   .device-stack > summary { min-height: 44px; align-content: center; }
   .device-start-links a { display: inline-flex; align-items: center; min-height: 44px; }
 }

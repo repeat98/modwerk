@@ -665,9 +665,9 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
 .forum-shoutbox.is-floating .shout-message { padding: 12px; }
 .forum-shoutbox.is-floating .shoutbox-composer p { font-size: 10px; }
 @media (max-width: 600px) {
-  .forum-chat-launcher { z-index: 55; right: 14px; bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .forum-chat-launcher { z-index: 55; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); }
   /* The top edge stays 16px below the app bar and clear of the status bar: 72px plus the top inset. */
-  .forum-shoutbox.is-floating { z-index: 55; right: 12px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 360px; max-height: calc(100dvh - 88px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
+  .forum-shoutbox.is-floating { z-index: 55; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 360px; max-width: calc(100vw - 32px); max-height: calc(100dvh - 88px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
   .shoutbox-heading :is(a, button) { min-height: 44px; }
   .forum-shoutbox.is-floating .shoutbox-heading > div:last-child button { width: 44px; }
   .shout-actions { width: 44px; }
@@ -706,8 +706,8 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
   .forum-thread-row { gap: 8px; }
   .forum-thread-summary { gap: 10px; }
   .forum-thread-summary > .forum-avatar { width: 30px; height: 30px; font-size: var(--text-xs); }
-  .forum-thread-tags { gap: 4px 8px; }
-  .forum-thread-tags a { display: inline-flex; align-items: center; min-height: 32px; }
+  .forum-thread-tags { gap: 0 8px; }
+  .forum-thread-tags a { display: inline-flex; align-items: center; min-height: 44px; }
   .forum-last-active a { min-height: 44px; }
   .forum-last-active a small { max-width: none; }
   .forum-page .forum-thread-heading h1 { font-size: 22px; }
