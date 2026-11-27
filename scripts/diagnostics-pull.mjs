@@ -55,6 +55,15 @@ const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username
   data.upload && 'command=' + data.upload.command, data.upload?.chunkOffset !== undefined && 'chunkOffset=' + data.upload.chunkOffset,
   data.upload?.remainingBytes !== undefined && 'remainingBytes=' + data.upload.remainingBytes,
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
+const problemLine = entry => {
+  const text = line(entry)
+  const { event, reason, client } = entry.data
+  if (event !== 'link_failed') return text
+  const details = [reason && 'reason=' + reason,
+    client?.browser && 'browser=' + client.browser + (client.major ? '/' + client.major : ''),
+    client?.os && 'os=' + client.os].filter(Boolean)
+  return details.length ? text + ' ' + details.join(' ') : text
+}
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
 /** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
 const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down', 'window open', 'meets a buffer'],
@@ -351,7 +360,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
   const saveFailures = new Set([...found.values()].flatMap(member => member.saveFailures ?? []))
-  const problems = events.filter(entry => !selection(entry) && (saveFailures.has(entry) || PROBLEMS.includes(entry.data.event) || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
+  const problems = events.filter(entry => !selection(entry) && (saveFailures.has(entry) || PROBLEMS.includes(entry.data.event) || entry.data.event === 'link_failed' || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const checks = Object.entries(Object.groupBy(events.filter(selection), entry => entry.username)).sort((a, b) => b[1].length - a[1].length)
   const days = Map.groupBy(counts, row => row.day)
@@ -381,7 +390,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),
     '', 'Self-test peaks are measured only while DSP modules run. Live load comes from the site while connected; the unit\'s log covers the time without it. Screen codes are stock input layers, keys stock key codes.',
-    '', `Problems (${problems.length}, newest first, up to 30):`, ...problems.slice(0, 30).map(entry => '  ' + line(entry)),
+    '', `Problems (${problems.length}, newest first, up to 30):`, ...problems.slice(0, 30).map(entry => '  ' + problemLine(entry)),
     ...checks.length ? ['', 'Card-build checks that refused a selection (on every module change; not failures): ' + checks.map(([name, rows]) => `@${name} ${rows.length}`).join(', ')] : [],
     '', `Stability per base (without @${OWNER}'s development unit; OS upgrades and reflashes left out; hours from the units' load logs):`,
     ...stabilityLines(found, events, versions),
