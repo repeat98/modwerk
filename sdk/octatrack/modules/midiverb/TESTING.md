@@ -18,6 +18,29 @@ Record what you ran, on which build and which unit, and what you saw. "Not teste
 
 ## On the unit
 
+- **0.2.0 on the owner's MKII, 27 Nov 2026** (OS 1.40C, development twin `46c30886` of main's base 0.8.2, built from `48f4a9b9c`; Dev17 bank C, Part 1 as loaded after the RAM boot, C04, 126 BPM). Every trial was rolled back. None logged a crash, stall, freeze or skipped track.
+  - *PROG stopped at 58 at first.* That is 0.1.0's last value, so 0.2.0's 43 new values could not be picked. For a listed module, `module:dev` takes the FX page recipe from the committed `src/engine/assets/descriptor-recipes.json`, and that still held 0.1.0's PROG: a count of 59, and 59 labels in `menu-recipes.json`. The packages below are built with the page derived from this manifest (PROG 102, BANK 3), with Midiverb's entry left out of that file for the build. The release regenerates both recipe files from source.
+  - *Timing.* The same program on T1 (core 1) and T5 (core 0) on FX2, each read against a NONE baseline. Each reading is the mean of three `stats` lines with the transport stopped; the effect runs either way.
+    - Readings with C04 playing were discarded: the same program read 422 and 600 on core 0 in two trials, because each trig and sample changes the load.
+    - Stopped, the readings repeat to 0.1 cycle. Cycles a sample an instance, core 1 / core 0:
+
+      | Programs | Core 1 / core 0 |
+      | --- | --- |
+      | Midiverb II LFO programs (#53, #55-#69) | 599.9-613.3 / 580.0-593.0 |
+      | Midiverb II #10 | 586.8 / 567.4 |
+      | Midiverb #1 | 444.6 / 429.9 |
+
+    - Core 1 runs about 3 % above core 0. The dearest program, #69 (595 modelled), reads 613.3 / 593.0 twice.
+    - Single readings went up to 631.9 (#64) and 622.2 (#61); both read 612.5 when repeated.
+    - Not timed stopped: #51 and #54. The timing script overshot their PROG values; playing, they read like the others.
+  - *Release build:* `npm run module:dev -- midiverb --listed --build-only --slots fx2 --cycles 632 --cycles-kind hardware --state 32 --buffer 15870`, with the derived page. Package `1c2e43f69e96e82b…`, 59,348 bytes, DSP 929 words. 632 is the highest single reading, rounded up; one instance may be charged 726.
+  - *Price and curve* (`npm run device:price -- --write --memory --curve T1,T3,T6,T7 --pick-pattern 2 --measure-pattern 4`, package `1c2e43f6`):
+    - At rest: frame +0, CPU +0.6.
+    - In use on T1 FX2: frame +1.5, CPU +2, DSP T1-4 +11. DSP T5-8 also read about +11, at rest and in use.
+    - Curve: first 1.6, each 1.6. Admitted alone on the empty pattern (longest frame 39.5 %) and the medium one (81.6 %), nothing dropped, no stalls.
+    - Module pool: 63,936 bytes.
+  - Not run yet: the test procedure and its edge cases, PROG and BANK by hand on each bank, a Part saved with 0.1.0, a listen.
+
 - **Trial, 25 Nov 2026, the owner's Octatrack** on flashed base `eb6679620d0c`, from commit ede56e7b6: package `midiverb.mwrm`, SHA-256 `8184ae0826318eced0dd1053b638dd58db4eb09097fd8ed0fb30c48b87dea653`, built by `npm run module:dev -- midiverb --slots fx2 --cycles 400 --cycles-kind executed --state 32 --buffer 15870`. The base admitted it and ran it as a RAM trial. The owner reported it "working great" (reported, not observed by the agent). Not run: the test procedure, its edge cases, scenes, locks, LFOs, several instances.
 - The first attempts were refused at verify, loader refusal 6 (RUNTIME_CYCLES): 824 declared cycles, then the builder's placeholder. One instance must fit beside seven stock slots on a core: 3,120 − 7 × 342 = 726 chip cycles, a draft's figure charged at 7/4, so at most 414 declared.
 

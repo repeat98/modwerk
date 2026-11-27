@@ -211,12 +211,12 @@
       "source": "evidence/performance.json"
     },
     "cpuPrice": {
-      "value": 1.1,
+      "value": 1.5,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
-      "date": "2026-11-25",
-      "conditions": "Dev17 bank C, Part 1 reloaded to its saved copy, stopped; picks on the empty C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7); owner's MKII, OS 1.40C; base 0.8.1 (development twin 4c7eb79b of eb667962), MKII; 3 readings of 8 s a state. Frame interrupt 34.9 % before, 35.7 % installed and used nowhere, 36 % on T1 FX2; CPU meter 57 % before, 57.8 % at rest, 54.8 % in use.",
+      "date": "2026-11-27",
+      "conditions": "Dev17 bank C, Part 1 as loaded after the RAM boot, stopped; picks on C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7; T2 and T4 play samples) at 126 BPM; owner's MKII, OS 1.40C; base 46c30886 (main 0.8.2 development twin of 48f4a9b9c), MKII; 3 readings of 8 s a state. Frame interrupt 35.6 % before, 35.6 % installed and used nowhere, 37.1 % on T1 FX2; CPU meter 51 % before, 51.6 % at rest, 53 % in use.",
       "source": "evidence/cpu-price.json"
     },
     "impact": {
