@@ -54,10 +54,11 @@ it('escapes catalog text in metadata and titles', () => {
 
 it.each(['./', '/octamod/'])('gives both Digi machines independent pages under %s', base => {
   for (const device of ['digitakt', 'digitone']) {
-    const mod = DIGI_MODS.find(mod => mod.device === device && mod.id === 'digihealth')
+    const id = { digitakt: 'digiutils', digitone: 'kitbank' }[device]
+    const mod = DIGI_MODS.find(mod => mod.device === device && mod.id === id)
     const page = digiModulePageHtml(html, mod, 'module-thumbnails/digi.jpg', base)
     const root = 'https://modwerk.app/' + (base.startsWith('/') ? 'octamod/' : '')
-    expect(page).toContain(`<link rel="canonical" href="${root}${device}/module/digihealth/" />`)
+    expect(page).toContain(`<link rel="canonical" href="${root}${device}/module/${id}/" />`)
     expect(page.match(/rel="canonical"/g)).toHaveLength(1)
     expect(page).toContain(`<base href="${base.startsWith('/') ? base : '../../../'}" />`)
     expect(page).toContain(digiModuleDocument(mod).version)

@@ -171,14 +171,14 @@ describe('module update subscriptions', () => {
     expect((await f.call('/modules/unknown/updates', 'PATCH', { enabled: true }, owner.session)).status).toBe(404)
     expect((await f.call('/modules/miniverb/updates', 'PATCH', { enabled: 1 }, owner.session)).status).toBe(400)
     expect((await f.call('/modules/miniverb/updates', 'PATCH', { enabled: true, userId: other.id }, owner.session)).status).toBe(400)
-    for (const id of ['miniverb', 'digitakt-digihealth', 'digitone-digihealth']) {
+    for (const id of ['miniverb', 'digitakt-digiutils', 'digitone-kitbank']) {
       for (let i = 0; i < 2; i++) expect(await (await f.call('/modules/' + id + '/updates', 'PATCH', { enabled: true }, owner.session)).json()).toMatchObject({ enabled: true, emailEnabled: true, emailAvailable: true })
       expect(await (await f.call('/modules/' + id + '/updates', 'GET', undefined, other.session)).json()).toMatchObject({ enabled: false })
     }
     expect(f.db.prepare('SELECT COUNT(*) AS count FROM module_update_subscriptions').get()!.count).toBe(3)
     expect(f.db.prepare('SELECT COUNT(*) AS count FROM forum_follows').get()!.count).toBe(0)
-    await f.publish(release('miniverb'), release('digitakt-digihealth'), release('digitone-digihealth'))
-    expect((await f.items(owner.session)).map(item => item.module_id).sort()).toEqual(['digitakt-digihealth', 'digitone-digihealth', 'miniverb'])
+    await f.publish(release('miniverb'), release('digitakt-digiutils'), release('digitone-kitbank'))
+    expect((await f.items(owner.session)).map(item => item.module_id).sort()).toEqual(['digitakt-digiutils', 'digitone-kitbank', 'miniverb'])
     expect(await f.items(other.session)).toEqual([])
     await f.call('/modules/miniverb/updates', 'PATCH', { enabled: false }, owner.session)
     await f.publish(release('miniverb', '11.0.0'))
@@ -236,7 +236,7 @@ describe('module update subscriptions', () => {
   it('reads only the live inventory, supports repository URLs, and rejects malformed releases before writes', async () => {
     const { db, adapter } = testDatabase(); databases.push(db)
     const env = { APP_URL: 'https://example.test/modwerk' }
-    const fetch = vi.fn().mockResolvedValueOnce(new Response('', { status: 404 })).mockResolvedValueOnce(Response.json(manifest([release()]))).mockResolvedValueOnce(Response.json(manifest([release('miniverb', '11.0.0'), { ...release('digitakt-digihealth'), version: 'invalid' }])))
+    const fetch = vi.fn().mockResolvedValueOnce(new Response('', { status: 404 })).mockResolvedValueOnce(Response.json(manifest([release()]))).mockResolvedValueOnce(Response.json(manifest([release('miniverb', '11.0.0'), { ...release('digitakt-digiutils'), version: 'invalid' }])))
     vi.stubGlobal('fetch', fetch)
     expect(await syncModuleReleases(env, adapter)).toEqual({ checked: 0, notified: 0 })
     expect(await syncModuleReleases(env, adapter)).toEqual({ checked: 1, notified: 0 })
@@ -330,14 +330,14 @@ describe('module update subscriptions', () => {
 
   it('collects different modules for a day and enforces daily spacing for existing six-hour preferences', async () => {
     const f = await fixture(), owner = await f.member('dailyfan')
-    const ids = ['miniverb', 'digitakt-digihealth', 'digitone-digihealth']
+    const ids = ['miniverb', 'digitakt-digiutils', 'digitone-kitbank']
     for (const id of ids) await f.call('/modules/' + id + '/updates', 'PATCH', { enabled: true }, owner.session)
     await f.call('/notifications/preferences', 'PATCH', { frequency: 'hours' }, owner.session)
     await f.publish(...ids.map(id => release(id)))
     const base = Date.now()
     const stamp = (minutes: number) => new Date(base + minutes * 60000).toISOString().replace('T', ' ').slice(0, 19)
-    f.db.prepare("UPDATE notifications SET created_at=? WHERE module_id='digitakt-digihealth'").run(stamp(6 * 60))
-    f.db.prepare("UPDATE notifications SET created_at=? WHERE module_id='digitone-digihealth'").run(stamp(14 * 60))
+    f.db.prepare("UPDATE notifications SET created_at=? WHERE module_id='digitakt-digiutils'").run(stamp(6 * 60))
+    f.db.prepare("UPDATE notifications SET created_at=? WHERE module_id='digitone-kitbank'").run(stamp(14 * 60))
     expect(await f.digests(15)).toEqual({ sent: 0 })
     expect(await f.digests(23 * 60)).toEqual({ sent: 0 })
     expect(await f.digests()).toEqual({ sent: 1 })
@@ -351,8 +351,8 @@ describe('module update subscriptions', () => {
     expect(f.db.prepare('SELECT last_module_digest_at FROM notification_preferences WHERE user_id=?').get(owner.id)!.last_module_digest_at).toBe(last)
     // A day after the last digest is not enough: the release collects for its own day first.
     expect(await f.digests(48 * 60 + 16)).toEqual({ sent: 0 })
-    await f.publish(release('digitakt-digihealth', '11.0.0'))
-    f.db.prepare("UPDATE notifications SET created_at=? WHERE module_id='digitakt-digihealth' AND module_version='11.0.0'").run(stamp(40 * 60))
+    await f.publish(release('digitakt-digiutils', '11.0.0'))
+    f.db.prepare("UPDATE notifications SET created_at=? WHERE module_id='digitakt-digiutils' AND module_version='11.0.0'").run(stamp(40 * 60))
     expect(await f.digests(49 * 60 + 15)).toEqual({ sent: 1 })
     expect(sent[0].subject).toBe('Your daily Modwerk module updates (2)')
     expect(sent[0].text).toContain('Mini Verb 11.0.0')
@@ -439,7 +439,7 @@ describe('module update subscriptions', () => {
     expect(f.db.prepare('SELECT COUNT(*) AS count FROM notifications WHERE seen=0').get()!.count).toBe(501)
   })
 
-  it.each(['digitakt-digihealth', 'digitone-digihealth'])('includes the version-matched changelog and instrument link for %s', async id => {
+  it.each(['digitakt-digiutils', 'digitone-kitbank'])('includes the version-matched changelog and instrument link for %s', async id => {
     const f = await fixture(), owner = await f.member('digifan')
     await f.call('/modules/' + id + '/updates', 'PATCH', { enabled: true }, owner.session)
     const published = release(id)
@@ -523,15 +523,15 @@ describe('new module release announcements', () => {
   it('announces each module once despite retries, newer versions and reintroduction, including across instruments', async () => {
     const { db, adapter } = testDatabase(); databases.push(db)
     await recordModuleReleases(adapter, [release('miniverb')])
-    const modules = [release('vector'), release('digitakt-digihealth'), release('digitone-digihealth')]
+    const modules = [release('vector'), release('digitakt-digiutils'), release('digitone-kitbank')]
     await recordModuleReleases(adapter, modules); await recordModuleReleases(adapter, modules)
     await recordModuleReleases(adapter, [release('vector', '11.0.0')])
     await recordModuleReleases(adapter, [release('vector', '9.0.0')])
     db.prepare('DELETE FROM module_release_state WHERE module_id=?').run('vector')
     await recordModuleReleases(adapter, [release('vector', '11.0.0')])
     expect(db.prepare('SELECT module_id,url FROM announcements ORDER BY module_id').all()).toEqual([
-      { module_id: 'digitakt-digihealth', url: '#digitakt/module/digihealth' },
-      { module_id: 'digitone-digihealth', url: '#digitone/module/digihealth' },
+      { module_id: 'digitakt-digiutils', url: '#digitakt/module/digiutils' },
+      { module_id: 'digitone-kitbank', url: '#digitone/module/kitbank' },
       { module_id: 'vector', url: '#module/vector' },
     ])
   })
@@ -551,8 +551,11 @@ describe('new module release announcements', () => {
 
   it('announces the missed Digitakt and Digitone imports exactly as the automatic announcement would, once, and only where members exist', async () => {
     const migration = readFileSync(new URL('../../migrations/0039_announce_digitakt_digitone_imports.sql', import.meta.url), 'utf8')
-    const imports = [['digitakt-digichain', '1.6.0'], ['digitakt-digieq', '1.0.0'], ['digitakt-digimatrix', '1.0.0'], ['digitakt-digimono', '0.13.0'], ['digitakt-digipoly', '2.0.0'], ['digitakt-digiutils', '1.9.0'], ['digitone-digitables', '1.3.0']]
+    const imports = [['digitakt-digichain', '1.6.0'], ['digitakt-digieq', '1.0.0'], ['digitakt-digimatrix', '1.0.0'], ['digitakt-digimono', '0.13.0'], ['digitakt-digipoly', '2.0.0'], ['digitakt-digiutils', '1.9.0']]
       .map(([id, version]) => release(id, version + '-experimental'))
+    // digitables has left the library since; the migration still names it, so its release is written out here.
+    const version = '1.3.0-experimental'
+    imports.push({ id: 'digitone-digitables', version, name: 'digitables', href: '#digitone/module/digitables', notes: { version, date: '2026-10-08', changes: ['Correct playback behavior for digitone-digitables v' + version + '.'] } })
     const rows = (db: DatabaseSync) => db.prepare('SELECT slug,title,body,url,module_id,created_by FROM announcements ORDER BY slug').all()
     // The automatic path, on a library that was already baselined, is the reference for the text and keys.
     const automatic = testDatabase(); databases.push(automatic.db)

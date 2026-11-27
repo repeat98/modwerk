@@ -164,11 +164,12 @@ describe('live library selection details', () => {
     expect(details.textContent).toContain('Estimated memory')
     expect(details.querySelector('a[href="#digitakt/configuration"]')).not.toBeNull()
     details.open = true
-    await render(['digislicer', 'cc-names', 'midi-expression', 'euclidean', 'digineighbor', 'digistring'])
+    // Without Digi Mono, the library's sixteen largest Digitakt modules are what it takes to pass the shared area.
+    await render(['cc-names', 'midi-expression', 'euclidean', 'digiperform', 'digistring', 'live-looper', 'dt-fm', 'digieq', 'digiutils', 'digisophie', 'sample-tools', 'crossfader', 'ram-machines', 'digimatrix', 'realunits', 'digipoly'])
     expect(details.open).toBe(true)
     expect(details.textContent).toContain('Over the shared memory limit')
     expect(details.textContent).not.toContain('Digi Mono and STRING')
-    await render(['digislicer', 'digineighbor'])
+    await render(['digisophie', 'digistring'])
     expect(summary.textContent).toBe('Selection details')
     expect(details.textContent).toContain('All stock FX kept')
   })

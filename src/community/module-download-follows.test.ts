@@ -19,7 +19,7 @@ async function fixture() {
 }
 
 describe('automatic download update follows', () => {
-  it.each(['miniverb', 'digitakt-digihealth', 'digitone-digihealth'])('follows %s once and preserves an explicit opt-out until manually re-enabled', async id => {
+  it.each(['miniverb', 'digitakt-digiutils', 'digitone-kitbank'])('follows %s once and preserves an explicit opt-out until manually re-enabled', async id => {
     const { call, db, user, token } = await fixture()
     const download = () => call('/modules/' + id + '/download', 'POST', {}, token)
     expect(await (await download()).json()).toEqual({ enabled: true })

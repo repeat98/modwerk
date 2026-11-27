@@ -58,7 +58,7 @@ describe('the vendored elekloader catalog', () => {
     expect(digiDownloadsOpen('constructor', true)).toBe(false)
   })
   it('reports modules without a file for the chosen release', () => {
-    expect(planBuild('digitakt', '1.53', ['fx-track', 'digihealth'])).toMatchObject({ missing: ['fx-track'], mods: [{ id: 'digihealth', os: '1.53' }] })
+    expect(planBuild('digitakt', '1.53', ['fx-track', 'digiutils'])).toMatchObject({ missing: ['fx-track'], mods: [{ id: 'digiutils', os: '1.53' }] })
   })
   it('refuses to fall back to the original Digitakt II core when the base pin is missing', () => {
     const catalog: Catalog = {
@@ -416,10 +416,10 @@ describe('preparing a build', () => {
   const stock = new File([new Uint8Array(4)], 'Digitakt_OS1.53.syx')
   it('adds each catalog file and ticks the catalog\'s core for the release', async () => {
     const { client, raw } = fakeClient()
-    const prepared = await prepareBuild(client, { machine: 'digitakt', release: '1.53', stock, moduleIds: ['digihealth', 'digislicer'] })
+    const prepared = await prepareBuild(client, { machine: 'digitakt', release: '1.53', stock, moduleIds: ['digiutils', 'digimatrix'] })
     expect(prepared.ok).toBe(true)
-    expect(raw.addCatalogMod.mock.calls.map(call => call[0])).toEqual(['digihealth-1.0.elemod', 'digislicer-2.1.elemod'])
-    expect(prepared.ok && prepared.enabled).toEqual(['/work/core/core-4.4.elemod', '/work/mods/digihealth-1.0.elemod', '/work/mods/digislicer-2.1.elemod'])
+    expect(raw.addCatalogMod.mock.calls.map(call => call[0])).toEqual(['digiutils-1.9a.elemod', 'digimatrix-1.0b.elemod'])
+    expect(prepared.ok && prepared.enabled).toEqual(['/work/core/core-4.4.elemod', '/work/mods/digimatrix-1.0b.elemod', '/work/mods/digiutils-1.9a.elemod'])
   })
   it('builds the core alone when nothing is selected', async () => {
     const { client, raw } = fakeClient()
@@ -441,8 +441,8 @@ describe('preparing a build', () => {
     expect(check).toHaveBeenCalledTimes(2)
   })
   it('passes on the builder’s refusals without building', async () => {
-    const refused = fakeClient({ check: vi.fn(async () => ({ ok: false, headline: 'Conflicts: the firmware cannot be built', problems: ['NEIGHBOR and SOPHIE patch the same bytes'] })) })
-    expect(await prepareBuild(refused.client, { machine: 'digitakt', release: '1.53', stock, moduleIds: ['digineighbor', 'digisophie'] })).toMatchObject({ ok: false, error: 'Conflicts: the firmware cannot be built' })
+    const refused = fakeClient({ check: vi.fn(async () => ({ ok: false, headline: 'Conflicts: the firmware cannot be built', problems: ['Digi Poly and SOPHIE patch the same bytes'] })) })
+    expect(await prepareBuild(refused.client, { machine: 'digitakt', release: '1.53', stock, moduleIds: ['digipoly', 'digisophie'] })).toMatchObject({ ok: false, error: 'Conflicts: the firmware cannot be built' })
     const stockRefused = fakeClient({ setStock: vi.fn(async () => ({ ok: false, error: 'Not a known stock OS file.' })) })
     expect(await prepareBuild(stockRefused.client, { machine: 'digitakt', release: '1.53', stock, moduleIds: [] })).toEqual({ ok: false, error: 'Not a known stock OS file.' })
     const otherOs = fakeClient()

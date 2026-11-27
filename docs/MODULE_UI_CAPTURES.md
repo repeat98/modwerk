@@ -304,7 +304,7 @@ capture script in an isolated sandbox with network and user credentials denied
 python3 scripts/capture-digi-module-ui.py \
   --emulator /path/to/reviewed/digiemu \
   --firmware /private/capture/custom.syx \
-  --plan sdk/digitakt/modules/digislicer/media/capture-plan.txt \
+  --plan sdk/digitakt/modules/digimono/media/capture-plan.txt \
   --out /private/capture/new-session --fixture-loop
 ```
 

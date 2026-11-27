@@ -156,7 +156,7 @@
       "Selecting another pattern while the sequencer is stopped reloads the offsets at once; while it plays, the new pattern’s knobs take over when it starts. This is detected from the audio engine’s own pattern bytes, and the author has seen it work on a unit.",
       "After the stock chord, metronome, scale, microtiming or retrig screens, press TRIG twice to open the Perform page again.",
       "The Perform page opens from the audio tracks’ TRIG page; on a MIDI track TRIG keeps its stock job. SETTINGS > PERFORM EDIT works from any track.",
-      "Heavy Digi Mono machines (ENS, VO, POLY SIN) with Overbridge connected load the Digitakt close to its limit, on stock pages too; the author measured the Perform page within about a point of a stock page there. digihealth’s FAST AUDIO gives more headroom.",
+      "Heavy Digi Mono machines (ENS, VO, POLY SIN) with Overbridge connected load the Digitakt close to its limit, on stock pages too; the author measured the Perform page within about a point of a stock page there. digihealth’s FAST AUDIO, which gave more headroom, is no longer in the library.",
       "Built for OS 1.53 and 1.54. The author’s hardware observations, with the OS release each was made on, are in TESTING.md."
     ]
   },

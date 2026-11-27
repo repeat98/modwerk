@@ -23,9 +23,9 @@ describe('downloaded module guides', () => {
       expect(guide.audio.every(item => item.captureType === 'audio')).toBe(true)
       expect([...guide.screenshots, ...guide.audio].map(item => item.path).sort()).toEqual(moduleMediaDocument(module.id)!.media.map(item => item.path).sort())
     }
-    const [digitakt, digitone] = builtModules(['digitakt-digihealth', 'digitone-digihealth'])
-    expect(downloadedModuleGuide(digitakt)?.thumbnail).toContain('/digitakt-digihealth/' + digitakt.version + '/')
-    expect(downloadedModuleGuide(digitone)?.thumbnail).toContain('/digitone-digihealth/' + digitone.version + '/')
+    const [digitakt, digitone] = builtModules(['digitakt-digiutils', 'digitone-kitbank'])
+    expect(downloadedModuleGuide(digitakt)?.thumbnail).toContain('/digitakt-digiutils/' + digitakt.version + '/')
+    expect(downloadedModuleGuide(digitone)?.thumbnail).toContain('/digitone-kitbank/' + digitone.version + '/')
   })
   it('does not substitute current instructions or screenshots for an older or unknown build', () => {
     expect(downloadedModuleGuide({ id: 'miniverb', name: 'Mini Verb', version: '0.1.1-experimental' })).toBeUndefined()
@@ -50,7 +50,7 @@ describe('downloaded module guides', () => {
     }
   })
   it('gives longer guides titled first tests without losing their full instructions', () => {
-    for (const module of builtModules(['vector', 'synth', 'digitakt-digislicer', 'digitakt-digineighbor', 'digitakt-digisophie', 'digitakt-digimono', 'digitakt-digiutils'])) {
+    for (const module of builtModules(['vector', 'synth', 'digitakt-digisophie', 'digitakt-digimono', 'digitakt-digiutils'])) {
       const guide = downloadedModuleGuide(module)!
       expect(guide.hasQuickTest, module.id).toBe(true)
       expect(guide.steps.every(step => step.title && step.text), module.id).toBe(true)
@@ -60,10 +60,10 @@ describe('downloaded module guides', () => {
       expect(html, module.id).toContain('Full instructions &amp; more controls')
       for (const step of guide.usage) expect(html, module.id).toContain(renderToStaticMarkup(createElement('li', null, step)))
     }
-    const [slicer, sophie, neighbor] = builtModules(['digitakt-digislicer', 'digitakt-digisophie', 'digitakt-digineighbor'])
-    expect(downloadedModuleGuide(slicer)?.steps.map(step => step.text).join(' ')).toContain('wait at least one second')
+    const [mono, sophie, utils] = builtModules(['digitakt-digimono', 'digitakt-digisophie', 'digitakt-digiutils'])
+    expect(downloadedModuleGuide(mono)?.steps.map(step => step.text).join(' ')).toContain('Your build needs Digi Mono and digichain')
     expect(downloadedModuleGuide(sophie)?.steps.map(step => step.text).join(' ')).toContain('finite DEC; avoid INF')
-    expect(downloadedModuleGuide(neighbor)?.steps.map(step => step.text).join(' ')).toContain('restore T1 AMP VOL')
+    expect(downloadedModuleGuide(utils)?.steps.map(step => step.text).join(' ')).toContain('a short SONG press opens the normal popup')
   })
 })
 

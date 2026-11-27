@@ -130,7 +130,7 @@ describe('module detail parity across machines', () => {
 
   it('offers the report form on both Digi machines with public delivery, private configuration, and machine-specific fields', () => {
     for (const machine of ['digitakt', 'digitone'] as const) {
-      const mod = DIGI_MODS.find(mod => mod.device === machine && mod.id === 'digihealth')!
+      const mod = DIGI_MODS.find(mod => mod.device === machine && mod.id === { digitakt: 'digiutils', digitone: 'kitbank' }[machine])!
       const html = render(digiPage(mod), member)
       for (const name of ['title', 'model', 'flash', 'os', 'moduleVersion', 'steps', 'expected', 'actual']) {
         expect(html).toContain('name="' + name + '"')

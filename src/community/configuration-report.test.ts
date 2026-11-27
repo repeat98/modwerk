@@ -18,9 +18,10 @@ describe('which modules a configuration report is about', () => {
   it('lists the catalog modules by community id and leaves out any the catalog does not have', () => {
     expect(catalogModules('octatrack', [{ id: 'miniverb', version: '0.1.0' }, { id: 'removed-long-ago', version: '1.0.0' }])).toEqual([{ id: 'miniverb', moduleId: 'miniverb', name: communityModule('miniverb')!.name, version: '0.1.0' }])
     // Digitakt modules are known by their native id in a configuration, and by machine-prefixed id everywhere else.
-    expect(catalogModules('digitakt', [{ id: 'digihealth', version: '1.0.0' }]).map(item => item.id)).toEqual(['digitakt-digihealth'])
-    expect(catalogModules('digitone', [{ id: 'digihealth', version: '1.0.0' }]).map(item => item.id)).toEqual(['digitone-digihealth'])
-    expect(catalogModules('octatrack', [{ id: 'digihealth', version: '1.0.0' }])).toEqual([])
+    expect(catalogModules('digitakt', [{ id: 'digiutils', version: '1.0.0' }]).map(item => item.id)).toEqual(['digitakt-digiutils'])
+    expect(catalogModules('digitone', [{ id: 'kitbank', version: '1.0.0' }]).map(item => item.id)).toEqual(['digitone-kitbank'])
+    expect(catalogModules('digitone', [{ id: 'digiutils', version: '1.0.0' }])).toEqual([])
+    expect(catalogModules('octatrack', [{ id: 'digiutils', version: '1.0.0' }])).toEqual([])
   })
 
   it('takes the modules from a log when there is one, and from the reporter otherwise', () => {
@@ -37,8 +38,8 @@ describe('which modules a configuration report is about', () => {
   })
 
   it('validates a Digitakt configuration with the machine’s own rules and refuses a log for it', () => {
-    const device = DEVICES_BY_ID.digitakt, base = { machine: 'digitakt', model: device.variants?.[0] ?? device.name, flash: 'flashed', os: device.firmware!.releases[0], moduleVersion: '1.0.0', modules: [{ id: 'digihealth', version: '1.0.0' }], keepStockFx2: null, build: '' }
-    expect(validateConfigurationReportContext(base).modules.map(item => item.id)).toEqual(['digitakt-digihealth'])
+    const device = DEVICES_BY_ID.digitakt, base = { machine: 'digitakt', model: device.variants?.[0] ?? device.name, flash: 'flashed', os: device.firmware!.releases[0], moduleVersion: '1.0.0', modules: [{ id: 'digiutils', version: '1.0.0' }], keepStockFx2: null, build: '' }
+    expect(validateConfigurationReportContext(base).modules.map(item => item.id)).toEqual(['digitakt-digiutils'])
     expect(() => validateConfigurationReportContext({ ...base, os: 'not-an-os' })).toThrow(IssueInputError)
     expect(() => validateConfigurationReportContext({ ...base, machine: 'syntakt' })).toThrow(IssueInputError)
     expect(() => validateConfigurationReportContext(base, log.summary)).toThrow('structured reports only')

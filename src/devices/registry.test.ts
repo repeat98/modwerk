@@ -56,26 +56,27 @@ describe('digi combination estimate', () => {
     expect(estimateCombination('analog-rytm-mkii', ['ctrl-all', 'analog-bd']).unmeasured).toEqual([])
   })
   it('fits small sets and rejects sets over the shared area', () => {
-    expect(estimateCombination('digitakt', ['digineighbor', 'digisophie', 'digihealth']).fits).toBe(true)
-    expect(estimateCombination('digitakt', ['digislicer', 'digineighbor']).fits).toBe(true)
-    expect(estimateCombination('digitakt', ['digislicer', 'digineighbor', 'digisophie', 'digihealth']).fits).toBe(true)
-    expect(estimateCombination('digitakt', ['digislicer', 'cc-names', 'midi-expression', 'euclidean', 'digineighbor', 'digistring']).fits).toBe(false)
+    expect(estimateCombination('digitakt', ['digistring', 'digisophie', 'digiutils']).fits).toBe(true)
+    expect(estimateCombination('digitakt', ['digisophie', 'digistring']).fits).toBe(true)
+    expect(estimateCombination('digitakt', ['digistring', 'digisophie', 'digiutils', 'euclidean']).fits).toBe(true)
+    // Without Digi Mono, the library's sixteen largest Digitakt modules are what it takes to pass the shared area.
+    expect(estimateCombination('digitakt', ['cc-names', 'midi-expression', 'euclidean', 'digiperform', 'digistring', 'live-looper', 'dt-fm', 'digieq', 'digiutils', 'digisophie', 'sample-tools', 'crossfader', 'ram-machines', 'digimatrix', 'realunits', 'digipoly']).fits).toBe(false)
   })
 
-  it('keeps machine slots apart between slicer and neighbor', () => {
-    const estimate = estimateCombination('digitakt', ['digislicer', 'digineighbor'])
+  it('keeps machine slots apart between SOPHIE and STRING', () => {
+    const estimate = estimateCombination('digitakt', ['digisophie', 'digistring'])
     expect(estimate.clashes).toEqual([])
-    expect(estimate.usedBytes).toBe(92190 + 26712 + 4096)
+    expect(estimate.usedBytes).toBe(8528 + 24293 + 4096)
     expect(estimate.compatibleReleases).toEqual(['1.53', '1.54'])
   })
 
-  it('refuses neighbor and sophie even though their memory and machine slots fit', () => {
-    const estimate = estimateCombination('digitakt', ['digineighbor', 'digisophie'])
+  it('refuses Digi Poly and SOPHIE even though their memory and machine slots fit', () => {
+    const estimate = estimateCombination('digitakt', ['digipoly', 'digisophie'])
     expect(estimate.fits).toBe(true)
     expect(estimate.compatibleReleases).toEqual([])
-    // Since SOPHIE 1.2.0 their firmware changes meet in Machine Pages, which this estimate does not expand; the declared conflict refuses them.
+    // Their own firmware changes do not overlap; the conflict Digi Poly declares refuses them.
     expect(estimate.clashes).toEqual([
-      { claim: 'marked as incompatible by their authors', mods: ['NEIGHBOR', 'SOPHIE'] },
+      { claim: 'marked as incompatible by their authors', mods: ['Digi Poly', 'SOPHIE'] },
     ])
   })
 
@@ -98,12 +99,12 @@ describe('digi combination estimate', () => {
   })
 
   it('refuses two mods whose own firmware changes overlap', () => {
-    const estimate = estimateCombination('digitakt', ['digislicer', 'sample-tools'])
+    const estimate = estimateCombination('digitakt', ['digimono', 'sample-tools'])
     expect(estimate.compatibleReleases).toEqual([])
     expect(estimate.clashes).toEqual([
-      { claim: 'marked as incompatible by their authors', mods: ['DIGISLICER', 'Sample Snap and Crossfade'] },
-      { claim: 'overlapping firmware changes in OS 1.53', mods: ['DIGISLICER', 'Sample Snap and Crossfade'] },
-      { claim: 'overlapping firmware changes in OS 1.54', mods: ['DIGISLICER', 'Sample Snap and Crossfade'] },
+      { claim: 'marked as incompatible by their authors', mods: ['Digi Mono', 'Sample Snap and Crossfade'] },
+      { claim: 'overlapping firmware changes in OS 1.53', mods: ['Digi Mono', 'Sample Snap and Crossfade'] },
+      { claim: 'overlapping firmware changes in OS 1.54', mods: ['Digi Mono', 'Sample Snap and Crossfade'] },
     ])
   })
 
@@ -122,13 +123,14 @@ describe('digi combination estimate', () => {
     DIGI_MODS.push(
       { ...base, id: 'range-a', title: 'A', releases: ['1.53', '1.54'], patchSites: { '1.53': [{ addr: '0x40001000', len: 8 }], '1.54': [{ addr: '0x40001000', len: 8 }] } },
       { ...base, id: 'range-b', title: 'B', releases: ['1.53', '1.54'], patchSites: { '1.53': [{ addr: '0x40001006', len: 8 }], '1.54': [{ addr: '0x40001008', len: 8 }] } },
+      { ...base, device: 'digitone', id: 'range-a', title: 'A', ramBytes: 4500, releases: ['1.44'], patchSites: {} },
     )
     try {
       expect(estimateCombination('digitakt', ['range-a', 'range-b']).compatibleReleases).toEqual(['1.54'])
       expect(estimateCombination('digitakt', ['range-a', 'range-b'], '1.53').clashes).toHaveLength(1)
       expect(estimateCombination('digitakt', ['range-a', 'range-b'], '1.54').clashes).toEqual([])
-      expect(estimateCombination('digitakt', ['digihealth']).usedBytes).toBe(5672 + 4096)
-      expect(estimateCombination('digitone', ['digihealth']).usedBytes).toBe(4500 + 4096)
+      expect(estimateCombination('digitakt', ['range-a']).usedBytes).toBe(base.ramBytes + 4096)
+      expect(estimateCombination('digitone', ['range-a']).usedBytes).toBe(4500 + 4096)
       expect(estimateCombination('digitakt', ['range-a'], '1.44').clashes[0].claim).toBe('no shared supported OS release')
     } finally { DIGI_MODS.splice(0, DIGI_MODS.length, ...original) }
   })

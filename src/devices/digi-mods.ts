@@ -127,6 +127,8 @@ export function categorySlug(category: string) { return category.toLowerCase() }
 // library adds its id here in the same change.
 export const RETIRED_DIGI_MODULE_IDS: Readonly<Partial<Record<DigiMachine, readonly string[]>>> = {
   'analog-rytm-mkii': ['pipo-loop', 'improved-performance'], // #1650 (16 November 2026), #1944 (21 November 2026)
+  digitakt: ['digihealth', 'digineighbor', 'digislicer'], // withdrawn 27 November 2026
+  digitone: ['digihealth', 'digitables', 'digihoard', 'digiprism', 'digireel', 'digiswarm', 'digitide', 'digitriad'], // withdrawn 27 November 2026
 }
 export function withoutRetiredDigiModules(device: DigiMachine, ids: readonly string[]): string[] {
   const retired = RETIRED_DIGI_MODULE_IDS[device] ?? []

@@ -19,9 +19,9 @@ function render(session: Session, ids: string[]) {
 
 describe('after a firmware download', () => {
   it('names the catalog modules of a build with the versions the build used', () => {
-    const miniverb = communityModule('miniverb')!, digi = communityModule('digitakt-digihealth')!
+    const miniverb = communityModule('miniverb')!, digi = communityModule('digitakt-digiutils')!
     expect(builtModules(['miniverb', 'not-a-module'], { miniverb: '9.9.9' })).toEqual([{ id: 'miniverb', name: miniverb.name, version: '9.9.9' }])
-    expect(builtModules(['digitakt-digihealth'])).toEqual([{ id: 'digitakt-digihealth', name: digi.name, version: digi.version }])
+    expect(builtModules(['digitakt-digiutils'])).toEqual([{ id: 'digitakt-digiutils', name: digi.name, version: digi.version }])
   })
   it('writes a hardware report that names the unit, the OS and the rest of the build', () => {
     const [verb, echo] = [{ id: 'a', name: 'Verb', version: '1.0.0' }, { id: 'b', name: 'Echo', version: '0.2.0' }]
@@ -79,9 +79,9 @@ describe('after a firmware download', () => {
     expect(html).toContain('<option value="usb">Running modules loaded over USB</option>')
   })
   it('prefills machine-specific reports with native IDs and the downloaded OS and version', () => {
-    const module = communityModule('digitakt-digihealth')!
+    const module = communityModule('digitakt-digiutils')!
     const workspace = downloadedReportContext({ machine: 'Digitakt', os: '1.54', modules: [{ id: module.id, name: module.name, version: '0.1.0' }] })
-    expect(workspace.modules).toEqual([{ id: 'digihealth', version: '0.1.0' }])
+    expect(workspace.modules).toEqual([{ id: 'digiutils', version: '0.1.0' }])
     const html = renderToStaticMarkup(createElement(CommunityContext.Provider, { value: { session: member, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } }, createElement(DigiIssueReport, { id: module.id, embedded: true, workspaceContext: workspace, baseOs: '1.54', moduleVersion: '0.1.0' })))
     expect(html).toContain('<option selected="">1.54</option>')
     expect(html).toContain('name="moduleVersion"')

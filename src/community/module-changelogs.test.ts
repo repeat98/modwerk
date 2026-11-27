@@ -61,7 +61,7 @@ describe('module release notes', () => {
     expect(mergeModuleReleases(notes)).toHaveLength(2)
   })
 
-  it.each(['euclid', 'digitakt-digieq', 'digitone-digitables'])('renders authored changes for %s before the history service responds', id => {
+  it.each(['euclid', 'digitakt-digieq', 'digitakt-digiutils'])('renders authored changes for %s before the history service responds', id => {
     const html = renderToStaticMarkup(createElement(ModuleChangelog, { id }))
     expect(html).toContain('module-release-notes')
     expect(html).toContain('Current version')
