@@ -41,15 +41,21 @@
 #define UF_UNCACHED(p) ((volatile uint8_t *)((uintptr_t)(p) + 0x08000000u))
 #define UF_IMAGE_ADDRESS(p) ((uint32_t)(uintptr_t)(p))
 #define UF_CALL(handler) (((unsigned (*)(void))(handler))())
+/* Stock's own controller routines (OS 1.40C): the bus reset (statuses, endpoint flush, its send ring, the control state)
+ * and the start (device mode, the control endpoint's queue heads, run/stop, the interrupts it takes). */
+#define UF_STOCK_RESET() (((void (*)(void))0x4001d6b8u)())
+#define UF_STOCK_START() (((void (*)(void))0x4001d630u)())
 #endif
 int modwerk_machine_stopped(void);
 int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open */
 
 #define UF_USBCMD 0xfc0b0140u      /* bit 0, run/stop: the pull-up */
 #define UF_PORTSC1 0xfc0b0184u
+#define UF_FRINDEX 0xfc0b014cu     /* advances with every frame the host sends */
+#define UF_ULPIVIEW 0xfc0b0170u    /* the ULPI transceiver's viewport: bit 31 wakes it */
+#define UF_SUSPENDED 0x80u         /* PORTSC1.SUSP: the host suspended the unit */
 #define UF_OTGSC 0xfc0b01a4u
 #define UF_SESSION_VALID 0x800u    /* OTGSC.BSV */
-#define UF_PORT_BUSY 0x180u        /* PORTSC1.PR or SUSP, MCF54455RM section 10.3.4.14: a reset under way, or suspended */
 #define UF_SETUPSTAT 0xfc0b01acu
 #define UF_PRIME 0xfc0b01b0u
 #define UF_FLUSH 0xfc0b01b4u
@@ -118,6 +124,9 @@ static volatile uint8_t state, reconnects;
 static uint8_t forced, live_profile, panel_reconnect, retried;
 static uint16_t live_in_packet; /* the active high-speed profile's EP3 IN wMaxPacketSize, 0 without one */
 static volatile uint8_t reset_seen; /* BACK: the host has reset the bus since the unit came back */
+static uint32_t back_frindex; /* BACK: the host's frame number when last seen moving */
+static uint16_t back_still;    /* BACK: ticks without a new frame */
+static uint8_t recoveries;     /* controller resets since the start (uf_controller_reset) */
 static volatile uint16_t timer, frames_to_attach;
 static uint16_t off_ticks;
 static uint16_t waited;
@@ -351,9 +360,30 @@ static void uf_wait_to_attach(unsigned down)
     state = UF_OFF; /* publish last to the frame interrupt */
 }
 
+/* The controller as a power cycle leaves it. On the owner's MKII (27 November 2026, behind a USB 2.0 hub) a host reset
+ * that met the base's own reconnect left the port taking no further reset (attached, enabled, the old address) or held in
+ * one (PORTSC1.PR for seconds), with no frames from the host; neither the pull-up off and on, the attach watchdog nor a
+ * cable replug brought it back, a power cycle did. So: the controller's own reset, the transceiver as the bootloader sets
+ * it up (ULPI selected in PORTSC1, then woken through the viewport), stock's reset and start, and off the bus until the
+ * caller attaches. The USB interrupt is held off; every wait is bounded. */
+static void uf_controller_reset(void)
+{
+    UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) & ~1u;
+    UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) | 2u;
+    for (unsigned n = 0; (UF_REG(UF_USBCMD) & 2u) && n < 8u * UF_FLUSH_SPINS; ++n) {}
+    UF_REG(UF_PORTSC1) = (UF_REG(UF_PORTSC1) & 0x3fffffffu) | 0x80000000u;
+    UF_REG(UF_ULPIVIEW) = 0x80000000u;
+    for (unsigned n = 0; (UF_REG(UF_ULPIVIEW) & 0x80000000u) && n < 8u * UF_FLUSH_SPINS; ++n) {}
+    UF_STOCK_RESET();
+    UF_STOCK_START();
+    UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) & ~1u;
+    if (recoveries < 255u) ++recoveries;
+}
+
 static void uf_attach(void)
 {
     reset_seen = 0;
+    back_frindex = UF_REG(UF_FRINDEX), back_still = 0;
     state = UF_BACK;
     UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) | 1u;
     ++reconnects;
@@ -402,18 +432,22 @@ int modwerk_usb_function_tick(int quiet)
         modwerk_machine_unmask(lock);
         break;
     default:
+        {
+            uint32_t f = UF_REG(UF_FRINDEX);
+            if (f == back_frindex) { if (back_still < 0xffffu) ++back_still; } else back_frindex = f, back_still = 0;
+        }
         if (timer && --timer) {
             if (timer != UF_LEASE - UF_ATTACH_CHECK || retried) break;
-            /* RS requests attachment; a host that sees it resets the bus within a second. No reset by now: off the bus for
-             * long enough that the hub sees a disconnect, then once more. CCS does not tell: the unit reads attached and
-             * even enabled while the host fails to reset it. Leave a resetting or suspended port, a real unplug and an
-             * active disk session to their owners. */
+            /* RS requests attachment; a host that sees it resets the bus and sends frames within a second. None for half a
+             * second by now: the port is stuck (see uf_controller_reset), whatever CCS, PE and PR say. Reset the
+             * controller and stay off long enough that the hub sees a disconnect, then once more. Leave a suspended
+             * port, a real unplug and an active disk session to their owners. */
             lock = modwerk_machine_lock();
-            if (state == UF_BACK && !reset_seen && quiet && !modwerk_machine_usb_disk() &&
-                (UF_REG(UF_OTGSC) & UF_SESSION_VALID) && !(UF_REG(UF_PORTSC1) & UF_PORT_BUSY) &&
+            if (state == UF_BACK && back_still >= 30u && !modwerk_machine_usb_disk() &&
+                (UF_REG(UF_OTGSC) & UF_SESSION_VALID) && !(UF_REG(UF_PORTSC1) & UF_SUSPENDED) &&
                 (UF_REG(UF_USBCMD) & 1u)) {
                 retried = 1;
-                UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) & ~1u;
+                uf_controller_reset();
                 uf_wait_to_attach(UF_DOWN_LONG);
             }
             modwerk_machine_unlock(lock);

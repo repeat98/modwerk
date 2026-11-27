@@ -55,6 +55,10 @@ static unsigned host_call(uintptr_t handler)
     fprintf(stderr, "uncalled %#lx\n", (unsigned long)handler); exit(2);
 }
 #define UF_CALL(handler) host_call(handler)
+/* Stock's controller reset and start: counted; the start sets run/stop as stock's does. */
+static unsigned stock_resets, stock_starts;
+#define UF_STOCK_RESET() ((void)++stock_resets)
+#define UF_STOCK_START() ((void)++stock_starts, (void)(UF_REG(0xfc0b0140u) |= 1u))
 static int locked, usb_disk;
 uint32_t modwerk_machine_lock(void) { CHECK(!locked); locked = 1; return 4; }
 void modwerk_machine_unlock(uint32_t s) { CHECK(locked && s == 4); locked = 0; }
@@ -303,7 +307,13 @@ static void speed_compose(void)
 }
 
 static unsigned status(unsigned k) { uint8_t out[8]; CHECK(modwerk_usb_function_status(out) == 8u); return out[k]; }
-static unsigned ticks(unsigned n, int quiet) { unsigned lapsed = 0; while (n--) lapsed += (unsigned)modwerk_usb_function_tick(quiet); return lapsed; }
+static int host_frames = 1; /* a host on the bus sends a frame every tick and more: FRINDEX moves */
+static unsigned ticks(unsigned n, int quiet)
+{
+    unsigned lapsed = 0;
+    while (n--) { if (host_frames) UF_REG(0xfc0b014cu) += 8u; lapsed += (unsigned)modwerk_usb_function_tick(quiet); }
+    return lapsed;
+}
 static int attached(void) { return (int)(UF_REG(USBCMD) & 1u); }
 static void base_slots(void)
 {
@@ -497,9 +507,11 @@ int main(void)
      * Check the same installation against each link status. A second attach
      * must keep the original deadline and the already published descriptors. */
     struct link_case { unsigned session, port; int retry; } cases[] = {
-        {0x800, 0, 1}, {0, 0, 0}, {0x800, 1, 1}, {0x800, 0x100, 0}, {0x800, 0x80, 0}
+        {0x800, 0, 1}, {0, 0, 0}, {0x800, 1, 1}, {0x800, 0x100, 1}, {0x800, 0x80, 0}
     };
+    host_frames = 0;                                    /* no frames from the host after the unit comes back */
     for (unsigned k = 0; k < sizeof cases / sizeof cases[0]; ++k) {
+        unsigned resets_before = stock_resets;
         UF_REG(OTGSC) = cases[k].session;
         UF_REG(PORTSC1) = cases[k].port;
         arrive();
@@ -507,7 +519,8 @@ int main(void)
         unsigned first_attach = status(3);
         CHECK(!ticks(180, 1));
         CHECK(attached() == !cases[k].retry);
-        unsigned off = cases[k].retry ? 601u : 31u;     /* a retry stays off ten seconds, inside the lease */
+        CHECK(stock_resets == resets_before + (unsigned)cases[k].retry && stock_starts == stock_resets);
+        unsigned off = cases[k].retry ? 601u : 31u;     /* a recovered port stays off ten seconds, inside the lease */
         CHECK(!ticks(off, 1) && attached());
         CHECK(status(3) == first_attach + (unsigned)cases[k].retry);
         describes(1);
@@ -519,13 +532,16 @@ int main(void)
         back();
     }
 
+    host_frames = 1;
     /* With the cable still powered, a successful second attachment settles
      * the existing trial. Do not treat the remaining lease as a disconnect. */
     UF_REG(OTGSC) = 0x800;
     UF_REG(PORTSC1) = 0;
     arrive();
+    host_frames = 0;
     CHECK(!ticks(62 + 31 + 180, 1) && !attached());
     CHECK(!ticks(600, 1) && !attached() && ticks(1, 1) == 0u && attached()); /* ten seconds off before the second attach */
+    host_frames = 1;
     UF_REG(PORTSC1) = 1u;
     back();
     CHECK(!status(0) && !ticks(1200, 1));
