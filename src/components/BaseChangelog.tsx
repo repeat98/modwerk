@@ -16,6 +16,7 @@ const releases: Record<'octatrack' | 'rytm' | 'zoom', [BaseRelease, ...BaseRelea
       changes: [
         { area: 'Modules', detail: 'Modules share 2 MiB instead of 768 KiB, so a large set installs whole, and one module may hold up to 256 KiB of code and data. The room comes from sample memory: Flex machines and recorders have 1.5 MB less, about 9 seconds of stereo audio.' },
         { area: 'Effects', detail: 'An effect can change its DSP code with a program knob while it plays, switching between two audio frames, for effects like the Quadraverb reverbs.' },
+        { area: 'Effects', detail: 'An effect can keep delay lines longer than the DSP’s own memory in the Octatrack’s main memory, moved in and out every audio frame, as the Quadraverb’s do. One such effect plays at a time, beside USB audio input; a second is refused with STREAM FULL.', note: '2026-11-27-octatrack-stream-channel-release' },
         { area: 'MODULES', detail: 'Switching modules while the sequencer is paused or held by MIDI STOP now says STOP PLAYBACK FIRST instead of BUSY: TRY AGAIN, and a busy card says CARD BUSY: TRY AGAIN.' },
         { area: 'CPU', detail: 'A module machine pasted onto a track, or brought back by a Part reload, is checked against the CPU line the same way as picking it, so it can no longer push a full pattern over.' },
         { area: 'Update screen', detail: 'The Octatrack shows MODWERK while it installs a base or a module set.' },

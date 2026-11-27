@@ -154,7 +154,8 @@ pitch change of 1/16 for 0.36 ms. Vendor request 0x56 reports the trims as a six
 
 Base 0.8.1 owns the frame-transfer interrupt. Its guarded DMA
 scheduler sends a staged input block to core 0 before an FX loader packet
-when both are due. The two transfers use disjoint DSP ranges. The RX hook
+when both are due; from 0.8.4 a streaming effect's block goes between them
+(`stream_probe.py` scheduler). The transfers use disjoint DSP ranges. The RX hook
 consumes the block marker once so a closed stream or a skipped transfer
 leaves the analog input intact. The base gives USB priority on the crossbar
 while a duplex configuration is selected and restores its previous values
