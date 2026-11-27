@@ -134,6 +134,17 @@ describe('track machines and exact-source approvals', () => {
     expect(benchmark(loaded(140, 16.5), priceLimits(machine(35))).state).toBe('fail')
     expect(benchmark(loaded(101.6, 36), priceLimits(machine(35))).state).toBe('fail')
   })
+  it('judges a module that takes over a built-in function against that built-in under the same load', () => {
+    const usb = (builtIn) => { const r = loaded(51.5, 9.6); r.load.builtIn = builtIn; return r }
+    const builtIn = { name: 'the built-in USB AUDIO OUT MAIN CUE', longestUs: 280 + 76.9, idlePercent: 40 - 8.9 }
+    expect(benchmark(usb(undefined)).state).toBe('fail')            /* 14.2% over the stock image alone */
+    expect(benchmark(usb(builtIn))).toMatchObject({ state: 'ok' })   /* lighter than the built-in it replaces */
+    expect(benchmark(usb(builtIn)).detail).toContain('built-in USB AUDIO OUT MAIN CUE')
+    expect(benchmark(usb(builtIn)).detail).toContain('over the stock image alone it grows by 14.2%')
+    expect(benchmark(usb({ ...builtIn, longestUs: 280 })).state).toBe('fail') /* dearer than the built-in by as much */
+    expect(benchmark(usb({ name: 'x', longestUs: 999, idlePercent: 0 })).state).toBe('fail') /* an unnamed reference is ignored */
+    expect(benchmark(usb({ ...builtIn, idlePercent: undefined })).state).toBe('fail')
+  })
   it('binds a record to an approval only at its exact owner, version and source', () => {
     const approval = { kind: 'owner-approved-update', approvedBy: 'repeat98', id: 'example', version: '0.1.0', sourceSha256: source }
     expect(approvalCoversSource(approval, 'example', '0.1.0', source)).toBe(true)
