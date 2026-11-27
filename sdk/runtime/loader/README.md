@@ -304,7 +304,7 @@ torn writes. Exact-build hardware, audio and reboot persistence remain open.
 - **Admission before anything changes.** A package is refused, with the
   live set untouched, when another live module patches any byte of its
   sites (Elekloader's own rule: one owner per byte), when `RUNTIME_MODULES`
-  are live (32 by default; the Octatrack base builds with 128 in a 1.5 MiB
+  are live (32 by default; the Octatrack base builds with 128 in a 2 MiB
   pool), or when the pool has no free run large enough. The refusal reason
   (`modwerk_runtime_refusal()`: malformed, memory, conflict, full, busy)
   is kept for diagnostics and the unit's own message.

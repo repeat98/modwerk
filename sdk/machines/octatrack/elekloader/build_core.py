@@ -320,11 +320,11 @@ FX_IDS = 128
 VALIDATOR_CLAMPS = (0x400023b6, 0x400023bc, 0x400023de, 0x400023e4)  # the Part validator's moveq #31, FX1 then FX2
 FX_WORDS = (FX_IDS + 31) // 32
 # Modules installed at once and their memory (loader.h; owner, 12 October 2026: up to 128 modules; 27 November 2026:
-# the pool 1.5 MiB, one module's image 256 KiB and its image and bss 512 KiB, for the Quadraverb's 48 programs and
+# the pool 2 MiB, one module's image 256 KiB and its image and bss 512 KiB, for the Quadraverb's 48 programs and
 # large sets). The pool is taken from sample memory at boot (core-ot's arena pages, 6,144 bytes each), and modset.c
 # keeps a copy of the set as staged beside it, so the pool's 768 KiB more take 256 more pages.
 RUNTIME_MODULES = 128
-RUNTIME_POOL_BYTES = 1536 * 1024
+RUNTIME_POOL_BYTES = 2048 * 1024
 RUNTIME_IMAGE_BYTES = 256 * 1024
 RUNTIME_MODULE_BYTES = 512 * 1024
 DSP_EDITS = {

@@ -83,7 +83,7 @@ int main(void)
     modwerk_diag_set();
     CHECK(LOG->incidents == 3u && last()->kind == DIAG_SET && last()->a == 2u && last()->machine[0] == 0x95u && last()->machine[3] == 0x96u);
     CHECK(last()->screen == 0x773c84aau && last()->tempo24 == 7u && !refused_module && !refused_code);
-    /* 98,250 units of the 1.5 MiB pool used: its low 16 bits, bit 16 in dsp1's bits 8-11 beside the check */
+    /* 98,250 units of the 2 MiB pool used: its low 16 bits, bit 16 in dsp1's bits 8-11 beside the check */
     CHECK(last()->cpu == 32714u && last()->dsp0 == 63u && last()->dsp1 == 0x102u && !refused_used && !refused_largest && !refused_check);
     CHECK(last()->machine[4] == 0xbcu && last()->machine[7] == 0x74u && last()->machine[8] == 0u && last()->keys[0] == 0u);
     modwerk_test_modules[0] = modwerk_test_modules[1] = 0;

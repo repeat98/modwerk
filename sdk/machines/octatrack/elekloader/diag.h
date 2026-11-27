@@ -69,7 +69,7 @@ struct diag_load {
  * restore that refused a package, `screen` its module, `tempo24` the refusal, `cpu` and `dsp0` the module pool then (bytes
  * used and the largest free run, in 16-byte units: their low 16 bits) and `dsp1` the loader's check that refused it in
  * its low byte (runtime_check: 1 the pool, 2 claims, 3 metadata, 4 the DSP's limits), then bits 16-19 of the bytes used in
- * bits 8-11 and of the largest free run in bits 12-15 (0 below 1 MiB, so on every base before the 1.5 MiB pool); all
+ * bits 8-11 and of the largest free run in bits 12-15 (0 below 1 MiB, so on every base before the 2 MiB pool); all
  * three 0 on bases before 0.7.10.
  * RESTORE (bases from 0.8.2, right after the START it belongs to) the values stock's checks had to fix in the
  * battery copy of the current bank at power-up (diag.c modwerk_boot_restore), with `cpu` those in the project's

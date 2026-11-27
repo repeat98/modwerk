@@ -23,7 +23,7 @@
 #define RUNTIME_DSP_CLAIMS 16u           /* ABI 9: X/Y words the DSP code reads or writes outside its slot */
 #define RUNTIME_DSP_HOOK_ENTRIES 8u      /* ABI 9: entries for the base's stock-DSP hook sites (ABI 10: an engine's) */
 #define RUNTIME_DSP_INIT_WORDS 4096u     /* ABI 10: an engine's claims' initial words, 24-bit */
-/* A machine may raise these (the Octatrack: 128 modules in 1.5 MiB, a module's image up to 256 KiB and its image and
+/* A machine may raise these (the Octatrack: 128 modules in 2 MiB, a module's image up to 256 KiB and its image and
  * bss up to 512 KiB, build_core.py). */
 #ifndef RUNTIME_IMAGE_BYTES
 #define RUNTIME_IMAGE_BYTES 131072u      /* one module's image (Tape Echo's tone table is 86 KiB) */

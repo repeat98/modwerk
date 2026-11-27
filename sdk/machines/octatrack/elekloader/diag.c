@@ -384,7 +384,7 @@ void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint
 {
     refused_module = module, refused_code = refusal, refused_used = used, refused_largest = largest, refused_check = check;
 }
-/* Bytes in the pool's 16-byte units, 20 bits: the low 16 in the record's field, the top 4 in a nibble of dsp1 (a 1.5 MiB
+/* Bytes in the pool's 16-byte units, 20 bits: the low 16 in the record's field, the top 4 in a nibble of dsp1 (a 2 MiB
  * pool is 98,304 units), which is 0 below 1 MiB, so a record reads as on the bases before. */
 static uint32_t sixteenths(uint32_t bytes) { bytes = (bytes + 15u) / 16u; return bytes < 0xfffffu ? bytes : 0xfffffu; }
 void modwerk_diag_set(void)

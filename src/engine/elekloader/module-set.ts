@@ -136,7 +136,7 @@ const DSP_CLAIMS = 16, HOOK_ENTRIES = 8, INIT_WORDS = 4096
 /** The published base's module pool (build_core.py RUNTIME_POOL_BYTES; every base before it, since 12 October 2026, has
  * 768 KiB), and the loader's records in it on the ColdFire: loader.h's runtime_module, runtime_site, runtime_dsp_claim and
  * runtime_dsp_entry, as the unit's pool readings confirm (docs/verification/2026-11-21-octatrack-module-pool-allocation.json). */
-export const OCTATRACK_POOL_BYTES = 1536 * 1024
+export const OCTATRACK_POOL_BYTES = 2048 * 1024
 const poolOf = (base?: string) => isPublishedBase(base) ? OCTATRACK_POOL_BYTES : 768 * 1024
 const MODULE_RECORD = 736, SITE_RECORD = 74, CLAIM_RECORD = 12, ENTRY_RECORD = 8
 function requirements(entry: RuntimePackage, group = false) {
@@ -178,7 +178,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   // Hooks 0-3 are the core handlers; an ABI 8 package that subscribes to the base's site events (feature 128) adds one
   // word per event of sdk/machines/octatrack/events.json after them: its order in the top byte, its handler below.
   const subscriber = abi >= 8 && (want.features & RuntimeFeature.siteEvents) !== 0
-  // build_core.py RUNTIME_IMAGE_BYTES and RUNTIME_MODULE_BYTES. shortcut: a base before the 1.5 MiB pool takes 128 and
+  // build_core.py RUNTIME_IMAGE_BYTES and RUNTIME_MODULE_BYTES. shortcut: a base before the 2 MiB pool takes 128 and
   // 288 KiB and refuses a larger package only once it is sent (RUNTIME_MALFORMED, the set rolled back); ask for the base
   // update here once such a package is published without a need the base update already covers (program areas).
   if (flags & ~(abi >= 8 ? 7 : 3) || image > 262144 || image + bss > 524288 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||

@@ -14,7 +14,7 @@ class SavedSetSession(unittest.TestCase):
         cc = shutil.which('cc')
         if not cc:
             self.skipTest('host compiler unavailable')
-        for defines in ([], ['-DRUNTIME_POOL_BYTES=1572864u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u']):
+        for defines in ([], ['-DRUNTIME_POOL_BYTES=2097152u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u']):
             with self.subTest(defines=defines), tempfile.TemporaryDirectory() as temp:
                 binary = str(Path(temp) / 'session')
                 result = subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', *defines,

@@ -113,7 +113,7 @@ describe('preparing a module set', () => {
     expect(fetched).not.toHaveBeenCalled()
     const audio = (manifest as { usbAudio?: { configurable?: { name: string } } }).usbAudio?.configurable
     const extraNames = audio ? [audio.name] : []
-    // Every published package at once fits the base's 1.5 MiB module pool (the 768 KiB before took them in two sets).
+    // Every published package at once fits the base's 2 MiB module pool (the 768 KiB before took them in two sets).
     const compose = async (ids: readonly string[], capabilities: typeof events) =>
       (await prepareModuleSet({ name: 'All', moduleIds: [...ids] }, empty, fetched, capabilities, baseBinding.identity)).changes
     const changes = await compose(USB_MODULE_IDS, events)

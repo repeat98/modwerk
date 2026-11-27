@@ -164,7 +164,7 @@ describe('diagnostics pull', () => {
       .toContain('refused SC Ringmod (module memory, by its DSP claims meeting a delay buffer, module memory 158 KiB used, largest free block 610.4 KiB)')
     expect(unitLines([{ ...set, tempo24: 2, dsp1to4: 1, cpu: 48640, dsp5to8: 96 }])[0])
       .toContain('refused SC Ringmod (module memory, by the module pool, module memory 760 KiB used, largest free block 1.5 KiB)')
-    // The 1.5 MiB pool: bits 16-19 of each in dsp1's top nibbles.
+    // The 2 MiB pool: bits 16-19 of each in dsp1's top nibbles.
     expect(unitLines([{ ...set, tempo24: 2, dsp1to4: 0x1101, cpu: 32714, dsp5to8: 3214 }])[0])
       .toContain('refused SC Ringmod (module memory, by the module pool, module memory 1535 KiB used, largest free block 1074.2 KiB)')
   })
