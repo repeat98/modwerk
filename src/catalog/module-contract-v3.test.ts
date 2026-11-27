@@ -84,7 +84,7 @@ describe('module contract v3', () => {
     expect(() => parse({ ...template(), machine: 'syntakt' })).toThrow('no SDK yet')
     expect(() => parse({ ...template(), machine: 'octatrack' })).toThrow('octabam')
     expect(() => parse({ ...template(), compatibility: { ...template().compatibility, releases: ['1.30'] } })).toThrow('not a Digitakt OS release')
-    expect(() => parse({ ...template(), resources: { ...template().resources, memoryBytes: 200000 } })).toThrow('exceed the Digitakt budget')
+    expect(() => parse({ ...template(), resources: { ...template().resources, memoryBytes: 300000 } })).toThrow('exceed the Digitakt budget')
     expect(() => parse({ ...template(), platform: { ...template().platform, core: '9.0' } })).toThrow('newer than the machine’s core')
   })
 

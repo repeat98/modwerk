@@ -14,6 +14,7 @@ Which cores were pinned beside the old ones, how every library set was linked wi
   | `core-dn1-5.4-os1.44.elemod` | Digitone mk1/Keys, OS 1.44 | `4fa199a6…` |
 
 - **The kit stays 0.7.0.** `npm run elekloader:update` took the cut catalog, which is the old one plus these four pins. Its own checks passed, so the Octatrack base's pinned elekloader checkout does not move.
+- **The machine profiles** (`sdk/machines/digitakt/machine.json`, `sdk/machines/digitone/machine.json`) now name core 4.4 and 5.4, so `modules:check` accepts a mod that needs a core newer than 2.1 or 2.2. Their shared mod memory is each core's `ram_area` as the builder reads it: 262,144 bytes on core 4.4 and 1,310,720 on core 5.4 (its own share about 110 KB), against 131,072 on the old cores.
 - **The core choice.** The kit takes the newest core new enough for the mods. Core 4.4 patches two places Digi EQ 1.0.2 patches (`0x40044acc`, `0x400721e6` on OS 1.53), and core 5.4 two places KitBank 0.2.0 patches on OS 1.44 (`0x4000eb10`, `0x4001570e`). On kit 0.7.0 those sets would fail. `prepareBuild` now tries the next older core when a set fails to combine with the newest, as elekloader 0.11's `pick_core` does.
 
 ## How it was checked
