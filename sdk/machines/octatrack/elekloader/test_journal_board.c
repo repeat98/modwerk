@@ -39,6 +39,9 @@ const uint16_t modwerk_dsp_arena[2] = {2320, 2300};
 int dl_publication_idle(void) { return 1; }
 uint32_t dl_slot_cycles(unsigned i) { (void)i; return 0; } /* manager.c; the source stage is test_dsp.c's */
 uint8_t modwerk_test_memory[0x40000] __attribute__((aligned(16)));
+/* fxpage.c's knob-name hooks (modwerk_fxpage_names, #2228): these tests load no project and draw no names. */
+const volatile uint8_t *modwerk_test_part_store(unsigned part) { (void)part; return 0; }
+void modwerk_test_format(uint32_t code, char *line, uint32_t value) { (void)code; (void)value; line[0] = 0; }
 uint32_t modwerk_fx1_list[MODWERK_LIST_ROWS] = {0x1000}, modwerk_fx2_list[MODWERK_LIST_ROWS] = {0x1000};
 const uint32_t modwerk_fx_rows[2] = {1, 1};
 void modwerk_machine_invalidate_code(void) {}

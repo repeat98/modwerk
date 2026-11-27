@@ -9,9 +9,11 @@ import frameCosts from '../../../sdk/machines/octatrack/frame-costs.json' with {
 export interface FrameCost { module: number; use: number; wake: number; rest: number }
 /** The base's own figures travel as these pseudo module ids (status.c), after every package id: a sample track's share,
  * the line, the stock reserve for a pattern whose busiest step trigs 0 to 8 tracks, the reserve's margin and its floor,
- * what each further track that trigs off that step adds, and the margin on a pattern's own measured stock. */
-export const STOCK_IDS = { trackStock: 0xfffffff1, line: 0xfffffff2, reserveBySteps: 0xfffffff3, reserveMargin: 0xfffffffc, reserveFloor: 0xfffffffd, trackPlay: 0xfffffffe, measuredMargin: 0xffffffff } as const
-type Stock = { trackStock: number; line: number; reserveBySteps: readonly number[]; reserveMargin: number; reserveFloor: number; trackPlay: number; measuredMargin: number }
+ * what each further track that trigs off that step adds, and the margin on a pattern's own measured stock; first, what
+ * an open USB stream adds to the frame interrupt's work (to a computer, and both ways, then by width: up to 2, 4, 8, 16
+ * and 20 channels), ids below those. */
+export const STOCK_IDS = { stream: 0xffffffe0, streamDuplex: 0xffffffe1, streamByWidth: 0xffffffe2, trackStock: 0xfffffff1, line: 0xfffffff2, reserveBySteps: 0xfffffff3, reserveMargin: 0xfffffffc, reserveFloor: 0xfffffffd, trackPlay: 0xfffffffe, measuredMargin: 0xffffffff } as const
+type Stock = { stream?: number; streamDuplex?: number; streamByWidth?: readonly number[]; trackStock: number; line: number; reserveBySteps: readonly number[]; reserveMargin: number; reserveFloor: number; trackPlay: number; measuredMargin: number }
 /** The measured costs (sdk/machines/octatrack/frame-costs.json, percent: `first` alone, `each` further, `rest` installed
  * and unused, and the base's `stock`) as v2 sends them, by id ascending. */
 export function frameCostTable(costs: Record<string, { first: number; each: number; rest?: number }> = frameCosts.costs, stock: Stock | null = frameCosts.stock): FrameCost[] {
@@ -20,9 +22,13 @@ export function frameCostTable(costs: Record<string, { first: number; each: numb
     use: Math.round(cost.each * 10), wake: Math.max(0, Math.round(cost.first * 10) - Math.round(cost.each * 10)),
     rest: Math.max(0, Math.round((cost.rest ?? 0) * 10)),
   }))
-  if (modules.some(m => m.module >= 0xfffffff0)) throw new Error('A module id collides with the base\'s own figures.') // 0xfffffff0 and up are the base's
+  if (modules.some(m => m.module >= 0xffffffe0)) throw new Error('A module id collides with the base\'s own figures.') // 0xffffffe0 and up are the base's
   if (stock && stock.reserveBySteps.length !== 9) throw new Error('The stock reserve needs a figure for 0 to 8 tracks on a step.')
+  if (stock?.streamByWidth && stock.streamByWidth.length !== 5) throw new Error('A stream needs a figure for up to 2, 4, 8, 16 and 20 channels.')
   const own = stock ? [
+    ...(stock.stream === undefined ? [] : [{ module: STOCK_IDS.stream, use: Math.round(stock.stream * 10), wake: 0, rest: 0 }]),
+    ...(stock.streamDuplex === undefined ? [] : [{ module: STOCK_IDS.streamDuplex, use: Math.round(stock.streamDuplex * 10), wake: 0, rest: 0 }]),
+    ...(stock.streamByWidth ?? []).map((figure, n) => ({ module: STOCK_IDS.streamByWidth + n, use: Math.round(figure * 10), wake: 0, rest: 0 })),
     { module: STOCK_IDS.trackStock, use: Math.round(stock.trackStock * 10), wake: 0, rest: 0 },
     { module: STOCK_IDS.line, use: Math.round(stock.line * 10), wake: 0, rest: 0 },
     ...stock.reserveBySteps.map((figure, n) => ({ module: STOCK_IDS.reserveBySteps + n, use: Math.round(figure * 10), wake: 0, rest: 0 })),

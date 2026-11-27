@@ -30,7 +30,8 @@ int olog_stock_open(struct file_object *f, const char *path, const char *mode, v
     int which = !strcmp(path, "/MODWERK0.SET") ? 0 : !strcmp(path, "/MODWERK1.SET") ? 1 : -1, write = !strcmp(mode, "w");
     CHECK(which >= 0 && (write || !strcmp(mode, "r")) && n == 512u &&
           (io == modwerk_test_card_io || (!write && io == modwerk_test_export_io)));
-    if (which < 0 || (!write && !card_present[which])) return -1;
+    if (which < 0) return -1;
+    if (!write && !card_present[which]) return -12; /* stock: no such file */
     if (write) { card_present[which] = 1; if (!card_keeps) card_length[which] = 0; } /* card_keeps: overwrite in place */
     f->word[0] = (uint32_t)which; f->word[1] = 0; f->word[2] = (uint32_t)write; f->word[3] = 0x5e7u;
     return 0;
