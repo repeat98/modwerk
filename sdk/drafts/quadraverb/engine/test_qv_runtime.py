@@ -132,7 +132,7 @@ def run(rt, dsps, frames, events=None):
 
 def frames_for(plan):
     """At least 600 frames, and every ring filled once and wrapped."""
-    return max(600, max(len(r) for r in qvs.ColdFire(plan).ring.values()) // N + 200)
+    return max(600, max((len(r) for r in qvs.ColdFire(plan).ring.values()), default=0) // N + 200)   # a program with nothing to stream has no ring
 
 
 @unittest.skipUnless(PROGRAMS.exists() and LFO.exists(), "no ROM-derived inputs in ~/.cache/modwerk-local")

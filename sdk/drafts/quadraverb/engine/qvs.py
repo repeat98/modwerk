@@ -493,7 +493,7 @@ def stream_code(plan, info, P="qv", area=None):
             else:
                 modes.append(("+", None))
     tail = []
-    if lines:
+    if lines or area:     # an area with no line still sends its tag and K: take() learns the program from them
         tail += [f"{P}KOST:", f"        move    {x7(LAST)},b", "        tst     b", f"        beq     {P}KOUT"]
         if area:     # no block while the base has not named it; else the tag and K first
             tail += [f"        move    {x7(MBOUT)},b", "        tst     b", f"        beq     {P}KOUT",
@@ -502,20 +502,21 @@ def stream_code(plan, info, P="qv", area=None):
                      "        move    #>$008000,x0"]
         else:
             tail += [f"        move    {x7(MBOUT)},r3", "        move    #>$008000,x0"]
-        tail += [
-                 f"        move    {imm(plan.head[lines[0]] + 1 - first4)},n5", "        move    r4,r5",
-                 "        lua     (r5)+n5,r5"]
-        # n5 holds each skip from just after the use before it, far ahead of its own use
-        skips = [v for m_, v in modes if m_ == "n"]
-        body = copy_out(["+n5" if m_ == "n" else "+" for m_, _ in modes])
-        if skips:
-            tail += [f"        move    {imm(skips[0])},n5"]
-            # a different skip goes in right after the load that used the one before
-            uses = [k for k, l in enumerate(body) if "(r5)+n5" in l]
-            for i in reversed(range(len(skips) - 1)):
-                if skips[i + 1] != skips[i]:
-                    body.insert(uses[i] + 1, f"        move    {imm(skips[i + 1])},n5")
-        tail += body
+        if lines:
+            tail += [
+                     f"        move    {imm(plan.head[lines[0]] + 1 - first4)},n5", "        move    r4,r5",
+                     "        lua     (r5)+n5,r5"]
+            # n5 holds each skip from just after the use before it, far ahead of its own use
+            skips = [v for m_, v in modes if m_ == "n"]
+            body = copy_out(["+n5" if m_ == "n" else "+" for m_, _ in modes])
+            if skips:
+                tail += [f"        move    {imm(skips[0])},n5"]
+                # a different skip goes in right after the load that used the one before
+                uses = [k for k, l in enumerate(body) if "(r5)+n5" in l]
+                for i in reversed(range(len(skips) - 1)):
+                    if skips[i + 1] != skips[i]:
+                        body.insert(uses[i] + 1, f"        move    {imm(skips[i + 1])},n5")
+            tail += body
         for j, x in enumerate(mw):
             tail += [f"        move    {x7(Fw[j][L - 1])},x0", "        move    x0,x:(r3)+"]
         if area:     # K counts the frames sent, modulo $8000; Q up to LAT
@@ -539,7 +540,7 @@ def generate(plan, prefix="qv", schedule=True, area=None):
     _, info = qvc.generate(plan.steps, plan.addr, plan.size, prefix, schedule, mod, unit=bool(area))
     if area:
         info["area"] = area
-    if plan.windows:
+    if plan.windows or area:     # an area's fade words and tag come with its stream code, even with nothing to stream
         st = stream_code(plan, info, prefix, area)
         info["stream"] = st
         if mod:
