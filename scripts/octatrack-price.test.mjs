@@ -179,6 +179,14 @@ it('reads the Part\'s CPU allowance from the session\'s cpu reply, so a curve ca
 })
 
 
+it('names a file by its runtime id, or by its hash for a release row without one (USB Audio)', () => {
+  const data = Buffer.alloc(68); data.write('MWRM', 0, 'ascii'); data.write('USB Audio', 50, 'latin1')
+  const sha256 = createHash('sha256').update(data).digest('hex')
+  const usb = { id: 'usb-audio-out-tracks-main-cue', name: 'USB Audio', version: '0.4.2-experimental', sha256 }
+  expect(priceFileTarget('/p/0.4.2-experimental.mwrm', data, [usb])).toMatchObject({ id: 'usb-audio-out-tracks-main-cue', version: '0.4.2-experimental' })
+  expect(priceFileTarget('/p/0.4.2-experimental.mwrm', data, [])).toMatchObject({ id: '0.4.2-experimental', version: 'file' }) // unknown: the file's name
+})
+
 it('tells which packages have instances to curve: an effect by its header, a machine by its descriptors', () => {
   const header = slots => { const data = Buffer.alloc(68); data.write('MWRM', 0, 'ascii'); if (slots) { data.writeUInt32BE(1, 32); data[39] = slots } return data }
   expect(hasInstances({ root: '.', id: 'no-such-module', data: header(1) })).toBe(true) // an FX1 effect
