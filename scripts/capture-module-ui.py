@@ -66,6 +66,8 @@ def main():
     parser.add_argument('--project-name', help='Load this disposable project before panel actions')
     parser.add_argument('--mki', action='store_true', help='Default panel is MKII')
     parser.add_argument('--key-ms', type=int, default=150, help='Key down/up interval, 20–500 ms; use 50 for double taps')
+    parser.add_argument('--boot-max', type=int, default=50_000_000,
+                        help='ColdFire instruction budget before RTOS handoff (Modwerk dev images often need 200000000+)')
     args = parser.parse_args()
     if not 20 <= args.key_ms <= 500:
         parser.error('--key-ms must be 20–500 emulated milliseconds.')
@@ -146,7 +148,8 @@ def main():
             card.write_bytes(codec.build_image(str(work / 'card-tree'), 32))
         plane = work / 'lcd.bin'
         command = [str(args.emulator.resolve()), '--image', str(image), '--card', str(card),
-                   '--dsp', '--frame', '--ms', '3000', '--interactive', '--lcd', str(plane),
+                   '--dsp', '--frame', '--ms', '3000', '--max', str(args.boot_max),
+                   '--interactive', '--lcd', str(plane),
                    '--main-level', 'off', '--rtc', 'host']
         if args.project_name:
             command.extend(['--mount', '--set', args.set_name, '--project', args.project_name])
