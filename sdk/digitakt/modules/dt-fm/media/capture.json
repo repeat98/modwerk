@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "machine": "digitakt",
+  "moduleId": "dt-fm",
+  "moduleVersion": "1.2.1",
+  "capturedAt": "2026-10-22",
+  "firmware": "1.54",
+  "imageSha256": "33adf14ff9ff9287ed682942133013bf0da47920df739a5027b91736b770dd94",
+  "emulator": {
+    "name": "digiemu",
+    "version": "0.4.1"
+  },
+  "stockSha256": null,
+  "source": {
+    "repository": "https://github.com/mtalikka/DT-FM",
+    "revision": "2255df788470638c867e24e83290f9e95e91e5ec",
+    "path": "."
+  },
+  "captures": [
+    {
+      "path": "media/image-1.png",
+      "sha256": "28ecd54b62835e236b50417e64cac29d23abdb5cc34bd2e6209cfbfefd038088",
+      "plan": "Show an audio track on the default single-shot machine's SRC page before opening machine assignment."
+    },
+    {
+      "path": "media/image-2.png",
+      "sha256": "5d5fa13ea8afb69e8194bf5a055fe4504286b49761061c73b80ac1de9ee0f22a",
+      "plan": "Open machine assignment with FUNC + SRC and show DT-FM highlighted before confirming with YES."
+    },
+    {
+      "path": "media/image-3.png",
+      "sha256": "93cb6dce4373bb9db28139abf26aa9bae2b82ba59a1bca5a058db4c0fba0eff4",
+      "plan": "After assigning DT-FM, show its SRC page with operator and envelope controls."
+    }
+  ],
+  "setup": "Captured in digiemu 0.4.1 using custom Elekloader firmware. This is not the Modwerk-built firmware; the capture documents UI appearance only, not emulator execution or audio correctness."
+}

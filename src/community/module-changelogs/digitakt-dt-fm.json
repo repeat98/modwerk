@@ -1,0 +1,13 @@
+[
+  {
+    "version": "1.2.1",
+    "date": "2026-10-21",
+    "changes": [
+      "Imported the upstream DT-FM project into Modwerk as a Digitakt machine module for OS 1.53 and 1.54.",
+      "Matched the upstream machine-page and patch-site metadata, and declared the required machine-pages dependency for Modwerk’s catalog flow.",
+      "Recorded the compatibility import without changing the underlying DT-FM source or generated firmware behavior.",
+      "Documentation-only: replaced placeholder artwork with a three-screen emulator walkthrough for the default machine, DT-FM selection and DT-FM SRC controls.",
+      "Documentation-only: identifies the reported OS 1.54 hardware run as DT-FM 1.2.1 and records its aggregate CPU observation; it does not measure per-module or worst-case DSP load."
+    ]
+  }
+]
