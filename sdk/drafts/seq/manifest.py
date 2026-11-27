@@ -38,7 +38,7 @@ MODULE = Module(
     author="ilia-murzinov",
     author_url="https://github.com/ilia-murzinov",
     proof=Proof.UNTESTED,
-    proof_note="Modwerk port; not yet run on a unit or in the emulator (TESTING.md).",
+    proof_note="Partial MKII and emulator results are recorded in TESTING.md; full publication qualification remains incomplete.",
     doc="TRACK + PAGE opens SEQ: Euclidean rhythms, lock rhythms, and generated melodies and chords, "
         "for audio and MIDI tracks.",
     linked=(Linked("seq", "modules/seq/seq.s", dram=True),),

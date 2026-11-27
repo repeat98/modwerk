@@ -10,9 +10,11 @@ clears remaining SEQ pointers in the stock dispatch cache after the layer
 is popped and the cache rebuilt. The cleanup saves its registers in correctly
 sized frames. The host verifier passed all four checks.
 
-The emulator passed a removal trial after CUE then NO, after tapping CUE
-before pressing T2/T3 and closing with TRACK+PAGE, and after holding CUE
-through T2/T3 and closing with TRACK+PAGE. The loader reported an empty
+The emulator passed removal trials after pressing **`[CUE]`** then
+**`[NO]`**, after tapping **`[CUE]`** before pressing **`[TRACK 2]`** and
+**`[TRACK 3]`** and closing with **`[TRACK 1]`** + **`[PAGE]`**, and after
+holding **`[CUE]`** through the track presses and closing with
+**`[TRACK 1]`** + **`[PAGE]`**. The loader reported an empty
 slot during each removal trial. On the MKII in A03, the tap sequence
 left SEQ installed after timed Undo and an explicit recovery attempt, both
 with `needs-recovery`. This sequence can open the rhythm confirmation on a
@@ -42,14 +44,19 @@ stall, freeze or skipped track.
 
 Twin `4c7eb79b`, `ot_emu` without `--dsp`. With `--dsp`, USB key sequences often hit the 21 s bench limit.
 
-| Case | Result |
-| --- | --- |
-| open, **NO**, `remove` | pass |
-| **TRACK+PAGE** toggle close, `remove` | pass (script) |
-| **CUE** + T2/T3 + **TRACK+PAGE** close, `remove` | pass |
-| **CUE** + **NO** | pass |
+For each case, start a fresh emulator session, install and accept the SEQ trial,
+open SEQ on **`[TRACK 1]`**, send the listed keys, then run standalone
+removal. A pass means removal rolled back without `RUNTIME_UI_OPEN` or
+`needs-recovery`.
 
-`scripts/seq-emu-rollback.sh` (26 Nov, `PKG=/tmp/seq-fix22.mwrm`): **4/4 passed**, exit 0 (~11 min, no `--dsp`).
+| Keys after opening SEQ | Result |
+| --- | --- |
+| Press **`[NO]`** to close, then `remove` | pass |
+| Close with **`[TRACK 1]`** + **`[PAGE]`**, then `remove` | pass |
+| Hold **`[CUE]`**, press **`[TRACK 2]`** and **`[TRACK 3]`**, close with **`[TRACK 1]`** + **`[PAGE]`**, then `remove` | pass |
+| Press **`[CUE]`**, then **`[NO]`**, then `remove` | pass |
+
+All four emulator rollback cases passed on 26 Nov 2026 in about 11 minutes without `--dsp`.
 
 ## On the unit: close and trial removal (26 Nov 2026, fix22)
 
@@ -146,10 +153,12 @@ walk finds a word pointing into SEQ. Two causes, both fixed in 924a6e6a:
   dispatch (`0x40031734`) keeps the key number. Stock then cleared the
   wrong key's held flag, and **`[CUE]`** stayed routed to SEQ.
 
-Each case runs a fresh emulator, installs SEQ as a trial, sends the keys
-and rolls back. These results come from the emulator, not the unit. With the
-layer fix alone, the **`[CUE]`** case still failed; it passed once the
-handlers ran through the thunks.
+Each case ran in a fresh `ot_emu` session on twin `4c7eb79b`. The test
+started a SEQ trial, accepted it, opened SEQ on **`[TRACK 1]`**, sent the keys below, then
+ran standalone removal. A pass means removal rolled back without
+`RUNTIME_UI_OPEN` or `needs-recovery`. These results come from the emulator,
+not the unit. With the layer fix alone, the **`[CUE]`** case still failed; it
+passed once the handlers ran through the thunks.
 
 | Keys after **`[TRACK 1]`** + **`[PAGE]`** | 924a6e6a |
 | --- | --- |

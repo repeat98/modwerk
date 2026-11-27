@@ -1,6 +1,6 @@
 # SEQ
 
-Version 0.1.0-experimental · by @ilia-murzinov · a draft, not tested on a unit yet.
+Version 0.1.0-experimental · by @ilia-murzinov · MKII and emulator results recorded.
 
 ## Overview
 
@@ -76,7 +76,7 @@ files, and saved with the project.
 
 ## Compatibility and limitations
 
-- OS 1.40C on the Modwerk base, over USB only. Not yet run on a unit or in the emulator.
+- OS 1.40C on the Modwerk base, over USB. MKII results use the author's unit and RAM-booted development twin `4c7eb79b`. Emulator rollback cases are listed in [TESTING.md](TESTING.md).
 - D offers page-1 parameters only. The octabam module's FX page-2 destinations
   (through PLOCKS P2) and CX OSC SETUP destinations are left out, because
   Modwerk has neither module.
@@ -132,4 +132,4 @@ SEQ is by [ilia-murzinov](https://github.com/ilia-murzinov), MIT
 
 ## Screens and audio
 
-None yet: captures follow the first emulator run.
+No screenshots or audio captures are included.
