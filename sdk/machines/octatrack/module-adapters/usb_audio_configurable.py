@@ -26,11 +26,28 @@ def configure_source(text):
     for marker in ('| d2 = the stem', '    | The gain history', '| ==== TRACKS POST', '    .balign 4\npost_hidx:'):
         old = '.if USB_LAYOUT == LAYOUT_TRACKS_POST\n' + marker
         text = checked(text, old, '.if 1\n' + marker)
+    # The gain history's eight-track pass cost every frame of every layout about 2.6 points of the frame interrupt
+    # with no stream (owner's MKII, 26 November 2026). It serves the POST tap
+    # alone, so it runs only while that is on; turning POST on starts from the history of when it was last on,
+    # settled within four frames. mwua_begin_frame sets mwua_post before this shim, so it holds for the frame.
+    text = checked(text, '''    moveq   #0,%d0                  | state only, no per-sample table
+    bsr     post_frame
+    bsr     post_emac_leave
+''', '''    tstb    mwua_post
+    beqs    .Lpost_gate_idle
+    moveq   #0,%d0                  | state only, no per-sample table
+    bsr     post_frame
+    bsr     post_emac_leave
+.Lpost_gate_idle:
+''')
     text = checked(text, 'audio_frame_shim_body:\n', '''audio_frame_shim_body:
-    mvzb    mwua_post,%d0
+    tstb    mwua_post
+    beqs    .Lpost_gate_body
+    moveq   #1,%d0
     bsr     post_frame
     lea     post_gtab,%a0
     movel   %a0,mwua_gain
+.Lpost_gate_body:
 ''')
     start = text.index('    moveq   #RB_TRACKS-1,%d7\n2:  movel   %a0@,%d2')
     end = text.index('    bpl     2b\n', start) + len('    bpl     2b\n')
@@ -44,8 +61,46 @@ def configure_source(text):
     moveal  %sp@+,%a4
     bra     .Lstems_done
 .Lpre_words:
+    | MAIN + CUE sends no track word: its sixteen stores a frame are skipped. Only there: it is the one layout with
+    | a profile of its own (two pairs), so leaving it re-enumerates and the stream restarts on fresh slots. In a
+    | layout that can start sending a track without that (ALL from MAIN + CUE ONLY, TRACK 8 from MAIN), the packets
+    | would first carry the ring's words from before.
+    tstb    mwua_main_cue           | set once a frame, below the speed check
+    beqs    .Lstems_store
+    lea     %a3@(64),%a3            | past the slot's track words, left as they were
+    bra     .Lstems_done
+.Lstems_store:
 ''' + loop + '.Lstems_done:\n' + text[end:]
-    text = checked(text, '    movel   %d4,aud_produced\n.endif\n', '    movel   %d4,aud_produced\n    bsr post_emac_leave\n.endif\n')
+    # MAIN + CUE at high speed does the built-in's work (owner's MKII, 27 November 2026: recording cost 4 points of
+    # the frame interrupt more than the built-in's code, mostly the routed C copy). mwua_main_cue holds only when the
+    # copy's routes are Main then Cue: two pairs, words 16-19 sent and the first pair Main (mwua_fs_pair is route[0]).
+    text = checked(text, '''    seq     %d1                     | d1 = 0xff at high speed
+    moveal  %d1,%a1                 | a1 != 0: skip the sum this block
+''', '''    seq     %d1                     | d1 = 0xff at high speed
+    moveal  %d1,%a1                 | a1 != 0: skip the sum this block
+    moveq   #0,%d0                  | mwua_main_cue, for the producer and the packet copy
+    tstl    %d1
+    beqs    .Lmc_flag
+    mvzb    mwua_pairs,%d1
+    subql   #2,%d1
+    bnes    .Lmc_flag
+    movel   mwua_sent_words,%d1
+    cmpil   #0xf0000,%d1
+    bnes    .Lmc_flag
+    mvzb    mwua_fs_pair,%d1
+    subql   #8,%d1
+    bnes    .Lmc_flag
+    moveq   #1,%d0
+.Lmc_flag:
+    moveb   %d0,mwua_main_cue
+''')
+    text = checked(text, '    movel   %d4,aud_produced\n.endif\n', '''    movel   %d4,aud_produced
+    tstb    mwua_post
+    beqs    .Lpost_gate_done
+    bsr post_emac_leave
+.Lpost_gate_done:
+.endif
+''')
     text = checked(text, '    tstb    usbaudio_alt\n    bnes    .Lproduce', '''    tstb    mwua_off
     beqs    .Loutput_on
     addql   #8,aud_produced
@@ -103,6 +158,8 @@ mwua_route:                        | a0 dTD, a3 buffer, a5 wrap, a6 slot
     beqs 1f
     tstb mwua_direct
     bne audio_copy80
+    tstb mwua_main_cue
+    bne mwua_copy_main_cue
     moveq #0,%d1
     bras 2f
 1:  moveq #1,%d1
@@ -119,9 +176,21 @@ mwua_route:                        | a0 dTD, a3 buffer, a5 wrap, a6 slot
     bsr mwua_packet_bytes
     addal %d6,%a1
     rts
+mwua_copy_main_cue:                | d0 frames from a2 to a1: each slot's words 16-19, as the built-in copies them
+    lea %a2@(64),%a2               | (clobbers d1-d4, as audio_copy16 does at the same call)
+    tstl %d0
+    beqs 2f
+1:  moveml %a2@,%d1-%d4
+    moveml %d1-%d4,%a1@
+    lea %a2@(80),%a2
+    lea %a1@(16),%a1
+    subql #1,%d0
+    bnes 1b
+2:  rts
     .bss
     .balign 4
 mwua_gain: .space 4
+mwua_main_cue: .space 1
 '''
     return text
 
@@ -173,7 +242,7 @@ def source(root, module, layout, functions, load, sine_curve, package_hooks, *, 
     text = checked(text, 'mwua_bus_end: ', 'mwua_bus_end:\n    clrb uac2_set_pending\n    | ')
     if usb_input:
         text = checked(text, '.set USB_IN, 0\n', '.set USB_IN, 1\n')
-        text = input_trim(usb_input.package_source(text))
+        text = output_trim(input_trim(usb_input.package_source(text)))
     return text
 
 
@@ -206,6 +275,42 @@ mwua_trims:   .long 0               | drift trims: absorbed << 16 | repeated
     | ''')
     text = checked(text, '    moveq   #14,%d0\n.Linput_counters:', '    moveq   #15,%d0\n.Linput_counters:')
     return checked(text, '    moveal  #SRAM_REPLY,%a0\n    moveq   #60,%d0\n', '    moveal  #SRAM_REPLY,%a0\n    moveq   #64,%d0\n')
+
+
+def output_trim(text):
+    """Send the recording on the host's clock while the host plays into the unit (#2263).
+
+    The input stream is adaptive, on the host's clock. With the recording on the unit's crystal (the rate
+    servo), macOS runs both in one I/O cycle and its output buffer slid against what it sent until it sent
+    stale buffers: a buzz at its buffer's rate after about three minutes. So while EP3 OUT is up
+    (in_running), each packet takes the nominal 11.025 frames a poll and usb_audio_output_trim.c absorbs the
+    producer's drift in the ring. With nothing played in, the servo runs as before. The trims go out as a
+    sixteenth long of vendor request 0x55."""
+    text = checked(text, '''    bnes    .Lsrv_done              | ring, send nominal: the bring-up burst's
+''', '''    bnes    .Lsrv_done              | ring, send nominal: the bring-up burst's
+    tstb    in_running              | the host plays in: nominal, on its clock
+    bnes    .Lsrv_done              | (usb_audio_output_trim.c holds the ring)
+''')
+    text = checked(text, '''    movel   %d2,usbaudio_lastfill
+''', '''    movel   %d2,usbaudio_lastfill
+    tstb    in_running
+    beqs    .Lmwua_trimmed
+    movel   %a0,%sp@-
+    movel   %d4,%sp@-               | n
+    movel   %d2,%sp@-               | the fill before this packet
+    movel   usbaudio_consumed,%sp@-
+    pea     aud_ring
+    jsr     mwua_output_trim
+    lea     %sp@(16),%sp
+    moveal  %sp@+,%a0
+    addl    %d0,usbaudio_consumed   | 1: a frame absorbed, -1: one repeated
+.Lmwua_trimmed:
+''')
+    text = checked(text, 'aud_produced:      .long 0          | producer frame count\n', '''aud_produced:      .long 0          | producer frame count
+    .global mwua_out_trims
+mwua_out_trims:    .long 0          | recording drift trims: absorbed << 16 | repeated
+''')
+    return checked(text, '    lea     usbaudio_consumed,%a0\n    moveq   #60,%d0\n', '    lea     usbaudio_consumed,%a0\n    moveq   #64,%d0\n')
 
 
 # The imported layouts (layouts/descriptors.py, pinned in sdk/imports/usb-audio-outbox-7b2984c8.json) declare the input

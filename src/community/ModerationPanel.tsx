@@ -8,7 +8,7 @@ export function ModerationPanel(){
  const [query,setQuery] = useState('')
  const term = query.trim().toLowerCase()
  const matched = items.filter(item => [item.module_id, item.author, item.body].some(text => text.toLowerCase().includes(term)))
- return <section className="configuration-section"><div className="section-title"><h2>Recent comments</h2>{!loading && !error && <span className="pill">{matched.length}</span>}</div>
+ return <section className="configuration-section"><div className="section-title"><h2>Recent comments{!loading && !error && <span className="subtle">{matched.length}</span>}</h2></div>
   <p className="service-note">Guest names are unverified. Remove spam, abuse or private and infringing content.</p>
   {!!items.length && <label className="admin-search">Find a comment<input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Module, author or text"/></label>}
   {matched.map(item => <article className="admin-comment" key={item.id}>

@@ -1,4 +1,8 @@
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
+import { AVAILABLE_MODULES } from '../catalog/availability'
+import { LIBRARY_CATEGORY_LABELS, type ModuleCategory } from '../catalog/modules'
+import { DIGI_MODS } from '../devices/digi-mods'
+import { ZOOM_EFFECTS } from '../devices/zoom-effects'
 import type { ReactNode } from 'react'
 import { useActionsMenu } from '../hooks/useActionsMenu'
 import { Icon } from './Icon'
@@ -26,12 +30,23 @@ export type LibraryToolsProps = {
   buildText?: string
 }
 
+// A long Type menu lists its types under the library category they belong to, so it can be scanned.
+const TYPE_CATEGORY = new Map<string, ModuleCategory>([
+  ...ZOOM_EFFECTS.map(effect => [effect.type, effect.category] as const),
+  ...DIGI_MODS.map(mod => [mod.category, mod.libraryCategory] as const),
+  ...AVAILABLE_MODULES.map(module => [module.type, module.category] as const),
+])
+
 export function LibraryTools({ family, families, onFamilyChange, sort, onSortChange, comparisonCount, onCompare, buildHref = '#configuration', buildLabel, machine, categoryNav, categoryLabel, disabled = false, build = true, buildText }: LibraryToolsProps) {
   // On the Octatrack base path, loading happens from the Octatrack hub's guided load, not a .bin;
   // #configuration opens it on the set you edit.
   const usb = useOctatrackBase() && buildHref === '#configuration', mobile = useMobileWorkspace()
   const days = downloadPeriod(sort)
   const { open, setOpen, buttonRef, panelRef, panelId, moveFocus } = useActionsMenu()
+  const sorted = [...families].sort((a, b) => a.localeCompare(b))
+  const grouped = new Map<string, string[]>()
+  if (sorted.length > 12) for (const value of sorted) { const category = TYPE_CATEGORY.get(value), label = category ? LIBRARY_CATEGORY_LABELS[category] : 'Other'; grouped.set(label, [...grouped.get(label) ?? [], value]) }
+  const typeGroups = grouped.size > 1 ? [...grouped] : undefined
   return <div className="discovery-tools">
     {machine}
     <div className="catalog-commands">
@@ -49,7 +64,7 @@ export function LibraryTools({ family, families, onFamilyChange, sort, onSortCha
       <div className="catalog-sort-group">
         <label><span className="sr-only">Type</span><select value={family} disabled={disabled} onChange={event => onFamilyChange(event.target.value)}>
           <option value="all">All types</option>
-          {[...families].sort((a, b) => a.localeCompare(b)).map(value => <option key={value}>{value}</option>)}
+          {typeGroups ? typeGroups.map(([label, values]) => <optgroup key={label} label={label}>{values.map(value => <option key={value}>{value}</option>)}</optgroup>) : sorted.map(value => <option key={value}>{value}</option>)}
         </select></label>
         <label className="catalog-sort"><Icon name="sort" size={16} /><span className="sr-only">Sort</span><select value={sortOption(sort).value} disabled={disabled} onChange={event => onSortChange(event.target.value)}>{MODULE_SORTS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
         {days !== undefined && <label className="discovery-period"><span className="sr-only">Period</span><select value={sort} disabled={disabled} onChange={event => onSortChange(event.target.value)}>{DOWNLOAD_PERIODS.map(period => <option key={period.value} value={period.value}>{period.label}</option>)}</select></label>}

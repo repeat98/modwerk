@@ -1,8 +1,8 @@
 .audio-submission-dialog { width: min(460px, calc(100% - 32px)); padding: 24px; }
 .audio-submission-dialog .section-title { margin-bottom: 6px; }
-.audio-submission-dialog .section-title h2 { font-size: 18px; margin: 0; }
+.audio-submission-dialog .section-title h2 { font-size: var(--text-lg); margin: 0; }
 .audio-submission-module { font-size: 12px; color: var(--muted); margin: 0 0 18px; }
-.audio-submission-dialog .audio-submission-file { display: flex; flex-direction: row; position: relative; align-items: center; gap: 14px; padding: 18px; border: 1px solid var(--control-border); border-radius: 8px; cursor: pointer; }
+.audio-submission-dialog .audio-submission-file { display: flex; flex-direction: row; position: relative; align-items: center; gap: 14px; padding: 18px; border: 1px solid var(--control-border); border-radius: var(--radius-md); cursor: pointer; }
 .audio-submission-file:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 .audio-submission-file > svg { color: var(--accent); flex: none; }
 .audio-submission-file > span { display: grid; gap: 5px; min-width: 0; }
@@ -10,9 +10,9 @@
 .audio-submission-file small { font-size: 11px; line-height: 1.5; color: var(--muted); }
 .audio-submission-file input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
 .audio-submission-credit { display: grid; gap: 8px; margin-top: 20px; font-size: 13px; }
-.audio-submission-credit input { width: 100%; min-height: 44px; border: 1px solid var(--control-border); border-radius: 6px; padding: 10px 12px; background: var(--background); color: var(--text); }
+.audio-submission-credit input { width: 100%; min-height: 44px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); padding: 10px 12px; background: var(--field); color: var(--text); }
 .audio-submission-dialog .audio-submission-rights { display: flex; flex-direction: row; align-items: center; gap: 10px; min-height: 44px; margin: 12px 0; font-size: 13px; line-height: 1.5; }
-.audio-submission-dialog .audio-submission-rights input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; padding: 0; flex: none; }
+.audio-submission-dialog .audio-submission-rights input { accent-color: var(--accent); width: 20px; height: 20px; margin: 0; padding: 0; flex: none; }
 .audio-submission-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-.audio-submission-dialog .audio-preview-player { margin-top: 16px; border: 1px solid var(--line); border-radius: 8px; --signal: var(--accent); }
+.audio-submission-dialog .audio-preview-player { margin-top: 16px; border: 1px solid var(--line); border-radius: var(--radius-md); --signal: var(--accent); }
 @media (max-width: 600px) { .audio-submission-dialog { padding: 20px; } }
