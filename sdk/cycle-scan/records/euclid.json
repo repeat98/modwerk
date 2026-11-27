@@ -2,7 +2,7 @@
   "schema": 1,
   "module": "euclid",
   "version": "0.1.6-experimental",
-  "sourceSha256": "e99fa5d15beef67bab9591134d4de50db66aaaeeebac971dadedddf9e50587d3",
+  "sourceSha256": "50b4ed7284b4c9e25cfe628e3106e06f1d31aba51fa743960ba25414569bfab1",
   "scanRevision": "cc7cffc1a675a763c5b8d6fbe1659f2b322cc540",
   "model": "DSP56300FM Table A-1 cycles and the A.2 and 3.5 stalls on one steady block of each --sweep setting; a model, not a measurement",
   "dearest": {
@@ -22,5 +22,12 @@
     "instructions": 139.81,
     "cycles": 223.38,
     "stalls": 20.19
+  },
+  "stock": {
+    "comparator": "FILTER",
+    "setting": "defaults/max",
+    "instructions": 240.19,
+    "cycles": 279.81,
+    "stalls": 11.06
   }
 }

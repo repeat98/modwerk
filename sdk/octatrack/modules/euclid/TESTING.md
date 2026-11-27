@@ -14,7 +14,7 @@ Version: 0.1.6-experimental · author: [Jannik Aßfalg](https://github.com/repea
   | 0.1.6 | +0.0 / -0.1 | +3.9 / +4.2 / +5.7 (+5.9) |
 
 - **In use:** the DSP reading isn't lower despite the speed-ups (one run of three readings, peaks equal within 0.1); the cycle scan's -9.1 cycles a sample is the static figure. Not re-measured by ear.
-- Not run on this release: the instance curve, the test procedure, Part/project reload and power cycles, an MKI.
+- Not run on this release: Part/project reload and power cycles, an MKI. The instance curve and the test procedure's software steps follow below.
 - **Performance record, on a computer** (26 November 2026, `evidence/performance.json`): from `sdk/octabam`, `python3 tools/build/cycle_count.py` (the module's `measure`), `python3 tools/harness/benchmark_stock_dsp.py`, `python3 modules/euclid/perf.py bench OUT` and `python3 modules/euclid/perf.py stress OUT --seconds 2`, then `npm run perf:audit -- check … --stamp`. The DSP filter alone, on a private image (`0c23ac7d…`); not hardware.
 
   | | |
@@ -23,6 +23,29 @@ Version: 0.1.6-experimental · author: [Jannik Aßfalg](https://github.com/repea
   | stock benchmark | 187.75 vs FILTER 284.88 (0.66x); the dearest stock effect is 330.94 |
   | stress | 4 per core, eight tracks, 3 LFOs and 20 locked slots, 2 s, no clobber, no hang |
 - **Module pool, on a unit** (26 November 2026): two rolled-back trials of `27263940…` on development twin `46c30886` of base 0.8.2 read 10,480 bytes each, the loader extent of base 0.8's module record (#2284).
+
+### Test procedure: euclid 0.1.6-experimental, 27 November 2026
+
+Build: revision `f57544fc2` (the owner's re-signed build approval of 27 November); the runner builds the plain runtime
+package `91af771d…`; the published package is `27263940…` (identical in CI's octatrack-source rebuild).
+`npm run test:procedure -- euclid --no-unit --no-emulator`, 9 s.
+
+| # | Step | Result |
+| --- | --- | --- |
+| 1 | Software checks (`npm run module:doctor -- euclid`) | passed |
+| 2 | Beside every other module (`npm run modules:compat -- euclid`) | passed |
+| 3 | Name the build (`npm run module:dev -- euclid --build-only`) | passed: `91af771d` |
+| 4 | DSP cost model (`node scripts/cycle-scan.mjs check`) | passed, after `cycle-scan.mjs record euclid` re-recorded the scan on this source (`perf.py` joined it; the DSP code and its 223.38 cycles a sample are unchanged); the unit's in-use reading (5.4 points = 245 cycles) is 1.10 of the model, its peak (281) above the dearest model |
+| 5-10 | Emulator rehearsal and the unit steps | not run in this run: left out with `--no-emulator` and `--no-unit` |
+| 11-12 | By hand, and the submitter's own stage | to do: the owner's |
+
+On the unit, 26 November 2026, outside the runner: `device:price --write --curve --memory` of the published `27263940…`
+on the owner's MKII (development twin `46c30886` of base 0.8.2, built from main `48f4a9b9c`; Dev17 C04, rebuilt in the
+working copy): at rest frame +1.7 points, in use on T1 FX2 frame +4.2 and DSP T1-4 +5.4 (peak +6.2); curve first 4.2,
+each 0.5 (points 82.1, 84.8, 86.8, 87.3, 87.8 on T1, T3, T6, T7); admitted alone on the empty (56.2 %) and the medium
+(85.1 %) pattern, nothing dropped, no stalls; rolled back.
+
+Not tested on a unit for this record: the runner's scripted pass and soak, a power cycle, a listen.
 
 ## 0.1.6-experimental: rests while no slot uses it (prepared 20 November 2026, tested on 0.7.11 below)
 
