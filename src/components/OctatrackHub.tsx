@@ -194,17 +194,16 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
               : 'Connect your Octatrack to see which base it runs. Installing the base for the first time? The guide takes you through it.'}</p>
             <button type="button" className={'button ' + (!usb || status === 'stock' || needsBase || status === 'ready' && !connected ? 'button-primary' : 'button-quiet')} onClick={() => onInstall(wantedLayout)}><Icon name="download" size={16} />{!usb ? 'Install the base' : wantedLayout ? 'Install base with this layout' : needsBase ? 'Install latest base' : status === 'stock' ? 'Install the base' : connected ? 'Install the base again' : 'Open the install guide'}</button>
             {usb && MODULE_SKIP_HINT && <p className="link-hint">{MODULE_SKIP_HINT}</p>}
-            <p className="link-hint">Going back to the original OS works from the card: <a className="text-button" href="#faq/return-to-stock">how to go back</a></p>
-            {onWelcome && <p className="link-hint"><button type="button" className="text-button" onClick={onWelcome}>What’s new: modules over USB</button></p>}
+            <p className="link-hint">Going back to the original OS works from the card: <a className="text-button" href="#faq/return-to-stock">how to go back</a>{onWelcome && <> · <button type="button" className="text-button" onClick={onWelcome}>What’s new: modules over USB</button></>}</p>
           </section>
-          {usb && <section className="hub-section" aria-labelledby="setup-connect-title">
-            <h3 id="setup-connect-title">Can’t connect?</h3>
+          {usb && <details className="hub-section hub-help">
+            <summary><h3 id="setup-connect-title">Can’t connect?</h3></summary>
             <p><strong>Linux:</strong> Chrome needs permission to use the Octatrack. Add this rule, then unplug the Octatrack and plug it back in:</p>
             <pre className="hub-code">{'echo \'SUBSYSTEM=="usb", ATTR{idVendor}=="1935", TAG+="uaccess"\' | sudo tee /etc/udev/rules.d/70-octatrack.rules\nsudo udevadm control --reload-rules'}</pre>
             <p>Chromium from the Snap Store also needs <code>sudo snap connect chromium:raw-usb</code>.</p>
             <p><strong>Windows:</strong> Chrome can open the Octatrack only once it runs the Modwerk base. With the original OS, install the base from the card first.</p>
             <p><strong>In use by another window or app:</strong> Modwerk open in another browser, another Chrome profile or a private window holds the Octatrack, and so can another app that talks to it. Close it, and this page connects by itself. If it stays in use, quit the browser completely and open it again, or unplug the Octatrack and plug it back in.</p>
-          </section>}
+          </details>}
           {card}
         </>)}
         {panel('diagnostics', <><h2 className="hub-view-title">Diagnostics</h2><OctatrackDiagnosticsSettings username={username} /></>)}

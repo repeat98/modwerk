@@ -1,12 +1,12 @@
 .octatrack-samples { min-width: 0; container-type: inline-size; }
 .octatrack-samples h2 { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; margin: 0; }
 .octatrack-samples p { color: var(--muted); line-height: 1.5; }
-.samples-wip { font-size: .7rem; font-weight: 500; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: .25rem .45rem; }
+.samples-wip { font-size: var(--text-xs); font-weight: 500; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: .25rem .45rem; }
 .samples-drop { border: 1px dashed var(--line); border-radius: var(--radius-md); padding: 1.1rem; }
 .samples-drop p { margin-top: 0; }
 .samples-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
-.octatrack-samples button, .samples-tree summary { min-height: 44px; }
-.samples-local-note, .samples-notice { font-size: .8rem; }
+.octatrack-samples button, .samples-tree summary { min-height: var(--control-h); }
+.samples-local-note, .samples-notice { font-size: var(--text-sm); }
 .samples-notice { min-height: 1.5em; }
 .samples-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.25rem; }
 .samples-list-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
