@@ -30,5 +30,5 @@
 .load-legend .load-time::before { display: none; }
 .load-table { flex: 1; min-height: 0; overflow: auto; font-size: 12px; }
 .load-table table { width: 100%; text-align: left; font-variant-numeric: tabular-nums; }
-.load-table th, .load-table td { padding: 4px 6px; }
+.load-table th, .load-table td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
 .load-note { margin: 6px 0 0; color: var(--muted); font-size: 11px; }

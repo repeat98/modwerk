@@ -10,13 +10,11 @@ export function CreditsPage() {
   const repository = sourceRepository() || 'https://github.com/repeat98/modwerk'
   return <div className="credits-page">
     <div className="page-heading credits-heading"><div>
-      <p className="page-kicker">MODWERK / CREDITS</p>
-      <h1>Credits &amp; acknowledgements</h1>
+      <h1>Credits</h1>
       <p>Modwerk exists because people shared their research, tools and ideas. These are the projects and contributors that made it possible.</p>
     </div></div>
 
     <section className="credits-origin" aria-labelledby="credits-origin-title">
-      <p className="credits-eyebrow">WHERE IT STARTS</p>
       <h2 id="credits-origin-title">{DSP56300_CREDIT.name}</h2>
       <p className="credit-author">{DSP56300_CREDIT.author}</p>
       <p className="credits-origin-copy">{DSP56300_CREDIT.description}</p>
@@ -29,12 +27,11 @@ export function CreditsPage() {
       heading?.focus({ preventScroll: true })
     }}>{section.title}</button>)}</nav>
 
-    {CREDIT_SECTIONS.map((section, index) => <section key={section.id} className="credits-section" aria-labelledby={'credits-' + section.id}>
+    {CREDIT_SECTIONS.map(section => <section key={section.id} className="credits-section" aria-labelledby={'credits-' + section.id}>
       <header className="credits-section-heading">
-        <span className="credits-eyebrow" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
         <div><h2 id={'credits-' + section.id} tabIndex={-1}>{section.title}</h2><p>{section.description}</p></div>
       </header>
-      <div className="credits-grid">{section.projects.map(project => <article key={project.name} className="credit-project">
+      <div>{section.projects.map(project => <article key={project.name} className="credit-project">
         <h3>{project.name}</h3>
         <p className="credit-author">{project.author}</p>
         <p className="credit-description">{project.description}</p>

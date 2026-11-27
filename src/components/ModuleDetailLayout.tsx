@@ -119,7 +119,7 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
         {videoTarget && <button type="button" className="text-button module-watch-video" onClick={showVideo}><span className="module-watch-video-icon" aria-hidden="true"><Icon name="play" size={12} /></span>Watch the video</button>}
         <ModuleUpdateButton id={id} compact />
         <ModuleFeedbackPanel workingCount={workingCount} workingAction={<ModuleWorksReportButton key={id} id={id}/>} onReportIssue={showIssueReport}/>
-        <div className="detail-rating"><button className="text-button" onClick={showDiscussion}>Reviews & discussion{discussionBadge}</button></div>
+        <div className="detail-rating"><button className="text-button" onClick={showDiscussion}>Reviews & discussion</button></div>
       </div>
       {resources}
     </section>
