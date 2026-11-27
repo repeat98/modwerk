@@ -1136,6 +1136,32 @@ modwerk_site_4009fb58:
         jmp 0x4009fb80
         1: jmp 0x4009fb5e
 
+| ---- 0x400a2d6a: ev_audio_step
+        .globl  modwerk_site_400a2d6a
+modwerk_site_400a2d6a:
+        lea     0x800064d0,%a0
+        mvz.b   (0,%a0,%d5.l),%d0 | stock step for track d5 (displaced mvzb at 0x400a2d70)
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_audio_step: int f(unsigned *step, unsigned track)
+        movea.l modwerk_runtime_event_row+236,%a2
+.L400a2d6a_ev_audio_step:
+        move.l  (%a2)+,%d0
+        beq     .L400a2d6a_ev_audio_step_end
+        move.l  %d5,-(%sp)
+        pea     4(%sp)
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     8(%sp),%sp
+        tst.l   %d0
+        beq     .L400a2d6a_ev_audio_step
+        bra     .L400a2d6a_tail
+.L400a2d6a_ev_audio_step_end:
+.L400a2d6a_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        jmp 0x400a2d74 | movel %d0,%sp@- (the step argument to 0x4009d1e8)
+
 | ---- raised (by a module, or by the base): ev_mute_keep: unsigned f(void); every handler runs, the answers OR'd
         .globl  modwerk_raise_ev_mute_keep
 modwerk_raise_ev_mute_keep:

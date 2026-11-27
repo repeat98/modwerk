@@ -846,12 +846,41 @@
     "source": "sdk/machines/octatrack/module-adapters/analog_bd_dsp_price.json"
    },
    "controller": "analog_bd_write_lease",
-   "lease": {"feature": 4, "functions": ["ab_render", "ab_lease_end"], "why": "its packaged feature (dsp-sites.json) and the functions holding its one Begin and one End call (machine_lease_policy.py)"},
+   "lease": {
+    "feature": 4,
+    "functions": [
+     "ab_render",
+     "ab_lease_end"
+    ],
+    "why": "its packaged feature (dsp-sites.json) and the functions holding its one Begin and one End call (machine_lease_policy.py)"
+   },
    "imports": [
     "modwerk_controller_write_begin",
     "modwerk_controller_write_end"
    ],
    "why": "Every Analog BD chooser, page and renderer seam is the base registry's. Since 0.1.6 it has no engine list (TYPE on SRC SETUP picks 808/909): without a pool it is a LIST machine: the base opens the track's window on the machine list, as for PICKUP, so the double tap shows the list at once. Its package links the analog-bd lane's controller (analog_bd_runtime.port: no writes to stock's descriptor row 5; analog_bd_write_lease.port: render only under the board's write lease, else the stock silent source), whose two lease functions are the exact base's exports. ab_type and ab_engine_right are not descriptor fields: both assume chooser row 5, and the registry's signature lookup and RIGHT dispatch do the same with the machine's actual row."
+  },
+  "playmodes": {
+   "sources": {
+    "sdk/octabam/modules/playmodes/manifest.py": "36c814b0157ca9a694ccd13cfe5ee871eb43379cbef7a9ad982010588956c0f1",
+    "sdk/octabam/modules/playmodes/hooks.s": "2b44e236ddbd9db898f60f2212ffeebaa22e4f2f6ef869781a7e21eefd09c0d9"
+   },
+   "subscribe": [
+    {
+     "event": "ev_audio_step",
+     "fn": "pm_ev_audio_step",
+     "order": 40,
+     "replaces": "pm_audio_step"
+    }
+   ],
+   "callWrappers": [
+    {
+     "fn": "pm_ev_audio_step",
+     "via": "pm_step_entry",
+     "shape": "step_ptr_track"
+    }
+   ],
+   "why": "MOP-102 upstream: base owns 0x400a2d6a as ev_audio_step (index 63). This port replaces pm_audio_step so modules:compat and USB sets subscribe instead of Detour; glue wraps pm_step_entry. Native playmodes sources unchanged; standalone published .mwrm still Detours until a follow-up owner-approved playmodes runtime.json. MIDI/rebuild/LED Detours stay Play Modes' own. Coexists with Seq Pos order 50 (listing tip)."
   }
  }
 }
