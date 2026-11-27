@@ -18,5 +18,5 @@ export const DSP_LOADER = false
 export const USB_LINK = import.meta.env?.DEV ?? false // plain Node (the scripts) has no import.meta.env
 // The ELEK update name appears on the resident bootloader's screen.
 // The panel boot font has uppercase letters; lowercase codes draw symbols.
-// Its fixed field is ten ASCII bytes; module versions are reported separately.
-export const FIRMWARE_VERSION = 'ELEKLOADER'
+// Its fixed field is ten ASCII bytes, the name right-justified in it; module versions are reported separately.
+export const FIRMWARE_VERSION = 'MODWERK'
