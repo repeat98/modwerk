@@ -559,7 +559,7 @@ export default function App() {
   const resourcesRef = useRef<HTMLDetailsElement>(null)
   const moduleTitle = detailModule?.name ?? digiMod?.title ?? zoomEffect?.name ?? communityModule?.title
   const breadcrumbSection = hubRoute ? 'Your Octatrack' : unitPageName ? 'Your ' + unitPageName
-    : projectsRoute ? PROJECT_TITLE : faqRoute ? 'Help & FAQ' : route === 'credits' ? 'Credits & acknowledgements'
+    : projectsRoute ? PROJECT_TITLE : faqRoute ? 'Help & FAQ' : route === 'credits' ? 'Credits'
     : route === 'base' ? 'Base firmware' : configuration || machineView === 'configuration' ? w.Set
     : route === 'privacy' ? 'Privacy' : route === 'impressum' ? 'Impressum' : route === 'community-rules' ? 'Community rules'
     : route === 'modding-guidelines' ? 'Modding guidelines' : route === 'report-content' ? 'Report content'
@@ -613,7 +613,7 @@ export default function App() {
                 {!DEVELOP_HIGHLIGHT && <a href="#submit" aria-current={route.startsWith('submit') ? 'page' : undefined}><Icon name="plus" /><span>Start developing</span></a>}
                 <a href="#base" aria-current={route === 'base' ? 'page' : undefined}><Icon name="shield" /><span>Base firmware</span><span className="sidebar-feature-new">New</span></a>
                 <a href="#faq" aria-current={faqRoute ? 'page' : undefined}><Icon name="help" /><span>Help &amp; FAQ</span></a>
-                <a href="#credits" aria-current={route === 'credits' ? 'page' : undefined}><Icon name="heart" /><span>Credits &amp; acknowledgements</span></a>
+                <a href="#credits" aria-current={route === 'credits' ? 'page' : undefined}><Icon name="heart" /><span>Credits</span></a>
                 <a href="#modding-guidelines" aria-current={route === 'modding-guidelines' ? 'page' : undefined}><Icon name="file" /><span>Modding guidelines</span></a>
               </nav>
               {SUPPORT_URL && <div className="sidebar-footer"><SupportButton onClick={() => setSupportOpen(true)} /></div>}
@@ -683,7 +683,6 @@ export default function App() {
                 <span className="breadcrumb-current" aria-current="page">{moduleTitle ?? breadcrumbSection}</span>
               </>}
             </nav>
-            <span className="preview-badge">Preview</span>
           </div>
           {libraryNav && <><label className={'search' + (searchExpanded ? ' is-open' : '')}><Icon name="search" size={15} /><input ref={searchRef} type="search" aria-label={route==='module-sets'?'Search module sets':'Search modules'} placeholder={route==='module-sets'?'Search sets':'Search modules'} value={query} onChange={(event) => setQuery(event.target.value)} onBlur={() => { if (!query) setSearchOpen(false) }} onKeyDown={(event) => { if (phoneLayout && event.key === 'Escape') closeSearch() }} /></label><button ref={searchToggleRef} type="button" className="toolbar-icon search-toggle" aria-label={route==='module-sets'?'Search module sets':'Search modules'} onClick={openSearch}><Icon name="search" size={20} /></button><button type="button" className="search-cancel" onClick={closeSearch}>Cancel</button></>}
           <div className="toolbar-actions">
