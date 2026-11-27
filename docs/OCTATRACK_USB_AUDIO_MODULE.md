@@ -57,7 +57,7 @@ Two things it found in the emulator shape the rest:
    unit. Once no base links USB Audio in, the site can become an ordinary resting site event.
 2. **SET_INTERFACE and GET_INTERFACE.** The prototype leaves them as stock sites of the function's own
    (`0x4001dd04`, `0x4001d824`, and the EP0 page at `0x4001d4b2`). Decide per site: base-owned event or the package's.
-3. **Memory.** The module's bss (the ring, up to 96 KiB) comes from the 768 KiB runtime pool. Check the
+3. **Memory.** The module's bss (the ring, up to 96 KiB) comes from the 1.5 MiB runtime pool. Check the
    controller's alignment and addressing needs for the isochronous buffers and transfer descriptors against pool
    memory, and what the largest layout leaves for a set of 24 modules.
 4. **The POST layout's gain curve** (`usb_post.py`) is 256 stock words a linked base reads from the owner's own OS.

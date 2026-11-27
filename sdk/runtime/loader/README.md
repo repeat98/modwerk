@@ -127,8 +127,10 @@ explicit `.fill` array. Every copy/fill destination must be a bounded
 zero placeholder, disjoint from other destinations and relocation words.
 The base reconstructs copies and fills without changing the stock-overlap
 scanner or exempting encoded payloads from it. A module's image is at most
-128 KiB, its image and bss together at most 288 KiB (`RUNTIME_MODULE_BYTES`,
-MIDI Scenes' 256 KiB of locks), and it has at most 2,048 relocations.
+128 KiB (`RUNTIME_IMAGE_BYTES`), its image and bss together at most 288 KiB
+(`RUNTIME_MODULE_BYTES`, MIDI Scenes' 256 KiB of locks); the Octatrack base
+raises them to 256 and 512 KiB (`build_core.py`, the Quadraverb's 48
+programs). A module has at most 2,048 relocations.
 
 Package flags remain u16 at 6, module ID u32 at 28 and layout u16 at 66.
 The Octatrack's read-only vendor request 29 (`C1`, value 0, vendor-interface
@@ -302,7 +304,7 @@ torn writes. Exact-build hardware, audio and reboot persistence remain open.
 - **Admission before anything changes.** A package is refused, with the
   live set untouched, when another live module patches any byte of its
   sites (Elekloader's own rule: one owner per byte), when `RUNTIME_MODULES`
-  are live (32 by default; the Octatrack base builds with 128 in a 768 KiB
+  are live (32 by default; the Octatrack base builds with 128 in a 1.5 MiB
   pool), or when the pool has no free run large enough. The refusal reason
   (`modwerk_runtime_refusal()`: malformed, memory, conflict, full, busy)
   is kept for diagnostics and the unit's own message.
