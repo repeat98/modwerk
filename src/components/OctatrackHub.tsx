@@ -1,6 +1,6 @@
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { ConfigurationHandoff } from './ConfigurationHandoff'
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { MODULES } from '../catalog/modules'
 import { inventoryUsbAudio, lastInventory, matchesUsbAudio, sameModules, type Inventory } from '../config/inventory'
 import { lastSuccessfulSync } from '../config/octatrack-progress'
@@ -90,6 +90,14 @@ function MobileModuleSets({ sets, selectedId, onSelect, onNew, onImport, onSetAc
 
 function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, username, onSelect, onSync, onInstall, onNew, onImport, onSetAction, onFill, onSaveUnit, onReport, onWelcome, header, grid, card }: OctatrackHubProps) {
   const state = useOctatrackLink(link), { status, identity } = state
+  // 76 of 91 failed claims connected by themselves within 10 s (20-27 November 2026): "isn't answering" waits that long.
+  const [unanswered, setUnanswered] = useState(false)
+  useEffect(() => {
+    if (status !== 'busy') return
+    const timer = setTimeout(() => setUnanswered(true), 10000)
+    return () => { clearTimeout(timer); setUnanswered(false) }
+  }, [status])
+  const looking = status === 'connecting' || status === 'busy' && !unanswered
   const connected = !!identity?.canSubmit && status === 'ready', busy = BUSY.includes(status), usb = !!link && status !== 'unsupported'
   const last = connected || busy ? undefined : lastInventory()
   const audio = connected && inventory ? inventoryUsbAudio(identity?.base, inventory) : last
@@ -119,10 +127,11 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
     : busy ? [state.module || status !== 'testing' ? 'Syncing…' : 'Self-test running…', null]
     : connected && stopped ? [DSP_STOPPED, null]
     : connected ? [<>Connected · {inventory ? modules(inventory.moduleIds.length) + ' on it' : 'reading what’s on it…'}{onUnit && <> · same as <b>{onUnit.name}</b></>}</>, null]
-    : status === 'connecting' ? ['Looking for your Octatrack…', null]
+    : looking ? ['Looking for your Octatrack…', null]
     : status === 'busy' ? [LINK_BUSY, <button key="retry" className="button button-quiet" onClick={() => void link?.retry()}>Try again</button>]
     : status === 'stock' || status === 'ready' ? [status === 'stock' ? 'Connected · original OS' : 'Connected · a Modwerk base this site can’t talk to', <button key="install" className="button button-primary" onClick={() => onInstall()}>Install the base</button>]
     : state.notice?.tone === 'error' ? [state.notice.text, connect]
+    : state.noDevice ? ['No Octatrack was chosen. If yours wasn’t in the list, see Can’t connect? in Setup.', connect]
     : [<>Not connected{last ? <> · Last seen: {lastName ? <b>{lastName}</b> : modules(last.moduleIds.length)} · {when(last.at)}</> : null}</>, connect]
   const screenLink = connected && ((identity.capabilities?.features ?? 0) & RuntimeFeature.screen) ? link : null
   const screenUnavailable = screenLink ? undefined
@@ -132,7 +141,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
       detail: 'Screen preview needs a Modwerk base with screen capture support.',
       action: <a className="button button-primary" href="#octatrack/setup">Open Setup<Icon name="arrow" size={16} /></a>,
     }
-    : status === 'connecting' ? { title: 'Connecting to your Octatrack…' }
+    : looking ? { title: 'Connecting to your Octatrack…' }
     : busy ? { title: 'Sync in progress', detail: 'Finish the sync before opening the screen preview.' }
     : status === 'busy' ? { title: 'Octatrack isn’t answering', detail: LINK_BUSY, action }
     : { title: 'Connect your Octatrack', detail: state.notice?.text ?? 'Use a USB data cable to mirror its display here.', action }
@@ -195,8 +204,9 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             {usb && MODULE_SKIP_HINT && <p className="link-hint">{MODULE_SKIP_HINT}</p>}
             <p className="link-hint">Going back to the original OS works from the card: <a className="text-button" href="#faq/return-to-stock">how to go back</a>{onWelcome && <> · <button type="button" className="text-button" onClick={onWelcome}>What’s new: modules over USB</button></>}</p>
           </section>
-          {usb && <details className="hub-section hub-help" open={state.notice?.tone === 'error' || undefined}>
+          {usb && <details className="hub-section hub-help" open={state.notice?.tone === 'error' || state.noDevice || undefined}>
             <summary>Can’t connect?</summary>
+            <p><strong>Not in the list?</strong> Use the Octatrack’s USB port and a cable that carries data, plugged straight into the computer. If the Octatrack is in <b>USB DISK MODE</b>, leave it and wait for its normal screen.</p>
             <p><strong>Linux:</strong> Chrome needs permission to use the Octatrack. Add this rule, then unplug the Octatrack and plug it back in:</p>
             <pre className="hub-code">{'echo \'SUBSYSTEM=="usb", ATTR{idVendor}=="1935", TAG+="uaccess"\' | sudo tee /etc/udev/rules.d/70-octatrack.rules\nsudo udevadm control --reload-rules'}</pre>
             <p>Chromium from the Snap Store also needs <code>sudo snap connect chromium:raw-usb</code>.</p>

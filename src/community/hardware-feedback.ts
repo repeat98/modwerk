@@ -45,16 +45,36 @@ function save(memberId: string, records: HardwareFeedback[]) {
   try { localStorage.setItem(key(memberId), JSON.stringify(records)); window.dispatchEvent(new Event(FEEDBACK_CHANGED)); return true }
   catch { return false /* Optional reminders must never stop a download or a successful working confirmation. */ }
 }
+const confirmedKey = (memberId: string) => key(memberId) + ':confirmed'
+/** Modules given feedback per exact build (feedbackId, the same fields the server keys a working report on), newest first. */
+function readConfirmed(memberId: string): [string, string[]][] {
+  try {
+    const saved = localStorage.getItem(confirmedKey(memberId)), rows: unknown = saved && saved.length <= 100000 ? JSON.parse(saved) : []
+    return Array.isArray(rows) ? rows.filter((row): row is [string, string[]] => Array.isArray(row) && typeof row[0] === 'string' && Array.isArray(row[1]) && row[1].every(id => typeof id === 'string')) : []
+  } catch { return [] }
+}
+export function confirmedFeedback(memberId: string, build: DownloadedBuild) {
+  const id = feedbackId(build)
+  return readConfirmed(memberId).find(([item]) => item === id)?.[1].filter(moduleId => build.modules.some(module => module.id === moduleId)) ?? []
+}
+function rememberConfirmed(memberId: string, build: DownloadedBuild, ids: readonly string[]) {
+  const id = feedbackId(build), completed = [...new Set([...confirmedFeedback(memberId, build), ...ids])].filter(moduleId => build.modules.some(module => module.id === moduleId))
+  try { localStorage.setItem(confirmedKey(memberId), JSON.stringify([[id, completed], ...readConfirmed(memberId).filter(([item]) => item !== id)].slice(0, 20))) }
+  catch { /* Optional, like the reminders. */ }
+}
 /** Every download schedules its guide. Repeated builds retain feedback and later-reminder preferences. */
 export function rememberHardwareFeedback(memberId: string, build: DownloadedBuild, now = Date.now()) {
   if (!memberId || !build.modules.length) return
   const records = readHardwareFeedback(memberId, now), id = feedbackId(build)
   const existing = records.find(record => feedbackId(record) === id)
+  // Feedback on this exact build counts even after a sync of another set replaced its record; with none left to give, no check-in.
+  const completed = [...new Set([...existing?.completed ?? [], ...confirmedFeedback(memberId, build)])]
+  const checkInAt = build.modules.some(module => !completed.includes(module.id)) ? now + CHECK_IN_DELAY : undefined
   if (existing) {
-    save(memberId, records.map(record => record === existing ? { ...record, downloadedAt: now, checkInAt: now + CHECK_IN_DELAY, checkInShownAt: undefined } : record))
+    save(memberId, records.map(record => record === existing ? { ...record, completed, downloadedAt: now, checkInAt, checkInShownAt: undefined } : record))
     return
   }
-  const record: HardwareFeedback = { machine: build.machine, os: build.os, modules: build.modules.map(({ id, name, version }) => ({ id, name, version })), downloadedAt: now, remindAt: now + FEEDBACK_DELAY, checkInAt: now + CHECK_IN_DELAY, completed: [], dismissed: false }
+  const record: HardwareFeedback = { machine: build.machine, os: build.os, modules: build.modules.map(({ id, name, version }) => ({ id, name, version })), downloadedAt: now, remindAt: now + FEEDBACK_DELAY, checkInAt, completed, dismissed: false }
   if (valid(record)) save(memberId, [record, ...records.filter(item => item.machine !== build.machine)].slice(0, 3))
 }
 export function pendingFeedback(record: HardwareFeedback) { return record.modules.filter(module => !record.completed.includes(module.id)) }
@@ -77,6 +97,7 @@ export function claimHardwareCheckIn(memberId: string, build: DownloadedBuild, n
 export function updateHardwareFeedback(memberId: string, build: DownloadedBuild, action: 'dismiss' | 'later' | { completed: string | readonly string[] }, now = Date.now()) {
   if (!memberId) return
   const id = feedbackId(build)
+  if (typeof action === 'object') rememberConfirmed(memberId, build, typeof action.completed === 'string' ? [action.completed] : action.completed)
   save(memberId, readHardwareFeedback(memberId, now).map(record => feedbackId(record) !== id ? record : {
     ...record,
     ...(action === 'dismiss' ? { dismissed: true, checkInShownAt: now } : action === 'later' ? { dismissed: false, remindAt: now + FEEDBACK_SNOOZE, checkInShownAt: now }
@@ -85,5 +106,5 @@ export function updateHardwareFeedback(memberId: string, build: DownloadedBuild,
 }
 /** Used to clean up the disposable development preview's separate member namespace. */
 export function forgetHardwareFeedback(memberId: string) {
-  try { localStorage.removeItem(key(memberId)); window.dispatchEvent(new Event(FEEDBACK_CHANGED)) } catch { /* Optional local state. */ }
+  try { localStorage.removeItem(key(memberId)); localStorage.removeItem(confirmedKey(memberId)); window.dispatchEvent(new Event(FEEDBACK_CHANGED)) } catch { /* Optional local state. */ }
 }
