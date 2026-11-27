@@ -168,6 +168,12 @@
    "identities": [
     "5af431bd3e42d93ce766747f4ed77505df88ce3b49e26ff7ce4dc32af7795829"
    ]
+  },
+  {
+   "version": "0.8.4",
+   "identities": [
+    "06d97b5bf43811066afc89d289a9a626ee821df15c67f9e9803727005bf3a46d"
+   ]
   }
  ]
 }

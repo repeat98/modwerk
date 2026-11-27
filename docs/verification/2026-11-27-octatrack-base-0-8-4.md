@@ -11,7 +11,12 @@ Source: `base/octatrack-next` after base 0.8.3, plus these commits, each its own
 
 ## Builds
 
-Regenerated with `npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin --beta --write`; the identities follow in the regeneration commit.
+Regenerated with `npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin --beta --write`, then `node scripts/base-size.mjs --write` and `npm run octatrack:module-packages -- --base-only`:
+
+- base 0.8.4 `06d97b5bf43811066afc89d289a9a626ee821df15c67f9e9803727005bf3a46d`; package `ef22105b…`, fills `86d01ea6…`.
+- browser `.bin` = `build_core.py` `.bin`: `e67245fbc838111b365ddc954fafc4b5a31e791740f39cc27c9767223249a179` (838,976 bytes); bootloader copy identical, `.bin` and `.syx` carry the same OS, every change inside a declared site.
+- 838,960 of 851,712 container bytes, 12,752 free (+1,068 since 0.8.3); MAIN 1,354,732 of 1,572,864.
+- Relinked: USB Audio 0.4.2-experimental `c2597a32…`.
 
 ## Tests
 
