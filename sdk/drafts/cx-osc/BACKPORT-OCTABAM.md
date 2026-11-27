@@ -28,4 +28,4 @@ Items proved on Modwerk MKII (dev twin `46c30886`, Nov 2026) that apply to the s
 ## Still Modwerk-only
 
 - **No detours on `ot_machines` table-owned sites** (`fm_main_commit`, `ml_*`, `po_lfdname`, …): Modwerk refuses them once the base contributes those tables; cx-osc manifest keeps engine/page detours only, **`contribute.replaces` = []** like `synth` (Nov 2026 migration). octabam still uses pinned detours in its own image layout.
-- USB `.mwrm` package, `device:test`, and frame-cost table in `sdk/machines/octatrack/frame-costs-base.json`.
+- USB `.mwrm` package and `device:test`. Frame-cost curve lives in `evidence/frame-cost.json` until catalog listing promotes it into `frame-costs.json`.
