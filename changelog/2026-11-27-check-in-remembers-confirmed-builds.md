@@ -1,0 +1,1 @@
+Site: the "Your new modules" check-in no longer opens again after a sync of a set you already gave feedback on. A module you confirmed for exactly that set, with the same OS and module versions, shows as saved, and when every module has feedback the check-in stays closed. A changed set or a new module version still asks, and "Report an issue" stays where it was.
