@@ -66,6 +66,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 
 ## Other machines and research
 
+- [DT2_DN2_SHARED_LINK_RUNTIME.md](DT2_DN2_SHARED_LINK_RUNTIME.md): joint-review design for the shared Digitakt II / Digitone II link, runtime, unit page and device tools, with proposed responsibilities and native qualification gates.
 - [SYNTAKT_OS_RESEARCH.md](SYNTAKT_OS_RESEARCH.md), [TONVERK_OS_RESEARCH.md](TONVERK_OS_RESEARCH.md), [DIGITONE_II_OS_RESEARCH.md](DIGITONE_II_OS_RESEARCH.md), [RYTM_MKI_OS_RESEARCH.md](RYTM_MKI_OS_RESEARCH.md): what each stock OS has shown so far.
 - [LXR_02.md](LXR_02.md): the Erica Synths LXR-02, in research.
 - [ZOOM_MULTISTOMP.md](ZOOM_MULTISTOMP.md) and [ZDL_MODULE_CONTRACT.md](ZDL_MODULE_CONTRACT.md): proposals for Zoom MultiStomp pedals and their effect files.
