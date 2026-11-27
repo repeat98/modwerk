@@ -400,6 +400,13 @@ static void counts(unsigned n, unsigned rows)
                           clamp[] = {0x40078c23u, 0x40078cb1u, 0x40078d2fu, 0x40078defu, 0x40078e7du};
     if (counted == (n | rows << 8 | 1u << 16)) return;
     for (unsigned i = 0; i < 2; ++i) put8(pea[i], (uint8_t)(5u + n));
+    /* SELECT MACHINE TYPE init is stock pea row_count, pea visible (0x40079248).
+     * counts() raised row_count to 5+n but left the second immediate at 6, so with one
+     * added machine the window showed six slots for five rows (empty line at the bottom). */
+    {
+        unsigned rows_total = 5u + n, visible = rows_total > 6u ? 6u : rows_total;
+        put8(0x4007924fu, (uint8_t)visible);
+    }
     for (unsigned i = 0; i < 4; ++i) put8(moveq[i], (uint8_t)(4u + n));
     for (unsigned i = 0; i < 5; ++i) put8(clamp[i], (uint8_t)(n > 1 ? 4u + n : 5u)), put8(clamp[i] + 6u, (uint8_t)(n > 1 ? 4u + n : 5u));
     put8(0x40065c7fu, (uint8_t)(3u + rows));
