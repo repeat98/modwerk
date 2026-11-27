@@ -2,6 +2,8 @@
 
 ## Current 0.1.7 observations — 27 November 2026
 
+**Expanded stage1 failed:**9973new guarded skips across the dense FM Synth/Mini Verb/activeUSB4 quartet trial;1new skip at9.445seconds with FRACT plus a private fixed20channelUSB companion. Both stopped/undone; see [failure receipt](release/expanded-failures-20261127-iteration18.json). The earlier standalone4channel results do not cover these loads. Two-reader optimization is under investigation; no full pass or release approval.
+
 One FRACT owner may now use any T1–T8; two live readers and the Part ABI are unchanged. The actual admission function passes all eight owners, 64 exclusion pairs, invalid tracks and Part immutability checks. Ten module tests, 52 SDK cases (four historical skips), nine runtime cases and seven probe cases pass. macOS and isolated Linux release packages are byte-identical. See [the exact-build record](release/qualification-20261127-iteration18.md).
 
 Development125c on base46 passed fixed T1/T5 and 12 Part checks, the 2400-operation control soak, all eight single-owner track picks, 20 four-format windows and 122 seconds of active MAIN+CUE four-channel USB stress with no new guard skips. CPU FULL refusals before refreshed native playback, CPU warning notes and failed probe attempts are retained. Private89411 timing is separate from normal125c. See [the hardware report](release/hardware-20261127-iteration18.md).

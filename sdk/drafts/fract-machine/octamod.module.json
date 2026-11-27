@@ -12,7 +12,7 @@
   },
   "build": {
     "status": "pending",
-    "reason": "Development0.1.7 hardware evidence recorded; released-base audio, full qualification, human stage and first-release review remain pending."
+    "reason": "Expanded development companion/USB20 tests failed with guard skips; performance investigation and full qualification pending."
   },
   "author": {
     "github": "ex1010",
@@ -178,7 +178,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Development125c: fixed T1/T5 and12Part checks,2400-operation control soak, all8single-owner picks,20format windows and122sactive4chUSB with zero new guard skips. Private timing probe separately scoped. Full qualification, released-base audio, listening/persistence and first-release review pending. Shared SDK gate corrections#2283/#2294 remain separate. Exact public f806/base24e install/integrity/Undo passed; audio and full release qualification remain pending.",
+    "summary": "Expanded stage1 failed: dense FM Synth/Mini Verb/activeUSB4 trial had9973new guard skips; private fixed20channelUSB case had1new skip at9.445s. Prior standalone4channel and format results stay scoped passes. Public f806 install/integrity/Undo passed only. Performance investigation, human stage and first-release review pending.",
     "hardwareStatus": "reported",
     "gates": [
       "modules/fract-machine/verify.py"

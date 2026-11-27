@@ -2,6 +2,10 @@
 
 Two-reader development125c completed the current format and active USB workloads without new guarded render skips. One FRACT owner was selected on each T1-T8, one at a time; the second owner was refused. This supports keeping two readers. It does not establish unrestricted workload capacity or release approval.
 
+## Expanded follow-up: stage1 failed
+
+Later current-byte tests found9973new guarded render skips across a dense FRACT+FM Synth+Mini Verb/two-core+activeUSB4 trial, and1new skip after9.445seconds in a separate FRACT+fixed20channelUSB control/lock/LFO case. Actual20channel CoreAudio recording was verified. Both trials were stopped and undone after loading a native scratch project; no crash/stall, Keep, NOR or guard/allowance changes. Full qualification is failed, not just waiting for approval. Earlier standalone4channel passes remain valid only for those named workloads. See [the expanded failure receipt](expanded-failures-20261127-iteration18.json). Optimization investigation continues with two readers.
+
 ## Exact builds and scope
 
 | Purpose | Package SHA-256 | Base |

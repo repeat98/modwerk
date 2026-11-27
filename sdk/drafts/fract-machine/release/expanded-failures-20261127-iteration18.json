@@ -1,0 +1,41 @@
+{
+  "hardware": true,
+  "module": "fract-machine",
+  "version": "0.1.7-experimental",
+  "packageSha256": "125c0ab3c7ac9b5cf8afc45710bca68ef62f8e55b34c8bb6fa20e6ae2379a165",
+  "baseIdentity": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+  "result": "EXPANDED_STAGE1_FAILED",
+  "denseCompanions": {
+    "set": [
+      "FRACT0.1.7",
+      "FM Synth0.1.5",
+      "Mini Verb0.2.3 on both cores",
+      "configurableUSB4 with active recording"
+    ],
+    "newGuardSkipsAcrossTrial": 9973,
+    "tracksReported": [
+      "T1",
+      "T2"
+    ],
+    "crashOrStallLogged": false,
+    "limits": "Initial attempt safely refused FM on warmed empty pattern; ordinary selection on another empty pattern succeeded at allowance45/booked44. No guard/allowance/cost-table edits. Main dense case stopped when skips grew; exact first measurement baseline/peak were not retained by that private driver, so9973 describes the entire quartet trial."
+  },
+  "usb20": {
+    "companionSha256": "2289eecf66f725fece541599324337c582fb4a595f0eac6cff3c04ba1bd3190b",
+    "companionScope": "Private current-source fixed20channel comparison build, stock-guard checked; not the public configurable package",
+    "coreAudioInputChannels": 20,
+    "recorderRan": true,
+    "beforeSkips": 9973,
+    "afterSkips": 9974,
+    "newGuardSkips": 1,
+    "secondsAtFirstDetection": 9.445375957991928,
+    "controlWindows": 2,
+    "lastFrameMaxPercent": 102,
+    "lastMeanFramePercent": 74.8,
+    "lastOwnRenderPeakPercent": 64.5,
+    "guardSharePercent": 80,
+    "cpuAllowancePercent": 45
+  },
+  "recovery": "Each failed trial stopped; native scratch T19 loaded before standard Undo. Independent readback after each returned base46 normal/empty/originalset87f28, unchanged NOR. Original project/CF final restoration still pending at this mid-session checkpoint.",
+  "next": "Bounded state-locality optimization investigation, preserving two readers and all controls; any new bytes require fresh qualification."
+}

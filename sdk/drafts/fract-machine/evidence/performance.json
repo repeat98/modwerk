@@ -44,5 +44,10 @@
     "wholeInterruptGuardShareUs": 290.24242424242425,
     "maxTimerFrameRelativeError": 0.00015764170541099354,
     "scope": "Private probe; original eleven executable units preserved. Includes native FLEX and timer/call overhead, excludes trailing probe bookkeeping. Whole-ISR share also pays base/other work; it is not module headroom. Lifetime callback maxima across twelve cases. No waiver granted."
+  },
+  "additionalWorkloads": {
+    "result": "EXPANDED_STAGE1_FAILED",
+    "record": "../release/expanded-failures-20261127-iteration18.json",
+    "method": "Separate expanded workloads failed; stress fields above describe only the earlier standalone4channel run."
   }
 }
