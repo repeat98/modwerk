@@ -6,7 +6,8 @@ import { MODULE_DOCUMENTS_BY_ID } from '../catalog/documents'
 import MACHINE_MODULES from '../catalog/machine-modules.json'
 import { FirmwareFeedbackDialog } from '../components/FirmwareFeedbackDialog'
 import { ModuleUsageInstructions } from '../components/ModuleUsageInstructions'
-import { builtModules } from './build-follow-up'
+import { builtModules, downloadedMachine, downloadedReportContext } from './build-follow-up'
+import { catalogModules } from './configuration-report'
 import { downloadedModuleGuide } from './downloaded-module-guide'
 import { moduleMediaDocument } from './module-media'
 
@@ -118,5 +119,24 @@ describe('downloaded firmware overview', () => {
     expect(html).toContain('Use ← / → to browse.')
     expect(html).toContain('Home / End jumps to the first / last screen.')
     expect(html).toContain('role="status" aria-atomic="true"')
+  })
+})
+
+describe('reporting the whole downloaded set', () => {
+  const props = { inline: true, onConfirm: async () => {}, onReport: () => {}, onLater: () => {}, onClose: () => {} }
+  const html = (modules: ReturnType<typeof builtModules>, onReportSet?: () => void) => renderToStaticMarkup(createElement(FirmwareFeedbackDialog, { ...props, build: { machine: 'Analog Rytm', os: '1.74', modules }, onReportSet }))
+  it('offers it beside the per-module report when the set has more than one module', () => {
+    const rytm = builtModules(['analog-rytm-mkii-analog-bd', 'analog-rytm-mkii-loop-sync'])
+    expect(rytm).toHaveLength(2)
+    expect(html(rytm, () => {})).toContain('Not sure which module? Report the whole set')
+    expect(html(rytm)).not.toContain('Report the whole set')
+    expect(html(rytm.slice(0, 1), () => {})).not.toContain('Report the whole set')
+  })
+  it('names the build’s machine from its modules and hands the report every module at its downloaded version', () => {
+    const build = { machine: 'Analog Rytm', os: '1.74', modules: builtModules(['analog-rytm-mkii-analog-bd', 'analog-rytm-mkii-loop-sync']) }
+    expect(downloadedMachine(build)).toBe('analog-rytm-mkii')
+    expect(downloadedMachine({ machine: 'Octatrack', os: '1.40C', modules: builtModules(['miniverb']) })).toBe('octatrack')
+    const context = downloadedReportContext(build)
+    expect(catalogModules('analog-rytm-mkii', context.configurations[0].modules).map(module => [module.id, module.version])).toEqual(build.modules.map(module => [module.id, module.version]))
   })
 })

@@ -5,6 +5,8 @@ import { watchHardwareCheckIn } from './hardware-check-in'
 import { feedbackId, pendingFeedback, readHardwareFeedback, updateHardwareFeedback, type DownloadedBuild, type HardwareFeedback } from './hardware-feedback'
 import { Icon } from '../components/Icon'
 import { ModuleIssueDialog } from './ModuleIssueDialog'
+import { ConfigurationReportDialog } from './ConfigurationReport'
+import { downloadedMachine, downloadedReportContext } from './build-follow-up'
 import { MODULE_STATISTICS_CHANGED } from './module-statistics'
 import { saveWorkingReports } from './module-works-report'
 
@@ -31,7 +33,8 @@ function MemberHardwareCheckIn({ memberId, enabled }: { memberId: string; enable
 
 export function DownloadedBuildCheckIn({ memberId, record, onClose, preview = false }: { memberId: string; record: HardwareFeedback; onClose: () => void; preview?: boolean }) {
   const isPreview = import.meta.env.DEV && preview
-  const [reporting, setReporting] = useState(''), [issueReports, setIssueReports] = useState<string[]>([])
+  const [reporting, setReporting] = useState(''), [issueReports, setIssueReports] = useState<string[]>([]), [reportingSet, setReportingSet] = useState(false)
+  const machine = downloadedMachine(record)
   // Capture the pending choices once. Successful actions stay visible as confirmations until closing.
   const [pendingIds] = useState(() => pendingFeedback(record).map(module => module.id))
   function finish(action: 'dismiss' | 'later') { updateHardwareFeedback(memberId, record, action); onClose() }
@@ -41,11 +44,12 @@ export function DownloadedBuildCheckIn({ memberId, record, onClose, preview = fa
     if (!isPreview) window.dispatchEvent(new Event(MODULE_STATISTICS_CHANGED))
   }
   return <>
-    <FirmwareFeedbackDialog build={record} pendingIds={pendingIds} issueReportedIds={issueReports} onConfirm={confirm} onReport={setReporting} onLater={() => finish('later')} onClose={() => finish('dismiss')}/>
+    <FirmwareFeedbackDialog build={record} pendingIds={pendingIds} issueReportedIds={issueReports} onConfirm={confirm} onReport={setReporting} onReportSet={machine && !isPreview ? () => setReportingSet(true) : undefined} onLater={() => finish('later')} onClose={() => finish('dismiss')}/>
     {reporting && <ModuleIssueDialog id={reporting} build={record} preview={isPreview} onReported={() => {
       updateHardwareFeedback(memberId, record, { completed: reporting })
       setIssueReports(current => [...new Set([...current, reporting])])
     }} onClose={() => setReporting('')}/>}
+    {reportingSet && machine && <ConfigurationReportDialog machine={machine} configurationId="downloaded-build" workspaceContext={downloadedReportContext(record)} onClose={() => setReportingSet(false)}/>}
   </>
 }
 
