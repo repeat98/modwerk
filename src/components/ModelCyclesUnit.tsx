@@ -85,7 +85,7 @@ export function ModelCyclesUnit({ device, header, request = browserMidi() }: { d
           <p role="status"><span className={'unit-led is-' + (ready ? 'on' : status === 'connecting' ? 'load' : 'off')} aria-hidden="true" />{line}</p>
           {error && <p role="alert">{error}</p>}
         </div>
-        {status === 'idle' && <button className="button button-quiet" onClick={connect}>Connect</button>}
+        {status === 'idle' && <button className="button button-primary" onClick={connect}>Connect</button>}
       </header>
       <nav className="hub-nav" aria-label={'Your ' + device.name}>
         <div className="hub-nav-group">

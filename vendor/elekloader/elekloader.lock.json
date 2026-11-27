@@ -47,9 +47,9 @@
   }
  },
  "catalog": {
-  "revision": "0da420d6532225851c0fb0ae7da58638054406c134bd34889a00c624e4a17687",
-  "sha256": "551e50618333e06875df838b0981b591eedbfa87cc7e500cd37985ba53665881",
-  "cores": 5,
+  "revision": "3447b9794a8674090bae986a6d352eb0edc273c7",
+  "sha256": "6c02248ad5cd8d1298d8f9725488875fe5dff4373e5d6cca2a8958f498c00a34",
+  "cores": 9,
   "mods": 21
  }
 }

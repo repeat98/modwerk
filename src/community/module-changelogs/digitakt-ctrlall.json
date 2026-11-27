@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.2.0",
+    "date": "2026-11-27",
+    "changes": [
+      "First release in Modwerk for the original Digitakt on OS 1.54: Ctrl All, by ceredmeat.",
+      "Hold TRK and press YES, then lock a step: the lock lands on the same step of every other track with a trig there.",
+      "Not with Digi EQ, which builds only on the older core.",
+      "The author's own 0.2 file, unchanged."
+    ]
+  }
+]

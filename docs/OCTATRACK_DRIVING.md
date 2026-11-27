@@ -30,6 +30,9 @@ On Windows keep the default chunk size, so a transfer fits WinUSB. The `serve` l
   (11 October 2026: a RELOAD made before the unplug was gone, and picks from before it were back).
 - Keep each command short: a few steps, a time limit, its output read at once. A long run goes in the
   background and logs every step, and you look at the log.
+- A trial of new frame-interrupt code (a producer, a trim, a frame hook): read `late guard` within its first 30 s
+  and stop at the first waited entry or a frame over 100 %, before any long run. On the unit it shows as the
+  sequencer's step lights holding back (26 November 2026: interpolating whole USB packets made frames of 112-125 %).
 - Never power-cycle on your own; ask the owner. Never flash.
 - Leave the CF card in for a trial. A twin loads no set another base wrote (`do saved` reads card set 4, FOREIGN;
   `do adopt` makes its next start load it, writing none) and a trial writes none: `device:test` fails if `saved` reads differently afterwards. `npm run device -- boot <flashed image>`

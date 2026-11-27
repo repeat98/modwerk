@@ -308,7 +308,9 @@ python3 scripts/capture-digi-module-ui.py \
   --out /private/capture/new-session --fixture-loop
 ```
 
-Use a new private output directory. `--fixture-loop` seeds an original synthetic
+Use a new private output directory, and add `--prune` unless you need the firmware, +Drive or snapshots afterwards: each run otherwise leaves about 0.4 GB, and a few dozen runs fill a disk. Panel traps on the Digitakt that cost reruns: an encoder's first turn after a page opens is swallowed, so start with `turn X -127` (or a second turn) before the turn you capture; SETTINGS opens on the last submenu used, and GLOBAL inside SETTINGS closes it; the first-boot project refuses a temp save (FUNC + YES shows "Prj must be re-saved!"), so save it once through SETTINGS > PROJECT > SAVE PROJECT AS and `wait 15000` before the next input; on a MIDI track, FLTR is CC Value and AMP is CC Select.
+
+`--fixture-loop` seeds an original synthetic
 `DOC_LOOP` on the disposable +Drive before boot; the plan still has to load it
 through the instrument's sample browser. It does not write RAM, menu selection
 or parameter state. The script runs firmware-native drawing (`hle=False`),

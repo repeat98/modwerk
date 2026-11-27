@@ -39,6 +39,7 @@
 // Each command is one whole transaction. A trial is rolled back unless --accept
 // is given; Ctrl-C rolls back early. If this process dies mid-trial, unplug USB:
 // the base rolls back any module that was not accepted.
+import { panelInput, panelKeys } from './device-panel.mjs'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync, crc32 } from 'node:zlib'
 import { basename, join, resolve } from 'node:path'
@@ -160,8 +161,7 @@ async function devIn(request, value, length) {
 async function keys(spec) {
   const codes = spec.split('+').map(name => KEYS[name.toUpperCase()] ?? Number(name))
   if (codes.some(code => !Number.isInteger(code) || code < 0 || code > 63)) throw new Error('Unknown key in ' + spec + ': ' + Object.keys(KEYS).join(' '))
-  for (const code of codes) { await devIn(5, code | 0x100, 1); await wait(code === codes.at(-1) ? 80 : 30) }
-  for (const code of codes.reverse()) { await devIn(5, code, 1); await wait(30) }
+  await panelKeys(devIn, codes)
 }
 async function screen(png = values.png) {
   const frame = (await devIn(7, 0, 1028)).subarray(4)
@@ -449,14 +449,14 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
     let m
     if ((m = /^w(\d+)$/.exec(step))) await wait(Number(m[1]))
-    else if ((m = /^enc([A-F]|LEVEL)([+-]\d+)$/i.exec(step))) await devIn(8, 0x30 | ('ABCDEF'.indexOf(m[1].toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(m[1].toUpperCase()) : 6) | (Number(m[2]) & 0xff) << 8, 1)
-    else if ((m = /^fader(\d+)$/.exec(step))) await devIn(8, 0x40 | Number(m[1]) << 8, 1)
+    else if ((m = /^enc([A-F]|LEVEL)([+-]\d+)$/i.exec(step))) await panelInput(devIn, 8, 0x30 | ('ABCDEF'.indexOf(m[1].toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(m[1].toUpperCase()) : 6) | (Number(m[2]) & 0xff) << 8)
+    else if ((m = /^fader(\d+)$/.exec(step))) await panelInput(devIn, 8, 0x40 | Number(m[1]) << 8)
     else if (step === 'ui') await ui()
     else if (step === 'screen') await screen()
     else if ((m = /^([+-])([A-Z0-9]+)$/i.exec(step))) { // +BANK holds, -BANK lets go
       const code = KEYS[m[2].toUpperCase()]
       if (code === undefined) throw new Error('Unknown key in ' + step + ': ' + Object.keys(KEYS).join(' ')) // not TRIG1 (undefined | 0x100)
-      await devIn(5, code | (m[1] === '+' ? 0x100 : 0), 1)
+      await panelInput(devIn, 5, code | (m[1] === '+' ? 0x100 : 0))
     }
     else if ((m = /^png:(\S+)$/.exec(step))) await screen(m[1])
     else if ((m = /^mem:(0x[0-9a-f]+):(\d+)$/i.exec(step))) { // RAM, read-only, hex; any length (500-byte reads)
@@ -754,12 +754,12 @@ if (command === 'serve') {
     const [, name, delta] = /^([A-F]|LEVEL)([+-]\d+)$/i.exec(file) ?? []
     const encoder = 'ABCDEF'.indexOf(name?.toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(name.toUpperCase()) : name?.toUpperCase() === 'LEVEL' ? 6 : -1
     if (encoder < 0 || !Number(delta) || Math.abs(delta) > 127) throw new Error('Use enc A+3, enc F-1 or enc LEVEL+2.')
-    await devIn(8, 0x30 | encoder | (Number(delta) & 0xff) << 8, 1); process.exit(0)
+    await panelInput(devIn, 8, 0x30 | encoder | (Number(delta) & 0xff) << 8); process.exit(0)
   }
   if (command === 'fader') {
     const position = Number(file)
     if (!Number.isInteger(position) || position < 0 || position > 255) throw new Error('Use fader 0-255.')
-    await devIn(8, 0x40 | position << 8, 1); process.exit(0)
+    await panelInput(devIn, 8, 0x40 | position << 8); process.exit(0)
   }
   if (command === 'loader') {
     const bytes = await devIn(9, 0, 60), view = new DataView(bytes.buffer, bytes.byteOffset, 60)

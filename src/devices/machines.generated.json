@@ -142,7 +142,7 @@
       "catalog": null,
       "guide": "sdk/machines/digitakt/README.md",
       "core": {
-        "version": "2.1",
+        "version": "4.4",
         "path": "sdk/digitakt/core"
       },
       "toolchain": "m68k-elf GCC and binutils for ColdFire, and Modwerk’s .elemod linker and OS writer (in development).",
@@ -150,8 +150,8 @@
         {
           "name": "Shared mod memory",
           "unit": "bytes",
-          "value": 131072,
-          "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader)."
+          "value": 262144,
+          "note": "Core 4.4’s area, shared by the core and every mod: the builder’s ram_area for core-4.4. Sets that build on core 2.1 keep its 131,072 bytes."
         },
         {
           "name": "Fast SRAM for code",
@@ -238,7 +238,7 @@
       "catalog": null,
       "guide": "sdk/machines/digitone/README.md",
       "core": {
-        "version": "2.2",
+        "version": "5.4",
         "path": "sdk/digitone/core"
       },
       "toolchain": "m68k-elf GCC and binutils for ColdFire, and Modwerk’s .elemod linker and OS writer (in development).",
@@ -246,8 +246,8 @@
         {
           "name": "Shared mod memory",
           "unit": "bytes",
-          "value": 131072,
-          "note": "DDR 0x47BE0000–0x47C00000 below the audio DMA ring, shared by the core and every mod (public research: elekloader)."
+          "value": 1310720,
+          "note": "Core 5.4’s area, shared by the core (about 110 KB) and every mod: the builder’s ram_area for core-dn1-5.4. Sets that build on core 2.0a or 2.2 keep their 131,072 bytes."
         },
         {
           "name": "Parameter slots",

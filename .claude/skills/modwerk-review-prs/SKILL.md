@@ -8,6 +8,7 @@ description: Review Modwerk's open pull requests, answer their authors where som
 **The goal is to finish pull requests.** A pass should leave as many as it can merged or declined. Each one still open should have one concrete next step and a named owner.
 
 **What to review:** the pull requests named. With none named, every open one not labelled `needs-work` or `one-at-a-time` that has changed since your last comment, or has gone quiet since your last request.
+- "Your" comments include the maintenance bot's: its comments and its PR reviews (`gh pr view N --json comments,reviews`), posted as `github-actions`. A bot answer still waiting in its window or for an Approve is not on the thread: it expires when a commit or comment lands, so never count it as said. To carry out the invoker's yes to one, post its text from their account (the bot's copy then expires); a session cannot approve it in the bot's ledger.
 - Contributors' drafts count. Many authors open a draft without knowing it and expect a review; the triage bot skips drafts, so nobody else sees them. Review a draft like any other, and when it is otherwise ready, offer to mark it ready (`gh pr ready`).
 - The invoker's own drafts are theirs to finish: skip them unless named.
 
