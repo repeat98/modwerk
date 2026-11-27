@@ -1,0 +1,1 @@
+Digitakt: seq-events, the shared step-fire events several sequencer mods build on (Dracyr's, from elekloader 0.11.0), is now part of the library and comes with the first mod that needs it, Track Solo. It does not build beside Euclidean, which patches the same step-fire code.

@@ -21,6 +21,9 @@ export function hardwareReportBody(machine: string, os: string, module: BuiltMod
   return summary
 }
 
+/** The machine a downloaded build is for, read from its modules: device names repeat across models (Analog Rytm). */
+export const downloadedMachine = (build: DownloadedBuild) => build.modules.map(item => communityModule(item.id)?.machine).find(Boolean)
+
 /** The downloaded versions remain the report context even if the active configuration changed since downloading. */
 export function downloadedReportContext(build: DownloadedBuild): WorkspaceReportContext {
   const modules = build.modules.flatMap(item => {

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">Kit A/B</title>
+<desc id="description">Two kit blocks marked A and B with a switch between them. Original conceptual illustration, not an instrument screen or a measured result.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#b5a0ff;stroke-width:2.7}.signal-secondary{stroke:#b5a0ff;opacity:.65;stroke-width:1.7}.signal-ghost{stroke:#b5a0ff;opacity:.2;stroke-width:1.3}.signal-art text{fill:#b5a0ff;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}.signal-dot{fill:#b5a0ff;stroke:none}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"></path><path d="M20 97H300"></path><path d="M20 142H300"></path><path d="M64 33V163"></path><path d="M128 33V163"></path><path d="M192 33V163"></path><path d="M256 33V163"></path></g><g><rect class="signal-main" x="44" y="52" width="80" height="70" rx="4"></rect><text x="80" y="92">A</text><rect class="signal-secondary" x="196" y="52" width="80" height="70" rx="4"></rect><text x="232" y="92">B</text><path class="signal-secondary" d="M60 70h48M60 82h36M60 104h44M212 70h48M212 82h40M212 104h28"></path><path class="signal-main" d="M132 76H188M180 70l8 6-8 6"></path><path class="signal-ghost" d="M188 100H132M140 94l-8 6 8 6"></path><text x="24" y="177">EDITS (A) ⇄ TEMP SAVE (B)</text></g>
+</svg>

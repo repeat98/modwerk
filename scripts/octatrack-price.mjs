@@ -76,6 +76,9 @@ export function allocationReading(text) {
   if (!pool || !core1 || !core0) return { unavailable: 'The development base did not report the module pool and both DSP program arenas.' }
   return { modulePoolBytes: Number(pool[1]), dspProgramWordsT1to4: Number(core1[1]), dspProgramWordsT5to8: Number(core0[1]) }
 }
+/** Whether a trial's output shows it rolled back: `try` says so on SIGINT, `device -- recover` by leaving the trial for normal
+ *  ("recovered from trial", then "normal, …"; a served session's recover says "now normal, …"). */
+export const rolledBackIn = log => /rolled back/.test(log) || /^recovered from (trial|pending|recovery|publishing)\b/m.test(log) || /^now normal,/m.test(log)
 /** What went wrong with a pick, from the session's reply (device.mjs pick's errors), or null when the slot runs it. */
 export const pickFailure = reply => /error|refused|not admitted|timed out/i.test(reply) ? reply.trim().split('\n').find(line => /error|refused|not admitted|timed out/i.test(line)).slice(0, 200) : null
 /** The session's `state` reply says the transport is stopped (device.mjs: "stopped" or "playing"). */
@@ -107,13 +110,16 @@ export function priceInputs(keyBus) {
  * also identifies a published module when the filename is a version or was renamed. */
 export function priceFileTarget(file, data, catalogue) {
   if (data.length < 68 || data.toString('ascii', 0, 4) !== 'MWRM') throw new Error('Not an Octatrack runtime package: ' + file)
-  const row = catalogue.find(entry => entry.module === data.toString('hex', 28, 32))
+  const digest = createHash('sha256').update(data).digest('hex')
+  const row = catalogue.find(entry => entry.module === data.toString('hex', 28, 32) || entry.sha256 === digest)
   const id = row?.id ?? basename(file, '.mwrm')
   const name = data.toString('latin1', 50, 66).split('\0', 1)[0] || row?.name || id
   const slots = data.readUInt32BE(32) ? { 1: 'fx1', 2: 'fx2', 3: 'both' }[data[39]] : undefined
-  const version = row && createHash('sha256').update(data).digest('hex') === row.sha256 ? row.version : 'file'
+  const version = row && digest === row.sha256 ? row.version : 'file'
   return { id, name, slots, version, file }
 }
+/** Whether --curve can read this package's instances, as curve() below tells them: an effect by its header's slots, a machine by its descriptors. */
+export const hasInstances = ({ root, id, data }) => !!priceFileTarget(id, data, []).slots || machineDescriptors({ root, id }).length > 0
 
 const OVERLOAD = 125 // percent of a frame: no skips up to ~115 on an MKII, drops from ~120 (22 Nov 2026)
 /** Readings a state by default (--readings): one 8-s reading could not tell a module's cost from the scene's own scatter
@@ -222,7 +228,9 @@ if (import.meta.filename === process.argv[1]) {
   if ((args.write || args['write-costs']) && !(args.base && args.scene)) throw new Error('--write and --write-costs need --base and --scene: the price names the base and what played (model, project, pattern)')
   if (args['write-costs'] && !args.curve && !args.stock) throw new Error('--write-costs writes a curve (--curve T1,T3,T6,T7) or the stock reserve (--stock)')
   // --write with --curve also writes each effect's or machine's curve: its evidence/frame-cost.json and its frame-costs.json line.
-  const catalogue = JSON.parse(readFileSync(resolve(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8')).packages
+  const packages = JSON.parse(readFileSync(resolve(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8')), catalogue = packages.packages
+  // USB Audio's releases have rows of their own, without a runtime id: a release file is known by its hash (USB_AUDIO_MODULE, src/config/usb-audio.ts).
+  const usbAudio = Object.values(packages.usbAudio ?? {}).map(row => ({ ...row, id: 'usb-audio-out-tracks-main-cue' }))
   // What admission charges now (frame-costs.json): a curve installs its module with it (measuringCosts).
   const costList = existsSync(resolve(root, FRAME_COSTS_PATH)) ? JSON.parse(readFileSync(resolve(root, FRAME_COSTS_PATH), 'utf8')) : null
   // An ID is a catalogue row; a path to a .mwrm is that file, for a build that is not published yet. In the order given.
@@ -230,7 +238,7 @@ if (import.meta.filename === process.argv[1]) {
   const unknown = ids.filter(id => !catalogue.some(row => row.id === id)).concat(files.filter(file => !existsSync(file)))
   if (unknown.length) throw new Error('No USB package for ' + unknown.join(', '))
   const chosen = positionals.length
-    ? positionals.map(name => name.endsWith('.mwrm') ? priceFileTarget(resolve(name), readFileSync(name), catalogue) : catalogue.find(row => row.id === name))
+    ? positionals.map(name => name.endsWith('.mwrm') ? priceFileTarget(resolve(name), readFileSync(name), [...catalogue, ...usbAudio]) : catalogue.find(row => row.id === name))
     : catalogue.filter(row => !row.requiredBase)
   // All the readings are one turn on the unit (scripts/unit-queue.mjs); the trials below run inside it.
   await takeUnitTurn({ note: 'device:price ' + chosen.map(row => row.id).join(' ').slice(0, 100), command: 'npm run device:price -- ' + process.argv.slice(2).join(' ').slice(0, 300),
@@ -432,7 +440,13 @@ if (import.meta.filename === process.argv[1]) {
     await send('STOP w500')
     trial.kill('SIGINT') // rolls the trial back
     await ended
-    result.rolledBack = /rolled back/.test(log) || Boolean(result.refused) // a refused module was never in
+    // Windows sends a child no SIGINT: kill() ends it before its handler rolls back, and the trial stays on the unit.
+    // Roll it back as `npm run device -- recover` does, which finds the trial and leaves it for normal.
+    if (!result.refused && !rolledBackIn(log) && process.platform === 'win32') {
+      const recover = device('recover'); recover.stdout.on('data', chunk => { log += chunk }); recover.stderr.on('data', chunk => { log += chunk })
+      await new Promise(done => recover.on('exit', done))
+    }
+    result.rolledBack = rolledBackIn(log) || Boolean(result.refused) // a refused module was never in
     // The measuring table outlives the rollback: offer the package once more with this checkout's table and roll it back a second later.
     if (measuring && /frame costs/.test(log)) {
       let back = ''; const again = device('set', packagePath, '--seconds', '1')

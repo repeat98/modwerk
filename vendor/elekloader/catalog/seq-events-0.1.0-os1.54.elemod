@@ -1,0 +1,816 @@
+{
+ "elemod": 2,
+ "id": "seq-events",
+ "version": "0.1.0",
+ "title": "seq events",
+ "description": "The Digitakt's step fire as events, so several mods that change what the sequencer plays combine: generators (does an audio track's step fire, which note it plays) and effects over what every fire plays, audio and MIDI tracks (the step it reads, the trig, its condition, notes, velocity and locks), a step clock per track, and the playing pattern's facts when asked. Dracyr's seq-events 0.1 from elekloader. On its own it changes nothing the unit does.",
+ "category": "system",
+ "author": "Dracyr",
+ "license": "GPL-2.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.54",
+  "syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "section3_sha256": "5c58bf9e3949ef09977c5fc007a61e8d026931f67f1621238379dfb8ee4d31a2",
+  "section3_len": 2479680
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 2916,
+   "parts": [
+    [
+     "hex",
+     "282f0050246f00544feffff048d703032f0b2f042f054eb9000000004fef000c28004cd703034fef00104e75282f0058266f005c4feffff048d703032f0a2f042f064eb9000000004fef000c28004cd703034fef00104e754feffff448d703022f002f012f2f00182f2f00204eb9000000004fef00104cd703024fef000c4e753033080041f33800082800070383670408c000142f052f0472016100ffbc508f7201c2804e75d4833033280041f33800082800070383670408c000142f052f0472006100ff94508f32004e753032080041f23800082800070383670408c000142f062f0472016100ff70508f7201c2804e75d4833032280041f23800082800070383670408c000142f062f0472006100ff48508f34004e754feffff448d703022f002f012f2f00184eb9000000004fef000c4cd703024fef000c4e752f5700104fef00102f012f0522046100ffcc588f221f4a804e752f5700104fef00102f012f0622046100ffb2588f221f4a804e754feffff448d703012f012f002f2f00184eb9000000004fef000c22004cd703014fef000c4e757128038c2f172f012f05220020046100ffca588f2001221f2f4000044e757328038c2f172f002f0620046100ffae588f201f2f4100044e754feffff848d700032f0c42a748733800224f20572002082800070383670408c000142f092f002f042f054eb9000000004fef00104a806708286f000808c200104fef000c4cd700034fef000841f338007cff4e752f07486f003c48723800224f20572002082800070383670408c000142f092f002f042f064eb9000000004fef00104a8067042e2f00084fef000c41f2380072ff4e752f2f00342f042f054eb9000000004fef000cd7c44e752f0d2f042f064eb9000000004fef000c2a4041f2380072ff4e754feffff448d703022f0d2f042f054eb9000000004fef000c4cd703024fef000c203c000005dc4e75202f000841f900000000222f000420300c00b2806604200160182040d1fcc0000000b1fc07ffffff62ecb0b94199ec4066e44e752f022f2f000c2f2f000c4ebaffc0508f223c0001ec54204073701800207c0001ec5975b0080020427401b488661a342f000ec5fc038f2042d1c0716803887401b4816606428160022001206f0010208122005381ec89670270ff241f4e754feffff0700f48d7040cb0af0014640e202f001c4cd7040c4fef00104e75240f06820000001c45f9000000002052202f001c4a8867de2f0276022f2f001c2f2f001c2f4000184e90588a222f002852814fef000cb68164d42f6f000c001c60cc222f00047001c0810801000067120801000b670eee897001c2807002738190814e757014e0a960ee2f0a2f02206f0018202f00144290226f00104a8067122251727f10290384c0811080241f245f4e75222900087407b4af000c6d04108160ea4a816e2010bcffff60e02469000422124a80670a75c024322c0094811202118108005280b0a900086cc07204b28066da60b84e56ffe448d7040c26394199ec3820030680c0000000242e0008246e000c0c8007ffffff63024283700fb082641472ff2d41fff04cee040cffe4202efff04e5e4e754a8a67e84a8367e4486efff82f022f034ebafe5c4fef000c2d40fff02d40fff452804a8067cc2f022f034ebafe0e508f223c0000038f4c012800204050c1d1c210280384307cfe001d41fffd720b1d40fffc3d48fffeb2ae001064321540000850c03548000a24aefff0256efff800041540000942aefff06000ff7841f608f4159008005280b0ae001066f060e6428060f44e56ffd448d70c7c24394199ec3820020680c0000000262e00080c8007ffffff6302428242aefff8700f42aefffcb083640e428042814cee0c7cffd44e5e4e754a8267ee486efff42f032f024ebafd8e4fef000c2c0070ffb08667d6283c0000038f4c03480042aefff02f032f024ebafd382040d1c471eefff273f00a007128038302800010000082802f014ebafe0c4fef000c080000006714701f7201c0aefff0e1a9202efff0ea8083b60cf852aefff0bcaefff06eb2202efffc222efff86000ff74202f000481b9000000004e754fefffa448d75c0c24394199ec3820020680c00000000c8007ffffff630242822039000000004a80662e41f90000000043f900000000220076ffe789528042b1180023831804721020c17210b28066e6760123c3000000004a82675645ef001c9dce264a486f00182f0e2f024ebafc9e4fef000c248052804a806736588a528e7610b68e66de428041f90000000043f308007240219108005880b28066f02039000000007601b6806d08528023c0000000004cd75c0c4fef005c4e754feffff4700148d7001c26390000000042b900000000b0b9000000006c2a4a836726b0b94199ec2c671e42827001e5a8c0834a80670a2f024eb94006fb82588f52827010b08266e44cd7001c4fef000c4e754e56fff0700f48d7040c262e0008222e0010b0836500008c743fb4ae000c65000082200374ffe78841f90000000021813c0041f90000000043f00804b491671c242e000cb491650e43f9000000007401b4b13c0066067401b5b00800226e000c218908044ab900000000673620010680c00000000c8007ffffff6226486efffc2f032f014ebafb784fef000c240070ffb0826602744045f90000000020524a88660e4cee040cfff0202e000c4e5e4e752f022f2e000c2f034e90588a4fef000cb4806204202e000c2d40000c60ce4feffff048d7400c242f00202f024ebafbde588f26002f40000c700fb0af00146530703fb0af001865284df90000000020564a8866284df90000000020564a88663c222f000cb28367084a81665076fec48320024cd7400c4fef00104e75486f000c2f2f00202f2f00202f2f0020588e4e907003c1af001c4fef001060b2486f000c2f2f00202f2f00202f2f0020588e4e907003c1af001c4fef0010609e7001c28020020802000b6712ee887601c0837180b081660c7001848060967614e6a860ea4a8167080082000008816084088200070082000008016000ff782f024aaf001057c2750244822f022f2f00102f2f00104ebafa9a4fef000c72ffb2806710b082670c4a8057c0710044802f400010202f0010241f4e754878ffff2f2f000c2f2f000c4ebafa684fef000c7201b280670a4a806704202f000c4e75706460fa4fefffdc700f48d75c3c242f0028282f002c2c6f0034b0826506723fb284640c42804cd75c3c4fef00244e752f2f00304ebafa7c588f0800000067e42056700116304a014683c6804a0366104ab90000000066084ab90000000067c42002e5887b8347fafa7249f9000000002440d5fc000000002f0a2f052f0e2f024e934fef001020544a88664249f90000000020544a8866444a03661e486f002042a72f0e2f024e934fef001042807732080073370820b283673210127207b2826d3a4a006d2e71002d40000860282f0a2f052f04588c2f024e9060a62f0a2f042f024e90588c4fef000c60a652807204b28066ba9dce200e6000ff2c4a006d307100226e0004720122807001163218006714751277032042747fd1c3b488650623880c00528052817404b48166de6098428060942f0a700f2f02b0af000c651c4ab9000000006714240f06820000001445f90000000020524a88660a202f0014241f245f4e752f022f2f00142f2f00144e90588a202f0020727f4fef000cb2806c08707f2f40001460cc4a806cf6428060f24fefffc0700748d744fc282f0044246f004cb08465344ab900000000672c200a0680c00000000c8007ffffff621c263c0000000042824def0020224320514a886612204e4281b2826d344cd744fc4fef00404e757007b0826de87a0858839a822f0548762c002f2f00502f044e904fef00104a806fc4b0856ec0d48060bc3a1076347dc5b68665402c6a0008763538280002200eb68e6402703543ea00144283b680661a7634b68e651e77c05280e78b358538143584381625400008600a7fd1be86660c33440002528158886000ff785283508960ca"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 332
+  }
+ },
+ "symbols": {
+  "apply": [
+   ".run",
+   88
+  ],
+  "cond": [
+   ".run",
+   280
+  ],
+  "prob": [
+   ".run",
+   368
+  ],
+  "dev_track_pat": [
+   ".run",
+   700
+  ],
+  "dev_fire_pat": [
+   ".bss",
+   268
+  ],
+  "dev_track_len": [
+   ".run",
+   752
+  ],
+  "cond_of": [
+   ".run",
+   846
+  ],
+  "dev_trig_in": [
+   ".run",
+   942
+  ],
+  "dev_notes_in.isra.0": [
+   ".run",
+   982
+  ],
+  "rearm_due": [
+   ".bss",
+   192
+  ],
+  "inited": [
+   ".bss",
+   200
+  ],
+  "clock_len": [
+   ".bss",
+   204
+  ],
+  "ready_ticks": [
+   ".bss",
+   196
+  ],
+  "notes_buf": [
+   ".bss",
+   128
+  ],
+  "sq_site_mnotes": [
+   ".run",
+   546
+  ],
+  "sq_site_mvel": [
+   ".run",
+   634
+  ],
+  "sq_on_notes": [
+   ".run",
+   2304
+  ],
+  "sq_on_cond": [
+   ".run",
+   2204
+  ],
+  "sq_clock": [
+   ".bss",
+   0
+  ],
+  "sq_tick_end": [
+   ".run",
+   1696
+  ],
+  "sq_site_sread": [
+   ".run",
+   0
+  ],
+  "sq_rearm": [
+   ".run",
+   1496
+  ],
+  "sq_on_locks": [
+   ".run",
+   2702
+  ],
+  "sq_site_notes": [
+   ".run",
+   462
+  ],
+  "sq_site_sprob": [
+   ".run",
+   406
+  ],
+  "sq_on_step": [
+   ".run",
+   1778
+  ],
+  "sq_on_vel": [
+   ".run",
+   2608
+  ],
+  "sq_on_trig": [
+   ".run",
+   1984
+  ],
+  "sq_tick": [
+   ".run",
+   1508
+  ],
+  "sq_site_scond": [
+   ".run",
+   316
+  ],
+  "sq_site_mgate": [
+   ".run",
+   204
+  ],
+  "sq_site_word": [
+   ".run",
+   166
+  ],
+  "sq_site_mread": [
+   ".run",
+   44
+  ],
+  "sq_site_mcond": [
+   ".run",
+   342
+  ],
+  "sq_site_slocks": [
+   ".run",
+   660
+  ],
+  "sq_track_info": [
+   ".run",
+   1088
+  ],
+  "sq_site_mprob": [
+   ".run",
+   436
+  ],
+  "sq_site_svel": [
+   ".run",
+   612
+  ],
+  "sq_site_mword": [
+   ".run",
+   242
+  ],
+  "sq_stored": [
+   ".run",
+   1300
+  ],
+  "sq_site_gate": [
+   ".run",
+   128
+  ],
+  "sq_on_prob": [
+   ".run",
+   2264
+  ]
+ },
+ "exports": [
+  "sq_clock",
+  "sq_on_cond",
+  "sq_on_locks",
+  "sq_on_notes",
+  "sq_on_prob",
+  "sq_on_step",
+  "sq_on_trig",
+  "sq_on_vel",
+  "sq_rearm",
+  "sq_site_gate",
+  "sq_site_mcond",
+  "sq_site_mgate",
+  "sq_site_mnotes",
+  "sq_site_mprob",
+  "sq_site_mread",
+  "sq_site_mvel",
+  "sq_site_mword",
+  "sq_site_notes",
+  "sq_site_scond",
+  "sq_site_slocks",
+  "sq_site_sprob",
+  "sq_site_sread",
+  "sq_site_svel",
+  "sq_site_word",
+  "sq_stored",
+  "sq_tick",
+  "sq_tick_end",
+  "sq_track_info"
+ ],
+ "imports": [
+  "ev_fire_cond",
+  "ev_fire_locks",
+  "ev_fire_notes",
+  "ev_fire_step",
+  "ev_fire_trig",
+  "ev_fire_vel",
+  "ev_gen_notes",
+  "ev_gen_trig"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   24,
+   "abs32",
+   "sec:.run",
+   1778
+  ],
+  [
+   ".run",
+   68,
+   "abs32",
+   "sec:.run",
+   1778
+  ],
+  [
+   ".run",
+   110,
+   "abs32",
+   "sec:.run",
+   1984
+  ],
+  [
+   ".run",
+   298,
+   "abs32",
+   "sec:.run",
+   2204
+  ],
+  [
+   ".run",
+   386,
+   "abs32",
+   "sec:.run",
+   2264
+  ],
+  [
+   ".run",
+   506,
+   "abs32",
+   "sec:.run",
+   2304
+  ],
+  [
+   ".run",
+   584,
+   "abs32",
+   "sec:.run",
+   2304
+  ],
+  [
+   ".run",
+   622,
+   "abs32",
+   "sec:.run",
+   2608
+  ],
+  [
+   ".run",
+   642,
+   "abs32",
+   "sec:.run",
+   2608
+  ],
+  [
+   ".run",
+   676,
+   "abs32",
+   "sec:.run",
+   2702
+  ],
+  [
+   ".run",
+   706,
+   "abs32",
+   "sec:.bss",
+   268
+  ],
+  [
+   ".run",
+   886,
+   "abs32",
+   "sym:ev_fire_cond",
+   0
+  ],
+  [
+   ".run",
+   1502,
+   "abs32",
+   "sec:.bss",
+   192
+  ],
+  [
+   ".run",
+   1542,
+   "abs32",
+   "sec:.bss",
+   200
+  ],
+  [
+   ".run",
+   1552,
+   "abs32",
+   "sec:.bss",
+   204
+  ],
+  [
+   ".run",
+   1558,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1592,
+   "abs32",
+   "sec:.bss",
+   200
+  ],
+  [
+   ".run",
+   1646,
+   "abs32",
+   "sec:.bss",
+   204
+  ],
+  [
+   ".run",
+   1668,
+   "abs32",
+   "sec:.bss",
+   196
+  ],
+  [
+   ".run",
+   1682,
+   "abs32",
+   "sec:.bss",
+   196
+  ],
+  [
+   ".run",
+   1708,
+   "abs32",
+   "sec:.bss",
+   192
+  ],
+  [
+   ".run",
+   1714,
+   "abs32",
+   "sec:.bss",
+   192
+  ],
+  [
+   ".run",
+   1720,
+   "abs32",
+   "sec:.bss",
+   196
+  ],
+  [
+   ".run",
+   1820,
+   "abs32",
+   "sec:.bss",
+   268
+  ],
+  [
+   ".run",
+   1830,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1852,
+   "abs32",
+   "sec:.bss",
+   204
+  ],
+  [
+   ".run",
+   1880,
+   "abs32",
+   "sym:ev_fire_step",
+   0
+  ],
+  [
+   ".run",
+   1930,
+   "abs32",
+   "sym:ev_fire_step",
+   0
+  ],
+  [
+   ".run",
+   2028,
+   "abs32",
+   "sym:ev_gen_trig",
+   0
+  ],
+  [
+   ".run",
+   2040,
+   "abs32",
+   "sym:ev_fire_trig",
+   0
+  ],
+  [
+   ".run",
+   2382,
+   "abs32",
+   "sym:ev_fire_notes",
+   0
+  ],
+  [
+   ".run",
+   2390,
+   "abs32",
+   "sym:ev_gen_notes",
+   0
+  ],
+  [
+   ".run",
+   2408,
+   "abs32",
+   "sym:ev_gen_notes",
+   0
+  ],
+  [
+   ".run",
+   2416,
+   "abs32",
+   "sec:.bss",
+   128
+  ],
+  [
+   ".run",
+   2442,
+   "abs32",
+   "sym:ev_fire_notes",
+   0
+  ],
+  [
+   ".run",
+   2622,
+   "abs32",
+   "sym:ev_fire_vel",
+   0
+  ],
+  [
+   ".run",
+   2638,
+   "abs32",
+   "sym:ev_fire_vel",
+   0
+  ],
+  [
+   ".run",
+   2726,
+   "abs32",
+   "sym:ev_fire_locks",
+   0
+  ],
+  [
+   ".run",
+   2750,
+   "abs32",
+   "sym:ev_fire_locks",
+   0
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4006f4dc",
+   "len": 8,
+   "stock_sha256": "1ed9e3b5544685664e1233716fdd597655f817cfe1a3354506008b22a82aa778",
+   "new": "4eb9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_sread",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f51a",
+   "len": 6,
+   "stock_sha256": "a59f0209c9835aa2214ea3116c71eef8b65b96fa50e2e09cb914fa4cbd7b913d",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f564",
+   "len": 6,
+   "stock_sha256": "2647899cf5f073c5636f485063b0f9411b8fe7581103d1f3598f38fcd7a78f8b",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_scond",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f56e",
+   "len": 6,
+   "stock_sha256": "2e47d787d82abb0d27b6a8d4194ebb25175c03e6f598298bf56ca4b1a6fb26b6",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_sprob",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f582",
+   "len": 6,
+   "stock_sha256": "38896adefcc8bbda67b2f2bdadb1dd636974ecfc0247e1ba0bfd20967763a77c",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_word",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f5be",
+   "len": 6,
+   "stock_sha256": "be5ee7edc7ebd641f380d19ccb1503254a68e4d84c20ccdf80bf65e3c771b0fa",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_notes",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f750",
+   "len": 6,
+   "stock_sha256": "8aa0af08fab55160f61599623fb285182c175288ff83b7bcc457b564b61b7e48",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_slocks",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f772",
+   "len": 6,
+   "stock_sha256": "88ef55371109cedbd3c2b2ce791e78ee038bc8352d37b94a68e4ccf29747f55c",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_svel",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f864",
+   "len": 8,
+   "stock_sha256": "7a50a96832da8d648b7108c474c0ba33ceadfe598d481f951f2222ead89f13bd",
+   "new": "4eb9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mread",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f8a4",
+   "len": 6,
+   "stock_sha256": "c222c8806f341be527c8b0833ac6b5fc68d530d9c68010ee9bbad610fa43887a",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mgate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f8ee",
+   "len": 6,
+   "stock_sha256": "2647899cf5f073c5636f485063b0f9411b8fe7581103d1f3598f38fcd7a78f8b",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mcond",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f8f8",
+   "len": 6,
+   "stock_sha256": "223ac870ed3538968e0072fe489f449443233a37ea3d6405037f8fc170326a12",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mprob",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f90c",
+   "len": 6,
+   "stock_sha256": "0c2d9498db22bca1b7039564e2100a31fd977cebfefb95c0c4cce23f658bcaa2",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mword",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f98a",
+   "len": 6,
+   "stock_sha256": "7a799b964ebb7f7bb844f41c3f6f45087dd1d48d75b44b896c9f74f55579f074",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mnotes",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4006f9a6",
+   "len": 6,
+   "stock_sha256": "7a799b964ebb7f7bb844f41c3f6f45087dd1d48d75b44b896c9f74f55579f074",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mvel",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {
+  "ev_fire_step": {
+   "entry": 4
+  },
+  "ev_gen_trig": {
+   "entry": 4
+  },
+  "ev_fire_trig": {
+   "entry": 4
+  },
+  "ev_fire_cond": {
+   "entry": 4
+  },
+  "ev_gen_notes": {
+   "entry": 4
+  },
+  "ev_fire_notes": {
+   "entry": 4
+  },
+  "ev_fire_vel": {
+   "entry": 4
+  },
+  "ev_fire_locks": {
+   "entry": 4
+  }
+ },
+ "contribute": [
+  {
+   "to": "ev_tick",
+   "order": 10,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:sq_tick",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_tick",
+   "order": 90,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:sq_tick_end",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [],
+  "core": "2.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [
+  "euclidean"
+ ],
+ "signature": null
+}

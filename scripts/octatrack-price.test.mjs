@@ -3,7 +3,7 @@
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
 import { frameCostTable } from '../src/engine/elekloader/set-package.ts'
-import { added, allocationReading, combined, curveFit, curveRunProblems, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, allowanceOf } from './octatrack-price.mjs'
+import { added, allocationReading, combined, curveFit, curveRunProblems, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, allowanceOf, hasInstances, rolledBackIn } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -172,12 +172,36 @@ it('reads a curve with the module\'s each booked at 0 and every other figure as 
   expect(measuringCosts(null, 'grain')).toBeNull()
 })
 
+it('reads the rollback from try on SIGINT and from recover (Windows sends a child no SIGINT)', () => {
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\ninterrupted: rolling back\nrolled back (pass --accept to keep it)\n')).toBe(true)
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\nfound trial, generation 3, active a8bcdca3ac910e22…\nnow normal, generation 4, active 4c7eb79b844c8139…\n')).toBe(true)
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\nrecovered from trial \nnormal, generation 4, active 4c7eb79b844c8139…\n')).toBe(true)
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\n')).toBe(false)
+  expect(rolledBackIn('nothing to recover \nnormal, generation 4, active 4c7eb79b844c8139…\n')).toBe(false)
+  expect(rolledBackIn('found trial, generation 3\nnow trial, generation 3\n')).toBe(false)
+})
+
 it('reads the Part\'s CPU allowance from the session\'s cpu reply, so a curve can put it back', () => {
   expect(allowanceOf('allowance 45 %, booked 35 %, refused -\nguarded renders, longest since the last read: T1 53.2\n')).toBe(45)
   expect(allowanceOf('allowance 400 %, booked 0 %, refused T3\n')).toBe(400)
   expect(allowanceOf('error: this base does not answer CPU\n')).toBeUndefined() // then the curve leaves the allowance alone
 })
 
+
+it('names a file by its runtime id, or by its hash for a release row without one (USB Audio)', () => {
+  const data = Buffer.alloc(68); data.write('MWRM', 0, 'ascii'); data.write('USB Audio', 50, 'latin1')
+  const sha256 = createHash('sha256').update(data).digest('hex')
+  const usb = { id: 'usb-audio-out-tracks-main-cue', name: 'USB Audio', version: '0.4.2-experimental', sha256 }
+  expect(priceFileTarget('/p/0.4.2-experimental.mwrm', data, [usb])).toMatchObject({ id: 'usb-audio-out-tracks-main-cue', version: '0.4.2-experimental' })
+  expect(priceFileTarget('/p/0.4.2-experimental.mwrm', data, [])).toMatchObject({ id: '0.4.2-experimental', version: 'file' }) // unknown: the file's name
+})
+
+it('tells which packages have instances to curve: an effect by its header, a machine by its descriptors', () => {
+  const header = slots => { const data = Buffer.alloc(68); data.write('MWRM', 0, 'ascii'); if (slots) { data.writeUInt32BE(1, 32); data[39] = slots } return data }
+  expect(hasInstances({ root: '.', id: 'no-such-module', data: header(1) })).toBe(true) // an FX1 effect
+  expect(hasInstances({ root: '.', id: 'grain', data: header(0) })).toBe(true) // a machine
+  expect(hasInstances({ root: '.', id: 'usb-audio-out-tracks-main-cue', data: header(0) })).toBe(false) // neither: priced at rest alone
+})
 
 it('fails a requested curve when an unpublished renamed file measured only its rest', () => {
   // Observed output: dev.mwrm was not resolved to a draft machine; old CLI exited0.

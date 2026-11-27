@@ -172,9 +172,11 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .workspace-content:has(> .octatrack-hub) { display: flex; flex-direction: column; padding-bottom: 1rem; }
 .workspace-content:has(> .octatrack-hub) > :not(.octatrack-hub) { flex-shrink: 0; }
 .octatrack-hub { container: hub / inline-size; display: flex; flex-direction: column; flex: 1 0 0; min-height: 0; }
-.hub-page-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .375rem 1.5rem; margin-bottom: 1rem; }
-.hub-page-heading h1 { font-size: var(--text-xl); line-height: 1.1; letter-spacing: -.035em; }
-.hub-page-heading p { margin-top: .25rem; color: var(--muted); font-size: var(--text-sm); line-height: 1.45; }
+.hub-page-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .375rem 1.5rem; margin-bottom: .75rem; }
+/* A tool page: the title and its one line share a row, so the unit's pane starts high. */
+.hub-page-heading > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; min-width: 0; }
+.hub-page-heading h1 { font-size: 1.5rem; line-height: 1.2; letter-spacing: -.025em; }
+.hub-page-heading p { margin: 0; color: var(--muted); font-size: var(--text-sm); line-height: 1.45; }
 .hub-heading-actions, .hub-heading-actions nav { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1rem; }
 .hub-heading-actions a { display: inline-flex; align-items: center; min-height: 2.25rem; color: var(--text-secondary); font-size: .875rem; }
 .hub-heading-actions a:hover { color: var(--text); text-decoration: underline; }
@@ -344,16 +346,23 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-empty-set p { margin: 0 0 14px; color: var(--muted); font-size: var(--text-base); line-height: 1.55; }
 .hub-empty-set .button { min-height: 44px; }
 /* Setup: the base and the module file for the card. */
-.card-set-steps { margin: 10px 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: var(--reading-line-height); }
-.card-set-dialog { width: min(440px, calc(100vw - 32px)); }
+.app-dialog.card-set-dialog { width: min(440px, calc(100vw - 32px)); padding: 24px 28px; }
 .card-set-plan { display: grid; gap: 16px; margin: 22px 0 18px; padding: 0; list-style: none; }
 .card-set-plan li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; align-items: start; }
-.card-set-plan li > span { display: grid; place-items: center; width: 26px; height: 26px; color: var(--muted); font-size: var(--text-base); font-variant-numeric: tabular-nums; }
+.card-set-plan li > span { display: grid; place-items: center; width: 22px; height: 22px; margin-top: 2px; border-radius: 50%; background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--control-border); color: var(--muted); font-size: var(--text-base); font-variant-numeric: tabular-nums; }
 .card-set-plan strong { display: block; color: var(--text); font-size: 15px; line-height: 26px; }
 .card-set-plan p { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
-.card-set-base { margin: 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--text-sm); }
+.card-set-base { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--text-sm); }
 .card-set-base b { color: var(--text-secondary); font-family: var(--mono, ui-monospace, monospace); font-weight: 500; }
-.card-set-dialog .dialog-actions { margin-top: 18px; }
+.card-set-dialog .dialog-actions { margin: 20px -28px -24px; padding: 14px 28px; border-top: 1px solid var(--line); }
+.card-set-dialog .dialog-actions .button { min-height: 44px; min-width: 96px; justify-content: center; font-size: 14px; }
+.card-set-dialog fieldset .button { width: 100%; min-height: 44px; justify-content: center; white-space: normal; }
+.card-set-dialog fieldset { min-width: 0; margin: 18px 0; padding: 0; border: 0; }
+.card-set-dialog legend { margin-bottom: 4px; padding: 0; color: var(--text); font-size: var(--text-md); font-weight: 600; }
+.card-set-dialog fieldset p { margin: 0 0 12px; }
+.card-set-dialog fieldset label { gap: 6px; margin-bottom: 12px; color: var(--muted); font-size: 12px; }
+.card-set-dialog input[type="file"] { padding: 6px; color: var(--muted); font-size: 13px; cursor: pointer; }
+.card-set-dialog input[type="file"]::file-selector-button { margin-right: 10px; padding: 7px 12px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text); font: inherit; cursor: pointer; }
 .card-set-mismatch { margin: 18px 0 0; }
 .card-set-mismatch strong { display: block; margin-bottom: 4px; }
 .card-set-mismatch p { margin: 0; }
@@ -447,6 +456,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-unchanged { margin-top: 14px; color: var(--muted); font-size: 13px; }
 .load-unchanged summary { cursor: pointer; padding: 8px 0; }
 .load-unchanged ul { margin: 4px 0 0; padding-left: 20px; line-height: 1.7; }
+.load-unchanged p { margin: 0 0 4px; }
 .octatrack-diagnostics { margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; }
 .octatrack-diagnostics h3 { margin: 0 0 6px; font-size: 15px; }
 /* On its own Diagnostics page the page title already names it. */
@@ -462,7 +472,11 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-change small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
 .load-change.is-leaving { border-color: #6a3f45; }
 .load-change.is-on { background: none; }
-.load-blocked { margin: 14px 0 0; padding: 12px 14px; border: 1px solid var(--warn-line); border-radius: var(--radius-md); background: var(--warn-soft); color: var(--text); font-size: 13px; line-height: 1.55; }
+.load-blocked { margin: 12px 0 16px; padding: 12px 16px; border: 1px solid var(--warn-line); border-radius: var(--radius-md); background: var(--warn-soft); color: var(--text); font-size: 13px; line-height: 1.5; }
+.load-dialog .module-caution { margin: 12px 0 16px; padding: 12px 16px; font-size: 13px; line-height: 1.5; }
+.load-in-use strong { display: block; }
+.load-in-use p { margin: 2px 0 0; }
+.load-dialog .file-error, .load-dialog .success-note { max-width: none; }
 .load-blocked p { margin: 0; }
 .load-studio-only > div > strong { display: block; margin-bottom: 8px; }
 .load-studio-only p strong { color: var(--text); font-weight: 600; }
@@ -472,67 +486,79 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-blocked p + p { display: flex; gap: 16px; margin-top: 6px; }
 .load-blocked .text-button { color: var(--warn); }
 .load-dialog .progress-row { margin: 16px 0 12px; }
-.load-dialog .link-hint { margin: 0 0 12px; }
-.load-dialog .base-install-footer { flex-wrap: wrap; }
+.load-dialog .link-hint { margin: 12px 0 0; }
+.load-dialog .base-install-footer > .link-hint { margin: 0; }
 .load-check { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px; cursor: pointer; }
 .load-check input { width: 20px; height: 20px; accent-color: var(--accent); }
 @media (max-width: 600px) {
+  .app-dialog.card-set-dialog { padding: 20px 16px; }
+  .card-set-dialog .dialog-actions { flex-wrap: wrap; gap: 8px; margin: 16px -16px -20px; padding: 12px 16px; }
+  .card-set-dialog .dialog-actions .button { flex: 1 1 auto; }
   .toolbar-load span { display: none; }
   .toolbar-load { width: 36px; padding: 0; justify-content: center; }
 }
 
-/* One installation task at a time; actions remain reachable at large text sizes. */
+/* One installation task at a time; actions remain reachable at large text sizes. One rhythm: 16px between blocks,
+   6px under a heading, body text 14px at 1.5 within 60ch. */
 .base-install-dialog .base-install-footer .button { min-height: 44px; font-size: 14px; }
-.base-install-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 28px; padding: 0 0 20px; border-bottom: 1px solid var(--line); list-style: none; }
-.base-install-progress li { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; }
-.base-install-progress li > span { display: inline-flex; align-items: center; justify-content: center; flex: none; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
-.base-install-progress [aria-current="step"] { color: var(--text); font-weight: 600; }
-.base-install-progress [aria-current="step"] > span, .base-install-progress .is-past > span { color: var(--accent); }
-.base-install-stage { min-height: 240px; font-size: 15px; line-height: var(--reading-line-height); color: var(--text-secondary); }
-.base-install-stage h3 { margin: 0 0 10px; color: var(--text); font-size: var(--text-md); line-height: 1.3; }
-.base-install-stage p { margin: 0 0 16px; }
-.base-install-stage .risk-acceptance { margin-top: 20px; font-size: 14px; }
-.base-install-stage .risk-acceptance p, .base-install-stage .risk-acceptance label { font-size: 14px; line-height: var(--reading-line-height); }
+/* The steps along the top: a bar over each label, lit for the current step, tinted for those done. */
+.base-install-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0 0 20px; padding: 0; list-style: none; }
+.base-install-progress li { display: flex; align-items: center; gap: 6px; padding: 8px 2px 0; border-top: 3px solid var(--control-border); color: var(--muted); font-size: 13px; line-height: 1.3; }
+.base-install-progress li > span:first-child { display: inline-flex; align-items: center; justify-content: center; flex: none; height: 16px; font-size: var(--text-sm); line-height: 16px; font-variant-numeric: tabular-nums; }
+.base-install-progress [aria-current="step"] { border-color: var(--accent); color: var(--text); font-weight: 600; }
+.base-install-progress .is-past { border-color: var(--accent-line); }
+.base-install-progress [aria-current="step"] > span:first-child, .base-install-progress .is-past > span:first-child { color: var(--accent); }
+.base-install-stage { font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
+.base-install-stage h3 { margin: 0 0 6px; color: var(--text); font-size: var(--text-md); font-weight: 600; line-height: 1.35; }
+.base-install-stage p { max-width: 60ch; margin: 0 0 16px; }
+.base-install-stage .risk-acceptance { margin-top: 16px; font-size: 13px; }
+.base-install-stage .risk-acceptance p, .base-install-stage .risk-acceptance label { font-size: 13px; line-height: 1.55; }
 .base-install-stage .risk-acceptance label { min-height: 44px; }
-.base-install-stage .base-install-warning { display: flex; gap: 12px; margin-top: 20px; padding: 14px 16px; border: 1px solid var(--warn-line); border-radius: var(--radius-md); background: var(--warn-soft); color: var(--warn); font-size: 14px; line-height: 1.65; }
+.base-install-stage .base-install-warning { display: flex; max-width: none; gap: 10px; margin-top: 16px; padding: 10px 12px; border: 1px solid var(--warn-line); border-radius: var(--radius-md); background: var(--warn-soft); color: var(--warn); font-size: 13px; line-height: 1.5; }
 .base-install-warning svg { flex-shrink: 0; margin-top: 3px; }
 .base-install-warning strong, .base-install-warning a { color: var(--text); }
 .base-install-route { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.5; }
-.base-install-route svg { margin-top: 2px; color: var(--accent); }
-.base-install-route strong { color: var(--text-secondary); font-weight: 600; }
-.base-install-stage .base-install-note { margin-top: 24px; padding: 16px; border-left: 2px solid var(--accent); background: var(--surface-raised); }
+.base-install-route svg { flex: none; margin-top: 2px; color: var(--accent); }
+.base-install-route strong { color: var(--text); font-weight: 600; }
+/* A status under the actions: a quiet line on a raised background, not a second box of text. */
+.base-install-stage .base-install-note { max-width: none; margin-top: 16px; padding: 12px 16px; border-left: 2px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--surface-raised); color: var(--text-secondary); font-size: 13px; }
 .base-install-note .status-dot.is-updating { width: 8px; height: 8px; margin-right: 10px; vertical-align: 1px; }
-.base-instructions { display: flex; flex-direction: column; gap: 22px; margin: 24px 0 0; padding-left: 22px; }
-.base-instructions li { padding-left: 7px; }
-.base-instructions li::marker { color: var(--muted); font-variant-numeric: tabular-nums; }
-.base-instructions strong { display: block; color: var(--text); margin-bottom: 4px; font-size: var(--text-md); }
-.base-instructions p { margin: 0; }
-.base-install-recovery { margin-top: 24px; font-size: 14px; }
-.base-install-recovery summary { min-height: 44px; display: list-item; align-content: center; cursor: pointer; }
-.base-install-recovery p { margin-top: 8px; }
+.base-install-stage .success-note, .base-install-stage .file-error { max-width: none; }
+.base-install-stage .success-note { display: flex; align-items: center; gap: 8px; margin: 16px 0 0; padding: 12px 16px; line-height: 1.5; }
+/* What to do, as numbered one-liners: the number in a small round mark, the line beside it. */
+.base-instructions { display: grid; gap: 12px; max-width: 60ch; margin: 16px 0 0; padding: 0; list-style: none; counter-reset: base-step; }
+.base-instructions > li { position: relative; min-height: 22px; padding-left: 34px; color: var(--text); counter-increment: base-step; }
+.base-instructions > li::before { content: counter(base-step); position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--control-border); color: var(--muted); font-size: var(--text-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
+.base-instructions strong { color: var(--text); font-weight: 600; }
+.base-instructions p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+/* Keys and menu names on the instrument, as key caps. */
+.base-install-dialog kbd { display: inline-block; padding: 0 5px; border: 1px solid var(--control-border); border-bottom-width: 2px; border-radius: var(--radius-xs); background: var(--surface-raised); color: var(--text); font: inherit; font-size: 12px; font-weight: 600; line-height: 18px; white-space: nowrap; }
+/* A route through the instrument's menus (not a key): one mono box, its separators as written. */
+.base-install-dialog .menu-path { padding: 1px 6px; border: 1px solid var(--line); border-radius: var(--radius-xs); background: var(--field); color: var(--text); font: 12px/18px var(--mono); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+/* The why, the exceptions and the other ways: a quiet disclosure under the actions. */
+.base-install-recovery { margin-top: 16px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.base-install-recovery summary, .base-download-recovery summary, .base-install-stage .risk-acceptance summary { display: flex; align-items: center; gap: 8px; width: fit-content; min-height: 32px; color: var(--muted); cursor: pointer; list-style: none; }
+.base-install-recovery summary::-webkit-details-marker, .base-download-recovery summary::-webkit-details-marker, .base-install-stage .risk-acceptance summary::-webkit-details-marker { display: none; }
+.base-install-recovery summary::before, .base-download-recovery summary::before, .base-install-stage .risk-acceptance summary::before { content: ""; flex: none; width: 6px; height: 6px; margin: 0 2px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); }
+.base-install-recovery[open] summary::before, .base-download-recovery details[open] summary::before, .base-install-stage .risk-acceptance details[open] summary::before { transform: rotate(45deg); }
+.base-install-recovery summary:hover, .base-download-recovery summary:hover, .base-install-stage .risk-acceptance summary:hover { color: var(--text); }
+.base-file-ready { display: flex; align-items: center; gap: 8px; color: var(--grade-in-use); }
+.base-install-stage .base-install-recovery p { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
 @media (max-width: 600px) {
-  .base-install-progress { gap: 5px; margin-bottom: 24px; }
-  .base-install-progress li { flex-direction: column; gap: 6px; font-size: 12px; }
-  .base-install-progress li > span { flex-basis: auto; width: 23px; }
-  .base-install-dialog .base-install-footer { gap: 10px; }
-  .base-install-dialog .base-install-footer > .button:first-child { flex: 0 1 auto; }
-  .base-install-dialog .base-install-footer > .button:last-child { flex: 1; }
+  .base-install-progress { gap: 4px; margin-bottom: 18px; }
+  .base-install-progress li { justify-content: center; padding-inline: 0; font-size: 12px; }
+  /* Only the step now keeps its label beside the number; the others keep it for screen readers. */
+  .base-install-progress li:not([aria-current]) > span + span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .base-install-progress [aria-current="step"] > span + span { white-space: nowrap; } /* one line, even past its segment */
+  .base-install-progress li:first-child[aria-current] { justify-content: flex-start; }
+  .base-install-progress li:last-child[aria-current] { justify-content: flex-end; }
+  .base-install-recovery summary { min-height: 44px; }
 }
-
-.base-install-dialog.is-card-guide > .base-install-intro { margin: 6px 0 16px; color: var(--muted); line-height: 1.5; }
-.is-card-guide .base-install-progress { gap: 6px; margin: 0 0 22px; padding: 0; border: 0; }
-.is-card-guide .base-install-progress li { padding: 8px 6px 0; border-top: 3px solid var(--control-border); line-height: 1.3; }
-.is-card-guide .base-install-progress [aria-current="step"] { border-color: var(--accent); color: var(--accent-hover); }
-.is-card-guide .base-install-progress .is-past { border-color: var(--accent-line); }
-.is-card-guide .base-install-stage { min-height: 0; }
-.is-card-guide .base-install-stage h3 { margin-bottom: 6px; }
-.is-card-guide .base-install-footer { margin-top: 16px; }
-.is-card-guide .base-install-footer .button-quiet { min-width: 76px; }
 .is-card-guide .base-install-footer .button-primary:disabled {
   opacity: 1; border-color: var(--line); background: var(--accent-soft); color: var(--faint); box-shadow: none;
 }
 
-.base-install-download > p:first-of-type { margin-bottom: 12px; font-size: 14px; }
+.base-install-download > p:first-of-type { margin-bottom: 12px; }
 .base-download-file {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px;
   border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--preview); font-size: 14px; line-height: 1.4;
@@ -545,25 +571,20 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .base-download-file .text-button { display: inline-block; padding: 3px 0; }
 .base-download-file-status { display: flex; align-items: center; gap: 5px; margin-left: auto; color: var(--grade-in-use); font-size: 13px; font-weight: 600; }
 .base-download-recovery {
-  display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; padding: 10px 12px;
-  border-left: 2px solid var(--issue-confirmed); border-radius: var(--radius-xs); background: var(--warn-soft); font-size: 14px; line-height: 1.5;
+  display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; padding: 12px 16px;
+  border-left: 2px solid var(--issue-confirmed); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--warn-soft); font-size: 13px; line-height: 1.5;
 }
-.base-download-recovery > svg { margin-top: 1px; color: var(--issue-confirmed); }
-.base-download-recovery h4 { margin: 0 0 2px; color: var(--text); font-size: inherit; font-weight: 600; }
-.base-download-recovery p { margin: 0; }
-.base-download-recovery p + p { margin-top: 4px; }
+.base-download-recovery > svg { flex: none; margin-top: 1px; color: var(--issue-confirmed); }
+.base-download-recovery strong { color: var(--text); font-weight: 600; }
+.base-download-recovery p { max-width: 60ch; margin: 0; }
+.base-download-recovery p + p { margin-top: 6px; }
+.base-download-recovery details { margin-top: 2px; }
+.base-download-recovery summary { min-height: 32px; }
+.base-download-recovery details p { margin-top: 4px; padding-left: 18px; color: var(--muted); }
 .base-download-recovery a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
-.base-install-download .risk-acceptance { margin-top: 12px; padding-bottom: 0; border: 0; }
-.base-install-download .risk-acceptance p { margin-bottom: 0; color: var(--muted); }
-.base-install-download .risk-acceptance strong { color: var(--text-secondary); font-weight: 600; }
-.base-install-download .risk-acceptance details { margin-top: 4px; }
-.base-install-download .risk-acceptance summary { min-height: 32px; align-content: center; font-size: 13px; }
-.base-install-download .risk-acceptance .risk-accept { align-items: center; margin-top: 2px; }
+.base-install-download .risk-acceptance { margin-top: 0; padding-bottom: 0; border: 0; } /* the 44px row puts the box 12px above */
+.base-install-download .risk-acceptance .risk-accept { align-items: center; margin-top: 0; }
 .base-install-download .risk-accept input { margin-top: 0; }
-@media (max-width: 600px) {
-  .is-card-guide .base-install-progress { margin-bottom: 18px; }
-  .is-card-guide .base-install-progress li { padding-inline: 0; text-align: center; }
-}
 
 /* The update over USB: three stages and one restart, one row before, during and after. */
 .base-update-plan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 20px 0; padding: 0; list-style: none; }
@@ -596,37 +617,40 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 @keyframes progress-run { from { transform: translateX(-100%); } to { transform: translateX(265%); } }
 @media (prefers-reduced-motion: reduce) { .progress-bar > span { transition: none; } .progress-bar.is-busy > span { animation: none; background-image: none; } .progress-bar.is-indeterminate > span { animation: none; width: 100%; opacity: .45; } }
 /* While a base update runs: the one thing to know, above everything else in the window. */
-.base-update-hands-off { display: flex; gap: 14px; margin: 16px 0 4px; padding: 16px 18px; border: 1px solid var(--warn); border-radius: var(--radius-md); background: var(--warn-soft); color: var(--text-secondary); }
+.base-update-hands-off { display: flex; gap: 12px; margin: 0 0 16px; padding: 12px 16px; border: 1px solid var(--warn); border-radius: var(--radius-md); background: var(--warn-soft); color: var(--text-secondary); }
 .base-update-hands-off svg { flex-shrink: 0; margin-top: 2px; color: var(--warn); }
 .base-update-hands-off strong { display: block; color: var(--text); font-size: var(--text-md); line-height: 1.35; }
-.base-install-stage .base-update-hands-off p { margin: 4px 0 0; font-size: 14px; line-height: 1.6; }
+.base-install-stage .base-update-hands-off p { margin: 2px 0 0; font-size: 13px; line-height: 1.5; }
 .base-update-overall { margin: 4px 0 0; }
 .base-update-overall .progress-bar { height: 12px; }
-.base-install-stage .base-update-step { display: flex; align-items: baseline; gap: 10px; margin: 12px 0 0; color: var(--text); font-size: 15px; }
+.base-install-stage .base-update-step { display: flex; align-items: baseline; gap: 10px; margin: 12px 0 0; color: var(--text); font-size: 14px; }
 .base-install-stage .base-update-step.is-done { color: var(--grade-in-use); }
 .base-update-step .status-dot.is-updating { flex-shrink: 0; width: 8px; height: 8px; background: var(--progress); }
 /* A note above the stages (USB Audio off in this base): framed as the notes inside them are. */
-.base-install-dialog > .base-install-note { margin: 0 0 22px; padding: 14px 16px; border-left: 2px solid var(--accent); background: var(--surface-raised); color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
-/* The update's three steps as one slim row (StagePlan compact): numbered marks joined by a line. */
-.base-update-plan.is-compact { display: flex; gap: 0; margin: 22px 0 18px; }
-.base-update-plan.is-compact li { flex: 1 1 0; flex-direction: row; align-items: center; gap: 10px; padding: 0; border: 0; background: none; font-size: 14px; }
-.base-update-plan.is-compact li:last-child { flex: 0 0 auto; }
-.base-update-plan.is-compact li:not(:last-child)::after { content: ""; flex: 1; height: 2px; margin: 0 14px 0 4px; border-radius: 2px; background: var(--line); }
-.base-update-plan.is-compact li.is-complete:not(:last-child)::after { background: #456354; }
-.base-update-plan.is-compact strong { color: var(--text-secondary); font-size: 15px; font-weight: 500; white-space: nowrap; }
-.base-update-plan.is-compact .is-active strong, .base-update-plan.is-compact .is-complete strong { color: var(--text); font-weight: 600; }
-.base-update-plan.is-compact .base-update-mark { flex-shrink: 0; }
+.base-install-dialog > .base-install-note { max-width: none; margin: 12px 0 16px; padding: 12px 16px; border-left: 2px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--surface-raised); color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+/* The update's three steps (StagePlan compact): the install guide's step bar, a segment each, under the subtitle. */
+.base-update-plan.is-compact { gap: 6px; margin: 0 0 20px; }
+.base-update-plan.is-compact li { display: flex; flex-direction: row; align-items: center; gap: 6px; padding: 8px 2px 0; border-top: 3px solid var(--control-border); font-size: 13px; line-height: 1.3; }
+.base-update-plan.is-compact strong { color: inherit; font-size: 13px; font-weight: 400; white-space: nowrap; }
+.base-update-plan.is-compact .base-update-mark { justify-content: center; flex: none; width: auto; height: 16px; color: inherit; font-size: var(--text-sm); line-height: 16px; }
+.base-update-plan.is-compact .is-active { border-color: var(--accent); color: var(--text); }
+.base-update-plan.is-compact .is-active strong { font-weight: 600; }
+.base-update-plan.is-compact .is-complete { border-color: var(--accent-line); }
+.base-update-plan.is-compact :is(.is-active, .is-complete) .base-update-mark { color: var(--accent); }
+.base-update-plan.is-compact .is-failed { border-color: var(--danger-line); color: var(--text); }
+.base-update-plan.is-compact .is-failed .base-update-mark { color: var(--danger); font-weight: 700; }
 @media (max-width: 600px) {
-  .base-update-plan.is-compact { display: flex; }
-  .base-update-plan.is-compact li { display: flex; padding: 0; gap: 7px; }
-  .base-update-plan.is-compact li:not(:last-child)::after { margin: 0 8px 0 2px; }
-  .base-update-plan.is-compact strong { font-size: 14px; }
+  .base-update-plan.is-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin-bottom: 18px; }
+  .base-update-plan.is-compact li { display: flex; justify-content: center; padding: 8px 0 0; font-size: 12px; }
+  .base-update-plan.is-compact strong { font-size: 12px; }
 }
 /* Before it starts: what to do, a line each. */
-.base-update-checklist { display: flex; flex-direction: column; gap: 10px; margin: 0 0 4px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); list-style: none; }
-.base-update-checklist li { display: flex; align-items: flex-start; gap: 12px; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+.base-update-checklist { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); list-style: none; }
+.base-update-checklist li { display: flex; align-items: flex-start; gap: 10px; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+.base-install-dialog .base-update-aside { color: var(--muted); font-size: 12px; }
+.base-install-note .base-update-aside { display: block; margin-top: 2px; }
 .base-update-checklist svg { flex-shrink: 0; margin-top: 2px; color: var(--warn); }
 .base-update-checklist .is-ready svg { color: var(--grade-in-use); }
 .base-update-checklist strong { color: var(--text); font-weight: 600; }
-.base-install-stage .base-update-checklist + .risk-acceptance { margin-top: 18px; padding-bottom: 0; border-bottom: 0; }
-.base-install-stage .base-update-checklist ~ .base-install-recovery { margin-top: 6px; }
+.base-install-stage .base-update-checklist + .risk-acceptance { margin-top: 16px; padding-bottom: 0; border-bottom: 0; }
+.base-install-stage .base-update-checklist ~ .base-install-recovery { margin-top: 8px; }

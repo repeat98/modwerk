@@ -1,0 +1,1 @@
+Development: a Digitakt, Digitone or Rytm module whose C code trips the ColdFire miscompile check can now turn GCC's late-combine pass off in its own `build.json`, and the check's message says how. Released packages keep their bytes.

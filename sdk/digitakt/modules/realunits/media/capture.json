@@ -1,0 +1,148 @@
+{
+ "schemaVersion": 1,
+ "machine": "digitakt",
+ "moduleId": "realunits",
+ "moduleVersion": "0.2.0",
+ "capturedAt": "2026-11-27",
+ "firmware": "1.54",
+ "imageSha256": "aeb82670d42aeb092e904e7b2ce6377be9209b96158f4f2bf890fdaa336a7c16",
+ "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+ "source": {
+  "repository": "https://github.com/ceredmeat/FLEXMODS",
+  "revision": "e6a2aabf8a94118a7b761dbfeac3e325ce4cd4db",
+  "path": "mods/realunits"
+ },
+ "kit": {
+  "version": "0.7.0",
+  "lockSha256": "748ec9ad5e2f08067cf09fcbabea62b5ef96df7e6fb86c93b3c5e39d62d3b270"
+ },
+ "catalog": {
+  "revision": "99efc9b3f8f629c0927ec903e504bcf3d74cbd8e2bd07c670b622aea52519593",
+  "sha256": "15b6254672127dc76f8fb52566a23dcc108e0ba19c280f2a80194b91d87bde81",
+  "cores": 18,
+  "mods": 98
+ },
+ "build": {
+  "modules": [
+   {
+    "id": "core",
+    "version": "4.4",
+    "sha256": "dc65ffd32869036e961953707db304a5e9926e1b235b1bfbd28b772aae0b45ae"
+   },
+   {
+    "id": "realunits",
+    "version": "0.2",
+    "sha256": "57ccb6c50a89528ccad0c3bc68ad04b9ee75ced1c2b146173b66a42cfa5213d2"
+   }
+  ],
+  "outputVersion": "D001",
+  "verified": true
+ },
+ "emulator": {
+  "repository": "https://github.com/irpina/digiemu",
+  "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+  "unicorn": {
+   "version": "2.1.4",
+   "sourceRevision": "8028ec436f2d9376525352dd38ed9ed6b9f6be10",
+   "patches": {
+    "unicorn-2.1.4-m68k-digikit-accel.patch": "7048704a068cb074b93b751df4b1a73fd8972c1c0cc27e30774c4c2771ec2b5c",
+    "unicorn-2.1.4-m68k-digikit-speed.patch": "9560613223502656e82adc1ecc36d5d8486995bed13ea8ddad168f8c4558a799",
+    "unicorn-2.1.4-m68k-emac-mac-load.patch": "ac128dd6836997de55e0d2ad70d7a2978639168090f552c5634da50fddc70bfe",
+    "unicorn-2.1.4-m68k-emac-modes.patch": "5fc44429ea913c5256c34a6e9c93ab90f727f120b4f12922a8f35a952fd1dace",
+    "unicorn-2.1.4-m68k-fast-mem.patch": "7f79332f318352cbd8055386dbf5149efc801d0663ae2450e33f9f39fed53374",
+    "unicorn-2.1.4-m68k-hook-ccr-sync.patch": "56de71acf2adbd5ca2f448095478e65e49fd79d378aeb5b5e4217d2c90f52f4e"
+   },
+   "librarySha256": "b7ba43300ede6c4bb19c3355418095e2ec24aedc4b328b7d6f2128f8c04a0501"
+  },
+  "python": "3.12.13",
+  "platform": "macOS arm64",
+  "hle": false,
+  "audioRecording": false,
+  "cycleTiming": false,
+  "framebuffer": "firmware front LCD buffer at panel_diff flush",
+  "scale": 6,
+  "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling."
+ },
+ "setup": {
+  "project": "Disposable first-boot A01, stock initial track state; no owner projects or samples.",
+  "fixture": "No sample fixture required for the documented UI pages.",
+  "sandbox": "No network; user files denied; private temporary output only."
+ },
+ "inputs": [
+  [
+   1000.0,
+   "press 21"
+  ],
+  [
+   1100.0,
+   "release 21"
+  ],
+  [
+   2014.251,
+   "turn 1 -127"
+  ],
+  [
+   2014.251,
+   "turn 1 -127"
+  ],
+  [
+   2014.251,
+   "turn 1 -127"
+  ],
+  [
+   2014.251,
+   "turn 1 -127"
+  ],
+  [
+   2614.269,
+   "turn 1 +127"
+  ],
+  [
+   2614.269,
+   "turn 1 +33"
+  ],
+  [
+   3514.295,
+   "turn 5 -127"
+  ],
+  [
+   3514.295,
+   "turn 5 -127"
+  ],
+  [
+   3514.295,
+   "turn 5 -127"
+  ],
+  [
+   3514.295,
+   "turn 5 -127"
+  ],
+  [
+   4114.313,
+   "turn 5 +127"
+  ],
+  [
+   4114.313,
+   "turn 5 +33"
+  ]
+ ],
+ "captures": [
+  {
+   "path": "media/attack.png",
+   "sha256": "ef2853c9a05148252ee94f436a4d360839257e6237f773d07afc7f02c1c929e3",
+   "plan": "wait 1000\ntap FLTR\nwait 600\nturn A -127 600\nturn A 40 600\nwait 300\nsnap attack\nturn E -127 600\nturn E 40 600\nwait 300\nsnap freq\n",
+   "atMs": 3447.6264957264957,
+   "requestedAtMs": 3514.295299145299
+  },
+  {
+   "path": "media/freq.png",
+   "sha256": "516cb3e8adf43d1a423ecc4b173a15c0fb7cd4e820191454c9d74dd5bef0cc85",
+   "plan": "wait 1000\ntap FLTR\nwait 600\nturn A -127 600\nturn A 40 600\nwait 300\nsnap attack\nturn E -127 600\nturn E 40 600\nwait 300\nsnap freq\n",
+   "atMs": 5014.3395299145295,
+   "requestedAtMs": 5014.3395299145295
+  }
+ ],
+ "limitations": [
+  "UI-only documentation; no hardware, audio, CPU or timing qualification."
+ ]
+}

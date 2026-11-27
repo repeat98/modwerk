@@ -1,0 +1,1 @@
+Octatrack tools: on Windows, `device:price` rolls its trial back itself. Windows sends a child process no SIGINT, so the trial stayed on the unit and every run ended "THE TRIAL DID NOT ROLL BACK" until `device -- recover` was run by hand; the tool now runs that step.

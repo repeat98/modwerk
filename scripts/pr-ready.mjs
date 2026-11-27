@@ -280,7 +280,7 @@ async function main(argv) {
   for (const line of verdict.notes) console.log('· ' + line)
   console.log(!verdict.ok ? 'Not ready yet.' : draftOnly ? 'Ready as a draft: missing release evidence is listed above as a warning. Run pr:ready without --draft before you mark it ready for review.' : verdict.baseDraft ? 'Ready to update the cumulative base draft.' : verdict.instrument
     ? 'Ready: local checks passed. Once unit results for the exact build are recorded, mark the draft ready on GitHub and verify its status.'
-    : 'Ready: local checks passed. Push the checked commit, mark any draft ready on GitHub, and verify its status.')
+    : 'Ready: local checks passed. Push the checked commit; once its checks have started (gh pr checks <URL>), mark any draft ready on GitHub, and verify its status. A ready sent with the push can leave only the draft\'s run, which module-pr-ok then fails.')
   return verdict.ok ? 0 : 1
 }
 

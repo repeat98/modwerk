@@ -30,6 +30,21 @@ volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes, mw_fram
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget */
 volatile uint8_t mw_cpu_track_refusals[8];
 volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs; /* ep0.c's attach watchdog */
+/* ep0.c's USB_GONE reads: the host's frame number, whether a host is expected, the reconnect's state, one sample. */
+volatile struct diag_usb_gone modwerk_test_usb_gone;
+volatile uint32_t mw_ep0_runs, mw_uf_calls;
+static uint32_t frindex, usb_rs = 1u;
+static int expected;
+static unsigned uf_now;
+uint32_t modwerk_usb_frindex(void) { return frindex; }
+int modwerk_usb_host_expected(void) { return expected; }
+unsigned modwerk_usb_reconnect_state(void) { return uf_now; }
+void modwerk_usb_sample(volatile struct diag_usb_sample *s)
+{
+    s->otgsc = 0x00000f20u, s->portsc = 0x18000885u, s->usbcmd = 0x00080000u | usb_rs, s->deviceaddr = 4u << 25, s->frindex = frindex;
+    s->uf_timer = 1100u, s->wd_off = 0, s->wd_detached = 0, s->uf_state = (uint8_t)uf_now, s->uf_off_ticks = 0, s->uf_flags = 1u;
+    s->wd_tries = 0, s->flags = 0x12u, s->uf_reconnects = 9u;
+}
 
 /* The battery copy of the current bank: a record's byte above 15 is a value stock's checks fix (to 15, one each); the
  * first settings check does the same for the saved UI state's bank byte. The restore refuses while any is left. */
@@ -66,6 +81,8 @@ static volatile struct diag_incident *last(void) { return &LOG->incident[(LOG->i
 static void restart(void) { started = 0, ticks = 0, n = cpu_sum = cpu_peak = played = hot_run = hot_count = hot_at = 0; modwerk_diag_tick(); }
 /* One UI tick, as the base runs it: runtime.c's count, then the subscribers. */
 static void tick(void) { modwerk_runtime_ticks = modwerk_runtime_ticks + 1u; modwerk_diag_tick(); }
+/* n audio frames with a UI tick every 46th, ep0_tick running in it (its reconnect tick does not). */
+static void frames(unsigned n) { for (unsigned f = 0; f < n; ++f) { modwerk_diag_frame(); if (f % 46u == 45u) mw_ep0_runs = mw_ep0_runs + 1u, tick(); } }
 
 int main(void)
 {
@@ -329,7 +346,62 @@ int main(void)
     CHECK(last()->kind == DIAG_RESTORE && last()->a == 72u && last()->dsp0 == 72u && last()->screen == 0x100u && last()->tempo24 == 0xffffffffu);
     power_up();
 
+    /* The host's USB frames stop while one is expected (diag.h's USB_GONE): a sample at 3 s and one a second until 6 s,
+     * then the tick adds the record, its first sample whole. The UI tick and ep0_tick run on; the reconnect tick doesn't. */
+    restart();
+    for (unsigned i = 0; i < 5u; ++i) modwerk_status[i] = 0;
+    for (unsigned i = 0; i < sizeof modwerk_test_usb_gone; ++i) ((volatile uint8_t *)&modwerk_test_usb_gone)[i] = 0;
+    usb_index = usb_still = usb_expected = usb_gone = 0;
+    frindex = 1u, modwerk_diag_frame(); /* the frames move */
+    expected = 1, usb_rs = 0u, uf_now = 2u; /* the base's own reconnect took the pull-up off */
+    before = LOG->incidents;
+    frames(USB_GONE_FRAMES);
+    CHECK(USB_GONE->magic == DIAG_USB_GONE_MAGIC && USB_GONE->state == 1u && USB_GONE->boot == LOG->boot && LOG->incidents == before);
+    CHECK(USB_GONE->stopped == 2u && USB_GONE->ticks == USB_GONE_FRAMES / 46u && USB_GONE->ep0 == USB_GONE_FRAMES / 46u && USB_GONE->uf == 0u);
+    frames(3u * SAMPLE_FRAMES);
+    CHECK(USB_GONE->state == 2u && USB_GONE->sample[3].usbcmd == 0x00080000u && LOG->incidents == before);
+    tick();
+    volatile struct diag_incident *u = last();
+    CHECK(LOG->incidents == before + 1u && u->kind == DIAG_USB_GONE && u->boot == LOG->boot && USB_GONE->state == 3u);
+    CHECK(u->a == 0x00000f20u && u->screen == 0x18000885u && u->tempo24 == 0x00080000u && u->cpu == 1100u && u->playing == 0u);
+    CHECK(u->machine[0] == 8u && u->machine[8] == 2u && u->machine[10] == 1u && u->machine[12] == 0x12u && u->machine[13] == 2u);
+    CHECK(u->machine[14] == byte_of(USB_GONE_FRAMES / 46u) && u->machine[16] == 0u && u->machine[17] == 9u);
+    /* The 4, 5 and 6 s samples: OTGSC from byte 20, then USBCMD's low byte, uf_state and flags at 28-30 (fx 4-6), 40-42, 52-54. */
+    CHECK(u->machine[22] == 0x0fu && u->machine[23] == 0x20u && u->fx[4] == 0u && u->fx[5] == 2u && u->fx[6] == 0x12u && u->keys[1] == 2u && u->keys[14] == 0x12u);
+    frames(4u * SAMPLE_FRAMES); /* one record an episode */
+    CHECK(LOG->incidents == before + 1u);
+    /* Frames back after the first sample: the record keeps what it has. */
+    frindex = 2u, modwerk_diag_frame();
+    frames(USB_GONE_FRAMES);
+    frindex = 3u, modwerk_diag_frame();
+    tick();
+    CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_USB_GONE && last()->machine[22] == 0u && last()->machine[23] == 0u);
+    /* A host nobody expected (none talked, the unit not configured): nothing. */
+    expected = 0;
+    frames(USB_GONE_FRAMES + 4u * SAMPLE_FRAMES);
+    frindex = 4u, modwerk_diag_frame();
+    tick();
+    CHECK(LOG->incidents == before + 2u);
+    /* At most four a boot. */
+    expected = 1;
+    for (unsigned e = 0; e < 3u; ++e) {
+        frames(USB_GONE_FRAMES + 4u * SAMPLE_FRAMES);
+        frindex = frindex + 1u, modwerk_diag_frame();
+        tick();
+    }
+    CHECK(LOG->incidents == before + 4u);
+    /* A record whose tick never came (the unit off before its samples were in): the next start adds it, before its START. */
+    usb_gone = 0;
+    frames(USB_GONE_FRAMES);
+    CHECK(USB_GONE->state == 1u);
+    uint32_t gone_boot = LOG->boot;
+    before = LOG->incidents;
+    restart();
+    CHECK(LOG->incidents == before + 3u && LOG->incident[before % DIAG_INCIDENTS].kind == DIAG_USB_GONE && LOG->incident[before % DIAG_INCIDENTS].boot == gone_boot);
+    CHECK(LOG->incident[(before + 1u) % DIAG_INCIDENTS].kind == DIAG_START && USB_GONE->state == 3u);
+    expected = 0, usb_rs = 1u, uf_now = 0;
+
     if (failures) fprintf(stderr, "%u failure(s)\n", failures);
-    else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages, the frames before a stall and the power-up's restore passed");
+    else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages, the frames before a stall, the power-up's restore and USB_GONE passed");
     return failures != 0;
 }

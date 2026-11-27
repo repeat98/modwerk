@@ -1,0 +1,25 @@
+MUTINY
+Copyright (C) 2026 mbaumannn
+
+MUTINY is free software: you can redistribute it and/or modify it under the terms of the GNU
+General Public License as published by the Free Software Foundation, either version 2 of the
+License, or (at your option) any later version. It is distributed WITHOUT ANY WARRANTY; see
+LICENSE.
+
+Third-party work:
+
+seq-events 0.1 for the Digitone mk1, OS 1.44
+  By Dracyr, GPL-2.0-or-later. Part of Elekloader. The release includes the built
+  seq-events-0.1-os1.44.elemod because it is not in the Elekloader shop yet. Its source is
+  mods/seq-events-dn1 at Elekloader commit b893c9317936633d7a32829b618c2867ee99277c:
+  https://github.com/elekloader/elekloader/tree/b893c9317936633d7a32829b618c2867ee99277c
+
+TB-3PO, the generator behind TB3P
+  Phazerville suite for Ornament & Crime, software/src/applets/TB3PO.h at commit 684c952.
+  MIT licence, Copyright (c) 2020 Logarhythm, modified by djphazer. The original notice is kept
+  in src/engine/engine.c next to the ported code.
+
+Elektron
+  This repository contains no Elektron firmware, project or sound data. Parameter names follow
+  the Digitone manual. Elektron and Digitone are trademarks of Elektron Music Machines. MUTINY is
+  not affiliated with or endorsed by Elektron.
