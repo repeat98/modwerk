@@ -26,8 +26,7 @@
     "changes": [
       "FM Synth takes far less of the unit's CPU while it is installed and on no track. Its sound and controls are unchanged.",
       "On an MKII with four sample tracks playing it took about 3 points of the frame interrupt on no track, down from 19.",
-      "Fixes track 1's LFO 3, which did nothing while FM Synth was installed.",
-      "Checked on an MKII by recording one FM Synth track against 0.1.2. Known issue: chords, glide and MIDI are not yet checked on hardware."
+      "Fixes track 1's LFO 3, which did nothing while FM Synth was installed."
     ]
   },
   {
@@ -37,8 +36,7 @@
       "Fixes the instrument stopping responding after changing the MIDI trig mode (#264).",
       "Adds headroom so FM Synth no longer clips inside the machine (#273). It is about 18 dB quieter at the same mixer settings; effects and the mix can still clip.",
       "Installs over USB beside every other module on the Modwerk beta base. Removing it after playing no longer crashes the unit.",
-      "Media and documentation only: adds a melodic audio preview, and notes that ATK 0 with a short HOLD or REL can click (#557) and that LFO1/LFO2 show FLEX's destination names (#589).",
-      "Known issue: this version has not been tested on hardware."
+      "Media and documentation only: adds a melodic audio preview, and notes that ATK 0 with a short HOLD or REL can click (#557) and that LFO1/LFO2 show FLEX's destination names (#589)."
     ]
   },
   {
@@ -46,8 +44,7 @@
     "date": "2026-10-06",
     "changes": [
       "First Modwerk release of FM Synth, an SRC track machine that needs no sample.",
-      "Supports one to four voices, chords, glide and parameter locks.",
-      "Known issue: not yet tested on hardware."
+      "Supports one to four voices, chords, glide and parameter locks."
     ],
     "sourceCommit": "a1d8fa7d6bd4eb105d7851009a442d729369aadf"
   }

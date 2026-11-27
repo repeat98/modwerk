@@ -6,8 +6,7 @@
       "A jump now counts from the last restart, PLAY or the last normal pattern change: after a normal change, the new pattern lands in phase with the one that started there.",
       "Trig conditions carry on across a jump: 1:2 and the other A:B counts stand where the new pattern's would since that restart. A held [FILL] stays on, and a PRE trig right after the jump plays.",
       "A jump now lands just before the step, so the new pattern's first step is never late, and a cue made in the playing pattern's last step lands on its grid point too.",
-      "With LFO AUTO CHANGE on, each track's new LFOs arrive with its first trig of the new pattern; with SILENCE TRACKS on, the tracks a jump silences are released just before the step, without a pop.",
-      "Known issue: not yet run on an MKII; the author ran it on his MKI, both his card build and this USB package."
+      "With LFO AUTO CHANGE on, each track's new LFOs arrive with its first trig of the new pattern; with SILENCE TRACKS on, the tracks a jump silences are released just before the step, without a pop."
     ]
   },
   {
@@ -23,8 +22,7 @@
     "date": "2026-10-25",
     "changes": [
       "Fixes a Plays Free MIDI track with trig quantize DIRECT stalling after its first step in PER TRACK scale mode (#881). This is Zac Kyoti's own fix, now built into Direct Jump.",
-      "With that fix, Direct Jump places such a MIDI track with its own scale instead of the master's.",
-      "Known issue: the MIDI fix has not yet been tried on an MKII; the author tested it on his MKI."
+      "With that fix, Direct Jump places such a MIDI track with its own scale instead of the master's."
     ]
   },
   {
@@ -34,8 +32,7 @@
       "First Modwerk release of Zac Kyoti's Direct Jump: hold [PTN] and press [YES], and a pattern you cue takes over on the next step instead of at the end of the playing one.",
       "The new pattern starts where it would be had it played since PLAY, also with other lengths and per-track scales. Part, START SILENT and trig conditions change as on a stock pattern change.",
       "Off at every power-on; while off, or while the arranger or a chain runs, pattern changes are the stock ones.",
-      "For card builds and, for beta testers, over USB.",
-      "Known issue: not yet tested on a unit with a jump into another Part, per-track scales, external MIDI gear, the arranger or chains, or on an MKI."
+      "For card builds and, for beta testers, over USB."
     ]
   }
 ]

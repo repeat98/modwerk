@@ -4,9 +4,7 @@
     "date": "2026-10-23",
     "changes": [
       "Now Zac Kyoti's own final source, unchanged; the gesture and the LIVE REC messages work as before.",
-      "Switching the setting redraws PERSONALIZE only while that page is open.",
-      "Tested by the author on an MKI from the card: the gesture, the PERSONALIZE redraw and a power cycle.",
-      "Known issue: this version is not yet tested over USB, on an MKII, with grid recording or on MIDI tracks."
+      "Switching the setting redraws PERSONALIZE only while that page is open."
     ]
   },
   {
@@ -16,8 +14,7 @@
       "First Modwerk release of Zac-Kyoti’s QUANTIZE LIVE REC gesture, listed as Quant Live Rec.",
       "Hold [REC] and tap [PLAY] to show LIVE REC: QUANTIZED or UNQUANTIZED; tap [PLAY] again while it shows to switch. The first [REC] + [PLAY] still starts live recording.",
       "Modwerk rewords the messages and keeps an open PERSONALIZE list in step when you switch.",
-      "Available over USB on the Modwerk beta base. The setting is kept across power cycles and Part or project reloads.",
-      "Known issue: not yet tested on the MKI, with grid recording or on MIDI tracks."
+      "Available over USB on the Modwerk beta base. The setting is kept across power cycles and Part or project reloads."
     ]
   }
 ]
