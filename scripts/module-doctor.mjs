@@ -68,7 +68,10 @@ const MODULE_FOLDERS = ['sdk/octatrack/modules', ...ELEMOD_MACHINES.map(item => 
 if (!all && !exists('sdk/octatrack/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
 
 // The module and catalog rules every PR already enforces (versions, documentation, qualification, gauges, media): run once.
-const rules = spawnSync(process.execPath, ['scripts/modules.mjs'], { cwd: root, encoding: 'utf8' })
+const rules = spawnSync(process.execPath, ['scripts/modules.mjs'], {
+  cwd: root, encoding: 'utf8',
+  env: draft ? { ...process.env, MODWERK_EVIDENCE_PENDING: '1' } : process.env,
+})
 // Node prints the thrown message after the source excerpt and before the stack, an error dump and its version trailer: take the message line.
 const ruleLines = rules.stderr.trim().split('\n').filter(line => line && !/^\s+at /.test(line) && !/^Node\.js v/.test(line))
 const rulesProblem = rules.status === 0 ? '' : (ruleLines.find(line => /^\w*Error: /.test(line))?.replace(/^\w*Error: /, '') ?? ruleLines.at(-1) ?? 'failed')

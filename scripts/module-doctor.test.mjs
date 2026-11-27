@@ -38,6 +38,7 @@ describe('module doctor', () => {
     expect(result.stdout).toContain(draft + ' (Octatrack)')
     expect(result.stdout).toContain('usb package')
     expect(result.stdout).not.toContain('Node.js v')
+    expect(result.status, result.stdout + result.stderr).toBe(0)
     // The gate compares the draft too, so a clash shows before the catalogue lists it.
     expect(result.stdout).toMatch(/[✓✗] cross-compatibility/)
     expect(result.stdout).not.toContain('once it is listed')
