@@ -18,3 +18,8 @@ unregistered. irpina's build also claims the stock table range it rewrites at ru
 time (OS 1.53 `0x401abeec`-`0x401ac058`, OS 1.54 `0x401ac1ec`-`0x401ac358`) so that
 no other mod patches it; `build.json` has no field for that claim, and no library
 mod patches either range.
+
+One of irpina's 50 parameter-limit raises is left out: the instruction at
+`0x400318b2` (both OSes) stays stock, because CC Names hooks it to draw its labels
+and reads every parameter's label itself. Without the raise, CC Names combines
+with every machine mod as before.

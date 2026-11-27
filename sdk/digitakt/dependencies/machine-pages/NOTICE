@@ -12,4 +12,7 @@ ported 1.1 (Modwerk's Machine Pages 1.2, 2026-10-14):
 - params.c ends with four symbols for parts of mp_legacy_tables (+64, +228, +392,
   +600), which mod.json's keep2 sites reach by addend: build.json's sites name a
   symbol without one, and its keep2 sites are plain jsr, lea and guarded bytes.
+- build.json leaves out mod.json's site at 0x400318b2 (raising cmpi.l #0xa4,d5
+  to #0xab on both OSes): CC Names hooks that instruction for its labels and reads
+  every parameter's label itself, extra values included, so the two combine.
 Nothing else is changed. Stock preconditions are hashes only.

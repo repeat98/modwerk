@@ -477,14 +477,6 @@
           "stockSha256": "24504c158d3f7c024ca19ed3235980e874f8a43472784e2925342e787e21deaf"
         },
         {
-          "addr": "0x400318b2",
-          "op": "bytes",
-          "new": "0c85000000ab",
-          "kind": "code",
-          "len": 6,
-          "stockSha256": "ede057d369e3202ba1cec508618dd69dfd072fb66ba2aa50750cbf1d434dc4aa"
-        },
-        {
           "addr": "0x400328b2",
           "op": "bytes",
           "new": "0c83000000aa",
@@ -1290,14 +1282,6 @@
           "kind": "code",
           "len": 6,
           "stockSha256": "24504c158d3f7c024ca19ed3235980e874f8a43472784e2925342e787e21deaf"
-        },
-        {
-          "addr": "0x400318b2",
-          "op": "bytes",
-          "new": "0c85000000ab",
-          "kind": "code",
-          "len": 6,
-          "stockSha256": "ede057d369e3202ba1cec508618dd69dfd072fb66ba2aa50750cbf1d434dc4aa"
         },
         {
           "addr": "0x400328b2",
