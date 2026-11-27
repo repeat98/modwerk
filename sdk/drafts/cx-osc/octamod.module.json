@@ -106,9 +106,8 @@
     ],
     "uiClaims": [],
     "limitations": [
-      "Draft PR: not in sdk/catalog.json yet; modules:compat group-owned relation for synth waits for listing.",
-      "Cannot combine with FM Synth (synth): same Tim Hastie engine hook surface.",
-      "Table patches on ot_machines chooser sites still use detours; migrate to runtime contribute before listing (46 compat findings with --with cx-osc, 27 Nov 2026).",
+      "Not in sdk/catalog.json yet; catalog ship steps in CATALOG-SHIP.md.",
+      "Cannot combine with FM Synth (synth): same Tim Hastie engine hook surface; owner-reviewed group-owned relation required when both are listed (owner-compat-relation.json).",
       "MIDI chromatic drawer, legato, power-cycle retention and listening pass remain open."
     ]
   },
