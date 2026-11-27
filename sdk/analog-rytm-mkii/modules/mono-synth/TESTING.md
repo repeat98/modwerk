@@ -71,5 +71,5 @@ By ear: not checked whether a long decay is ever cut before it ends.
 
 ## Not tested
 
-- On a unit: whether a long decay is ever cut short by ear, the range tap, locks, the analog filter after it, several voices at once, a project save and a power cycle.
+- On a unit: whether a long decay is ever cut short by ear, locks, the analog filter after it, several voices recorded together, a project save and a power cycle.
 - In rytm-emu: not run. Whether slot 40 shows any knob as bipolar is unseen.
