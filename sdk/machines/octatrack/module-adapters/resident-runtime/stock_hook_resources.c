@@ -1,6 +1,12 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "stock_hook_resources.h"
 #include "dsp_ledger.h"
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+#include "resident_engines.h" /* program areas: a base feature with no ledger region, and its slot records */
+#define FEATURES (MW_DSP_FEATURES | MW_DSP_PROGRAMS)
+#else
+#define FEATURES MW_DSP_FEATURES
+#endif
 static const uint32_t fx1[4]={0x1000u,0x1c00u,0x2800u,0x3400u};
 static const uint32_t fx2[2][4]={{0x4000u,0x8000u,0x30000u,0x34000u},
                                 {0x4000u,0x8000u,0x38000u,0x3c000u}};
@@ -69,7 +75,14 @@ int mw_hook_ranges_idle(unsigned feature,const struct mw_hook_span *live,unsigne
  * no other feature's words at all, held or not, so no later feature ever finds them taken. */
 int mw_hook_claim_permitted(unsigned requires,const struct mw_hook_span *claim,unsigned writes) {
     if(!claim || writes>1u || (claim->space!=MW_HOOK_X && claim->space!=MW_HOOK_Y) || !valid(claim) ||
-       (requires&~MW_DSP_FEATURES)) return 0;
+       (requires&~FEATURES)) return 0;
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+    /* The slot records (the same X words on each core) are the base's too: a package that requires program areas may
+     * read inside them, nothing else may meet them. */
+    if(claim->space==MW_HOOK_X && claim->address<MW_SLOT_RECORDS+MW_SLOT_RECORD_WORDS && claim->address+claim->words>MW_SLOT_RECORDS &&
+       (writes || !(requires&MW_DSP_PROGRAMS) || claim->address<MW_SLOT_RECORDS ||
+        claim->address+claim->words>MW_SLOT_RECORDS+MW_SLOT_RECORD_WORDS)) return 0;
+#endif
     unsigned held=MW_DSP_IMPLIED(requires),inside=0,met=0;
     for(unsigned n=0;n<MW_DSP_REGIONS;++n) {
         const struct mw_dsp_region *g=&mw_dsp_regions[n];

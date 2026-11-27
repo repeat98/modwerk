@@ -56,8 +56,8 @@ def private_output(path):
 def base_binding(symbols, main):
     arena, pool = symbols.get('arena_base'), symbols.get('pool')
     start, end = symbols.get('__bss_start'), symbols.get('__bss_end')
-    if any(type(value) is not int for value in (arena, pool, start, end)) or not (0x40a955e0 < arena < 0x47f00000 and start <= pool and pool + 786432 <= end):
-        raise ValueError('Private base map must contain the moved arena and the bounded 768 KiB runtime pool.')
+    if any(type(value) is not int for value in (arena, pool, start, end)) or not (0x40a955e0 < arena < 0x47f00000 and start <= pool and pool + 2097152 <= end):
+        raise ValueError('Private base map must contain the moved arena and the bounded 2 MiB runtime pool (build_core.py RUNTIME_POOL_BYTES).')
     for address in (0x4000045e, 0x4000046c, 0x400004c8):
         at = address - 0x40000400
         if at + 4 > len(main) or struct.unpack_from('>I', main, at)[0] != arena:

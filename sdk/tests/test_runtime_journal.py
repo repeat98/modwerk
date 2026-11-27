@@ -98,7 +98,7 @@ int main(void) {
     def test_all_real_saved_set_paths_preserve_both_files_and_ram_baseline(self):
         source = (ELEK / 'test_modset.c').read_text()
         sanitizers = ('-g', *SANITIZE, '-fno-sanitize-recover=all')
-        for defines in (('-DMODWERK_HOST',), ('-DMODWERK_HOST', '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')):
+        for defines in (('-DMODWERK_HOST',), ('-DMODWERK_HOST', '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=2097152u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u')):
             with self.subTest(defines=defines):
                 self.compile_run(source, defines + sanitizers)
 
@@ -202,7 +202,7 @@ int main(void)
 }
 '''
         sanitizers = ('-g', *SANITIZE, '-fno-sanitize-recover=all')
-        for defines in (('-DMODWERK_HOST',), ('-DMODWERK_HOST', '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')):
+        for defines in (('-DMODWERK_HOST',), ('-DMODWERK_HOST', '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=2097152u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u')):
             with self.subTest(defines=defines):
                 self.compile_run(source, defines + sanitizers + ('-Wno-unused-function',))  # the fixture's other helpers
 

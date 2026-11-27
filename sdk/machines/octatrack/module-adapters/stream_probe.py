@@ -53,6 +53,18 @@ Why the regions are free in this build (`claims`, `proof`, `chain_proof`, `mailb
   at $2840-$36ff, ends below $3840; payload A's frame head writes $3f80-$3f81, above it; no stock or base host
   transfer reaches past $x83f (TRANSFERS, from the stock chain whose bytes `chain_proof` guards).
 Any other writer shows on the unit: as bad blocks on the DSP's checker (A) or the ColdFire's (B).
+
+The channel (--stream-channel, stream_channel.c): A's and B's paths carry the blocks of the slots that stream (events.json
+ot_dsp_effects stream_in, stream_out) instead of a pattern, from A's wide region X:$x1be0 (in) and B's X:$x1840 (out),
+as many minor loops a frame as the open lanes cover; no frame-head code. dsp_programs.c names each slot's blocks in its
+slot record. Development twins only, no --usb-input, beside the base's program areas.
+- Core 0 (T5-T8): A's send at state 7 and B's read at stock's state 0, as above.
+- Core 1 (T1-T4), host-tested only: only at the times stock itself talks to core 1 (dsp_core1.s's trap). Its in-blocks
+  go at state 3 right after the loader's packet to core 1 (`core1`), to X:$x1be0-$x1f5f: 896 words, because payload B's
+  frame routine writes X:$3f7f-$3fbf every frame (CORE1_FRAME_WORDS). Its out-blocks are read at state 1's entry
+  (0x400048da, its first 8 bytes, guarded), right after stock's pull from core 1 and with core 1 still selected, from
+  X:$x1840 with TCD1 saved and put back as B's; state 1 then runs as stock's. `core1_proof` checks both regions
+  against core 1's stock transfers (CORE1_TRANSFERS), the ledger's core-1 X regions, and payload B's X records.
 """
 import hashlib
 import json
@@ -65,6 +77,7 @@ from usb_audio_input import DSP_FRAME_SITE, STOCK_FRAME_GUARD  # noqa: E402  pay
 APP = HERE.parents[3]
 LEDGER = HERE.parent / 'dsp-sites.json'
 SOURCE = HERE / 'stream_probe.c'
+CHANNEL = (HERE / 'stream_channel.c', HERE / 'stream_channel.h')
 BUILD_CORE = HERE.parent / 'elekloader' / 'build_core.py'
 BANKS = (0x2000, 0x4000)  # core 0's host masks: $6000 + offset lands at $2000 or $4000 + offset, alternating each frame
 DESTINATION = 0x6360   # probe A up to 160 words: X:$2360 or X:$4360 after the DSP's mask
@@ -86,6 +99,11 @@ DSP_WORDS = 10         # the published copy: serial, frames, good, bad, missing,
 COUNTERS = ('frames', 'good', 'bad', 'missing', 'jumps', 'junk', 'last', 'diff')
 STATE0 = 0x40004862    # stock's state 0: `moveq #7,%d1; move.b %d1,0xfc04401c` (channel 7's request), then core 1's pull
 STATE0_GUARD = '575368927015d4a39583271e15f2d7cbda056fa0f830e1453ebd6ba52d3fc365'
+STATE1 = 0x400048da    # stock's state 1: `moveq #1,%d0; move.b %d0,0xfc04401c` (channel 1's request), then core 0's push
+STATE1_GUARD = hashlib.sha256(bytes.fromhex('700113c0fc04401c')).hexdigest()
+CORE1_IN_CAPACITY = 0x380  # core 1's in-region X:$x1be0-$x1f5f
+# Payload B's frame routine writes X:$3f7f-$3fbf every frame (sdk/octabam/docs/TRAPS.md#trap-stock-x-scratch).
+CORE1_FRAME_WORDS = (0x3f7f, 0x41)
 # The stock chain these proofs read: the eDMA completion entry and states 0-7 (0x40004840-0x40004bd1), and the frame
 # interrupt's pull from core 0 and its state reset (0x4000ab1a-0x4000ac37).
 CHAIN_GUARDS = ((0x40004840, 0x40004bd2, 'ab08f384c1560140749d616e58be273b632df105435a6363422890cdd5ac7501'),
@@ -94,6 +112,9 @@ CHAIN_GUARDS = ((0x40004840, 0x40004bd2, 'ab08f384c1560140749d616e58be273b632df1
 TRANSFERS = ((0x600, 512, 'read', 'frame entry, channels 1, 6, 7'), (0x080, 672, 'write', 'state 1'),
              (0x800, 64, 'write', 'state 3'), (0x000, 128, 'write', 'state 5'), (0x400, 512, 'write', 'state 6'),
              (0x320, 64, 'write', "the DSP loader's packet, state 7 (scheduler checks it)"))
+# Core 1's, from the same bytes: state 0's pull, state 2's and state 4's pushes, the loader's packet at state 3.
+CORE1_TRANSFERS = ((0x600, 256, 'read', 'state 0'), (0x080, 672, 'write', 'state 2'),
+                   (0x320, 64, 'write', "the DSP loader's packet, state 3 (dsp_core1.s)"), (0x000, 128, 'write', 'state 4'))
 
 
 def replace(text, before, after):
@@ -173,6 +194,38 @@ def proof(ledger=LEDGER, a_words=160, b_words=0):
         for at, words, who in spans:
             if any(start < bank + at + words and bank + at < end for bank in BANKS):
                 raise ValueError('The %s block meets a ledger region: %s' % (who, r['about']))
+    return seen
+
+
+def core1_claims():
+    return ((A_WIDE, CORE1_IN_CAPACITY, "core 1's in-region"), (READ_REGION, READ_CAPACITY, "core 1's out-region"))
+
+
+def core1_proof(ledger=LEDGER):
+    """The channel's core-1 regions: in the free run, apart, clear of core 1's stock transfers, of payload B's frame
+    routine's words in either bank and of every ledger X region core 1 holds; -> how many ledger X regions were checked."""
+    spans = core1_claims()
+    (a, n, who), (b, m, other) = spans
+    if a < b + m and b < a + n:
+        raise ValueError(who + ' meets ' + other)
+    for at, words, who in spans:
+        if not (FREE_RUN[0] <= at and at + words <= FREE_RUN[1]):
+            raise ValueError(who + ' leaves the free run X:$x%x-$x%x.' % FREE_RUN)
+        for start, count, _, where in CORE1_TRANSFERS:
+            if start < at + words and at < start + count:
+                raise ValueError('%s meets a host transfer to core 1 (%s).' % (who, where))
+        if any(CORE1_FRAME_WORDS[0] < bank + at + words and bank + at < sum(CORE1_FRAME_WORDS) for bank in BANKS):
+            raise ValueError(who + " meets payload B's frame-routine words X:$3f7f-$3fbf.")
+    seen = 0
+    for r in json.loads(Path(ledger).read_text())['regions']:
+        if r['space'] != 'x' or not (r.get('shared') or 'B' in r.get('cores', ())):
+            continue
+        start = int(r['start'], 16)
+        end = start + int(r['words'], 16)
+        seen += 1
+        for at, words, who in spans:
+            if any(start < bank + at + words and bank + at < end for bank in BANKS):
+                raise ValueError('%s meets a ledger region: %s' % (who, r['about']))
     return seen
 
 
@@ -368,7 +421,7 @@ PLACED = {}  # the frame-head code's absolute P addresses once placed: cflags() 
 
 
 def place_receiver(args, place, assemble, tag, end, work):
-    if tag != 'A':  # the blocks are core 0's only
+    if tag != 'A' or getattr(args, 'stream_channel', False):  # the blocks are core 0's only; the channel's DSP side is the module's
         return place(end)
     words, read_words = args.stream_probe, args.stream_read
     text = dsp_source(words, read_words)
@@ -398,12 +451,21 @@ def place_receiver(args, place, assemble, tag, end, work):
 def mailbox_initialization(image, device, dsp, args):
     """No stock X record of payload A loads into a claimed range in either bank; every block's magic word starts
     clear, so a cold DSP's garbage reads as no block."""
-    spans = claims(args.stream_probe, args.stream_read)
-    for space, at, count, _ in dsp.records(image, device, 'A'):
-        for offset, words, who in spans:
-            if space == 1 and any(at < bank + offset + words and bank + offset < at + count for bank in BANKS):
-                raise ValueError('The %s block overlaps a stock DSP record.' % who)
+    cores = (('A', claims(*widths(args))),) + ((('B', core1_claims()),) if getattr(args, 'stream_channel', False) else ())
+    for tag, spans in cores:
+        for space, at, count, _ in dsp.records(image, device, tag):
+            for offset, words, who in spans:
+                if space == 1 and any(at < bank + offset + words and bank + offset < at + count for bank in BANKS):
+                    raise ValueError('The %s block overlaps a stock DSP record of payload %s.' % (who, tag))
+    if getattr(args, 'stream_channel', False):  # nothing reads a block before its slot record names it (dsp_programs.c)
+        return {'A': []}
+    spans = cores[0][1]
     return {'A': [dict(space='x', address=bank + offset, words=[0], owner=0) for offset, _, _ in spans for bank in BANKS]}
+
+
+def widths(args):
+    """(A's words, B's words): the channel's are its regions' whole width."""
+    return (A_WIDE_CAPACITY, READ_CAPACITY) if getattr(args, 'stream_channel', False) else (args.stream_probe, args.stream_read)
 
 
 def scheduler(text, args):
@@ -411,7 +473,7 @@ def scheduler(text, args):
     comes to mw_stream_state0 (sites); the times are kept before the unmask, the block checked after it."""
     if text.count('move.w #0x6320,%d0') != 1 or text.count('move.w #63,%d0') != 1:
         raise ValueError('The loader packet no longer ends below the stream probe block ($x320-$x35f).')
-    words, read_words = args.stream_probe, args.stream_read
+    words, read_words = widths(args)
     if words:
         text = replace(text, '        jsr dl_frame\n        tst.l %d0', '''        jsr dl_frame
         move.l %d0,%d7
@@ -482,6 +544,8 @@ dl_write:
         jsr mw_stream_check     | stream_probe.c: probe B's block, after the unmask
         jmp DONE
 ''')
+    if getattr(args, 'stream_channel', False):
+        return text + CHANNEL_STATE0
     loop = read_loop_bytes(read_words)
     return text + f'''
         .text
@@ -525,17 +589,167 @@ mw_stream_stock0:
 '''
 
 
+# The channel's read at stock's state 0: probe B's, its count and minor loops (32 bytes) from stream_channel.c.
+CHANNEL_STATE0 = f'''
+        .text
+        .global mw_stream_state0
+| The stream channel's read (stream_channel.c), probe B's path: stock's state 0 jumps here at channel 7's completion (core
+| 0 still selected) and again at the read's own; the second visit, and a frame with no lane reading, go on to stock's.
+mw_stream_state0:
+        jsr mw_stream_read      | 1: read the out-region now (TCD1 saved); else go on to stock's state 0
+        subq.l #1,%d0
+        bne mw_stream_stock0
+        moveq #7,%d1
+        move.b %d1,0xfc04401c   | channel 7's request, as stock's state 0 clears it
+        clr.b 0xfc0a400c        | core 0, selected since the frame's entry
+        move.w #0x81,%d1
+        move.w %d1,0x20000000
+        moveq #2,%d1
+        move.w %d1,0xfc04503e   | TCD1 CSR: an interrupt at the end, no link, as stock's state 0 writes it
+        move.w #{0x6000 | READ_REGION:#x},%d1
+        move.w %d1,0x2000001c
+        move.w mw_stream_read_count,%d1
+        move.w %d1,0x2000001c
+        move.w #0x89,%d1
+        move.w %d1,0x20000004
+        move.l #mw_stream_rx+UNCACHED,%d1
+        move.l %d1,0xfc045030   | DADDR
+        moveq #32,%d1
+        move.l %d1,0xfc045028   | NBYTES: 32-byte minor loops
+        move.w mw_stream_read_iter,%d1
+        move.w %d1,0xfc045034   | CITER, BITER: each minor loop links to the next, as stock's
+        move.w %d1,0xfc04503c
+        moveq #1,%d1
+        move.b %d1,0xfc04401e   | SSRT: channel 1
+        move.l 0xfc07c00c,%d1
+        move.l %d1,mw_stream_read_started
+        jmp DONE
+mw_stream_stock0:
+        moveq #7,%d1
+        move.b %d1,0xfc04401c   | stock's own first 8 bytes
+        jmp 0x4000486a
+'''
+
+
+# Core 1's (stream_channel.c): its in-blocks after the loader's packet at state 3, its out-region read at state 1's entry.
+CORE1_SEND = f'''4:      move.w 0xfc04501e,%d0           | TCD0 CSR idle, as for the packet
+        andi.l #0xc1,%d0
+        cmpi.l #0x80,%d0
+        bne 3f
+        jsr mw_stream_block1            | stream_channel.c: core 1's in-region's minor loops, 0 none
+        tst.l %d0
+        beq 3f
+        moveq #1,%d1
+        move.b %d1,0xfc0a400c           | core 1, as state 2 left it
+        move.l #mw_stream_tx1+UNCACHED,%d1
+        move.l %d1,0xfc045000
+        moveq #64,%d1
+        move.l %d1,0xfc045008
+        move.w #0x81,%d1
+        move.w %d1,0x20000000
+        move.w #{0x6000 | A_WIDE:#x},%d1
+        move.w %d1,0x2000001c
+        move.l %d0,%d1
+        lsl.l #5,%d1
+        subq.l #1,%d1
+        move.w %d1,0x2000001c
+        move.w #0x88,%d1
+        move.w %d1,0x20000004
+        ori.l #0x8000,%d0
+        move.w %d0,0xfc045014
+        move.w %d0,0xfc04501c
+        moveq #2,%d0
+        move.l %d0,dl_c1_phase          | 2: the stream's block is on its way
+        clr.b 0xfc04401e
+        jmp DONE
+5:      clr.l dl_c1_phase
+        jsr mw_stream_complete1
+3:      clr.b %d0                       | the instructions the hook replaced
+'''
+CORE1_STATE1 = f'''
+        .text
+        .global mw_stream_state1
+| Core 1's out-region (stream_channel.c), probe B's path at stock's state 1: its entry is channel 1's completion of
+| stock's pull from core 1, core 1 still selected; again at the read's own. The second visit, and a frame with no
+| core-1 lane reading, go on to stock's state 1.
+mw_stream_state1:
+        jsr mw_stream_read1     | 1: read core 1's out-region now (TCD1 saved); else go on to stock's state 1
+        subq.l #1,%d0
+        bne mw_stream_stock1
+        moveq #1,%d1
+        move.b %d1,0xfc04401c   | channel 1's request, as stock's state 1 clears it
+        moveq #1,%d1
+        move.b %d1,0xfc0a400c   | core 1, selected since state 0
+        move.w #0x81,%d1
+        move.w %d1,0x20000000
+        moveq #2,%d1
+        move.w %d1,0xfc04503e   | TCD1 CSR: an interrupt at the end, no link, as stock's state 0 writes it
+        move.w #{0x6000 | READ_REGION:#x},%d1
+        move.w %d1,0x2000001c
+        move.w mw_stream_read_count1,%d1
+        move.w %d1,0x2000001c
+        move.w #0x89,%d1
+        move.w %d1,0x20000004
+        move.l #mw_stream_rx1+UNCACHED,%d1
+        move.l %d1,0xfc045030   | DADDR
+        moveq #32,%d1
+        move.l %d1,0xfc045028   | NBYTES: 32-byte minor loops
+        move.w mw_stream_read_iter1,%d1
+        move.w %d1,0xfc045034   | CITER, BITER
+        move.w %d1,0xfc04503c
+        moveq #1,%d1
+        move.b %d1,0xfc04401e   | SSRT: channel 1
+        jmp DONE
+mw_stream_stock1:
+        moveq #1,%d0
+        move.b %d0,0xfc04401c   | stock's own first 8 bytes
+        jmp {STATE1 + 8:#x}
+'''
+
+
+def core1(text, args):
+    """dsp_core1.s with the channel: phase 2 is core 1's in-block, after the packet (or none waiting); state 1's read."""
+    if not getattr(args, 'stream_channel', False):
+        return text
+    text = replace(text, '''        bne 2f                          | our packet's completion
+''', '''        bne 2f                          | our packet's completion, or the stream's block's
+''')
+    text = replace(text, '''        beq 3f                          | nothing waiting
+''', '''        beq 4f                          | nothing waiting: the stream's block, if any
+''')
+    text = replace(text, '''2:      clr.l dl_c1_phase
+''', '''2:      move.l dl_c1_phase,%d0
+        cmpi.l #2,%d0
+        beq 5f                          | the stream's block's completion
+        clr.l dl_c1_phase
+''')
+    text = replace(text, '''        clr.w (%a0)
+3:      clr.b %d0                       | the instructions the hook replaced
+''', '''        clr.w (%a0)
+''' + CORE1_SEND)
+    text = replace(text, '''        .data
+        .balign 4
+dl_c1_phase: .long 0                    | 1 while our transfer runs
+''', CORE1_STATE1 + '''
+        .data
+        .balign 4
+dl_c1_phase: .long 0                    | 1 while our packet runs, 2 the stream's block
+''')
+    return text
+
+
 def dsp_c(text, args):
     """dsp.c: A's recovery core select and give-up, as USB AUDIO IN's, and A's snapshot read ahead of the meter's; B's
     give-up in the same recovery."""
-    if args.stream_probe:
+    if args.stream_probe or getattr(args, 'stream_channel', False):
         text = replace(text, 'DSP_SELECT = dl_c1_phase ? 1u : (uint8_t)(dl_phase - 1u);',
                        'DSP_SELECT = dl_c1_phase ? 1u : 0u; /* state 7 always targets core 0 */')
-        text = replace(text, '    dl_phase = dl_c1_phase = 0;', '''    if (dl_phase >= 3u) {
+        text = replace(text, '    dl_phase = dl_c1_phase = 0;', '''    if (dl_phase >= 3u || dl_c1_phase == 2u) { /* a stream block was on its way */
         extern void mw_stream_dma_failed(void);
         mw_stream_dma_failed();
     }
     dl_phase = dl_c1_phase = 0;''')
+    if args.stream_probe:
         text = replace(text, '        if (peeking < 0 && meter_wanted >= 0 && probing < 0',
                        f'''        {{ /* the stream probe's published copy (stream_probe.c), ahead of the status page's meter reads */
             extern volatile int32_t mw_stream_dsp_wanted;
@@ -550,7 +764,7 @@ def dsp_c(text, args):
             }}
         }}
         if (peeking < 0 && meter_wanted >= 0 && probing < 0''')
-    if args.stream_read:
+    if args.stream_read or getattr(args, 'stream_channel', False):
         text = replace(text, '    dl_abort();\n    dl_residency_enabled = 0;\n', '''    { extern void mw_stream_read_failed(void); mw_stream_read_failed(); } /* stream probe B: read no more */
     dl_abort();
     dl_residency_enabled = 0;
@@ -580,6 +794,12 @@ def dev_c(text, args):
 
 
 def check_args(args):
+    if getattr(args, 'stream_channel', False):
+        if args.stream_probe or args.stream_read or not args.resident_on_demand:
+            raise ValueError('--stream-channel takes no probe beside it, and needs --resident-on-demand (its slot records).')
+        proof(a_words=A_WIDE_CAPACITY, b_words=READ_CAPACITY)
+        core1_proof()
+        return
     if not (args.stream_probe or args.stream_read):
         raise ValueError('Give --stream-probe N, --stream-read N or both.')
     if args.stream_probe:
@@ -592,24 +812,36 @@ def check_args(args):
 def prepare(args, source):
     """After build_core.py copied the base's sources: the probes' C source and their dev requests."""
     check_args(args)
+    if getattr(args, 'stream_channel', False):
+        for path in CHANNEL:
+            (source / path.name).write_bytes(path.read_bytes())
+        return
     (source / 'stream_probe.c').write_bytes(SOURCE.read_bytes())
     (source / 'dev.c').write_text(dev_c((source / 'dev.c').read_text(), args))
 
 
 def sites(image, device, args):
-    """Probe B takes stock's state 0 (its first 8 bytes, guarded); A takes no stock site of its own."""
+    """Probe B takes stock's state 0 (its first 8 bytes, guarded), the channel state 1 too; A takes no stock site."""
     chain_proof(image, device.main_load)
-    if not args.stream_read:
+    if not (args.stream_read or getattr(args, 'stream_channel', False)):
         return []
-    stock = image[STATE0 - device.main_load:STATE0 - device.main_load + 8]
-    if hashlib.sha256(stock).hexdigest() != STATE0_GUARD:
-        raise ValueError("Stock bytes at %#x are not the state 0 stream probe B takes." % STATE0)
-    return [dict(addr=hex(STATE0), stock=stock.hex(), op='jmp', target='mw_stream_state0')]
+    found = []
+    for at, guard, target in ((STATE0, STATE0_GUARD, 'mw_stream_state0'),) + (
+            ((STATE1, STATE1_GUARD, 'mw_stream_state1'),) if getattr(args, 'stream_channel', False) else ()):
+        stock = image[at - device.main_load:at - device.main_load + 8]
+        if hashlib.sha256(stock).hexdigest() != guard:
+            raise ValueError("Stock bytes at %#x are not the state the stream takes." % at)
+        found.append(dict(addr=hex(at), stock=stock.hex(), op='jmp', target=target))
+    return found
 
 
 def inputs(args):
     """What the probes add to the base's source identity: their files and both N, so no other base shares its identity."""
     found = {p.relative_to(APP).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in (Path(__file__).resolve(), SOURCE)}
+    if getattr(args, 'stream_channel', False):
+        found.update({p.relative_to(APP).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in CHANNEL})
+        found['stream-probe:channel'] = hashlib.sha256(b'1').hexdigest()
+        return found
     found['stream-probe:words'] = hashlib.sha256(str(args.stream_probe).encode()).hexdigest()
     if args.stream_read:  # absent for an A-only build, so its identity is the one before probe B
         found['stream-probe:read-words'] = hashlib.sha256(str(args.stream_read).encode()).hexdigest()
@@ -617,6 +849,8 @@ def inputs(args):
 
 
 def cflags(args):
+    if getattr(args, 'stream_channel', False):
+        return ['-DMODWERK_STREAM_CHANNEL']
     flags = []
     if args.stream_probe:
         if 'published' not in PLACED:
@@ -630,7 +864,9 @@ def cflags(args):
 
 
 def check_link(mapping, args):
-    for name in ('mw_stream_tx',) * bool(args.stream_probe) + ('mw_stream_rx',) * bool(args.stream_read):
+    a, b = (1, 1) if getattr(args, 'stream_channel', False) else (args.stream_probe, args.stream_read)
+    names = ('mw_stream_tx',) * bool(a) + ('mw_stream_rx',) * bool(b)
+    for name in names + (('mw_stream_tx1', 'mw_stream_rx1') if getattr(args, 'stream_channel', False) else ()):
         if mapping[name] % 16:
             raise ValueError('The stream probe buffer %s must be 16-byte aligned for its eDMA channel (16-byte bursts).' % name)
 
@@ -643,11 +879,13 @@ BUILD_EDITS = (
      "                        help='stream_probe.py, probe A: N halfwords to core 0 every frame (32-160 by 32, or 192-928) and a frame-head checker.')\n"
      "    parser.add_argument('--stream-read', type=int, default=0, metavar='N',\n"
      "                        help='stream_probe.py, probe B: N halfwords from core 0 every frame (32-928 by 16), written at its frame head.')\n"
+     "    parser.add_argument('--stream-channel', action='store_true',\n"
+     "                        help='stream_probe.py: the stream channel (stream_channel.c), probes A and B carrying the blocks of the slots that stream.')\n"
      "    parser.add_argument('--usb-input', action='store_true',\n"),
     ("        parser.error('--measure-voices is for a development twin: it needs --dev and --dsp-loader.')\n",
      "        parser.error('--measure-voices is for a development twin: it needs --dev and --dsp-loader.')\n"
      "    if (not args.dev or not args.dsp_loader or not args.site_events or not args.resident_stock_hooks or args.usb_input\n"
-     "            or args.dsp_hook != 'guard' or args.dsp_probe or args.dsp_burn or not (args.stream_probe or args.stream_read)):\n"
+     "            or args.dsp_hook != 'guard' or args.dsp_probe or args.dsp_burn or not (args.stream_probe or args.stream_read or args.stream_channel)):\n"
      "        parser.error('--stream-probe and --stream-read are for a development twin: --dev, --dsp-loader, --site-events, '\n"
      "                     '--resident-stock-hooks, the guarded transfer, no DSP probe or burn, no --usb-input (the probes take '\n"
      "                     'its frame-head site), and at least one of the two.')\n"),
@@ -671,6 +909,9 @@ BUILD_EDITS = (
     ("        recipe['sites'] += [] if args.dsp_probe == 'S' else dsp_sites\n",
      "        recipe['sites'] += STREAM_PROBE.sites(image, device, args)\n"
      "        recipe['sites'] += [] if args.dsp_probe == 'S' else dsp_sites\n"),
+    ("        shutil.copyfile(HERE / 'dsp_core1.s', source / 'dsp_core1.s')\n",
+     "        shutil.copyfile(HERE / 'dsp_core1.s', source / 'dsp_core1.s')\n"
+     "        (source / 'dsp_core1.s').write_text(STREAM_PROBE.core1((source / 'dsp_core1.s').read_text(), args))\n"),
     ("        raise ValueError('The DSP loader packet buffers must be 16-byte aligned for eDMA channel 0.')\n",
      "        raise ValueError('The DSP loader packet buffers must be 16-byte aligned for eDMA channel 0.')\n"
      "    STREAM_PROBE.check_link(mapping, args)\n"),

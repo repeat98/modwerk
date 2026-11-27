@@ -2,6 +2,7 @@
 """Stream probes A and B (module-adapters/stream_probe.py): A's core-0 checker and B's core-0 writer run in dsp_host,
 B's ColdFire check compiled on the host and fed what the writer left, and the build seams against the sources they
 edit."""
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -372,6 +373,89 @@ int main(void) {{
         dsp = stream_probe.dsp_c((SDK / 'elekloader/dsp.c').read_text(), SimpleNamespace(stream_probe=0, stream_read=64))
         self.assertIn('mw_stream_read_failed();', dsp)
         self.assertNotIn('mw_stream_dma_failed', dsp)
+
+
+    def test_channel_scheduler(self):
+        """--stream-channel: A's send at the wide in-region with the lanes' minor loops, B's read at the out-region with
+        stream_channel.c's count and minor loops, no frame-head code, both recoveries."""
+        core = stream_probe.build_core_module()
+        args = SimpleNamespace(stream_probe=0, stream_read=0, stream_channel=True, resident_on_demand=True)
+        stream_probe.check_args(args)
+        hooks = stream_probe.scheduler(self.hooks(core), args)
+        send = hooks[hooks.index('dl_send_stream:'):hooks.index('dl_write:')]
+        for line in ('move.w #0x7be0,%d1', 'move.l #mw_stream_tx+UNCACHED,%d1', 'moveq #64,%d1', 'lsl.l #5,%d1'):
+            self.assertIn(line, send)
+        read = hooks[hooks.index('mw_stream_state0:'):hooks.index('mw_stream_stock0:')]
+        order = ['jsr mw_stream_read', 'move.b %d1,0xfc04401c', 'clr.b 0xfc0a400c', 'move.w %d1,0x20000000',
+                 'move.w %d1,0xfc04503e', 'move.w #0x7840,%d1', 'move.w mw_stream_read_count,%d1', 'move.w #0x89,%d1',
+                 'move.l %d1,0xfc045030', 'moveq #32,%d1', 'move.l %d1,0xfc045028', 'move.w mw_stream_read_iter,%d1',
+                 'move.w %d1,0xfc045034', 'move.w %d1,0xfc04503c', 'move.b %d1,0xfc04401e', 'jmp DONE']
+        at = [read.index(line) for line in order]
+        self.assertEqual(at, sorted(at))
+        self.assertEqual(hooks.count('mw_stream_state0:'), 1)
+        complete = hooks[hooks.index('dl_complete:'):]
+        self.assertLess(complete.index('move.b %d1,0xfc04801d'), complete.index('jsr mw_stream_check'))
+        dsp = stream_probe.dsp_c((SDK / 'elekloader/dsp.c').read_text(), args)
+        self.assertIn('mw_stream_read_failed();', dsp)
+        self.assertIn('mw_stream_dma_failed', dsp)
+        self.assertNotIn('mw_stream_dsp_wanted', dsp)  # probe A's snapshot reads are not the channel's
+        self.assertIs(stream_probe.place_receiver(args, lambda end: end, None, 'A', 0x1234, None), 0x1234)
+        self.assertEqual(stream_probe.cflags(args), ['-DMODWERK_STREAM_CHANNEL'])
+        with self.assertRaises(ValueError):
+            stream_probe.check_args(SimpleNamespace(stream_probe=64, stream_read=0, stream_channel=True, resident_on_demand=True))
+
+    def test_channel_core1(self):
+        """--stream-channel on core 1: its block after the loader's packet at state 3 (phase 2), its read at state 1's
+        entry with core 1 still selected, its regions clear of core 1's transfers and of payload B's frame words."""
+        args = SimpleNamespace(stream_probe=0, stream_read=0, stream_channel=True, resident_on_demand=True)
+        stock = (SDK / 'elekloader/dsp_core1.s').read_text()
+        self.assertEqual(stream_probe.core1(stock, SimpleNamespace(stream_channel=False)), stock)
+        text = stream_probe.core1(stock, args)
+        flow = text[text.index('dl_state3:'):text.index('mw_stream_state1:')]
+        # the packet first; its completion (phase 1) and an idle frame with none waiting go on to the block
+        order = ['bne 2f', 'beq 4f', 'jmp DONE', '2:      move.l dl_c1_phase,%d0', 'beq 5f', 'clr.w (%a0)', '4:',
+                 'bne 3f', 'jsr mw_stream_block1', 'beq 3f', 'move.b %d1,0xfc0a400c', 'move.l #mw_stream_tx1+UNCACHED,%d1',
+                 'move.w #0x7be0,%d1', 'lsl.l #5,%d1', 'move.w #0x88,%d1', 'moveq #2,%d0', 'move.l %d0,dl_c1_phase',
+                 'clr.b 0xfc04401e', 'jmp DONE', '5:      clr.l dl_c1_phase', 'jsr mw_stream_complete1', '3:', 'jmp STATE3']
+        at, start = [], 0
+        for line in order:
+            start = flow.index(line, start)
+            at.append(start)
+        self.assertNotIn('0xfc04801d', flow)  # never the frame interrupt's mask
+        read = text[text.index('mw_stream_state1:'):text.index('mw_stream_stock1:')]
+        order = ['jsr mw_stream_read1', 'move.b %d1,0xfc04401c', 'move.b %d1,0xfc0a400c', 'move.w %d1,0x20000000',
+                 'move.w %d1,0xfc04503e', 'move.w #0x7840,%d1', 'move.w mw_stream_read_count1,%d1', 'move.w #0x89,%d1',
+                 'move.l #mw_stream_rx1+UNCACHED,%d1', 'move.l %d1,0xfc045030', 'moveq #32,%d1', 'move.l %d1,0xfc045028',
+                 'move.w mw_stream_read_iter1,%d1', 'move.w %d1,0xfc045034', 'move.w %d1,0xfc04503c',
+                 'move.b %d1,0xfc04401e', 'jmp DONE']
+        at = [read.index(line) for line in order]
+        self.assertEqual(at, sorted(at))
+        self.assertNotIn('clr.b 0xfc0a400c', read)  # core 1 stays selected
+        stock1 = text[text.index('mw_stream_stock1:'):]
+        self.assertEqual([line.split('|')[0].strip() for line in stock1.splitlines()[1:4]],
+                         ['moveq #1,%d0', 'move.b %d0,0xfc04401c', 'jmp 0x400048e2'])  # right past the 8 bytes
+        self.assertEqual(text.count('.data'), 1)
+        self.assertLess(text.index('mw_stream_stock1:'), text.index('.data'))
+        dsp = stream_probe.dsp_c((SDK / 'elekloader/dsp.c').read_text(), args)
+        self.assertIn('if (dl_phase >= 3u || dl_c1_phase == 2u)', dsp)
+        # the regions
+        self.assertGreaterEqual(stream_probe.core1_proof(), 1)
+        self.assertEqual(stream_probe.A_WIDE + stream_probe.CORE1_IN_CAPACITY + 0x2000, 0x3f60)
+        old = stream_probe.CORE1_IN_CAPACITY
+        try:
+            stream_probe.CORE1_IN_CAPACITY = stream_probe.A_WIDE_CAPACITY  # core 0's 928 words reach $3f7f
+            with self.assertRaises(ValueError):
+                stream_probe.core1_proof()
+        finally:
+            stream_probe.CORE1_IN_CAPACITY = old
+        self.assertEqual(hashlib.sha256(bytes.fromhex('700113c0fc04401c')).hexdigest(), stream_probe.STATE1_GUARD)
+        header = (SDK / 'module-adapters/stream_channel.h').read_text()
+        self.assertIn('#define MW_STREAM_IN1_WORDS %#xu' % stream_probe.CORE1_IN_CAPACITY, header)
+        mapping = {name: 0x40a00000 for name in ('mw_stream_tx', 'mw_stream_rx', 'mw_stream_tx1', 'mw_stream_rx1')}
+        stream_probe.check_link(mapping, args)
+        mapping['mw_stream_rx1'] += 8
+        with self.assertRaises(ValueError):
+            stream_probe.check_link(mapping, args)
 
 
 if __name__ == '__main__':

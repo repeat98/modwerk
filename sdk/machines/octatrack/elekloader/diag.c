@@ -437,8 +437,9 @@ void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint
 {
     refused_module = module, refused_code = refusal, refused_used = used, refused_largest = largest, refused_check = check;
 }
-/* Bytes in the pool's 16-byte units, so its 768 KiB fit a u16. */
-static uint16_t sixteenths(uint32_t bytes) { bytes = (bytes + 15u) / 16u; return (uint16_t)(bytes < 65535u ? bytes : 65535u); }
+/* Bytes in the pool's 16-byte units, 20 bits: the low 16 in the record's field, the top 4 in a nibble of dsp1 (a 2 MiB
+ * pool is 98,304 units), which is 0 below 1 MiB, so a record reads as on the bases before. */
+static uint32_t sixteenths(uint32_t bytes) { bytes = (bytes + 15u) / 16u; return bytes < 0xfffffu ? bytes : 0xfffffu; }
 void modwerk_diag_set(void)
 {
     if (!started) { refused_module = refused_code = refused_used = refused_largest = refused_check = 0; return; } /* never carried into a later set's record */
@@ -449,8 +450,11 @@ void modwerk_diag_set(void)
     bare(r, DIAG_SET);
     r->boot = l->boot, r->second = ticks / 60u, r->a = count;
     r->screen = refused_module, r->tempo24 = refused_code; /* a set record has no context */
-    if (refused_module) /* the module pool at the refusal, and the loader's check that refused (loader.h runtime_check) */
-        r->cpu = sixteenths(refused_used), r->dsp0 = sixteenths(refused_largest), r->dsp1 = (uint16_t)refused_check;
+    if (refused_module) { /* the module pool at the refusal, and the loader's check that refused (loader.h runtime_check) */
+        uint32_t used = sixteenths(refused_used), largest = sixteenths(refused_largest);
+        r->cpu = (uint16_t)used, r->dsp0 = (uint16_t)largest;
+        r->dsp1 = (uint16_t)((refused_check & 0xffu) | (used >> 16) << 8 | (largest >> 16) << 12);
+    }
     refused_module = refused_code = refused_used = refused_largest = refused_check = 0;
     volatile uint8_t *b = r->machine; /* machine, fx and keys: one run of 56 bytes */
     for (unsigned i = 0; i < 56u; ++i) b[i] = i < 4u * count ? (uint8_t)(ids[i / 4u] >> (24u - 8u * (i % 4u))) : 0;
