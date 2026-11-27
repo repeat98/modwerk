@@ -43,6 +43,7 @@ import sys
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import qvc  # noqa: E402
+import qvk  # noqa: E402
 
 N = 16                 # samples a frame
 LAT = 4                # frames from an out-block to the in-block that can use it (ASSUMPTION, FIRMWARE.md "Memory": 64 samples)
@@ -104,6 +105,88 @@ def drift(seq, a_w, lat, int_samples):
     return lo, hi, min(reps), max(reps), M
 
 
+# ---- the live knobs ---------------------------------------------------------------------------------------------
+
+KNOB_CENTRE = qvk.CENTRE
+KNOB_MARK = 0x4B00          # the knob words' first halfword: | the program's index (qv_runtime.c), else none apply
+
+
+def live_moves(lfo, steps, kn):
+    """Lfo.moves at every depth and centre SPD and DEP can ask for (qvk.Program.sweep_values)."""
+    seen = {kn.sweep_values(kD, kE)[3:] for kD in range(0, 128) for kE in range(0, 128)}
+    if kn.sweep["centreOf"] == "fixed":
+        seen = {max(seen)}                    # the deepest sweep reaches every address a shallower one does
+    addrs, coef, saved = {}, set(), lfo.par
+    try:
+        for dep, cen in sorted(seen):
+            lfo.par = dict(saved, depth=dep, centre=cen)
+            a, c = lfo.moves(steps)
+            for s, v in a.items():
+                addrs.setdefault(s, set()).update(v)
+            coef |= c
+    finally:
+        lfo.par = saved
+    return addrs, coef
+
+
+STREAM_IN_MOST = 352       # the base's channel: halfwords a frame to one core (stream_channel.h MW_STREAM_IN_MOST)
+
+
+def knob_list(plan):
+    kn = plan.knobs
+    if not kn:
+        return []
+    out = [("len", g) for g in range(len(kn.len_))]
+    if plan.ksweep:
+        out += [("rate",), ("depth",)] + ([("centre",)] if kn.sweep["centreOf"] == "depth" else [])
+    return out
+
+
+def knob_words(plan):
+    """The in-block's knob words after the windows (with the marker before them): per LEN group its coefficient, then
+    the sweep's rate, depth and, where the depth moves it, centre. None where they would pass the channel's 352: then
+    the DSP reads knobs B, D and E itself and looks them up in tables after the area's data (knob_tables)."""
+    kn = plan.knobs
+    if not kn or plan.kmode == "table":
+        return []
+    out = [("len", g) for g in range(len(kn.len_))]
+    if plan.ksweep:
+        out += [("rate",), ("depth",)] + ([("centre",)] if kn.sweep["centreOf"] == "depth" else [])
+    return out
+
+
+def knob_tables(plan):
+    """The DSP's own lookups (kmode 'table'), one word per knob position 0-127 each: per LEN group its coefficient
+    << 12; the speed's rate | K << 8 (qvk.fit_hk); the depth's H << 15. The sweep's depth word is then (H K) & $ff00."""
+    kn, out = plan.knobs, []
+    for w in plan.ktables:
+        if w[0] == "len":
+            out += [kn.coef(w[1], kn.len_values(k)[w[1]]) << 12 for k in range(128)]
+        elif w[0] == "rate":
+            out += [kn.R[s] | kn.K[s] << 8 for s in (qvk.value(k, kn.sweep["s"], 0, 98) for k in range(128))]
+        elif w[0] == "depth":
+            out += [kn.H[qvk.value(k, kn.sweep["d"], 0, kn.dhi) // kn.sweep["B"]] << 15 for k in range(128)]
+        else:
+            raise ValueError("a centre that moves has no table")
+    return out
+
+
+def knob_values(plan, index, knobs, words=None):
+    """The knob words (16-bit halfwords) the runtime sends for knobs (B, C, D, E): the marker, each LEN group's
+    coefficient << 4, the rate, the depth, the centre."""
+    kn = plan.knobs
+    kB, kC, kD, kE = knobs
+    out = [KNOB_MARK | index]
+    lv = kn.len_values(kB) if kn.len_ else []
+    sw = kn.sweep_values(kD, kE) if plan.ksweep else None
+    for w in plan.kwords if words is None else words:
+        if w[0] == "len":
+            out.append(kn.coef(w[1], lv[w[1]]) << 4)
+        else:
+            out.append({"rate": sw[2], "depth": sw[3], "centre": sw[4]}[w[0]])
+    return out
+
+
 # ---- the plan --------------------------------------------------------------------------------------------------
 
 class Window:
@@ -137,21 +220,60 @@ class Plan:
       narrow     the reads that take their word through the stream
       in_words, out_words   halfwords a frame each way"""
 
-    def __init__(self, steps, row=None, fade=None, lat=LAT, budget=None, force=(), reserve=0):
+    def __init__(self, steps, row=None, fade=None, lat=LAT, budget=None, force=(), reserve=0, knobs=None):
         self.steps, self.row, self.fade, self.lat = steps, row, fade, lat
         self.kind = row["kind"] if row else "static"
         self.moving = None
+        # The live knobs (qvk.Program): LEN's steps are products at every value, even 0; a sweep's reads reach every
+        # depth and centre SPD and DEP can ask for; TIME's taps read windows of their own (knob_windows).
+        self.knobs = knobs
+        self.kcoef = {s for g in knobs.len_ for s in g[0]} if knobs else set()
+        self.ksweep = bool(knobs and knobs.sweep and self.kind == "sweep")
         if row:
             lfo = qvc.Lfo(row)
             lfo.fade = fade
-            self.moving = lfo.moves(steps)
+            addrs, coef = live_moves(lfo, steps, knobs) if self.ksweep else lfo.moves(steps)
+            self.moving = (addrs, coef | self.kcoef)
             self.timing = qvc.tick_timing(row)
+        elif self.kcoef:
+            self.moving = ({}, set(self.kcoef))
         self.access, self.length, self.reach = qvc.analyse(steps, self.moving)
+        self.ktaps = {s: gi for gi, g in enumerate(knobs.time_) for s in g[0] if s in self.access} if knobs else {}
+        self.knob_windows(reserve, budget, force)
         self.accesses = sum(1 for i in qvc.FRAME if i in self.access) + sum(1 for w, l in self.length.items() if l is not None)
         tables = self.accesses + (FADE_WORDS if self.kind == "pitch" else 0)
         self.budget = (qvc.FX2_WORDS - tables - reserve) if budget is None else budget   # reserve: a unit build's dry scratch
         self.force = set(force)       # lines to stream as far as they can, fit or not (a test)
         self._drift = {}
+
+    def knob_windows(self, reserve, budget, force):
+        """TIME's taps (qvk.Program.time_), per group and line, as static windows of their own: the ColdFire moves
+        each one's start with knob C, b_at(k) = Dmin + 42 (ms(k) - factory ms). A delay under the stream's latency
+        (1 ms) the DSP copies from the line's own head instead, at 24 bits; kneed[w]: the head that takes."""
+        self.kwin, self.kneed = {}, {}
+        if not self.ktaps:
+            return
+        kn = self.knobs
+        for gi, (st, f, lo, hi, side) in enumerate(kn.time_):
+            taps = [s for s in st if s in self.access]
+            msset = sorted({kn.time_values(k)[gi] for k in range(128)})
+            at = lambda s, ms: (self.steps[s]["a"] + qvk.SAMPLES_MS * (ms - f)) & 0xFFFF
+            _, _, reach = qvc.analyse(self.steps, ({s: {at(s, ms) for ms in msset} for s in taps},
+                                                   self.moving[1] if self.moving else set()))
+            lines = {}
+            for s in taps:
+                w, d = self.access[s]
+                bad = [ms for ms in msset if reach[s][at(s, ms)] != d + qvk.SAMPLES_MS * (ms - f)]
+                assert not bad, f"step {s:#x}: TIME at {bad[0]} ms does not read its line {qvk.SAMPLES_MS} a ms further"
+                lines.setdefault(w, []).append((s, d))
+            for w, rs in lines.items():
+                for x in static_windows(rs):
+                    x.knob, x.line = dict(group=gi, f=f), w
+                    x.b_at = lambda k, x=x, gi=gi, f=f: x.dmin + qvk.SAMPLES_MS * (kn.time_values(k)[gi] - f)
+                    x.bmax = max(x.b_at(k) for k in range(128))
+                    need = [x.b_at(k) + x.W - N for k in range(128) if x.b_at(k) < N * self.lat]
+                    self.kwin.setdefault(w, []).append(x)
+                    self.kneed[w] = max([self.kneed.get(w, 0)] + need)
 
     # every item on a line: ('s', step, D) or ('g', taps, Dmin_reach, Dmax_reach)
     def items(self, w):
@@ -166,7 +288,7 @@ class Plan:
                     out.append(("g", g, min(ds), max(ds)))
                     grouped.update(g)
         for r, (line, d) in self.access.items():
-            if line != w or r in grouped:
+            if line != w or r in grouped or r in self.ktaps:
                 continue
             if r in moving:
                 ds = list(self.reach[r].values())
@@ -192,8 +314,12 @@ class Plan:
     def option(self, w, j):
         """Line w streaming its items from j on: (local length, windows, memory words, cost) or None."""
         its = self.items(w)
+        kw, need = self.kwin.get(w, []), self.kneed.get(w, 0)
         if j >= len(its):
-            return self.length[w], [], self.length[w] + 1, 0
+            if not kw:
+                return self.length[w], [], self.length[w] + 1, 0
+            local = max([N, need] + [it[3] for it in its])
+            return local, list(kw), local + 1 + sum(x.R for x in kw), 2 * sum(x.W for x in kw) + N
         floor = N * self.lat
         wins, statics = [], []
         for it in its[j:]:
@@ -202,16 +328,16 @@ class Plan:
                     return None
                 statics.append((it[1], it[2]))
             else:
-                if it[2] < floor:
+                if it[2] < floor or self.ksweep:   # a swept read SPD and DEP move stays in the DSP's ring
                     return None
                 mw = self.moving_window(w, it[1])
                 if mw.Bmin < floor:
                     return None
                 wins.append(mw)
-        wins = static_windows(statics) + wins
+        wins = static_windows(statics) + list(kw) + wins
         for x in wins:
             x.line = w
-        local = max([N] + [it[3] for it in its[:j]])
+        local = max([N, need] + [it[3] for it in its[:j]])
         mem = local + 1 + sum(x.R for x in wins)
         cost = 2 * sum(x.W for x in wins) + N + sum(1 for x in wins if x.kind == "moving")
         return local, wins, mem, cost
@@ -289,9 +415,16 @@ class Plan:
             addr[w] = h
         self.narrow, where = set(), {}
         for x in self.windows:
+            k = getattr(x, "knob", None)
+            if k:     # from the line's head while knob C <= thr (one delay, b1), else from the stream
+                ok = [kk for kk in range(128) if x.b_at(kk) < N * self.lat]
+                k["thr"], k["b1"] = (max(ok), x.b_at(0)) if ok else (-1, None)
+                assert ok == list(range(k["thr"] + 1)) and len({x.b_at(kk) for kk in ok}) <= 1, "TIME's short delays"
+                assert not ok or N <= k["b1"] and k["b1"] + x.W - N <= self.local[x.line], "a TIME delay the head lacks"
             for t, _ in x.taps:
                 where[t] = x
-                self.narrow.add(t)
+                if not (k and k["thr"] >= KNOB_CENTRE):     # a local read keeps 24 bits
+                    self.narrow.add(t)
         off = {}
         for r, (w, d) in self.access.items():
             x = where.get(r)
@@ -313,7 +446,13 @@ class Plan:
             if x.kind == "moving":
                 x.U0 = addr[x.rep]
         self.addr, self.off = addr, off
-        self.in_words = sum(x.W for x in self.windows)
+        self.kmode = getattr(self, "kmode", "words")
+        wins = sum(x.W for x in self.windows)
+        if self.kmode == "words" and knob_list(self) and wins + 1 + len(knob_list(self)) > STREAM_IN_MOST:
+            self.kmode = "table"
+        self.kwords = knob_words(self)
+        self.ktables = knob_list(self) if self.kmode == "table" else []
+        self.in_words = sum(x.W for x in self.windows) + (1 + len(self.kwords) if self.kwords else 0)
         self.out_words = N * len(self.streamed) + sum(1 for x in self.windows if x.kind == "moving")
 
     def summary(self):
@@ -385,6 +524,61 @@ def copy_out(modes):
     for k in range(2, n):
         out += [f"        mpy     y0,x0,{acc(k)} {acc(k)},x:(r3)+" + (ld(k + 1) if k + 1 < n else "")]
     out += [f"        move    {acc(n - 2)},x:(r3)+", f"        move    {acc(n - 1)},x:(r3)+"]
+    return out
+
+
+def knob_code(plan, info, P, area):
+    """The knobs at a frame's first call, after the windows' copy (r3 then points at the knob words, m5 = the ring):
+    the knob words into the coefficients and the sweep's words when the first is this program's marker; then each TIME
+    window that knob C (the dispatcher's page, x:(r6+2)) puts at 1 ms copied from its line's head (SplitEngine.knobs)."""
+    out = []
+    if plan.kwords:
+        assert area, "the knob words come with an area's stream"
+        lw = dict(rate=qvc.LFO_AT + 2, depth=qvc.LFO_AT + 3, centre=qvc.LFO_AT + 4)
+        out += ["; The knob words (qvs.knob_words): only when the first is this program's marker.",
+                "        clr     a", "        move    x:(r3)+,a1", "        and     #>$00ffff,a",   # a2 clear: junk in bit 23
+                f"        move    {imm(KNOB_MARK | (area['tag'] & 0xFF))},x0",
+                "        cmp     x0,a", f"        bne     {P}KNX", "        move    #>$000080,y1"]
+        for w in plan.kwords:
+            if w[0] in ("len", "depth"):      # (h & $ffff) << 8: a coefficient c << 12, the depth << 8
+                dst = [info["coef_at"][s] for s in plan.knobs.len_[w[1]][0]] if w[0] == "len" else [lw["depth"]]
+                out += ["        move    x:(r3)+,x0", "        mpy     x0,y1,a", "        move    a0,x0"]
+                out += [f"        move    x0,x:(r7+${d:02x})" for d in dst]
+            else:                              # the rate and the centre as they are
+                out += ["        move    x:(r3)+,a", "        and     #>$00ffff,a", f"        move    a1,x:(r7+${lw[w[0]]:02x})"]
+        out += [f"{P}KNX:"]
+    if plan.ktables:      # the DSP's own lookups: the tables follow the area's data, 128 words each (knob_tables)
+        lw = dict(rate=qvc.LFO_AT + 2, depth=qvc.LFO_AT + 3)
+        base = len(info["dist"]) + len(info["coef"])
+        slot = {"len": 1, "rate": 3, "depth": 4}
+        look = lambda w, j: [f"        move    x:(r6+${slot[w[0]] if w[0] != 'len' else 1:x}),a", "        and     #>$7f0000,a",
+                             "        asr     #16,a,a", f"        move    #>{P}DATA,b", "        add     a,b",
+                             f"        add     {imm(base + 128 * j)},b", "        move    b1,r1", "        nop",
+                             "        move    p:(r1),x0"]
+        out += ["; The knobs from the dispatcher's page through the area's tables (qvs.knob_tables)."]
+        for j, w in enumerate(plan.ktables):
+            out += look(w, j)
+            if w[0] == "len":
+                out += [f"        move    x0,x:(r7+${info['coef_at'][s]:02x})" for s in plan.knobs.len_[w[1]][0]]
+            elif w[0] == "rate":     # x0 = rate | K << 8: the rate, and K << 8 kept in y1 for the depth
+                out += ["        move    x0,a", "        and     #>$0000ff,a", f"        move    a1,x:(r7+${lw['rate']:02x})",
+                        "        move    x0,a", "        and     #>$00ff00,a", "        move    a1,y1"]
+            else:                    # x0 = H << 15: (H << 15) (K << 8) as mpy takes them leaves H K in a1
+                assert plan.ktables.index(("rate",)) < j
+                out += ["        mpy     x0,y1,a", "        and     #>$00ff00,a", f"        move    a1,x:(r7+${lw['depth']:02x})"]
+    first4 = info["first"][4]
+    for j, x in enumerate(w_ for w_ in plan.windows if getattr(w_, "knob", None) and w_.knob["thr"] >= 0):
+        L1, L2 = f"{P}KL{chr(65 + j)}", f"{P}KM{chr(65 + j)}"
+        out += [f"; TIME at 1 ms on window {j}: its run from the line's head, 24 bits, while knob C <= {x.knob['thr']}.",
+                "        move    x:(r6+$2),a", "        and     #>$7f0000,a", f"        move    {imm(x.knob['thr'] << 16)},x0",
+                "        cmp     x0,a", f"        bgt     {L1}",
+                f"        move    x:(r7+${qvc.STATE['r4']:02x}),r5", f"        move    {imm(x.h - first4)},n5",
+                "        lua     (r5)+n5,r5",
+                f"        move    x:(r7+${qvc.STATE['r4']:02x}),r1",
+                f"        move    {imm(plan.head[x.line] + x.knob['b1'] - 15 - first4)},n1",
+                f"        move    {imm(plan.size - 1)},m1", "        lua     (r1)+n1,r1",
+                f"        do      #{x.W},{L2}", "        move    y:(r1)+,x0", "        move    x0,y:(r5)+", f"{L2}:",
+                "        move    #>$ffffff,m1", f"{L1}:"]
     return out
 
 
@@ -472,6 +666,7 @@ def stream_code(plan, info, P="qv", area=None):
                  "        lua     (r5)+n5,r5"]
         body = copy_in(n)
         head += as_loop(body, f"{P}KSTL", 4, (n - 3) // 2, 4) if n >= 7 else body
+    head += knob_code(plan, info, P, area)
     for j, x in enumerate(mw):
         head += [f"        move    {x7(Fw[j][0])},a"]
         for i in range(1, L):
@@ -536,12 +731,21 @@ def generate(plan, prefix="qv", schedule=True, area=None):
     if plan.row:
         lfo = qvc.Lfo(plan.row)
         lfo.fade = plan.fade
+        lfo.live = plan.ksweep
         mod = dict(lfo=lfo, moving=plan.moving, off=plan.off, timing=plan.timing, fade=plan.fade)
-    _, info = qvc.generate(plan.steps, plan.addr, plan.size, prefix, schedule, mod, unit=bool(area))
+        if plan.ksweep:
+            kn = plan.knobs
+            seen = {kn.sweep_values(kD, kE)[3:] for kD in range(128) for kE in range(128)}
+            nm = lambda d: qvc.displacement(0xFFFF, d) >> 8
+            mod["reach"] = (min(c - nm(d) for d, c in seen), max(c + nm(d) for d, c in seen))
+    _, info = qvc.generate(plan.steps, plan.addr, plan.size, prefix, schedule, mod, unit=bool(area),
+                           moving_static=None if plan.row else plan.moving)
     if area:
         info["area"] = area
     if plan.windows or area:     # an area's fade words and tag come with its stream code, even with nothing to stream
         st = stream_code(plan, info, prefix, area)
+        if area and plan.ktables:
+            info["ktables"] = knob_tables(plan)
         info["stream"] = st
         if mod:
             mod["publish"] = st["publish"]
@@ -563,11 +767,11 @@ class ColdFire:
     frames up to k - lat only, which is the channel's latency; a read of a sample the ColdFire has not received is an
     error (the plan would be wrong), a read before the stream started is 0 (the ring is cleared at the pick)."""
 
-    def __init__(self, plan):
-        self.plan, self.lat = plan, plan.lat
+    def __init__(self, plan, index=0):
+        self.plan, self.lat, self.index = plan, plan.lat, index
         self.ring = {}
         for w in plan.streamed:
-            longest = max([x.dmin + x.W - N if x.kind == "static" else x.Bmax + x.W - N
+            longest = max([getattr(x, "bmax", x.dmin) + x.W - N if x.kind == "static" else x.Bmax + x.W - N
                            for x in plan.windows if x.line == w])
             self.ring[w] = [0] * (1 << math.ceil(math.log2(longest + N * (self.lat + 2))))
         self.pending = collections.deque()
@@ -598,20 +802,24 @@ class ColdFire:
         assert n > self.newest - len(ring), "the ring is too short"
         return ring[n % len(ring)]
 
-    def compose(self, k):
+    def compose(self, k, knobs=(KNOB_CENTRE,) * 4):
+        """In-block k for knobs (B, C, D, E) as the runtime reads them for that frame."""
         while self.pending and self.pending[0][0] <= k - self.lat:
             self.ingest(*self.pending.popleft())
         assert k - self.lat < 0 or self.newest == N * (k - self.lat) + N - 1, "an out-block is missing"
         out, j = [], 0
         for x in self.plan.windows:
             if x.kind == "static":
-                B = x.dmin
+                B = x.b_at(knobs[1]) if hasattr(x, "b_at") else x.dmin
+                B = max(B, N * self.lat)      # a delay the DSP takes from the line's head itself: any run will do
             else:
                 U = self.published[k - self.lat][j] if k - self.lat >= 0 else x.U0
                 j += 1
                 B = U - x.h - 15 + x.Bmin + x.lo
             out += [self.sample(x.line, N * k + N - 1 - B - i) for i in range(x.W)]
-        return out
+        # the knob words from the frame the runtime has learnt the program (its out-block 0 arrives for frame lat)
+        return out + (knob_values(self.plan, self.index, knobs) if self.plan.kwords and k >= self.lat else
+                      [0] * (1 + len(self.plan.kwords) if self.plan.kwords else 0))
 
 
 # ---- the DSP's side, modelled ----------------------------------------------------------------------------------
@@ -620,8 +828,8 @@ class SplitEngine:
     """What the DSP does, in the integer model: the program on the plan's ring (qvc.Machine or qvc.Moving), and at a
     frame's start the in-block copied into the windows, at its end the out-block taken from the heads."""
 
-    def __init__(self, plan, timing=None):
-        self.plan = plan
+    def __init__(self, plan, timing=None, index=0):
+        self.plan, self.index = plan, index
         if plan.row:
             self.mv = qvc.Moving(plan.row, plan.fade, plan.size, plan.addr, plan.off, timing or plan.timing)
             self.m = self.mv.m
@@ -630,9 +838,39 @@ class SplitEngine:
             self.m = qvc.Machine(plan.steps, plan.size, plan.addr)
         self.fifo = [[x.U0] * plan.lat for x in plan.windows if x.kind == "moving"]
 
-    def frame(self, block, xs):
-        """block: the in-block (16-bit halfwords, bits 16-23 ignored); xs: this frame's input words. Returns
-        (outputs, out-block)."""
+    def set_coef(self, s, c):
+        self.m.steps[s] = dict(self.m.steps[s], c=c)
+        if self.mv:     # its image too, or the next tick puts the old coefficient back
+            img = self.mv.img
+            img[4 * s + 2], img[4 * s + 3] = c >> 3, ((c & 7) << 5) | (img[4 * s + 3] & 0x1F)
+
+    def knobs(self, block, pos, kC, p0, page=(KNOB_CENTRE,) * 4):
+        """What the DSP does with the knobs at a frame's first call: the knob words (when the marker is its own),
+        then each TIME window that knob C puts on the line's head copied from there."""
+        pl = self.plan
+        if pl.ktables:       # the DSP's own lookups: the same values as the runtime's words
+            kB, kD, kE = page[0], page[2], page[3]
+            vals = knob_values(pl, self.index, (kB, kC, kD, kE), words=knob_list(pl))
+            block, pos = [0] * pos + vals, pos
+        if (pl.kwords or pl.ktables) and (block[pos] & 0xFFFF) == KNOB_MARK | self.index:
+            for w, h in zip(pl.kwords or pl.ktables, block[pos + 1:]):
+                h &= 0xFFFF
+                if w[0] == "len":
+                    for s in pl.knobs.len_[w[1]][0]:
+                        self.set_coef(s, h >> 4)
+                else:
+                    self.mv.lfo.par = dict(self.mv.lfo.par, **{w[0]: h})
+        m, S = self.m, pl.size
+        for x in pl.windows:
+            k = getattr(x, "knob", None)
+            if k and kC <= k["thr"]:
+                src = pl.head[x.line] + k["b1"] - 15
+                for i in range(x.W):
+                    m.mem[(x.h + i + p0) % S] = m.mem[(src + i + p0) % S]
+
+    def frame(self, block, xs, page=(KNOB_CENTRE,) * 4):
+        """block: the in-block (16-bit halfwords, bits 16-23 ignored); xs: this frame's input words; page: knobs B-E
+        as the DSP reads them from the dispatcher's page. Returns (outputs, out-block)."""
         m, S, pl = self.m, self.plan.size, self.plan
         p0 = m.p
         pos, j, pub = 0, 0, []
@@ -649,6 +887,7 @@ class SplitEngine:
             for i in range(x.W):
                 m.mem[(at + p0 + i) % S] = s16(block[pos + i]) << 8
             pos += x.W
+        self.knobs(block, pos, page[1], p0, page)
         outs = [(self.mv or m).sample(v) for v in xs]
         pe = m.p
         out = []
@@ -691,15 +930,15 @@ def reference(plan, left, right, narrow=True, every=False):
     return (mv or m).run(left, right)
 
 
-def make_plan(programs, p, lfo_dir=None, lat=LAT, force=(), reserve=0):
+def make_plan(programs, p, lfo_dir=None, lat=LAT, force=(), reserve=0, knobs=None):
     lfo_dir = pathlib.Path(lfo_dir or pathlib.Path.home() / ".cache/modwerk-local/quadraverb/engine/lfo")
     rows = {r["p"]: r for r in json.load(open(programs))}
     row, fade = qvc.load_lfo(lfo_dir / "lfo.json", p)
     if rows[p]["static"]:
-        return Plan(rows[p]["steps"], lat=lat, force=force, reserve=reserve).build()
+        return Plan(rows[p]["steps"], lat=lat, force=force, reserve=reserve, knobs=knobs).build()
     if row is None:
         return None
-    return Plan(row["steps"], row, fade, lat=lat, force=force, reserve=reserve).build()
+    return Plan(row["steps"], row, fade, lat=lat, force=force, reserve=reserve, knobs=knobs).build()
 
 
 def main(argv):

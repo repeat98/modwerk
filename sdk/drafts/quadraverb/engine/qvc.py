@@ -635,7 +635,7 @@ def rmove(src, dst, tag=None):
     return Op("r", f"{src},{dst}", {src}, {dst}, (src, dst), tag=tag)
 
 
-def generate(steps, addr, size, prefix="qv", schedule=True, mod=None, unit=False):
+def generate(steps, addr, size, prefix="qv", schedule=True, mod=None, unit=False, moving_static=None):
     """Straight-line code for one sample, the tables and init/proc around it. Returns (asm text, info).
 
     unit: the build a module packages (USTATE): MIX, the ring cleared over calls, init and a stale state set up
@@ -650,7 +650,7 @@ def generate(steps, addr, size, prefix="qv", schedule=True, mod=None, unit=False
     before it (unless it reads one of them at delay 0) into the product before them, and puts a reload that needs an
     instruction of its own where it fills a stall (a move of A right after the instruction that computes it) and
     stays three instructions ahead of its chain's next access."""
-    moving = mod["moving"] if mod else None
+    moving = mod["moving"] if mod else moving_static     # moving_static: ({}, LEN's steps) for a static program
     mcoef = moving[1] if moving else set()
     line_of, _, _ = analyse(steps, moving)      # live read -> (line, delay)
     frame_acc = [i for i in FRAME if addr[i] is not None]      # the accesses: live reads, stores a line keeps
@@ -860,7 +860,8 @@ def generate(steps, addr, size, prefix="qv", schedule=True, mod=None, unit=False
     first_cell = {c: addr[next(k for k in order if chain[k] == c)] for c in CHAINS}
     body = [c.text() for c in code]
     info = dict(coef=coef, dist=dist, closure=closure, first=first_cell, size=size, words=len(body),
-                accesses=len(order), products=len(products), body=body)
+                accesses=len(order), products=len(products), body=body,
+                coef_at={i: COEF_AT + j for j, i in enumerate(products)})
     if mod:
         # What a tick rewrites. A moving read k changes the distance into it, D[k], loaded by the reload after the
         # access before it on its chain, and the distance out of it, D[next]. A chain's first access in a sample is
@@ -906,6 +907,9 @@ def lfo_words(lfo):
     direction D, bit 1 the half H, bit 2 the Leslie's B); the Leslie adds four scratch words for its taps."""
     st = lfo.st
     flags = lambda s: s["D"] | s["H"] << 1 | s.get("B", 0) << 2
+    if lfo.kind == "sweep" and getattr(lfo, "live", False):   # SPD and DEP (qvs.knob_words): rate, depth << 8, centre
+        par = lfo.par
+        return [("P", st["P"]), ("F", flags(st)), ("R", par["rate"]), ("D", par["depth"] << 8), ("C", par["centre"])]
     if lfo.kind == "sweep":
         return [("P", st["P"]), ("F", flags(st))]
     if lfo.kind == "pitch":
@@ -921,6 +925,7 @@ def tick_lines(info, P):
     mod, steps, addr = info["mod"], info["steps"], info["addr"]
     lfo, off = mod["lfo"], mod["off"]
     W = {k: LFO_AT + j for j, (k, _) in enumerate(lfo_words(lfo))}
+    live = "R" in W
     out = []
     e = out.append
     ci = info["coef_index"]
@@ -955,7 +960,7 @@ def tick_lines(info, P):
         """b: X (clean). floor(X * depth / 256) = d: x1 = (d & 0xff) << 15, b = d >> 8."""
         e("        asl     #7,b,b")
         e("        move    b1,x0")
-        e(f"        move    {imm(depth << 8)},y1")
+        e(f"        move    {x7(W['D']) if live else imm(depth << 8)},y1")
         e("        mpy     x0,y1,a")
         e("        tfr     a,b")
         e("        asl     #15,b,b")
@@ -994,10 +999,13 @@ def tick_lines(info, P):
     regs = {}
     if lfo.kind == "sweep":
         par = lfo.par
+        rate = f"{x7(W['R'])},x0" if live else None
         e(f"        move    {x7(W['P'])},a")
         e(f"        move    {x7(W['F'])},b")
+        if live:
+            e(f"        move    {rate}")
         e(f"        jset    #0,b1,{P}TDN")
-        e(f"        add     {imm(par['rate'])},a")
+        e(f"        add     {'x0' if live else imm(par['rate'])},a")
         e(f"        cmp     {imm(0xFFFF)},a")
         e(f"        jle     {P}TPS")
         e(f"        sub     {imm(0x10000)},a")
@@ -1009,7 +1017,7 @@ def tick_lines(info, P):
         e("        eor     #>$000003,b")
         e(f"        jmp     {P}TPS")
         e(f"{P}TDN:")
-        e(f"        sub     {imm(par['rate'])},a")
+        e(f"        sub     {'x0' if live else imm(par['rate'])},a")
         e(f"        jge     {P}TPS")
         e("        neg     a")
         e("        bclr    #0,b1")
@@ -1049,10 +1057,16 @@ def tick_lines(info, P):
                     e(f"        move    x1,{coef_x(far)}")
             for near, far, centre, s in plan:
                 for k, extra in ((near, 0), (far, s)):
-                    nmax = displacement(0xFFFF, par["depth"]) >> 8
                     base = centre + extra
-                    assert 0 <= base - nmax and base + nmax <= 0xFFFF, "a sweep that wraps the 16-bit address"
-                    e(f"        move    {imm(base + off[k])},a")
+                    if live:     # every centre and depth SPD and DEP can ask for (mod["reach"]: lowest, highest)
+                        lo_, hi_ = mod["reach"]
+                        assert 0 <= lo_ + (base - par["centre"]) and hi_ + (base - par["centre"]) <= 0xFFFF, "a sweep that wraps"
+                        e(f"        move    {x7(W['C'])},a")
+                        e(f"        add     {imm(base - par['centre'] + off[k])},a")
+                    else:
+                        nmax = displacement(0xFFFF, par["depth"]) >> 8
+                        assert 0 <= base - nmax and base + nmax <= 0xFFFF, "a sweep that wraps the 16-bit address"
+                        e(f"        move    {imm(base + off[k])},a")
                     e(f"        {'add' if s > 0 else 'sub'}     b,a")
                     e(f"        move    a1,{regs[k]}")
             if sgn > 0:
@@ -1328,7 +1342,7 @@ def assemble_text(info, P):
     if area:     # an area carries its tables as P words after its code ({P}DATA), copied at its set-up
         setup += [f"        move    #>{P}DATA,r1", f"        do      #{L},{P}PDST", "        move    p:(r1)+,x0",
                   "        move    x0,y:(r4)+", f"{P}PDST:"]
-        info["data"] = list(dist) + list(coef)
+        info["data"] = list(dist) + list(coef) + info.get("ktables", [])   # the knobs' tables: qvs.knob_tables
     else:
         for k, d in enumerate(dist):     # r4 now points at the table, just after the ring
             setup += [f"        move    #>${d:06x},x0", "        move    x0,y:(r4)+"]
