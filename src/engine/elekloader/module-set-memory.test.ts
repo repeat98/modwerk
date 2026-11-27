@@ -28,8 +28,8 @@ const prepare = (moduleIds: string[], current = empty, base = baseBinding.identi
 
 describe('a module set and the base’s module pool', () => {
   it('prices a package as the loader takes it, as the unit measured', () => {
-    // The 21 November readings are of base 0.7, whose module record its loaderLayout gives; the later ones of this base's.
-    const records = [[pool, pool.loaderLayout.moduleBytes], [laterPool, undefined]] as const
+    // Each record's readings are of its own twin, whose module record its loaderLayout gives (0.7's 57 site events, 0.8.2's 59).
+    const records = [[pool, pool.loaderLayout.moduleBytes], [laterPool, laterPool.loaderLayout.moduleBytes]] as const
     const measured = records.flatMap(([record, moduleRecord]) => record.measurements.flatMap(reading => {
       const entry = manifest.packages.find(item => item.sha256 === reading.packageSha256)
       return entry ? [[entry.id, poolExtent(entry, file(entry.path), moduleRecord), reading.loaderExtentBytes]] : []
