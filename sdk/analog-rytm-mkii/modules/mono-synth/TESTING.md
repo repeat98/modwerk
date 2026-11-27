@@ -51,6 +51,10 @@ By ear: not checked whether a long decay is ever cut before it ends.
 
 `evidence.sourceSha256`, worked out in the module's folder as `shasum -a 256 build.json src/machine.c src/ms_dsp.c src/ms_gate.c src/amp_follow.s src/ms_dsp.h src/ms_gate.h | shasum -a 256` (the same as `sha256sum … | sha256sum`), is the source SM04 was built from. Memory: the package's `.run` 3,539 B and `.bss` 480 B, 4,019 B (`scripts/build-elemod-packages.mjs`); no fast RAM.
 
+## The pinned package (27 Nov 2026)
+
+`sdk/imports/packages/mono-synth/mono-synth-0.1.0-experimental-os1.74.elemod` (sha256 `64d9877c…59c3`), committed at `7e495d2f1`: compiled at `1210cbde7` in the pinned toolchain (`sdk/build/Dockerfile`, GCC 16.2.0, image built locally under colima) by `scripts/build-elemod-isolated.sh` twice with identical output, source tree `06e440fa…6686`, and exported by `scripts/package-elemod-recipe.mjs`; `verify-elemod-release-exports.mjs` reproduced the 75 current exports. Pinned in `sdk/imports/elekloader-mono-synth-2026-11-27.json` and `sdk/imports/mono-synth-2026-11-27.json`. SM04 was linked by `scripts/link-image.mjs` from the same `src/` (the same `evidence.sourceSha256`); this exported package has not run on a unit by itself.
+
 ## Test procedure (27 Nov 2026)
 
 `npm run test:procedure -- analog-rytm-mkii:mono-synth --package mono-synth-SM04.syx --no-unit` at `981ba53dd`: step 1 stops on the doctor's browser-builder line (no pinned Rytm `.elemod` until the pull request pins this module's package), so steps 2 to 12 did not run from the runner; for the Rytm it has no compatibility gate, cycle scan, soak or price yet. The unit steps were done by hand on SM04 instead, as recorded above: read the unit (`ident`), the machine on every track, the meter at rest and in use, the screenshots, and the unit left on SM04 for the author.
