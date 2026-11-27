@@ -92,13 +92,12 @@
       "release": "1.74",
       "testedOn": "2026-11-27",
       "tester": "filefolder",
-      "durationMinutes": null,
+      "durationMinutes": 60,
       "summary": "filefolder (the author) RAM-booted build LT07 (sha256 937c9006; the plain base and the pinned Light Taps package, compiled by CI from source tree d5cbabb6) on an Analog Rytm MKII, OS 1.74. Reported: the GLOBAL row turns LIGHT TAPS on and off; off, light taps stay silent as on stock; on, light taps play softly and firm hits play once at full level; mutes and pad selection work; a pad held lightly gives one soft hit; a light tap's retrig roll stops on release; a light tap on a muted track with the sequencer stopped does what a firm hit does; the setting survives a project save and power cycle.",
       "limitations": [
         "Run alone on the plain base; the pair with Silent Pad+Trig Settings was checked on earlier build LS03, not on LT07.",
         "Audio load measured on earlier builds LD0A and LD0B (same pad code as LT03), not on LT07.",
-        "MIDI note-off for a held light tap was not reported.",
-        "Duration not recorded."
+        "MIDI note-off for a held light tap was not reported."
       ]
     },
     "verifiedBy": null
