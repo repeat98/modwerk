@@ -13,7 +13,7 @@ import { packSection } from './codec/pack.ts'
 import { BIAS, Bits, FAR, Out, REUSE, depackSection } from './codec/depack.ts'
 import { CHUNK_SIZE, FIRST_COUNTER, MFR, contentChecksum, encodeSyx, packetChecksum } from './codec/transport.ts'
 import { type Device, versionAt } from './devices.ts'
-import { hexw, repr } from './py.ts'
+import { hexw, repr, type Loose } from './py.ts'
 
 export const COUNT_OFF = 0x1c, TABLE_OFF = 0x20, ENTRY_SZ = 16
 /** The HMAC-SHA256 trailer of a sealed machine. */
@@ -231,7 +231,7 @@ const count = (m: Uint8Array) => (m[12] << 14) | (m[13] << 7) | m[14]
 
 export type Section = { stored: number; stored_sha256: string; stock: boolean }
 /** What verify reports (the manifest's "output"), in the manifest's key order. */
-export type Facts = Record<string, any> & { sections: Map<string, Section> }
+export type Facts = Record<string, Loose> & { sections: Map<string, Section> }
 
 /** Throws SyxError unless `out` is `stock` with only the main OS changed and that depacks in place to `wantMain`;
  * the facts of the file otherwise. */

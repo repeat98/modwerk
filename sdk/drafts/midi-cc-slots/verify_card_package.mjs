@@ -6,7 +6,7 @@ import console from 'node:console'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 import { createHash } from 'node:crypto'
-import { build } from '../../../vendor/elekloader/kit/src/patch.ts'
+import { build } from '../../../src/engine/elektron/firmware-build.ts'
 
 const [original, directory] = process.argv.slice(2)
 if (!original || !directory) throw new Error('Usage: node verify_card_package.mjs ORIGINAL.bin PRIVATE-build-directory')

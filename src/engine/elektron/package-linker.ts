@@ -22,7 +22,7 @@ import {
   pyEq, resolveTarget, summarize, unpack,
 } from './module-package.ts'
 import { PCREL, decodeColdFire, readerAt } from './codec/coldfire-kit.ts'
-import { AttributeError, KeyError, PyException, ValueError, hex8, pyType, repr, str } from './py.ts'
+import { AttributeError, KeyError, PyException, ValueError, hex8, pyType, repr, str, type Loose } from './py.ts'
 import * as store from './store.ts'
 
 /** Python's struct.error. */
@@ -51,7 +51,7 @@ function dspTag(dev: Device, section: string): string | null {
 }
 
 /** d.items() of a JSON dict, failing as Python does otherwise. */
-function items(d: unknown): [string, any][] {
+function items(d: unknown): [string, Loose][] {
   if (!isDict(d)) throw new AttributeError(`'${pyType(d)}' object has no attribute 'items'`)
   return Object.entries(d)
 }
@@ -62,7 +62,7 @@ export type Contribution = { to: string; order: number; data: Uint8Array; relocs
 /** A loaded, validated format-2 package. */
 export class Mod2 implements AnyMod {
   readonly format = 2
-  doc: Record<string, any>
+  doc: Record<string, Loose>
   name: string
   sha256: string | null
   id: string
@@ -89,7 +89,7 @@ export class Mod2 implements AnyMod {
   conflicts: string[]
   blob = null
 
-  constructor(doc: Record<string, any>, name = '<mod>', raw: Uint8Array | null = null) {
+  constructor(doc: Record<string, Loose>, name = '<mod>', raw: Uint8Array | null = null) {
     this.doc = doc
     this.name = name
     this.sha256 = raw ? sha(raw) : null

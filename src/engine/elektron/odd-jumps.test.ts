@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { oddJumpsIn, oddJumpsInElemod, oddJumpsInFiles, type Machine } from './odd-jumps'
-import { devices } from '../../../vendor/elekloader/kit/src/devices.ts'
+import { devices } from './devices.ts'
 
 // A synthetic machine: its "stock" image is 0x40000000-0x40001000 and its module RAM 0x41000000-0x41001000. No
 // Elektron firmware is involved.

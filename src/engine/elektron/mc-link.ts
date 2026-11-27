@@ -7,7 +7,7 @@
 // frames go in parts, as the link takes them (base/modules.c), where the Digitone II's link takes a whole frame. The
 // wire (header, request, reply, 7-bit numbers and blocks) is link-wire.ts, shared with the Digitone II; this file keeps
 // the Model:Cycles' commands, status wording and readings.
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from './bytes.ts'
 import { DEVICE_LOG_IMAGE_BYTES, parseDeviceLog, type DeviceLog } from '../elekloader/device-log'
 import { UploadSession, type UploadTransport } from '../elekloader/upload-session'
 import { UPLOAD_RESPONSE, type UploadStatus } from '../elekloader/upload-wire'

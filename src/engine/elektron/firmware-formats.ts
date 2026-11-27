@@ -8,7 +8,7 @@
 import { encodeAsciiReplace, equal, sha } from './bytes.ts'
 import { type Device, type Release, UnknownFirmware, identify, supported } from './devices.ts'
 import * as elek from './octatrack-container.ts'
-import { hexw } from './py.ts'
+import { hexw, type Loose } from './py.ts'
 import * as syx from './syx-container.ts'
 import { BadZipFile, members, read } from './zip.ts'
 
@@ -38,7 +38,7 @@ const syxFirst = (m: { filename: string }) => (m.filename.toLowerCase().endsWith
 
 /** The known stock OS file inside a zip as Elektron publishes them: the first .syx, else .bin, the builder knows. */
 async function fromZip(raw: Uint8Array): Promise<Uint8Array> {
-  let candidates: ReturnType<typeof members> = []
+  let candidates: ReturnType<typeof members>
   try {
     candidates = members(raw).filter(m => !m.filename.endsWith('/') && m.fileSize <= 64 << 20 && /\.(syx|bin)$/i.test(m.filename))
     candidates.sort((a, b) => syxFirst(a) - syxFirst(b) || byName(a, b))
@@ -92,7 +92,7 @@ export function write(stock: Parsed, storedMain: Uint8Array, dev: Device, versio
  * are stock's; its facts otherwise. */
 export function verify(outputs: Outputs, stock: Parsed, wantMain: Uint8Array, dev: Device, version: string | null = null) {
   const stockMain = mainImage(stock, dev)
-  const facts: Record<string, any> = asFormatError(() => {
+  const facts: Record<string, Loose> = asFormatError(() => {
     if (dev.container !== 'ele3') return elek.verify(outputs as Record<string, Uint8Array>, stock as elek.ElekFile, wantMain, dev, stockMain, version)
     const result = syx.verify(outputs.syx, stock as syx.Syx, wantMain, dev, version)
     const untouched = [...(result.sections as Map<string, syx.Section>)].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).filter(([, s]) => s.stock).map(([id]) => id)

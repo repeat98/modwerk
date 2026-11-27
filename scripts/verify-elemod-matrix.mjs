@@ -6,9 +6,9 @@ import { createHash } from 'node:crypto'
 import { parseElemod, linkMods } from '../src/engine/elektron/elemod.ts'
 import { materializeElemodRecipe as materializeModuleObject } from '../src/catalog/elemod-recipe.ts'
 import { packageRecipe } from './package-elemod-recipe.mjs'
-import { partsBytes } from '../vendor/elekloader/kit/src/elemod.ts'
+import { partsBytes } from '../src/engine/elektron/module-package.ts'
 import { isDeepStrictEqual } from 'node:util'
-import { Mod2, link as kitLink } from '../vendor/elekloader/kit/src/link.ts'
+import { Mod2, link as kitLink } from '../src/engine/elektron/package-linker.ts'
 
 const args = process.argv.slice(2), get = key => args[args.indexOf(key) + 1]
 for (const key of ['--packages', '--reference', '--out', '--features']) if (!args.includes(key)) throw new Error('Expected ' + key)

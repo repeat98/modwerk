@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The kit's builder worker. A site starts it as a module worker from its own origin (worker.js beside the engine's
-// files, or this file through a bundler) and talks to it in the messages of protocol.ts, usually through client.ts.
-//
-// It keeps to the site it was started from: before anything loads, fetch and XMLHttpRequest refuse other origins,
-// and WebSocket, EventSource, WebTransport and RTCPeerConnection are gone. A worker takes its Content Security Policy
-// from its own response headers, which a static host may not send, so the worker enforces this itself. The owner's
+// The builder worker. A site starts it as a module worker from its own origin and talks to it in builder-protocol.ts's
+// messages, usually through builder-client.ts. It keeps to the site it was started from: before anything loads, fetch
+// and XMLHttpRequest refuse other origins, and WebSocket, EventSource, WebTransport and RTCPeerConnection are gone (a
+// worker takes its Content Security Policy from its own response, which a static host may not send). The owner's
 // files stay in this worker's memory and go nowhere.
-import { createService } from './serve.ts'
-import type { Answer, Call } from './protocol.ts'
+import { createService } from './builder-service.ts'
+import type { Answer, Call } from './builder-protocol.ts'
 
 const scope = self as unknown as Record<string, unknown> & { location: Location; fetch: typeof fetch }
 const SITE = scope.location.origin

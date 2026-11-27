@@ -7,7 +7,7 @@
 // load to RAM for a trial, and a power cycle ends them (sdk/machines/digitone-ii/LOADER.md). The wire itself, shared
 // with the Model:Cycles, is link-wire.ts; this file keeps the Digitone II's commands and status wording.
 // Transport-free (LinkLine): the page gives it Web MIDI, a test a simulated unit.
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from './bytes.ts'
 import { DEVICE_LOG_IMAGE_BYTES, parseDeviceLog, type DeviceLog } from '../elekloader/device-log.ts'
 import type { UploadTransport } from '../elekloader/upload-session.ts'
 import { UPLOAD_RESPONSE } from '../elekloader/upload-wire.ts'

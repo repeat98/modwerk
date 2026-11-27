@@ -7,7 +7,7 @@ import { ascii, byteSum, concat, decodeAscii, equal, putU32, sha, u32 } from './
 import { packSection } from './codec/pack.ts'
 import { depackSection } from './codec/depack.ts'
 import type { Device } from './devices.ts'
-import { hexw, repr } from './py.ts'
+import { hexw, repr, type Loose } from './py.ts'
 
 const ELEK = ascii('ELEK'), ELUP = ascii('ELUP')
 /** Where the main OS section (its [length][byte sum] header, then the stream) starts. */
@@ -160,6 +160,7 @@ export function decodeBin(raw: Uint8Array): [number, Uint8Array] {
 }
 
 /** str.strip() of ASCII text, as Python strips it. */
+// eslint-disable-next-line no-control-regex -- Python strips these control characters as whitespace
 const strip = (s: string) => s.replace(/^[ \t\n\r\x0b\x0c\x1c-\x1f]+|[ \t\n\r\x0b\x0c\x1c-\x1f]+$/g, '')
 
 /** A parsed Octatrack OS file, from its .syx or its .bin. */
@@ -245,7 +246,7 @@ export function verify(outputs: Record<string, Uint8Array>, stock: ElekFile, wan
   const budget = dev.flashLimit - dev.flashAt
   if (o.container.length > budget) throw new ElekError(`the container is ${o.container.length} bytes; the OS region in flash holds ${budget}`)
   const stored = o.stored.get(3)!
-  const facts: Record<string, any> = {
+  const facts: Record<string, Loose> = {
     sha256: sha(outputs.syx), bytes: outputs.syx.length, messages: outputs.syx.filter(x => x === 0xf7).length,
     container_len: o.container.length, flash_end: hx(dev.flashAt + o.container.length, 6),
     flash_headroom: budget - o.container.length, version: o.version,

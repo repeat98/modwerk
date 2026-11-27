@@ -9,7 +9,7 @@
 import { concat, encodeAsciiReplace, fromHex, sha } from './bytes.ts'
 import { type Device, type Release, UnknownFirmware, forTarget, imageEnd, linkable } from './devices.ts'
 import { FPU, ILLEGAL, LINEF, decodeColdFire, readerAt } from './codec/coldfire-kit.ts'
-import { AttributeError, PyFloat, TypeError_, ValueError, hex8, pyInt, pyType, repr, str, truthy } from './py.ts'
+import { AttributeError, PyFloat, TypeError_, ValueError, hex8, pyInt, pyType, repr, str, truthy, type Loose } from './py.ts'
 import { decodeUtf8, loads } from './pyjson.ts'
 
 export const FORMAT = 1
@@ -23,7 +23,7 @@ export class ModError extends Error {}
 /** Python's == of a JSON value and an int (True == 1, 1.0 == 1). */
 export const pyEq = (v: unknown, n: number): boolean => v === n || (typeof v === 'boolean' && Number(v) === n) || (v instanceof PyFloat && v.value === n)
 
-export const isDict = (v: unknown): v is Record<string, any> => typeof v === 'object' && v !== null && !Array.isArray(v) && !(v instanceof PyFloat)
+export const isDict = (v: unknown): v is Record<string, Loose> => typeof v === 'object' && v !== null && !Array.isArray(v) && !(v instanceof PyFloat)
 
 /** The package's format number. */
 export function formatOf(doc: unknown): unknown {
@@ -33,7 +33,7 @@ export function formatOf(doc: unknown): unknown {
 }
 
 /** d.get(k, default), failing as Python does when d is not a dict. */
-export function get(d: unknown, k: string, fallback: unknown = null): any {
+export function get(d: unknown, k: string, fallback: unknown = null): Loose {
   if (!isDict(d)) throw new AttributeError(`'${pyType(d)}' object has no attribute 'get'`)
   return k in d ? d[k] : fallback
 }
@@ -52,7 +52,7 @@ export function hexBytes(v: unknown, what: string): Uint8Array {
 }
 
 /** The machine and release a package's "target" names. */
-export function resolveTarget(doc: Record<string, any>, name: string): [Device, Release] {
+export function resolveTarget(doc: Record<string, Loose>, name: string): [Device, Release] {
   try {
     return forTarget(get(doc, 'target'))
   } catch (e) {
@@ -105,7 +105,7 @@ export type Reloc = [number, string, string, number]
 export const RSIZE = new Map([['abs32', 4], ['pc32', 4], ['pc16', 2], ['dsp24', 3]])
 export type Site = { addr: number; len: number; new: Uint8Array; kind: string; stock_sha256: string; relocs: Reloc[] }
 
-export function parseSites(doc: Record<string, any>, name: string, dev: Device, rel: Release, relocs = false): Site[] {
+export function parseSites(doc: Record<string, Loose>, name: string, dev: Device, rel: Release, relocs = false): Site[] {
   const end = imageEnd(dev, rel)
   return iter(get(doc, 'sites', [])).map((s, i): Site => {
     const what = `${name} site ${i}`
@@ -132,7 +132,7 @@ export function parseSites(doc: Record<string, any>, name: string, dev: Device, 
 export type Region = { name: string; lo: number; hi: number; area: string }
 
 /** A module's resources: the memory regions it takes (each inside one of the machine's areas) and the names it claims. */
-export function parseResources(doc: Record<string, any>, name: string, dev: Device): [Region[], string[]] {
+export function parseResources(doc: Record<string, Loose>, name: string, dev: Device): [Region[], string[]] {
   const given = get(doc, 'resources'), resources = truthy(given) ? given : {}
   const regions = iter(get(resources, 'regions', [])).map((g): Region => {
     const lo = int(get(g, 'lo'), name + ' region'), hi = int(get(g, 'hi'), name + ' region')
@@ -145,7 +145,7 @@ export function parseResources(doc: Record<string, any>, name: string, dev: Devi
 }
 
 /** The core version a module's resources.core says it needs ("3.0"), or null. */
-export function parseNeedsCore(doc: Record<string, any>, name: string): string | null {
+export function parseNeedsCore(doc: Record<string, Loose>, name: string): string | null {
   const given = get(doc, 'resources'), v = get(truthy(given) ? given : {}, 'core')
   if (v === null) return null
   if (typeof v !== 'string' || !(v[0] >= '0' && v[0] <= '9')) throw new ModError(`${name}: resources.core is the version of core it needs, such as "3.0"`)
@@ -185,7 +185,7 @@ export const COMMON = new Set(['elemod', 'dtmod', 'id', 'version', 'title', 'des
 /** What a format-1 and a format-2 module share. */
 export type AnyMod = {
   format: 1 | 2
-  doc: Record<string, any>
+  doc: Record<string, Loose>
   name: string
   sha256: string | null
   id: string
@@ -208,7 +208,7 @@ export type Blob = { load: number; len: number; sha256: string; parts: Part[] }
 /** A format-1 package: a whole build at once, its sites and one blob appended to the image. */
 export class Mod implements AnyMod {
   readonly format = 1
-  doc: Record<string, any>
+  doc: Record<string, Loose>
   name: string
   sha256: string | null
   id: string
@@ -222,7 +222,7 @@ export class Mod implements AnyMod {
   requires: string[]
   conflicts: string[]
 
-  constructor(doc: Record<string, any>, name = '<mod>', raw: Uint8Array | null = null) {
+  constructor(doc: Record<string, Loose>, name = '<mod>', raw: Uint8Array | null = null) {
     this.doc = doc
     this.name = name
     this.sha256 = raw ? sha(raw) : null

@@ -11,7 +11,7 @@
 // The lockfile's shape and key names are fixed: builds carry it (trailer), and owners keep theirs.
 // shortcut: its format key is the one existing lockfiles carry; rename it with a reader that accepts both.
 import { sha } from './bytes.ts'
-import { dumps as pyDumps, repr, str } from './py.ts'
+import { dumps as pyDumps, repr, str, type Loose } from './py.ts'
 import { ModError, cmpVersions, int } from './module-package.ts'
 
 export const FORMAT = 1
@@ -67,11 +67,11 @@ function roomCore(devKey: string, split: Split, scope: string, core: string): st
   return versions.find(v => cmpVersions(v, core) > 0 && capacity(devKey, split, v)[scope] === most) ?? null
 }
 
-const isObject = (v: unknown): v is Record<string, any> => typeof v === 'object' && v !== null && !Array.isArray(v) && !(v instanceof Uint8Array)
+const isObject = (v: unknown): v is Record<string, Loose> => typeof v === 'object' && v !== null && !Array.isArray(v) && !(v instanceof Uint8Array)
 const isInt = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v)
 const hexId = (v: number) => '0x' + (v >>> 0).toString(16).padStart(8, '0')
 const hasExactly = (d: Record<string, unknown>, keys: readonly string[]) => Object.keys(d).length === keys.length && keys.every(k => Object.hasOwn(d, k))
-const get = (d: Record<string, any>, key: string, missing: unknown = null) => (Object.hasOwn(d, key) ? d[key] : missing)
+const get = (d: Record<string, Loose>, key: string, missing: unknown = null) => (Object.hasOwn(d, key) ? d[key] : missing)
 
 function idValue(s: unknown, what: string): number {
   const v = int(s, 'lockfile: ' + what)
@@ -80,7 +80,7 @@ function idValue(s: unknown, what: string): number {
 }
 
 /** A module document's "storage" as [sym, scope, bits] rows. */
-export function parseDecls(doc: Record<string, any>): [string, string, number][] {
+export function parseDecls(doc: Record<string, Loose>): [string, string, number][] {
   const fields = get(doc, 'storage', [])
   if (!Array.isArray(fields)) throw new ModError('"storage" is a list of fields')
   const rows: [string, string, number][] = []

@@ -2,6 +2,10 @@
 // Python behaviours the firmware builder's messages and files follow, so a build says and writes the same as the
 // Python tools for the same inputs: repr() and str() of JSON values, int(x, 0), truthiness and json.dumps.
 
+/** A value read from a JSON document of any shape, used as Python uses it: checked where it is read. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- module packages are JSON of any shape, read as Python reads them
+export type Loose = any
+
 /** A JSON number written with a fraction or an exponent (or NaN, Infinity): a Python float, so 4.0 is refused where
  * an integer is wanted. */
 export class PyFloat {

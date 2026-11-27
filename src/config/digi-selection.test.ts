@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fresh } from '../../vendor/elekloader/kit/src/store.ts'
+import { fresh } from '../engine/elektron/store.ts'
 import { createDigiSelection, parseDigiSelection } from './digi-selection'
 import { pinModuleVersions } from './workspace'
 
