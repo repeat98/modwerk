@@ -1,0 +1,1 @@
+Development: `npm run site:live -- "<text>"` says whether a site change is live: it looks for the text in every script the deployed site serves, lazily loaded chunks included, where most components live. The fix-issue skill names it for closing a site fix.

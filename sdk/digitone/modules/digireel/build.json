@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/dsp.c",
+    "src/ui.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-Wno-error=incompatible-pointer-types"
+  ],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_key",
+      "fn": "dreel_key",
+      "order": 9
+    },
+    {
+      "event": "ev_enc",
+      "fn": "dreel_enc",
+      "order": 9
+    },
+    {
+      "event": "ev_hold",
+      "fn": "dreel_hold",
+      "order": 9
+    },
+    {
+      "event": "ev_midi_cc",
+      "fn": "dreel_cc",
+      "order": 58
+    },
+    {
+      "event": "ev_render_in",
+      "fn": "dreel_rin",
+      "order": 53
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "dreel_rout",
+      "order": 53
+    },
+    {
+      "event": "ev_tick",
+      "fn": "dreel_tick",
+      "order": 64
+    },
+    {
+      "event": "ev_draw",
+      "fn": "dreel_draw",
+      "order": 94
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_menu",
+      "order": 34,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dreel_menu",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "fx_effects",
+      "order": 63,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dreel_effect",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_projdata",
+      "order": 73,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dreel_projdata",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [
+    {
+      "name": "digireel tape",
+      "lo": "0x47700000",
+      "hi": "0x47900000"
+    }
+  ],
+  "claims": [
+    "projdata:DTEN"
+  ],
+  "requires": [
+    "fxkit"
+  ],
+  "derive": null,
+  "releases": {
+    "1.43": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    },
+    "1.44": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}

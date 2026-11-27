@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/dsp.c",
+    "src/ui.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-Wno-error=incompatible-pointer-types"
+  ],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_key",
+      "fn": "dtriad_key",
+      "order": 8
+    },
+    {
+      "event": "ev_enc",
+      "fn": "dtriad_enc",
+      "order": 8
+    },
+    {
+      "event": "ev_hold",
+      "fn": "dtriad_hold",
+      "order": 8
+    },
+    {
+      "event": "ev_midi_cc",
+      "fn": "dtriad_cc",
+      "order": 57
+    },
+    {
+      "event": "ev_render_in",
+      "fn": "dtriad_rin",
+      "order": 52
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "dtriad_rout",
+      "order": 52
+    },
+    {
+      "event": "ev_tick",
+      "fn": "dtriad_tick",
+      "order": 63
+    },
+    {
+      "event": "ev_draw",
+      "fn": "dtriad_draw",
+      "order": 93
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_menu",
+      "order": 33,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dtriad_menu",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "fx_effects",
+      "order": 62,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dtriad_effect",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_projdata",
+      "order": 72,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dtriad_projdata",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [
+    {
+      "name": "digitriad lines",
+      "lo": "0x47b00000",
+      "hi": "0x47be0000"
+    }
+  ],
+  "claims": [
+    "projdata:DHED"
+  ],
+  "requires": [
+    "fxkit"
+  ],
+  "derive": null,
+  "releases": {
+    "1.43": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    },
+    "1.44": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}

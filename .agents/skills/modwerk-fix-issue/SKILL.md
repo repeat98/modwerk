@@ -24,5 +24,5 @@ Then, in every flow:
 3. **Read the module's claim on the agent board** before changing it: `npm run board -- list module <machine>/<id>`. Someone else holding it is changing it now: stop, ask them yourself (`npm run board -- ask module <machine>/<id> "…"`), tell the developer who and that you asked, and settle it before you go on.
 4. **Test the fix** with `/modwerk-test-on-unit` on the build you will ship: the reproduction first, which must no longer fail and becomes the first edge case, then the procedure (`docs/TEST_PROCEDURE.md`), then the developer's own check of what only a person can judge. Record both stages in `TESTING.md`.
 5. **Ship the fix with its changelog entry** in the same pull request: a file in `changelog/`, or the module's own file in `src/community/module-changelogs/`. Name the limits that remain.
-6. **Close only after the live version is verified.** Keep closing keywords out of the pull request.
+6. **Close only after the live version is verified.** For a site change, `npm run site:live -- "<text it adds>"` finds it in the deployed scripts, lazily loaded chunks included. Keep closing keywords out of the pull request.
 7. **Handle reports and diagnostics** as `docs/DEVELOPER_WORKFLOW.md#manage-reports-on-github` describes. Quote nothing from private diagnostics on GitHub.

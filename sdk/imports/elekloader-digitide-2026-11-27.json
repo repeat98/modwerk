@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "digitide-2026-11-27",
+  "about": "DigiTide 0.2 for Digitone OS 1.43 and 1.44: the author's released .elemod files, pinned unchanged.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "digitide-0.2.elemod",
+      "sha256": "37b087b1b2de413f1c236821d96ed67126e104cf93dc69de44751185c5068f2a",
+      "id": "digitide",
+      "version": "0.2",
+      "device": "digitone-mk1",
+      "os": "1.43",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "irpina/digitide",
+        "tag": "v0.2"
+      },
+      "title": "DigiTide",
+      "requires": [
+        "core",
+        "fxkit"
+      ],
+      "conflicts": [],
+      "summary": "A two-channel pedal for the audio inputs: a wet channel (reverb, delay, grab) and a micro-looper that always listens (envelope, tape, stretch), CLOCK as a sample-rate clock, and MIDI CCs. With fxkit (0.2): a mixer, two LFOs on the stock LFO page aimed at its controls, p-locks kept in the pattern, and the MIDI tracks editable while it plays. The synths are silent while it is the active effect.",
+      "description": "A two-channel pedal for the Digitone mk1's audio inputs: a wet channel (REVERB, DELAY, GRAB, with FREEZE) and an always-listening looper that keeps the last 15 seconds and loops the last LENGTH of it when you turn it on (ENV, TAPE, STRETCH, with OVERDUB), routed into each other as ROUTING says, a CLOCK that lowers the sample rate of both from 48K to 2K, extra options, and MIDI CCs. DIGITIDE in core-dn1's Mod Menu (hold a track key) makes it the active effect and opens its page; while it is active it owns the audio engine (the synths are muted) and processes the inputs, through fxkit's MIXER (AMP), with two LFOs aimed at its controls (LFO) and p-locks on the pattern's steps (RECORD: hold a trig, turn a control). MIDI leaves the page to edit the MIDI tracks while it plays; NO turns it off. Needs fxkit (core-dn1 4.1).",
+      "category": "Effect",
+      "author": "irpina",
+      "needs_core": "4.1",
+      "on_unit": "0.2 tested on a Digitone mk1 by its author (Oct 2026), built before the effects' rename, which changed only names; still a beta. Also checked in digikit's emulator on OS 1.43 and 1.44. Not yet run on a Digitone Keys."
+    },
+    {
+      "file": "digitide-0.2-os1.44.elemod",
+      "sha256": "9139d071e18a24b8d30012824f5a1db6adc2d8e6608503d7b29aadf33e4f8605",
+      "id": "digitide",
+      "version": "0.2",
+      "device": "digitone-mk1",
+      "os": "1.44",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "irpina/digitide",
+        "tag": "v0.2"
+      },
+      "title": "DigiTide",
+      "requires": [
+        "core",
+        "fxkit"
+      ],
+      "conflicts": [],
+      "summary": "A two-channel pedal for the audio inputs: a wet channel (reverb, delay, grab) and a micro-looper that always listens (envelope, tape, stretch), CLOCK as a sample-rate clock, and MIDI CCs. With fxkit (0.2): a mixer, two LFOs on the stock LFO page aimed at its controls, p-locks kept in the pattern, and the MIDI tracks editable while it plays. The synths are silent while it is the active effect.",
+      "description": "A two-channel pedal for the Digitone mk1's audio inputs: a wet channel (REVERB, DELAY, GRAB, with FREEZE) and an always-listening looper that keeps the last 15 seconds and loops the last LENGTH of it when you turn it on (ENV, TAPE, STRETCH, with OVERDUB), routed into each other as ROUTING says, a CLOCK that lowers the sample rate of both from 48K to 2K, extra options, and MIDI CCs. DIGITIDE in core-dn1's Mod Menu (hold a track key) makes it the active effect and opens its page; while it is active it owns the audio engine (the synths are muted) and processes the inputs, through fxkit's MIXER (AMP), with two LFOs aimed at its controls (LFO) and p-locks on the pattern's steps (RECORD: hold a trig, turn a control). MIDI leaves the page to edit the MIDI tracks while it plays; NO turns it off. Needs fxkit (core-dn1 4.1).",
+      "category": "Effect",
+      "author": "irpina",
+      "needs_core": "4.1",
+      "on_unit": "0.2 tested on a Digitone mk1 by its author (Oct 2026), built before the effects' rename, which changed only names; still a beta. Also checked in digikit's emulator on OS 1.43 and 1.44. Not yet run on a Digitone Keys."
+    }
+  ]
+}

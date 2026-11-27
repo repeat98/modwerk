@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "module": "digitone/digiswarm",
+  "version": "0.2.0",
+  "date": "2026-11-27",
+  "upstream": {
+    "repository": "https://github.com/irpina/digiswarm",
+    "revision": "a5a2f5595aa5455ecd2d59a4558747b09903adbf",
+    "path": ".",
+    "license": "GPL-2.0-or-later"
+  },
+  "changes": [
+    "DigiSwarm 0.2 (tag v0.2, a5a2f55), imported unchanged: dsp.c, ui.c, dswarm.h, tables.h. It patches no stock site: it adds itself to fxkit's effects list and core's Mod Menu, owns the audio through fxkit while active, and keeps its settings in the project (DCSM).",
+    "build.json is the author's mod.json with its buffer region and -Wno-error=incompatible-pointer-types (GCC 16.2 refuses the source's int/int32_t function pointers); it requires fxkit, Modwerk's shared dependency built from irpina's source."
+  ],
+  "files": [
+    {
+      "from": "dsp.c",
+      "to": "src/dsp.c",
+      "sha256": "0c3bbd33f953ceeb2d06d613b1376c7b0f550cb91f80e698aa88be319901e716"
+    },
+    {
+      "from": "ui.c",
+      "to": "src/ui.c",
+      "sha256": "03d0ca45d1d2a717229e5755f8a46f57bf2317c396e7eb4ff6be4ed9b0061eea"
+    },
+    {
+      "from": "dswarm.h",
+      "to": "src/dswarm.h",
+      "sha256": "1f2a38ec9c4a18b952369f857a88108afd1c8b9b2da5545d77eadbe8781cbce0"
+    },
+    {
+      "from": "tables.h",
+      "to": "src/tables.h",
+      "sha256": "f2b739eb7625cc5c943e270784d99cd621fdd42a75a69508a2d017d471a66fac"
+    },
+    {
+      "from": "elekloader fxkit-v0.1: elekloader/sdk/include/digitone-mk1/core3.h",
+      "to": "src/digitone-mk1/core3.h",
+      "sha256": "e8a146f4c47e816a3a38543309ad8f09563c15b433008f8eaaec471b9485871b"
+    },
+    {
+      "from": "elekloader fxkit-v0.1: elekloader/sdk/include/digitone-mk1/fxkit.h",
+      "to": "src/digitone-mk1/fxkit.h",
+      "sha256": "e314aa1d7494afa7ae1b2044fd1e5033b02ac4d51c27c36e8036924a404c1fa7"
+    },
+    {
+      "from": "README.md",
+      "to": "upstream/README.md",
+      "sha256": "a81a1233227ffa213e7180dbf1ea70ae98c8d80fbd36ce12244d670ffbe086cd"
+    },
+    {
+      "from": "LICENSE",
+      "to": "LICENSE",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    }
+  ],
+  "excluded": [
+    "mod.json",
+    "docs/",
+    "gentables.py and pedal_tables.py (the generators of tables.h, which is included)"
+  ],
+  "transformations": [
+    "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json."
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata.",
+  "evidence": "sdk/digitone/modules/digiswarm/TESTING.md",
+  "requires": [
+    "fxkit"
+  ]
+}

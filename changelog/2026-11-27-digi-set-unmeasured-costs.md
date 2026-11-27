@@ -1,0 +1,1 @@
+Site: a Digitakt, Digitone or Rytm set page now says which chosen modules have no CPU cost measured on a unit, with "Large sets are untested; start with a few." Large Rytm sets froze on a livestream with no warning; adding up real costs or setting a limit waits until the costs are numbers measured on a unit.
