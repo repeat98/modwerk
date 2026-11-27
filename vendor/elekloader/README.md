@@ -30,6 +30,7 @@ These kit files hold a one-line re-export of Modwerk's own implementation instea
 | kit file | Modwerk's module |
 | --- | --- |
 | `src/bytes.ts` | [`src/engine/elektron/bytes.ts`](../../src/engine/elektron/bytes.ts), hashes, hex and byte helpers |
+| `src/link.ts` | [`src/engine/elektron/package-linker.ts`](../../src/engine/elektron/package-linker.ts), the linker for linkable module packages, DSP code included |
 | `src/py.ts` | [`src/engine/elektron/py.ts`](../../src/engine/elektron/py.ts), Python-style repr, int and JSON writing |
 | `src/pyjson.ts` | [`src/engine/elektron/pyjson.ts`](../../src/engine/elektron/pyjson.ts), Python-style UTF-8 and JSON reading |
 | `src/dsp.ts` | [`src/engine/elektron/dsp-payloads.ts`](../../src/engine/elektron/dsp-payloads.ts), the Octatrack main OS's DSP payloads |

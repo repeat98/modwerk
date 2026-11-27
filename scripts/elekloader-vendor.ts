@@ -35,6 +35,7 @@ export const KIT_REPLACEMENTS: Readonly<Record<string, string>> = {
   'src/elemod.ts': 'src/engine/elektron/module-package.ts',
   'src/formats.ts': 'src/engine/elektron/firmware-formats.ts',
   'src/isa/coldfire.ts': 'src/engine/elektron/codec/coldfire-kit.ts',
+  'src/link.ts': 'src/engine/elektron/package-linker.ts',
   'src/py.ts': 'src/engine/elektron/py.ts',
   'src/pyjson.ts': 'src/engine/elektron/pyjson.ts',
   'src/store.ts': 'src/engine/elektron/store.ts',
