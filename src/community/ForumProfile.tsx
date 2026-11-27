@@ -29,7 +29,8 @@ export function ForumProfile({ username, onLoad, onFail }: { username: string; o
   const stats: [string, number][] = [['Threads', profile.threads], ['Replies', profile.replies], ['Likes received', profile.likesReceived], ['Bug reports', profile.reports], ['Modules', profile.maintains.length]]
   // Who they are on the left, what they have done on the right; the page heading already names @username.
   return <><section className="configuration-section forum-profile"><ForumAvatar username={profile.username} avatar={profile.avatar} /><div className="forum-profile-identity">
-    <h2>{profile.displayName}<ForumRoleBadge contributions={profile.contributions} role={profile.role} betaTester={profile.betaTester} />{profile.maintains.length > 0 && <ForumMaintainerBadge />}</h2>
+    {/* A display name that only repeats the @username in the page heading is read out, not shown again. */}
+    <h2>{profile.displayName === profile.username ? <span className="sr-only">{profile.displayName}</span> : profile.displayName}<ForumRoleBadge contributions={profile.contributions} role={profile.role} betaTester={profile.betaTester} />{profile.maintains.length > 0 && <ForumMaintainerBadge />}</h2>
     <p className="forum-profile-since">Member since {memberSince(profile.memberSince)}</p>
     {profile.bio && <p className="profile-bio">{profile.bio}</p>}
     <ProfileLinksView key={profile.username} profile={profile} />

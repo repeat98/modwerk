@@ -31,12 +31,14 @@ function time(value: string) {
 export function NotificationList({ lines, onOpen }: { lines: NotificationLine[]; onOpen: (line: NotificationLine) => void }) {
   return <ul className="notification-list">{lines.map(line => { const when = time(line.created_at), detail = activity[line.kind]; return <li key={line.ids[0]} data-unread={!line.seen} data-kind={line.kind}>
     <a href={line.href} onClick={() => { if (line.href === SUPPORT_URL) { trackUsage('support_link_opened'); countSupportPrompt('bell-kofi'); answerSupportPrompt('kofi') } onOpen(line) }} {...line.href.startsWith('https://') ? { target: '_blank', rel: 'noreferrer' } : {}}>
-      <ForumAvatar username={line.actor} official={line.official} avatar={line.avatar} />
+      {/* The kind rides on the avatar as a small badge: the sentence already says what happened. */}
+      <span className="notification-who"><ForumAvatar username={line.actor} official={line.official} avatar={line.avatar} /><span className="notification-kind" title={detail.label}><Icon name={detail.icon} size={11} /></span></span>
       <span className="notification-copy">
-        <span className="notification-meta"><span className="notification-kind"><Icon name={detail.icon} size={12} />{detail.label}</span><span className="notification-when"><time dateTime={when.iso}>{when.label}</time>{!line.seen && <span className="notification-unread-dot" aria-hidden="true" />}</span></span>
-        <strong>{!line.seen && <span className="sr-only">Unread: </span>}{line.text}</strong>
+        <strong><span className="sr-only">{!line.seen && 'Unread '}{detail.label}: </span>{line.text}</strong>
         {line.excerpt && <span className="notification-excerpt">{line.excerpt}</span>}
+        <time dateTime={when.iso}>{when.label}</time>
       </span>
+      {!line.seen && <span className="notification-unread-dot" aria-hidden="true" />}
     </a>
   </li> })}</ul>
 }
