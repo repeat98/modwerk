@@ -82,8 +82,25 @@ class SourceRecipe(unittest.TestCase):
         self.assertEqual(row['bytes'], proof['bytes'])
         self.assertEqual(row['version'], proof['version'])
         self.assertEqual(row['version'], manifest['version'])
-        self.assertEqual(proof['hardware'], 'NOT_RUN')
-        self.assertEqual(manifest['tests']['hardwareStatus'], 'untested')
+        if proof['hardware'] == 'NOT_RUN':
+            self.assertEqual(manifest['tests']['hardwareStatus'], 'untested')
+        elif proof['hardware'] == 'INSTALL_INTEGRITY_UNDO_ONLY':
+            # An install-only observation never becomes audio or release qualification.
+            self.assertEqual(manifest['tests']['hardwareStatus'], 'reported')
+            evidence = json.loads((MODULE / 'release' / proof['hardwareEvidence']).read_text())
+            self.assertEqual(evidence['packageSha256'], proof['sha256'])
+            self.assertEqual(evidence['baseIdentity'], proof['baseIdentity'])
+            self.assertEqual(evidence['sourceRevision'], manifest['source']['revision'])
+            self.assertEqual(evidence['scope'], proof['hardware'])
+            self.assertEqual(evidence['integrity'], {'state': 'passed', 'intact': 1, 'modules': 1})
+            self.assertIs(evidence['rolledBack'], True)
+            self.assertEqual(evidence['finalPhase'], 'normal')
+            self.assertEqual(evidence['finalInventory'], [])
+            self.assertEqual(evidence['finalMissing'], [])
+            self.assertIs(evidence['audioQualified'], False)
+            self.assertIs(evidence['releaseQualified'], False)
+        else:
+            self.fail('Unreviewed current hardware evidence scope: ' + proof['hardware'])
         resources = json.loads((MODULE / 'release/resource-audit-20261125.json').read_text())
         self.assertEqual(resources['packageSha256'], proof['sha256'])
         self.assertEqual(resources['memory']['residentPoolExtentBytes'], manifest['resources']['storage']['value'])
@@ -91,7 +108,8 @@ class SourceRecipe(unittest.TestCase):
         self.assertIn(proof['sha256'], report)
         self.assertIn(proof['baseIdentity'], report)
         self.assertIn(manifest['source']['revision'], report)
-        self.assertIn('No physical USB device was opened', report)
+        if proof['hardware'] == 'NOT_RUN':
+            self.assertIn('No physical USB device was opened', report)
 
     def test_release_row_matches_named_receipt_and_scoped_hardware_report(self):
         history = MODULE / 'release/history/20261110'

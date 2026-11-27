@@ -1,5 +1,5 @@
-FRACT source-package checks now read stock-copy counts from the named build
-receipt and base-import offsets from its reviewed reconstruction recipe. An
-engine rebuild can move the import word or change coincidental stock matches;
-the test still requires the sole approved pool-open import with zero addend,
-the exact named package hash/size and normalized authored image.
+FRACT source-package checks follow the named stock-copy receipt and reviewed
+base-import offsets. Exact package hash/size and the sole pool-open import
+remain checked. A separately scoped install/integrity/Undo observation must
+match the current package, base and source, with a normal empty rollback;
+it cannot count as audio or release qualification.
