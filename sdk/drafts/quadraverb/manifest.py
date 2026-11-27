@@ -1,6 +1,7 @@
 """Quadraverb: the Alesis Quadraverb's factory programs, compiled to straight-line DSP code at a pick.
 
-The release (0.1.0-experimental, not built yet): PROG (A) picks one of the 73 programs in PROGRAMS, MIX (F) sets dry and
+The release (0.1.0-experimental): PROG (A) picks one of the programs in PROGRAMS, B-E (LEN, TIME, SPD, DEP) move its
+decay or feedback, pre-delay or delay time, sweep speed and depth live from their factory values, MIX (F) sets dry and
 wet. Its package requires the base's program areas and stream channel (BASE_FEATURES, loader ABI 9): the base writes
 the picked program's code into one of the slot's two areas and moves the long delay lines to and from the ColdFire
 every frame (ENGINE.md, "On the base"). The code, its tables and its stream plan are compiled from the owner's own ROM
@@ -51,7 +52,14 @@ MODULE = Module(
         # with 24 on 25 Nov 2026).
         Param(b"PROG", PROGRAMS.index(10), len(PROGRAMS), True, Formatter.WIDE_STEPPED, labels=tuple("%02d" % n for n in PROGRAMS),
               doc="the factory program, by its number on the original Quadraverb"),
-        *(Param() for _ in range(4)),
+        # B-E, live (engine/qvk.py): each relative to the program's factory value, which is the centre (64, drawn 0);
+        # the message box names what a turn sets on the program picked (runtime/qv_entry.s, qv_runtime.c qv_label).
+        Param(b"LEN", 64, 128, True, Formatter.BIPOLAR,
+              doc="DECAY on a reverb program, FEEDBACK on a delay-led one; the centre is the factory value"),
+        Param(b"TIME", 64, 128, True, Formatter.BIPOLAR,
+              doc="PRE-DELAY on a reverb program, DELAY TIME on a delay-led one (R keeps its ratio to L)"),
+        Param(b"SPD", 64, 128, True, Formatter.BIPOLAR, doc="the sweep's SPEED (chorus, flange, the reverbs' sweep)"),
+        Param(b"DEP", 64, 128, True, Formatter.BIPOLAR, doc="the sweep's DEPTH"),
         Param(b"MIX", 40, 128, True, Formatter.PLAIN, doc="dry/wet: 0 the dry alone, 127 the wet alone"),
         *(Param() for _ in range(6)),
     ),
