@@ -72,6 +72,7 @@
   .developer-path h2 { font-size: 21px; margin-bottom: 8px; }
   .developer-lead { margin-bottom: 16px; font-size: 16px; }
   .developer-hint, .developer-path summary, .developer-setup p, .developer-prompt-actions > span { font-size: 14px; }
+  .developer-path summary { padding-block: 12px; line-height: 20px; }
   .start-developing .copy-button.button-primary { width: 100%; }
   .developer-task-choice { display: flex; }
   .developer-task-choice button { flex: 1; padding: 8px 10px; font-size: 15px; }

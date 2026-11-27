@@ -1437,7 +1437,9 @@ h1 { font-size: var(--text-xl); }
 @media (max-width: 600px) {
   .faq-heading { align-items: stretch; }
   .faq-machines { display: flex; width: 100%; }
-  .faq-machines button { flex: 1 1 0; min-height: 40px; padding: 6px 4px; font-size: 12px; }
+  .faq-machines button { flex: 1 1 0; min-height: 44px; padding: 6px 4px; font-size: 12px; }
+  .faq-index ul { gap: 8px; }
+  .faq-index button { min-height: 44px; }
   .faq-quick header { padding: 14px 15px; }
   .faq-quick li { padding: 10px 15px; }
   .faq-quick-caution { padding: 10px 15px; }
@@ -1642,6 +1644,7 @@ h1 { font-size: var(--text-xl); }
 .legal-language button:hover { color: var(--text); background: var(--surface); }
 .legal-language button[aria-pressed="true"] { background: var(--surface-hover); color: var(--text); }
 @media (max-width:600px) {
+ .legal-language button { min-height:44px; }
  .status-bar { height:auto; min-height:60px; flex-wrap:wrap; padding:8px 13px; }
  .status-bar .legal-links { flex:1 0 100%; justify-content:space-between; }
  .status-bar .legal-links a { min-height:32px; }
