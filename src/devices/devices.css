@@ -138,7 +138,7 @@
   .library-machine-button[aria-expanded="true"] > svg:last-child { transform: rotate(180deg); }
   /* The phone chooser is a bottom sheet; styles.css holds the sheet frame shared with the menu. */
   .library-machine-menu { max-height: min(80dvh, 640px); }
-  .library-machine-menu a { min-height: 50px; font-size: 14px; }
+  .library-machine-menu a { min-height: 50px; font-size: 15px; }
   .device-ladder li { grid-template-columns: 28px minmax(0, 1fr); }
   .device-step-state { grid-column: 2; }
   .device-facts { grid-template-columns: 1fr; gap: 2px; }

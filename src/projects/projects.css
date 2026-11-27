@@ -1,5 +1,5 @@
 .projects-page { max-width: 1240px; width: 100%; margin: 0 auto; }
-.mobile-menu-panel small.menu-feature-new { border-color: #9788de; color: var(--accent-hover); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.mobile-menu-panel small.menu-feature-new { border-color: #9788de; color: #d5c9ff; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 .machine-external-projects { margin: -6px 0 18px; font-size: 12px; color: var(--accent); }
 .machine-external-projects a { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; }
 .machine-external-projects a:hover { text-decoration: underline; text-underline-offset: 3px; }

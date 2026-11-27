@@ -663,8 +663,8 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
 .forum-shoutbox.is-floating .shout-message { padding: 12px; }
 .forum-shoutbox.is-floating .shoutbox-composer p { font-size: 10px; }
 @media (max-width: 600px) {
-  .forum-chat-launcher { right: 14px; bottom: calc(16px + env(safe-area-inset-bottom)); }
-  .forum-shoutbox.is-floating { right: 12px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 360px; max-height: calc(100dvh - 90px); }
+  .forum-chat-launcher { z-index: 55; right: 14px; bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .forum-shoutbox.is-floating { z-index: 55; right: 12px; bottom: calc(16px + env(safe-area-inset-bottom)); width: 360px; max-height: calc(100dvh - 90px); }
 }
 
 /* A YouTube link on its own line becomes the player; in chat it is a card that loads the player when played. */
