@@ -1,0 +1,1 @@
+Development: Digitakt, Digitone and Rytm module builds accept `-fno-tree-loop-distribute-patterns`, which keeps GCC from turning a loop into a `memset` or `memcpy` call a mod cannot link, and the warnings `-Wmissing-prototypes` and `-Wstrict-prototypes`, as fxkit and MUTINY compile with.
