@@ -57,6 +57,7 @@
 .forum-thread-row[data-pinned="true"] { background: var(--surface-raised); box-shadow: inset 3px 0 var(--accent); }
 
 .forum-thread-row:hover, .forum-thread-row:focus-within { background: var(--surface-hover); }
+.forum-thread-row:is(:hover, :focus-within) :is(.forum-machine-badge, .forum-module-link) { border-color: var(--line-hover); }
 .forum-thread-summary { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
 .forum-thread-copy { min-width: 0; flex: 1; }
 .forum-thread-summary > .forum-avatar { margin-top: 3px; }
@@ -138,7 +139,7 @@
 /* Every thread on a member's page is theirs, so the rows drop the repeated avatar. */
 .forum-profile-heading ~ .forum-activity-layout .forum-thread-summary > .forum-avatar { display: none; }
 .forum-author .forum-avatar { width: 22px; height: 22px; font-size: var(--text-xs); letter-spacing: 0; }
-.forum-module-link { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 7px; border: 1px solid var(--line); border-radius: var(--radius-xs); background: var(--surface-raised); color: var(--muted); font-size: var(--text-xs); }
+.forum-module-link { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 7px; border: 1px solid var(--control-border); border-radius: var(--radius-xs); color: var(--text-secondary); font-size: var(--text-xs); }
 .forum-module-link:hover { border-color: var(--line-hover); color: var(--text); }
 .forum-reply-count { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--control-h); color: var(--text); font-size: var(--text-base); font-weight: 600; font-variant-numeric: tabular-nums; }
 .forum-reply-count svg { color: var(--faint); }
@@ -583,7 +584,7 @@ a.forum-category-badge:hover { color: var(--text); }
 .forum-machine-header > div { flex: 1; min-width: 0; }
 .forum-machine-header h2 small { color: var(--muted); font-weight: 400; font-size: 12px; }
 .forum-machine-header p { color: var(--muted); font-size: 12px; line-height: 1.6; margin-top: 4px; }
-.forum-machine-badge { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 7px; border-radius: var(--radius-xs); border: 1px solid var(--line); background: var(--surface-raised); color: var(--muted); font-size: var(--text-xs); }
+.forum-machine-badge { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 7px; border-radius: var(--radius-xs); border: 1px solid var(--control-border); color: var(--text-secondary); font-size: var(--text-xs); }
 .forum-machine-badge:hover { border-color: var(--line-hover); color: var(--text); }
 .forum-machines .photo-credits { margin-top: 14px; padding-top: 0; border-top: 0; }
 .forum-machines .photo-credits summary { cursor: pointer; font-size: 12px; color: var(--muted); }
