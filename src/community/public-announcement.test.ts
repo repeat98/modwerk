@@ -82,7 +82,7 @@ describe('quiet public announcements', () => {
     const support = render({ ...line, href: SUPPORT_URL })
     expect(support).toContain('Support on Ko-fi')
     expect(support).toContain('href="#credits"')
-    expect(support).toContain('Credits')
+    expect(support).toContain('Credits &amp; acknowledgements')
     expect(support).toContain('target="_blank" rel="noreferrer"')
     expect(support).toContain('aria-label="Dismiss announcement"')
   })

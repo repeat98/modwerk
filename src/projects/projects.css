@@ -4,6 +4,10 @@
 .machine-external-projects a { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; }
 .machine-external-projects a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .projects-heading p { max-width: 70ch; margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.65; }
+.projects-starting-points { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 16px; margin: 20px 0 0; }
+.projects-starting-points > span { color: var(--muted); font-size: var(--text-sm); }
+.projects-starting-points button { display: inline-flex; align-items: center; gap: 6px; min-height: var(--control-h); padding: 0; border: 0; background: transparent; color: var(--accent); font-size: var(--text-sm); }
+.projects-starting-points button:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 3px; }
 .projects-filters { display: flex; gap: 8px; margin-top: 20px; }
 .projects-search { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding: 0 12px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--field); color: var(--muted); }
 .projects-search:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -45,7 +49,7 @@
   .projects-types button { min-height: 44px; padding: 8px 10px; }
   .project-card { padding: 19px; }
   .project-thumbnail { margin: -19px -19px 18px; }
-  .projects-footer a { min-height: 44px; }
+  .projects-starting-points button, .projects-footer a { min-height: 44px; }
   .projects-footer { gap: 4px 20px; }
   .projects-footer p { width: 100%; margin-bottom: 6px; }
 }

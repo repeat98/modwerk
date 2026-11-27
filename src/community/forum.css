@@ -536,6 +536,8 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
 .forum-topic-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; min-height: var(--control-h); padding: 4px 6px; border-radius: var(--radius-sm); transition: background .15s; }
 .forum-topic-card:hover, .forum-topic-card:focus-visible { background: var(--surface-hover); }
 .forum-topic-card h3 { min-width: 0; margin: 0; font-size: var(--text-base); font-weight: 500; line-height: 1.5; color: var(--text-secondary); overflow-wrap: anywhere; }
+.forum-topic-copy { min-width: 0; }
+.forum-topic-copy p { margin: 1px 0 0; color: var(--muted); font-size: var(--text-sm); line-height: 1.4; }
 .forum-topic-card small { flex-shrink: 0; color: var(--muted); font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
 .forum-machine-directory { margin: 0 0 24px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
 .forum-machine-directory > summary { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 14px; border-radius: var(--radius-md); cursor: pointer; list-style: none; font-size: var(--text-base); color: var(--text-secondary); }

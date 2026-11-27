@@ -10,7 +10,7 @@ export function CreditsPage() {
   const repository = sourceRepository() || 'https://github.com/repeat98/modwerk'
   return <div className="credits-page">
     <div className="page-heading credits-heading"><div>
-      <h1>Credits</h1>
+      <h1>Credits &amp; acknowledgements</h1>
       <p>Modwerk exists because people shared their research, tools and ideas. These are the projects and contributors that made it possible.</p>
     </div></div>
 

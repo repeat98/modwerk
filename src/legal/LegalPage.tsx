@@ -1,3 +1,4 @@
+import { BackLink } from '../components/BackLink'
 import { ModdingGuidelines } from './ModdingGuidelines'
 import { assetUrl } from '../hosting'
 import { OPERATOR, COMMUNITY_RULES_VERSION } from './policy'
@@ -7,7 +8,7 @@ export const CONTENT_REPORT_MAILTO=SUPPORT_MAILTO+'?subject='+encodeURIComponent
 export function OperatorAddress(){return <address>{OPERATOR.name}<br/>{OPERATOR.street}<br/>{OPERATOR.locality}<br/>{OPERATOR.country}<br/><a href={SUPPORT_MAILTO}>{SUPPORT_EMAIL}</a></address>}
 export function LegalPage({route, guidelineTarget}:{route:string; guidelineTarget?:string}){
   if (route === 'modding-guidelines') return <ModdingGuidelines activeTopic={guidelineTarget} />
-  return <div className="community-page legal-page">{route==='impressum'?<>
+  return <div className="community-page legal-page"><BackLink href="#library">Module library</BackLink>{route==='impressum'?<>
     <div className="page-heading"><div><h1>Impressum</h1><p lang="de">Anbieterkennzeichnung und Kontakt</p></div></div>
     <section className="configuration-section" lang="de"><h2>Betreiber und Verantwortlicher</h2><OperatorAddress/><p>Modwerk wird von der oben genannten natürlichen Person betrieben.</p><h2>Kontakt</h2><p>Für Fragen zum Dienst, Datenschutzanfragen sowie als Kontaktstelle für Nutzende und Behörden: <a href={SUPPORT_MAILTO}>{SUPPORT_EMAIL}</a>. Kommunikation ist auf Deutsch und Englisch möglich; Anfragen werden persönlich bearbeitet.</p><p><a href="#privacy">Datenschutzerklärung / Privacy notice</a> · <a href="#community-rules">Community-Regeln / Community rules</a> · <a href="#report-content">Rechtswidrige Inhalte melden / Report unlawful content</a></p></section>
     <section className="configuration-section"><h2>Independent community project</h2><p>Modwerk is an independent project and is not affiliated with or endorsed by Elektron, Zoom or Erica Synths. Product names identify compatible devices. Module licences and attribution remain with their respective authors.</p><p>The Modwerk API/backend is source available under Elastic License 2.0. The browser frontend remains GPL-3.0-or-later; SDKs, modules and third-party components retain their respective licences. Earlier GPL releases retain their GPL rights.</p><a href={assetUrl('licenses/THIRD_PARTY_NOTICES.html')}>Software licences and third-party notices</a></section>

@@ -51,8 +51,8 @@
 .device-step-state { font-size: 12px; color: var(--faint); }
 .device-step-state.is-done { color: var(--grade-in-use); }
 /* The stack road stays folded: its summary says how far the machine has come. */
-.device-stack > summary { cursor: pointer; color: var(--muted); font-size: var(--text-sm); }
-.device-stack > summary h2 { display: inline; margin-right: 8px; color: var(--text); }
+.device-stack > summary { cursor: pointer; color: var(--text); font-size: var(--text-md); font-weight: 600; }
+.device-stack > summary .subtle { margin-left: 8px; color: var(--muted); font-size: var(--text-sm); font-weight: 400; }
 .device-stack[open] > summary { margin-bottom: 12px; }
 .device-step-state.is-started { color: var(--accent-hover); }
 

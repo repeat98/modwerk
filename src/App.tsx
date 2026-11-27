@@ -559,7 +559,7 @@ export default function App() {
   const resourcesRef = useRef<HTMLDetailsElement>(null)
   const moduleTitle = detailModule?.name ?? digiMod?.title ?? zoomEffect?.name ?? communityModule?.title
   const breadcrumbSection = hubRoute ? 'Your Octatrack' : unitPageName ? 'Your ' + unitPageName
-    : projectsRoute ? PROJECT_TITLE : faqRoute ? 'Help & FAQ' : route === 'credits' ? 'Credits'
+    : projectsRoute ? PROJECT_TITLE : faqRoute ? 'Help & FAQ' : route === 'credits' ? 'Credits & acknowledgements'
     : route === 'base' ? 'Base firmware' : configuration || machineView === 'configuration' ? w.Set
     : route === 'privacy' ? 'Privacy' : route === 'impressum' ? 'Impressum' : route === 'community-rules' ? 'Community rules'
     : route === 'modding-guidelines' ? 'Modding guidelines' : route === 'report-content' ? 'Report content'
@@ -596,13 +596,13 @@ export default function App() {
                 <div className="sidebar-section-label configuration-label"><span>Configurations</span><button className="icon-button" aria-label={'New ' + (machineCanConfigure ? currentDevice.name : 'Octatrack') + ' configuration'} disabled={!ready} onClick={() => newConfiguration(machineCanConfigure ? currentDevice.id : 'octatrack')}><Icon name="plus" size={18} /></button></div>
                 <div className="configuration-launcher"><button type="button" className="configuration-browse" onClick={event => { event.currentTarget.focus(); setConfigurationsOpen(true) }}><Icon name="file" size={17} /><span>Browse configurations</span><small>{workspace.configurations.length}</small></button><button type="button" className="configuration-recent" disabled={!sidebarConfiguration} onClick={() => { const item = allMachines ? storedActive : machineActive; if (item) changeConfiguration(item.id) }}>{sidebarConfiguration ? <><span>{sidebarConfiguration.name}</span><small>{DEVICES_BY_ID[configurationDevice(sidebarConfiguration)].name} · current</small></> : <><span>No configuration yet</span><small>Saved on this device</small></>}</button></div>
               </>}
-              {mobileWorkspace ? <a className="sidebar-build" href={configurationHref} title="Edit and share your modules."><Icon name="sliders" size={16} /><span className="sidebar-build-copy"><strong>Open configuration</strong></span></a> : octatrackUi && usbLink && currentDevice.id === 'octatrack' ? null : allMachines ? <div className="sidebar-build" title="Choose a machine in the library to build its firmware."><span className="status-dot" /><span className="sidebar-build-copy"><strong>Builds are per machine</strong></span></div> : currentDevice.id === 'octatrack' ? <a className="sidebar-build" href="#octatrack/setup" title="Install the base once, then sync modules over USB.">
+              {mobileWorkspace ? <a className="sidebar-build" href={configurationHref}><Icon name="sliders" size={16} /><span className="sidebar-build-copy"><strong>Open configuration</strong></span></a> : octatrackUi && usbLink && currentDevice.id === 'octatrack' ? null : allMachines ? <div className="sidebar-build"><span className="status-dot" /><span className="sidebar-build-copy"><strong>Builds are per machine</strong><small>Choose a machine in the library to build its firmware.</small></span></div> : currentDevice.id === 'octatrack' ? <a className="sidebar-build" href="#octatrack/setup">
                 <span className="status-dot" />
                 <span className="sidebar-build-copy"><strong>Set up your Octatrack</strong></span>
                 <Icon name="arrow" size={14} />
-              </a> : isZoomSetDevice(currentDevice.id) ? <a className="sidebar-build" href={configurationHref} title={'Review the effects selected for your ' + currentDevice.name + '.'}>
+              </a> : isZoomSetDevice(currentDevice.id) ? <a className="sidebar-build" href={configurationHref}>
                 <Icon name="sliders" size={16} /><span className="sidebar-build-copy"><strong>Open pedal set</strong></span><Icon name="arrow" size={14} />
-              </a> : machineCanConfigure ? <a className="sidebar-build" href={configurationHref} title={digiDownloadsOpen(currentDevice.id, betaUi) ? 'Check, build and download ' + currentDevice.name + ' firmware locally.' : 'Check and build ' + currentDevice.name + ' firmware. Downloads remain disabled pending review.'}><span className="status-dot preview" /><span className="sidebar-build-copy"><strong>{machineBuildPreview ? 'Core build preview' : 'Build in your browser'}</strong></span><Icon name="arrow" size={14} /></a> : <a className="sidebar-build" href={issueRepository() + '/blob/main/docs/ADD_A_MACHINE.md'} target="_blank" rel="noreferrer" title={'Help start the first ' + currentDevice.name + ' mod.'}><span className="status-dot" /><span className="sidebar-build-copy"><strong>No mods yet</strong></span><Icon name="arrow" size={14} /></a>}
+              </a> : machineCanConfigure ? <a className="sidebar-build" href={configurationHref}><span className="status-dot preview" /><span className="sidebar-build-copy"><strong>{machineBuildPreview ? 'Core build preview' : 'Build in your browser'}</strong>{!digiDownloadsOpen(currentDevice.id, betaUi) && <small>Check and build {currentDevice.name} firmware. Downloads remain disabled pending review.</small>}</span><Icon name="arrow" size={14} /></a> : <a className="sidebar-build" href={issueRepository() + '/blob/main/docs/ADD_A_MACHINE.md'} target="_blank" rel="noreferrer"><span className="status-dot" /><span className="sidebar-build-copy"><strong>No mods yet</strong></span><Icon name="arrow" size={14} /></a>}
             </section>
             {DEVELOP_HIGHLIGHT && <DevelopCard current={route.startsWith('submit')} />}
             <details className="sidebar-resources" ref={resourcesRef} open>
@@ -613,7 +613,7 @@ export default function App() {
                 {!DEVELOP_HIGHLIGHT && <a href="#submit" aria-current={route.startsWith('submit') ? 'page' : undefined}><Icon name="plus" /><span>Start developing</span></a>}
                 <a href="#base" aria-current={route === 'base' ? 'page' : undefined}><Icon name="shield" /><span>Base firmware</span><span className="sidebar-feature-new">New</span></a>
                 <a href="#faq" aria-current={faqRoute ? 'page' : undefined}><Icon name="help" /><span>Help &amp; FAQ</span></a>
-                <a href="#credits" aria-current={route === 'credits' ? 'page' : undefined}><Icon name="heart" /><span>Credits</span></a>
+                <a href="#credits" aria-current={route === 'credits' ? 'page' : undefined}><Icon name="heart" /><span>Credits &amp; acknowledgements</span></a>
                 <a href="#modding-guidelines" aria-current={route === 'modding-guidelines' ? 'page' : undefined}><Icon name="file" /><span>Modding guidelines</span></a>
               </nav>
               {SUPPORT_URL && <div className="sidebar-footer"><SupportButton onClick={() => setSupportOpen(true)} /></div>}
@@ -683,6 +683,7 @@ export default function App() {
                 <span className="breadcrumb-current" aria-current="page">{moduleTitle ?? breadcrumbSection}</span>
               </>}
             </nav>
+            <span className="preview-badge">Preview</span>
           </div>
           {libraryNav && <><label className={'search' + (searchExpanded ? ' is-open' : '')}><Icon name="search" size={15} /><input ref={searchRef} type="search" aria-label={route==='module-sets'?'Search module sets':'Search modules'} placeholder={route==='module-sets'?'Search sets':'Search modules'} value={query} onChange={(event) => setQuery(event.target.value)} onBlur={() => { if (!query) setSearchOpen(false) }} onKeyDown={(event) => { if (phoneLayout && event.key === 'Escape') closeSearch() }} /></label><button ref={searchToggleRef} type="button" className="toolbar-icon search-toggle" aria-label={route==='module-sets'?'Search module sets':'Search modules'} onClick={openSearch}><Icon name="search" size={20} /></button><button type="button" className="search-cancel" onClick={closeSearch}>Cancel</button></>}
           <div className="toolbar-actions">

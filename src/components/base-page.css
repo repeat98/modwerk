@@ -8,8 +8,7 @@
 
 .base-picker { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; margin: 0; }
 .base-picker > span { color: var(--text-secondary); font-size: .875rem; font-weight: 600; }
-.base-picker .faq-machines { max-width: 100%; background: var(--sidebar); }
-.base-picker .faq-machines button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-hover); }
+.base-picker .faq-machines { max-width: 100%; }
 
 .base-stack { max-width: 40rem; margin-block: 1.75rem; }
 .base-stack :is(h2, h3), .ot-controls h3, .ot-install h3 { margin: 0 0 1rem; font-size: var(--text-md); line-height: 1.25; }

@@ -18,6 +18,7 @@ export function ProjectsPage({ route = 'projects' }: { route?: string }) {
       <h1>{PROJECT_TITLE}</h1>
       <p>Independent mods and tools for your instrument. Check each project’s page for compatibility and installation instructions. These projects cannot be added to a Modwerk configuration.</p>
     </header>
+    {!filtered && <nav className="projects-starting-points" aria-label="Suggested starting points"><span>Start with a workflow</span>{[{ name: 'DigiChain', label: 'Prepare sample chains' }, { name: 'DNX', label: 'Organize Digitone projects' }, { name: 'Monomodule', label: 'Play in your DAW' }].map(item => <button key={item.name} type="button" onClick={() => setQuery(item.name)}>{item.label}<Icon name="arrow" size={14} /></button>)}</nav>}
     <div className="projects-filters">
       <label className="projects-search"><span className="sr-only">Search other projects</span><Icon name="search" size={17} /><input type="search" placeholder="Search projects, creators or features" value={query} onChange={event => setQuery(event.target.value)} /></label>
       <label className="projects-machine"><span className="sr-only">Filter projects by instrument</span><select value={machine} onChange={event => setMachine(event.target.value)}><option value="all">All instruments</option>{Object.entries(PROJECT_MACHINES).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>

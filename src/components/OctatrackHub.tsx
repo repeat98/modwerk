@@ -196,8 +196,8 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             {usb && MODULE_SKIP_HINT && <p className="link-hint">{MODULE_SKIP_HINT}</p>}
             <p className="link-hint">Going back to the original OS works from the card: <a className="text-button" href="#faq/return-to-stock">how to go back</a>{onWelcome && <> · <button type="button" className="text-button" onClick={onWelcome}>What’s new: modules over USB</button></>}</p>
           </section>
-          {usb && <details className="hub-section hub-help">
-            <summary><h3 id="setup-connect-title">Can’t connect?</h3></summary>
+          {usb && <details className="hub-section hub-help" open={state.notice?.tone === 'error' || undefined}>
+            <summary>Can’t connect?</summary>
             <p><strong>Linux:</strong> Chrome needs permission to use the Octatrack. Add this rule, then unplug the Octatrack and plug it back in:</p>
             <pre className="hub-code">{'echo \'SUBSYSTEM=="usb", ATTR{idVendor}=="1935", TAG+="uaccess"\' | sudo tee /etc/udev/rules.d/70-octatrack.rules\nsudo udevadm control --reload-rules'}</pre>
             <p>Chromium from the Snap Store also needs <code>sudo snap connect chromium:raw-usb</code>.</p>
