@@ -144,18 +144,21 @@ static void put(volatile struct fx_entry *e, uint32_t module, unsigned layout, c
 
 /* Where the project names `id` first, for status.c's MISSING page: the current bank first, its working Parts before
  * the saved copies, then the other banks in order. 0 when nowhere, 1 a working Part, 2 only a saved copy; with the
- * bank (0-15), Part (0-3) and track (0-7). */
-int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track)
+ * bank (0-15), Part (0-3), slot (0-15: FX1 T1-T8, then FX2) and how many slots name it in all banks, working and
+ * saved (a tester fixed one place after another, each time told only of the next, November 2026). */
+int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *slot, unsigned *places)
 {
-    unsigned now = BANK_NOW();
+    unsigned now = BANK_NOW(), n = 0;
+    int kind = 0;
     if (now > 15u) now = 0; /* before a project the base reads as 0, below the first bank */
     for (unsigned b = 0; b < 16u; ++b) {
         unsigned at = !b ? now : b - 1u < now ? b - 1u : b;
         for (unsigned p = 0; p < 8u; ++p)
             for (unsigned i = 0; i < 16u; ++i)
-                if (PART_FX(at, p, i) == id) { *bank = at, *part = p & 3u, *track = i & 7u; return p < 4u ? 1 : 2; }
+                if (PART_FX(at, p, i) == id && !n++) *bank = at, *part = p & 3u, *slot = i, kind = p < 4u ? 1 : 2;
     }
-    return 0;
+    *places = n;
+    return kind;
 }
 /* The module effect ids the project names anywhere: what runs, and every bank's Parts, working and saved. */
 fx_set modwerk_fxmap_used(void)
