@@ -1,24 +1,40 @@
 # DT-FM for Digitakt
 
-<img width="672" height="352" alt="m4f80cd2dd1a6" src="https://github.com/user-attachments/assets/3540c645-bca7-42d3-bc2d-7a29128d30d7" />
-
 DT-FM is a four-operator FM synth machine for the original Digitakt
 (Mk1), OS 1.53 and 1.54. It replaces the earlier Sophie-based voice with a dedicated
 FM engine and keeps Digitakt's regular AMP, filter, mixer and effects path.
 The source, not a modified Elektron OS, is what this repository distributes.
 
-[![Build checks](https://github.com/mtalikka/DT-FM/actions/workflows/build.yml/badge.svg)](https://github.com/mtalikka/DT-FM/actions/workflows/build.yml)
-
 ## Changelog
 
-- **1.2.1:**
-  -  Added support for parameter locks on SRC page ([#1](https://github.com/mtalikka/DT-FM/issues/1))
-  -  Fixed an issue with visual feedback of operator parameters ([#2](https://github.com/mtalikka/DT-FM/issues/2))
-- **1.2.0:** Compatibility changes for cooperation with other Elekloader mods
-- **1.1.0:** Added support for OS version 1.54
-- **1.0.1:** Fixed operator values changing after a power cycle
-- **1.0.0:** Initial release. Replaced the Sophie voice
-  code with a dedicated 4-op FM machine
+- **1.2.1:** RATIO, LEVEL, ATTK and DECAY can be parameter-locked
+  ([#1](https://github.com/mtalikka/DT-FM/issues/1)). On a track just
+  switched to DT-FM, OP shows each operator's own values at once instead of
+  after the track's first trig, and every operator starts at its default
+  instead of at SLICE's (LEVEL 0, DECAY 0)
+  ([#2](https://github.com/mtalikka/DT-FM/issues/2)).
+- **1.2.0:** elekloader can't build it yet: it
+  needs core 3.0 and machine-pages 1.1, which no elekloader release has.
+  Until one does, install 1.1.0. Built for elekloader's
+  core 3.0 and machine-pages 1.1, which draw DT-FM's SRC page, so it shares
+  a build with other machines made for them, such as SOPHIE's machine-pages
+  build once its author publishes it. ALGO's diagram and OP's number are
+  drawn as before, through machine-pages 1.1's knobs that draw themselves.
+  DT-FM is now machine 9; it was 7, SOPHIE's. Tracks saved as DT-FM by 1.1.0
+  or earlier load as another machine (SOPHIE if it is installed, else
+  ONESHOT): select DT-FM on them again and re-set their sound if needed.
+- **1.1.0:** DT-FM and the optional diagnostic also build
+  for OS 1.54, from the same source and with the same behavior: one
+  `.elemod` for each OS, named for it (`-os1.53`, `-os1.54`). The 1.54
+  files need elekloader 0.4.0 or later.
+- **1.0.1:** The hidden operators ride in each sound, so
+  every pattern keeps its own and copying a sound, track or pattern brings
+  all four. Fixed the operator OP shows coming back with older values after
+  a power cycle.
+- **1.0.0:** First DT-FM release. Replaced the Sophie voice
+  code with a dedicated 4-op FM machine (formerly FM2OP; its projects keep
+  working). OP shows the selected operator's number, ALGO draws its routing,
+  and the hidden operators survive a power cycle.
 
 ---
 
@@ -154,25 +170,13 @@ ELEKLOADER_CROSS=m68k-elf- sh scripts/build.sh \
 This builds core 3.0, machine-pages 1.1, DT-FM and the optional diagnostic
 from source for the OS of the file you give it, lints the combination, and
 writes the verified custom OS to `out/Digitakt_OS1.54_DT-FM_S034.syx`. Your
-elekloader checkout must have core 3.0 and machine-pages 1.1; the compatible
-source tree is tagged `kit-v0.5.0`. This is how to run 1.2.0 before an
-elekloader release can. The mods are
+elekloader checkout must have core 3.0 and machine-pages 1.1, as its main
+branch has. This is how to run 1.2.0 before an elekloader release can. The mods are
 named for the OS too: `out/dt-fm-1.2.0-os1.54.elemod` and
 `diagnostics/digihealth/out/digihealth-1.0.1-os1.54.elemod` (`1.53` for a
 1.53 file). To test DSP alone, run `make test`;
 `make cross-check` additionally compiles for ColdFire. Optional emulator
 probes in `tests/` require [digiemu](https://github.com/irpina/digiemu).
-
-On Windows with Docker Desktop, the container provides the compiler and
-elekloader checkout. Provide your own stock OS file; it is mounted read-only
-and is not included in the image:
-
-```powershell
-.\scripts\docker-build.ps1 .\firmware\Digitakt_OS1.54.syx
-```
-
-The verified custom OS and `.elemod` files are written under `out/` and
-`diagnostics/digihealth/out/` in this checkout. Docker must be running.
 
 ## Use and recovery
 

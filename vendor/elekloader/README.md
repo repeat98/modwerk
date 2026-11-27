@@ -13,8 +13,6 @@ Modwerk builds Digitakt mk1 and Digitone mk1/Keys firmware with [elekloader](htt
 
 The catalog's `revision` identifies its set of cores and mods. For upstream-only updates it is elekloader's catalog revision; with module records merged, it is a deterministic SHA-256 fingerprint of all the pins. Configuration backups record it, so it changes with the package set, not with the kit. A backup that names an older revision still imports: its modules are looked up again in the library, and the page says which were left out or changed version.
 
-The site-owned overlay `sdk/imports/elekloader-digitakt-core-4.0-2026-10-21.json` adds Elekloader's Core 4.0 pre-release for Digitakt mk1 OS 1.53 and 1.54. Core 4.0 preserves the Core 3.0 interface required by DT-FM 1.2 and expands its RAM area; it is not part of the pinned upstream catalog release. Its upstream release reports emulator checks, but notes that the emulator does not model sampler input and that sampling needs a hardware test. The kit chooses the newest core that satisfies a selection, so Digitakt builds may use Core 4.0; do not treat catalog or link checks as hardware qualification.
-
 `src/engine/elekloader/digi-build.ts` is Modwerk's side:
 
 - it starts the kit's worker (`kit/src/kit/worker.ts`, bundled by Vite) through the kit's client;

@@ -1,37 +1,162 @@
 {
-  "schemaVersion": 1,
-  "machine": "digitakt",
-  "moduleId": "dt-fm",
-  "moduleVersion": "1.2.1",
-  "capturedAt": "2026-10-22",
-  "firmware": "1.54",
-  "imageSha256": "33adf14ff9ff9287ed682942133013bf0da47920df739a5027b91736b770dd94",
-  "emulator": {
-    "name": "digiemu",
-    "version": "0.4.1"
-  },
-  "stockSha256": null,
-  "source": {
-    "repository": "https://github.com/mtalikka/DT-FM",
-    "revision": "2255df788470638c867e24e83290f9e95e91e5ec",
-    "path": "."
-  },
-  "captures": [
-    {
-      "path": "media/image-1.png",
-      "sha256": "28ecd54b62835e236b50417e64cac29d23abdb5cc34bd2e6209cfbfefd038088",
-      "plan": "Show an audio track on the default single-shot machine's SRC page before opening machine assignment."
-    },
-    {
-      "path": "media/image-2.png",
-      "sha256": "5d5fa13ea8afb69e8194bf5a055fe4504286b49761061c73b80ac1de9ee0f22a",
-      "plan": "Open machine assignment with FUNC + SRC and show DT-FM highlighted before confirming with YES."
-    },
-    {
-      "path": "media/image-3.png",
-      "sha256": "93cb6dce4373bb9db28139abf26aa9bae2b82ba59a1bca5a058db4c0fba0eff4",
-      "plan": "After assigning DT-FM, show its SRC page with operator and envelope controls."
-    }
+ "schemaVersion": 1,
+ "machine": "digitakt",
+ "moduleId": "dt-fm",
+ "moduleVersion": "1.2.1",
+ "capturedAt": "2026-11-27",
+ "firmware": "1.54",
+ "imageSha256": "4e5b8eb19c674aba73384e575b675ea28b14903176b9eafefe872d01e1da9fc3",
+ "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+ "source": {
+  "repository": "https://github.com/mtalikka/DT-FM",
+  "revision": "9ac1802b82b455c0567136032ef0df646a7fc074",
+  "path": "."
+ },
+ "kit": {
+  "version": "0.7.0",
+  "lockSha256": "748ec9ad5e2f08067cf09fcbabea62b5ef96df7e6fb86c93b3c5e39d62d3b270"
+ },
+ "catalog": {
+  "revision": "ac53ab421d5327c8c234ad78947c412a675cd60fdab7bb9d103ad062da15a3d1",
+  "sha256": "7999f830788adfaa5de1b34d38d1f0df26cfe5dde98f1d0728182e2294fe3978",
+  "cores": 18,
+  "mods": 95
+ },
+ "build": {
+  "modules": [
+   {
+    "id": "core",
+    "version": "4.4",
+    "sha256": "dc65ffd32869036e961953707db304a5e9926e1b235b1bfbd28b772aae0b45ae"
+   },
+   {
+    "id": "machine-pages",
+    "version": "1.2",
+    "sha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0"
+   },
+   {
+    "id": "dt-fm",
+    "version": "1.2.1",
+    "sha256": "336612bce704d2b52b39cf9a8fbb0b9dcaf3b95367c753a3e3e0c1d4ae360b3e"
+   }
   ],
-  "setup": "Captured in digiemu 0.4.1 using custom Elekloader firmware. This is not the Modwerk-built firmware; the capture documents UI appearance only, not emulator execution or audio correctness."
+  "outputVersion": "D001",
+  "verified": true
+ },
+ "emulator": {
+  "repository": "https://github.com/irpina/digiemu",
+  "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+  "unicorn": {
+   "version": "2.1.4",
+   "sourceRevision": "8028ec436f2d9376525352dd38ed9ed6b9f6be10",
+   "patches": {
+    "unicorn-2.1.4-m68k-digikit-accel.patch": "7048704a068cb074b93b751df4b1a73fd8972c1c0cc27e30774c4c2771ec2b5c",
+    "unicorn-2.1.4-m68k-digikit-speed.patch": "9560613223502656e82adc1ecc36d5d8486995bed13ea8ddad168f8c4558a799",
+    "unicorn-2.1.4-m68k-emac-mac-load.patch": "ac128dd6836997de55e0d2ad70d7a2978639168090f552c5634da50fddc70bfe",
+    "unicorn-2.1.4-m68k-emac-modes.patch": "5fc44429ea913c5256c34a6e9c93ab90f727f120b4f12922a8f35a952fd1dace",
+    "unicorn-2.1.4-m68k-fast-mem.patch": "7f79332f318352cbd8055386dbf5149efc801d0663ae2450e33f9f39fed53374",
+    "unicorn-2.1.4-m68k-hook-ccr-sync.patch": "56de71acf2adbd5ca2f448095478e65e49fd79d378aeb5b5e4217d2c90f52f4e"
+   },
+   "librarySha256": "b7ba43300ede6c4bb19c3355418095e2ec24aedc4b328b7d6f2128f8c04a0501"
+  },
+  "python": "3.12.13",
+  "platform": "macOS arm64",
+  "hle": false,
+  "audioRecording": false,
+  "cycleTiming": false,
+  "framebuffer": "firmware front LCD buffer at panel_diff flush",
+  "scale": 6,
+  "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling."
+ },
+ "setup": {
+  "project": "Disposable first-boot A01, stock initial track state; no owner projects or samples.",
+  "fixture": "No sample fixture required for the documented UI pages.",
+  "sandbox": "No network; user files denied; private temporary output only."
+ },
+ "inputs": [
+  [
+   1000.004,
+   "press 1"
+  ],
+  [
+   1103.959,
+   "press 20"
+  ],
+  [
+   1203.962,
+   "release 20"
+  ],
+  [
+   1503.971,
+   "release 1"
+  ],
+  [
+   1603.973,
+   "press 15"
+  ],
+  [
+   1703.977,
+   "release 15"
+  ],
+  [
+   2003.985,
+   "press 15"
+  ],
+  [
+   2103.988,
+   "release 15"
+  ],
+  [
+   2403.997,
+   "press 15"
+  ],
+  [
+   2504.0,
+   "release 15"
+  ],
+  [
+   2804.009,
+   "press 15"
+  ],
+  [
+   2904.012,
+   "release 15"
+  ],
+  [
+   3204.02,
+   "press 12"
+  ],
+  [
+   3304.023,
+   "release 12"
+  ],
+  [
+   3604.032,
+   "press 12"
+  ],
+  [
+   3704.034,
+   "release 12"
+  ]
+ ],
+ "captures": [
+  {
+   "path": "media/chooser.png",
+   "sha256": "ebd05d3d0b00535f69790e402c4d192de0747078150ca7a2d5852caa71f29cdd",
+   "plan": "wait 1000\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap chooser\ntap YES\ntap YES\nwait 1000\nsnap src\n",
+   "atMs": 3204.019871794872,
+   "requestedAtMs": 3204.019871794872
+  },
+  {
+   "path": "media/src.png",
+   "sha256": "fe7af60c2a1c8f8de2721197dd1322ce015b23a3ea36211bdbeb9aaf8a2270e8",
+   "plan": "wait 1000\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap chooser\ntap YES\ntap YES\nwait 1000\nsnap src\n",
+   "atMs": 4946.089316239316,
+   "requestedAtMs": 5004.072435897436
+  }
+ ],
+ "limitations": [
+  "UI-only documentation; no hardware, audio, CPU or timing qualification.",
+  "In this emulator DT-FM’s SRC knobs show their value but do not change when turned, on every core and Machine Pages build tried (TESTING.md); the captures show the pages, not the knobs’ behaviour."
+ ]
 }
