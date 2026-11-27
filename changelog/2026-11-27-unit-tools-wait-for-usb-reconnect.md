@@ -1,0 +1,1 @@
+Module tests on the Octatrack: the automated test and its clean-up no longer give up when installing or removing USB Audio takes the Octatrack off USB for a moment. They wait for it to come back, and never press a key twice.
