@@ -1,0 +1,1 @@
+Octatrack: FM Synth and UNGEMACH are charged what they cost on a medium pattern. FM Synth's first track costs 32.8 % (it was 20.4), and UNGEMACH's 27.1 % (it was 14.6). Both had been measured on lighter patterns, which read a heavy machine low, so busy sets with them were let on and then crackled. The library's CPU gauge for a machine shows what the base charges when you pick it.
