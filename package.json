@@ -20,6 +20,7 @@
     "test": "vitest run",
     "board": "node scripts/agent-board.mjs",
     "session": "node scripts/agent-session.mjs",
+    "site:live": "node scripts/site-live.mjs",
     "todo": "node scripts/maintenance-bot/todo.mjs",
     "check": "node scripts/check.mjs",
     "agent:eval": "node scripts/agent-eval/run.mjs",

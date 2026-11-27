@@ -38,6 +38,15 @@ describe('module release notes', () => {
     expect(() => parseModuleChangelogs(fixture([{ ...entry, changes: ['x'.repeat(201)] }]), catalog)).toThrow('at most 200 characters')
   })
 
+  it('keeps test status out of the notes players read', () => {
+    // Lines that stayed on tested releases until 26 Nov 2026; a player-facing limit and a self-test feature still pass.
+    const catalog = [{ id: 'euclid', version: entry.version }], notes = (line: string) => fixture([{ ...entry, changes: [line] }])
+    for (const line of ['Known issue: not yet tested on a unit.', 'Known issue: this version has not yet run on a unit.', 'Known issue: checked in the emulator only, not yet on a unit.', 'Tested on an MKI: all four modes and a power cycle.'])
+      expect(() => parseModuleChangelogs(notes(line), catalog), line).toThrow('Leave test status out')
+    for (const line of ['Known issue: the freeze with seven instances is still open.', 'Installing, removing or self-testing it no longer fails a sync (#791).', 'No change on the unit.'])
+      expect(() => parseModuleChangelogs(notes(line), catalog), line).not.toThrow()
+  })
+
   it('rejects duplicate versions, impossible dates, empty summaries and invalid references', () => {
     expect(() => parseModuleChangelogs(fixture([entry, entry]))).toThrow('Duplicate changelog version')
     expect(() => parseModuleChangelogs(fixture([{ ...entry, date: '2026-02-30' }]))).toThrow('Invalid changelog date')

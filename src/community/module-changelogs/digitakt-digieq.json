@@ -6,8 +6,7 @@
       "Media only: a new thumbnail in the library’s shared art style.",
       "Fixes page Clear on the EQ page: hold FUNC and LFO, then press PLAY (CLEAR) to reset every band’s gain, frequency, Q and type to default.",
       "Clear keeps the selected knob modes, the global setting and the other master pages.",
-      "Aligns the left EQ box with the pattern header and centres its label. These are Modwerk changes; the sound and saved EQ settings are unchanged.",
-      "Known issue: not yet tested on a unit. Page Copy/Paste and undoing a Clear are untested."
+      "Aligns the left EQ box with the pattern header and centres its label. These are Modwerk changes; the sound and saved EQ settings are unchanged."
     ],
     "sourceCommit": "1107d484c8d7ad84cfff14917b34acdcb83a53e6"
   },

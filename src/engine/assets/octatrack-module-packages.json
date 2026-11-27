@@ -845,12 +845,12 @@
     {
       "id": "midiverb",
       "slots": "fx2",
-      "cycles": 398,
-      "cyclesKind": "executed",
+      "cycles": 632,
+      "cyclesKind": "hardware",
       "state": 32,
       "buffer": 15870,
-      "version": "0.1.0-experimental",
-      "path": "octatrack-modules/midiverb/0.1.0-experimental.mwrm",
+      "version": "0.2.0-experimental",
+      "path": "octatrack-modules/midiverb/0.2.0-experimental.mwrm",
       "octabam": true,
       "abi": 8,
       "features": 129,
@@ -859,8 +859,8 @@
       "fills": 0,
       "name": "Midiverb I/II",
       "module": "e7e04dd9",
-      "bytes": 52126,
-      "sha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968"
+      "bytes": 63748,
+      "sha256": "d554753cf04faaf5dd3921a1b2c6ec34ed8d75521ae55a78148736ff560bd8f9"
     }
   ],
   "usbAudio": {
