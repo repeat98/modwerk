@@ -433,15 +433,14 @@ def stream_code(plan, info, P="qv", area=None):
             f"        bne     {P}KCDN",
             f"{P}KCIN:"]
     if area:
-        # this frame's bank is the parameter page's, r6 & $ffe000; the slot's record at $7fb0 + 4 ((r7 >> 8) & 15)
+        # this frame's host bank is X:$207 ($2000 or $4000, stock's bank take), not r6's: stock's dispatcher points r6 at
+        # its parameter copies, X:$25d-$3dc. The slot's record at $7fb0 + 4 ((r7 >> 8) & 15)
         head += ["        move    r7,b",
                  "        lsr     #6,b",
                  "        and     #>$00003c,b",
                  "        add     #>$007fb0,b",
                  "        move    b1,r3",
-                 f"        move    x:(r7+${qvc.USTATE['r6']:02x}),b",
-                 "        and     #>$ffe000,b",
-                 "        move    b1,x0",
+                 "        move    x:>$000207,x0",
                  "        move    x:(r3+$2),b",
                  "        tst     b",
                  f"        beq     {P}KNOU",

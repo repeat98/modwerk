@@ -511,8 +511,11 @@ unit. ROM-derived parts are made into `gen/` (ignored by Git) from the owner's R
   area is 919-1,168 words. When PROG leaves the value it started with, its wet ramps to 0 over 256 samples (back if PROG
   returns), so a pick fades the old program out before the base switches. `qvarea.py areas` assembles each at two origins: the words that move by the distance
   (9-10 a program: DO ends, jumps, the tables' address) are what `code()` relocates.
-- **The stream from the record:** each frame the area takes this frame's bank from its parameter page (r6 & $ffe000) and
-  the blocks' offsets from words 1 and 2 of the record; while a word is 0 that block is skipped. The out-block starts
+- **The stream from the record:** each frame the area takes this frame's host bank from X:$207, where stock's bank take
+  keeps it ($2000 or $4000), and the blocks' offsets from words 1 and 2 of the record. Not from r6: stock's dispatcher
+  points it at its parameter copies (X:$25d-$3dc), so the first release package (`110a31f8`), which masked r6, read its
+  in-blocks from X:$1be0 and wrote its out-blocks to X:$1840, inside stock's X tables, and rang on the unit (27 November
+  2026); while a word is 0 that block is skipped. The out-block starts
   with the program's tag (`$5100 | index`) and K, its frame number since it started (modulo $8000); the copy in waits
   until the program has sent 3 frames (the model's in-blocks are all zero until then). The plans are made at the base's
   latency, 3 frames, with the area's 32 dry words reserved.
