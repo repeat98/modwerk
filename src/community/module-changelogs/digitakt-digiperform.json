@@ -43,7 +43,7 @@
       "Each knob moves one track parameter, or the same parameter of every track, with the stock knob feel and FUNC-and-turn snaps.",
       "Assign on the page (FUNC and a knob's push) or in SETTINGS > PERFORM EDIT. Assignments are saved per pattern with the project.",
       "Hold TRIG and press REC, STOP or PLAY to copy, paste or clear the page. The offsets let go when a new pattern starts.",
-      "Not compatible with Digi Matrix. For OS 1.53 and 1.54; experimental, hardware-tested by its author only."
+      "Not compatible with Digi Matrix. For OS 1.53 and 1.54; experimental."
     ]
   }
 ]

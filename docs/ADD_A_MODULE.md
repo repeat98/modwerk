@@ -137,7 +137,7 @@ Every module fix includes its changelog entry in the same PR, never after it. Be
 }
 ```
 
-Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`). An optional `sourceCommit` is a full 40-character repository commit SHA; omit it until the referenced commit exists. Write for the people who play the module: they read these notes on the module page and in the update email. Use at most five lines, each one plain sentence of at most 200 characters about what changed for them: a new feature, a fixed bug with its issue number, a changed control, something to redo after updating. “Updated module” is not enough. A first release lists the version it ships, not the versions players never had; a port keeps upstream's history. Leave out how it was done, measurements, addresses, internal names, test evidence and owner waivers; they belong in the pull request and the verification record. When players need to know a limit, add one line that starts with `Known issue:` in plain words, for example `Known issue: not yet tested on the MKI.` Never imply hardware or audio testing that did not happen. For an imported release, say in a few words whether upstream changed the module or Modwerk only repackaged it.
+Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`). An optional `sourceCommit` is a full 40-character repository commit SHA; omit it until the referenced commit exists. Write for the people who play the module: they read these notes on the module page and in the update email. Use at most five lines, each one plain sentence of at most 200 characters about what changed for them: a new feature, a fixed bug with its issue number, a changed control, something to redo after updating. “Updated module” is not enough. A first release lists the version it ships, not the versions players never had; a port keeps upstream's history. Leave out how it was done, measurements, addresses, internal names, test evidence or status and owner waivers; they belong in the pull request and the verification record (`npm run check` refuses test status). When players need to know a limit, add one line that starts with `Known issue:` in plain words, for example `Known issue: three heavy tracks can crackle.` For an imported release, say in a few words whether upstream changed the module or Modwerk only repackaged it.
 
 ```json
 {
@@ -146,7 +146,7 @@ Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`)
   "changes": [
     "Fixes the Octatrack freezing while POLY8 plays (#646). When the CPU runs short, POLY8 now drops voices: release tails first, then the oldest notes.",
     "Uses much less CPU on the beta base. The sound is unchanged.",
-    "Known issue: not yet tested on the MKI or after reloading a project."
+    "Known issue: how many voices play at once depends on your base."
   ]
 }
 ```
