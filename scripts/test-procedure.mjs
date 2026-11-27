@@ -188,7 +188,9 @@ export function plan(step, ctx) {
     case 'software':
       if (!module) return { commands: [npmRun('sdk:check')] }
       if (!ctx.source) return { skip: 'no module source for ' + ctx.id + ' in this checkout' }
-      return { commands: [npmRun('module:doctor', ...(ctx.draft ? ['--draft'] : []), ctx.id)] }
+      // A listed module's update: its qualification record names the version before it until this run's evidence is written in.
+      const update = !ctx.draft && ctx.manifest?.tests?.qualification && ctx.manifest.tests.qualification.moduleVersion !== ctx.manifest.version
+      return { commands: [npmRun('module:doctor', ...(ctx.draft ? ['--draft'] : update ? ['--procedure'] : []), ctx.id)] }
     case 'compat':
       if (!module) return { commands: [npmRun('modules:compat')] }
       if (!ctx.source) return { skip: 'no module source for ' + ctx.id + ' in this checkout' }
