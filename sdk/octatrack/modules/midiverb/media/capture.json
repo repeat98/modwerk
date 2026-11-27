@@ -1,15 +1,15 @@
 {
  "firmware": "1.40C",
- "moduleVersion": "0.1.0-experimental",
+ "moduleVersion": "0.2.0-experimental",
  "hardware": true,
  "model": "MKII",
- "capturedOn": "2026-11-25",
+ "capturedOn": "2026-11-27",
  "capturedBy": "repeat98",
- "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
- "baseIdentity": "4c7eb79b844c81391f62c5ce99250101a711506ba982ece678122dd66838885f",
- "packageSha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968",
- "sourceRevision": "461f05d21983d1bc436dbeb6b79c0e9feb5cdc51",
- "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned).",
+ "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+ "baseIdentity": "ed5474c6bb66607d96f0ab1f95cb0a473755a124151dcb6c9926fd0bb820d56d",
+ "packageSha256": "d554753cf04faaf5dd3921a1b2c6ec34ed8d75521ae55a78148736ff560bd8f9",
+ "sourceRevision": "8bfd17721bd568f30d07003d208abfa71772dc0d",
+ "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned).",
  "palette": {
   "on": [
    24,
@@ -32,28 +32,36 @@
   },
   {
    "path": "midiverb-page.png",
-   "sha256": "8534cd8297a2bbbbec0d944ac9cb2a5198955efebc4a5c88af1c0c4d38931cbb",
+   "sha256": "f4c230c62a8d51a3e2b109b3650d62563605d9ec22db1e3650764900bbd03114",
    "scale": 2,
    "page": "FX2",
    "state": "Track 2 with Midiverb I/II on FX2 after YES and FX2: PROG, LEVL, BANK and MIX at the defaults."
   },
   {
    "path": "midiverb-prog.png",
-   "sha256": "5a577335f3a2a668c500a9d62515af982efa609e9c796f0e69d72b11d0160462",
+   "sha256": "e4f87ba3657a4dca50c88ff143134098f3f56532d0fcac528be32c0ab41f9e8a",
    "scale": 2,
    "page": "FX2",
-   "state": "Knob A turned: the message box names the program, .25 MEDIUM BRIGHT."
+   "state": "Knob A turned to the third program: the message box reads 3 .2S MEDIUM BRIGHT, its number on the original, then its name.",
+   "capture": "emulator",
+   "moduleVersion": "0.2.0-experimental",
+   "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+   "baseIdentity": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+   "packageSha256": "dc15a0060ab3b4acaf8db229984bdf3ce441ca62836890d9074fe0b155decb9b",
+   "sourceRevision": "1d8289c0189a3f20439e634e35629f4c2996a725",
+   "capturedOn": "2026-11-26",
+   "setup": "Emulator capture, not hardware: ot_emu (Modwerk's adapted build of Octabam f7d7290, 26 Nov 2026) running development twin 46c30886 of Modwerk base 0.8.2 (main 48f4a9b9c; imageSha256 is its MAIN image), MKII panel, DSP cores on, a fresh scratch card. The module ran as a USB trial of the package named here (built by npm run module:dev from source 1d8289c01), driven by npm run device:emulator: pick:T2:FX2:DELAY; FUNC+FX2; pick:T2:FX2:MIDIVRB_I/II; FX2; knob A turned eight detents to the third program. The png step's LCD read: 128x64 at integer scale 2 (256x128), two grey levels, not edited."
   },
   {
    "path": "midiverb-bank.png",
-   "sha256": "eda2099603acf4cd775ea14c9e3fedae262cad53276bcdbd50b4d8f92553b465",
+   "sha256": "a360fa0888a8fc4f2e6099ef53f47d276d3f680e5fbeaa0ddbbcbb817d384adc",
    "scale": 2,
    "page": "FX2",
    "state": "Knob D turned to MV2: the message box names the bank, MIDIVERB II."
   },
   {
    "path": "midiverb-mix.png",
-   "sha256": "1688c32e3ad946f9515c49b3afe65c9c574e0692eab86f4b3265fdccf998fbd9",
+   "sha256": "9d903eee2df81ba825957b11395d0507cd1d5f6315ee33e8638fcd081389ee8a",
    "scale": 2,
    "page": "FX2",
    "state": "MIX (knob F) turned up to 80 of 127."
