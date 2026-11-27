@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "First Modwerk catalog release: sequencer position as LFO PMTR destination SPOS (index 37) with per-audio-track address mode. FUNC+TRACK+LEVEL sets SPOS; LFO SETUP PMTR=SPOS modulates the addressed step; FUNC+TRACK+NO restores the stock playhead.",
+      "Publication cites Keep Accept inventory/card-save + physical reboot persistence on tip package 97de37e6… (MOP-245/247), owner-waived jump-colour publish gate remaining Unproven (MOP-243; mop219 Open fixture retained), and tests.qualification place with measured 752 cycles/event, budget 4790, and tip-wired memory 944 bytes (MOP-197/202).",
+      "USB usbOnly package ABI 8, 1224 B, module f7bb3258, sha256 9bb78c6395635cf7bf1531cdf587b381ac62e3081f7f1342dedfee1b21e8f7e2. resources.cpuPrice 0 (% of frame) from Undo-only npm run device:price -- --write on 2026-11-26 (evidence/cpu-price.json; at rest frame +0, cpu +0). Honest zero.",
+      "Limitations remain honest: jump-colour under address mode is Unproven/waived (not Proven); Enable/SPOS words are DRAM-only in 0.1.0 and do not survive reboot; MIDI step remap unwired; conflicts with Play Modes and peer LFO drafts on shared sites; emulator instruction counts are not chip wall-clock; dens/LED playhead under address mode remain Open firmware gaps (mop258–275 tip notes)."
+    ]
+  }
+]

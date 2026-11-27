@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {
+      "event": "ev_audio_step",
+      "fn": "sp_ev_audio_step",
+      "order": 50,
+      "replaces": "sp_audio_step"
+    },
+    {
+      "event": "module_key",
+      "fn": "sp_module_key"
+    },
+    {
+      "event": "module_enc",
+      "fn": "sp_module_enc"
+    }
+  ],
+  "contribute": [
+    {
+      "to": "ot_lfo_pmtr_dest",
+      "data": "sp_lfo_pmtr",
+      "order": 80
+    }
+  ]
+}

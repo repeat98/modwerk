@@ -251,6 +251,11 @@
       "id": "ungemach",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-25T20:05:10Z"
+    },
+    {
+      "id": "seq-pos",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-26T16:40:00Z"
     }
   ]
 }

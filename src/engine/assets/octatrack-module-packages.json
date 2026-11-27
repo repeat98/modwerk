@@ -861,6 +861,22 @@
       "module": "e7e04dd9",
       "bytes": 52126,
       "sha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968"
+    },
+    {
+      "id": "seq-pos",
+      "octabam": true,
+      "usbOnly": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/seq-pos/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Seq Pos",
+      "module": "f7bb3258",
+      "bytes": 1224,
+      "sha256": "9bb78c6395635cf7bf1531cdf587b381ac62e3081f7f1342dedfee1b21e8f7e2"
     }
   ],
   "usbAudio": {
