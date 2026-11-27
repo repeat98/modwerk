@@ -78,6 +78,40 @@ Not done: a unit run, and an emulator capture of the box (docs/MODULE_UI_CAPTURE
 knob handler. With Scale Quantizer or FM Synth installed the names do not show (they take the knob store first, as
 Midiverb's TESTING.md says).
 
+### Live knobs and 74 programs (27 November 2026)
+
+B LEN, C TIME, D SPD and E DEP are live (ENGINE.md, "Live knobs"), and 59 GREASE GUITAR is back: each area word is
+now a 2-byte index into the 4,563 distinct ones (`qvcf.tables`) instead of 3 bytes, which pays for the knobs and the
+74th program (image 257,676 before, 220,808 now). On the developer's computer, from the owner's ROM:
+
+```sh
+node engine/extract_knobs.mjs <rom> $E/knobs.json 0 1 2 4 5 ...   # the knobs' steps, curves and the firmware's words
+python3 -B engine/qvk.py                                          # each program's knobs and their messages
+```
+
+| Check | Result |
+| --- | --- |
+| `extract_knobs.mjs` | every LEN and TIME step follows its formula at every value on every program; the reverse programs' DECAY moves addresses (left alone, as the owner decided); on 41, 76 and 77 the delay page writes step 5c otherwise than a recall builds it, so recalls (every 37 ms) are the oracle there |
+| the DSP's triangle | equals the firmware's at every phase and direction for each of the 90 rates SPD can ask for |
+| `verify_area.py`, all 74 | 34 gates each pass: the earlier 32 at the centre (bit-exact), plus knobs B-E turned off the centre in two steps and back, the page and the runtime's in-blocks together |
+| `test_qv_runtime.py` | 19 tests pass: the earlier 15, the C runtime's in-blocks against `qvs.ColdFire` with every program's knobs turning (137,056 frames in all), every knob position's words against the firmware's (knobs.json), every message box line against `qvk`, and an absent knob moving nothing |
+| cycles (`--cycles`, `--knobs`) | dearest 53 BALLAD SNARE 2: 350.2 in its dearest block, 361.8 while it fades at the centre; 354.2 and 365.8 with TIME at 1 ms (the head copy); 17: 339.5 / 351.1; 59: 309.8 / 321.4; 70: 293.2 / 304.8 |
+
+`quadraverb-0.1.0-knobs.mwrm` in `~/.cache/modwerk-local/quadraverb/pkg/`, 221,700 bytes, SHA-256
+`94a3e39b003ffa231abe8e5eeb6b0497dc3e661d646eb0a61fdcc5093f6cf153`: ABI 9, requires `programs`, image 220,808 of
+262,144, bss 180,244 (the ring pool, 44 ECHO 2the LEFT's 176 KiB), both 401,052 of 524,288; 25 DSP words of shell;
+areas of 895-1,876 words; `--cycles 366` modeled. Built in the `base/octatrack-pool-raise` checkout (`f35ec5c41`) as
+before.
+
+- **Module pool** (`poolExtent`'s terms): 401,904 bytes; with every published Octatrack module (931,600) and USB Audio
+  0.4.2 (131,776), 1,465,280, 107,584 under 1.5 MiB.
+- **Stream:** at most 352 halfwords in and 144 out a frame, as before. The plates (17-19, 52, 53, 66, 78, 79) have no
+  room for knob words, so their areas look knobs B, D and E up themselves; 49 of the 74 programs stay within 160 in.
+- **DSP code:** `program_words` 1,876 (59), so 3,752 words claimed at every pick (3,602 before).
+
+Not done: a unit run, listening, `stress_area.py`, `evidence/performance.json`, the emulator capture of the knobs'
+message box. Not known: how the knobs feel; a jump in pre-delay or delay time clicks by design.
+
 ### 73 programs (27 November 2026)
 
 The owner asked for as many programs as possible. On the developer's computer, from the owner's ROM, with the stand-in

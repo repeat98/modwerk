@@ -16,24 +16,24 @@
   "presentation": {
     "label": "1989 DIGITAL REVERB",
     "family": "Reverb",
-    "summary": "73 factory programs of the Alesis Quadraverb (1989), each its original program run step for step on FX2: reverbs, choruses, echoes and the programs that combine them.",
+    "summary": "74 factory programs of the Alesis Quadraverb (1989), each its original program run step for step on FX2: reverbs, choruses, echoes and the programs that combine them.",
     "overview": "Rooms, halls, chambers and plates, choruses, flanges, delays and echoes, pitch shifts, Leslies, and the guitar, string and vocal programs that combine them, from the Quadraverb's factory programs. Each is the original's 96-step DSP program, compiled to DSP code when you pick it and run at 44.1 kHz with its own sweeps; its long delay lines live in the Octatrack's main memory. Not compared with a real Quadraverb.",
     "highlights": [
-      "73 original programs: reverbs, choruses, flanges, echoes, pitch shifts, Leslies and combinations",
+      "74 original programs: reverbs, choruses, flanges, echoes, pitch shifts, Leslies and combinations",
       "Each program is the original's, step for step, with its own LFO sweeps",
-      "PROG picks the program by its number on the original; MIX 0 is exact dry"
+      "PROG picks the program by its number on the original; LEN, TIME, SPD and DEP move its decay or feedback, pre-delay or delay time and sweep from the factory value, live; MIX 0 is exact dry"
     ],
     "usage": [
       "Choose QUADRAVERB in FX2 SETUP: hold FUNC, press FX2, turn LEVEL to it and press YES, then press FX2 for the main page.",
       "PROG (A) picks the program by its number on the original Quadraverb: 10-12 rooms, 13-16 halls, 17-19 plates, 20-22 chambers, 04 and 33 choruses, 05 and 30 flanges, 40-43 delays, 44-48 echoes, 07 and 37 pitch shifts, 08, 38 and 39 Leslies.",
-      "MIX (F): 0 dry, 127 wet only."
+      "LEN (B), TIME (C), SPD (D), DEP (E): 0 is the factory program; turned, decay or feedback, pre-delay or delay time, and the sweep's speed and depth, in place. MIX (F): 0 dry, 127 wet only."
     ]
   },
   "controls": [
     {
       "name": "PROG",
       "default": 9,
-      "count": 73,
+      "count": 74,
       "doc": "the factory program, by its number on the original Quadraverb (10 SMALL ROOM by default); its number and name show in a message box when it turns",
       "labels": [
         "00",
@@ -84,6 +84,7 @@
         "56",
         "57",
         "58",
+        "59",
         "61",
         "62",
         "63",
@@ -112,6 +113,34 @@
       ]
     },
     {
+      "name": "LEN",
+      "default": 64,
+      "count": 128,
+      "doc": "DECAY on a reverb program, FEEDBACK on a delay-led one; the centre is the factory value; what a turn sets shows in a message box",
+      "labels": null
+    },
+    {
+      "name": "TIME",
+      "default": 64,
+      "count": 128,
+      "doc": "PRE-DELAY on a reverb program, DELAY TIME on a delay-led one (R keeps its ratio to L); what a turn sets shows in a message box",
+      "labels": null
+    },
+    {
+      "name": "SPD",
+      "default": 64,
+      "count": 128,
+      "doc": "the sweep's SPEED (chorus, flange, the reverbs' sweep); what a turn sets shows in a message box",
+      "labels": null
+    },
+    {
+      "name": "DEP",
+      "default": 64,
+      "count": 128,
+      "doc": "the sweep's DEPTH; what a turn sets shows in a message box",
+      "labels": null
+    },
+    {
       "name": "MIX",
       "default": 40,
       "count": 128,
@@ -131,7 +160,7 @@
       "Each pick writes the program's code into one of two areas the base holds for the slot, so a pick is silent for a moment while the code and the new reverb's memory start; the other area keeps the program before.",
       "Unlike the original: 44.1 kHz instead of about 42 kHz (reverb times, delays and sweeps about 5 % shorter and faster), a mono input from the average of left and right, 24-bit words in the DSP and 16 bits where a word crosses to the ColdFire. Not compared with a real Quadraverb.",
       "Not in this release: the gated programs and the sweeps a signal onset restarts (03, 23-29, 31, 32, 86-88), whose gate needs a signal detector the original has in hardware, and 73 VERB SHIFTER; the pitch shifts (07, 37, 51, 59, 60, 70) and the Leslies (08, 38, 39, 67, 82), whose code is too long to sit beside a Part's stock effects; 05, 30, 40, 41, 56, 76 and 77, which the engine does not build in this form yet; and 06, 09, 42, 43, 45, 55, 57, 68, 69 and 72, which do not yet match the model bit for bit in this form.",
-      "MIDI modulation of sweep rate and depth, which the original takes, is not taken.",
+      "MIDI modulation of sweep rate and depth, which the original takes, is not taken: SPD and DEP set them. The Leslies' speed and the pitch shifts' detune are not on a knob.",
       "Built from the owner's own Quadraverb 1.07 ROM image on the developer's computer; the program sources compiled from it (gen/) are in this repository under the owner's waiver of 27 November 2026, the ROM is not."
     ],
     "effectId": 10
@@ -140,20 +169,20 @@
     "recorded": "2026-11-26",
     "storage": {
       "label": "DSP program / state",
-      "display": "two areas of 919-1,168 words a slot / 132-word state",
+      "display": "two areas of 895-1,876 words a slot / 132-word state",
       "value": null,
       "unit": "see display",
       "method": "static",
-      "conditions": "Two program areas a slot on its core (program_words 1,168), the 25-word shell, the r7 block $00-$83, up to 15,870 words of the track's FX2 buffer in Y, and on the ColdFire 171,432 bytes of code and data plus a 144 KiB ring pool in bss. See TESTING.md.",
+      "conditions": "Two program areas a slot on its core (program_words 1,876), the 25-word shell, the r7 block $00-$83, up to 15,870 words of the track's FX2 buffer in Y, and on the ColdFire 220,808 bytes of code and data plus a 176 KiB ring pool in bss. See TESTING.md.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "DSP cycles",
-      "display": "227-342 cycles/sample per instance, 353 while fading (model)",
+      "display": "up to 354 cycles/sample per instance, 366 while fading (model)",
       "value": null,
       "unit": "see display",
       "method": "emulator",
-      "conditions": "interlock_scan's stall model on step traces in dsp_host of the release form, all 73 programs, one instance, every place a tick can fall in a 16-sample block (engine/verify_area.py --cycles): the dearest, program 53, 341.8 in its dearest block and 353.4 while a pick fades it; declared 355 modeled. A model, not a measurement on a unit.",
+      "conditions": "interlock_scan's stall model on step traces in dsp_host of the release form, one instance, every place a tick can fall in a 16-sample block (engine/verify_area.py --cycles --knobs): the dearest, program 53, 354.2 in its dearest block and 365.8 while a pick fades it with TIME at 1 ms; declared 366 modeled. A model, not a measurement on a unit.",
       "source": "evidence/performance.json"
     },
     "cpuPrice": {
@@ -168,7 +197,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Built on the developer's computer (27 Nov 2026), not run on a unit or heard. In dsp_host the release's shell and areas run all 73 programs bit-exact against the integer model with the stream as the ColdFire half sends it; the ColdFire half matches its model on the host. The development builds of programs 5, 40 and 56 were priced on an MKII.",
+    "summary": "Built on the developer's computer (27 Nov 2026), not run on a unit or heard. In dsp_host the release's shell and areas run all 74 programs bit-exact, at the centre and with knobs B-E turned, against the integer model with the stream as the ColdFire half sends it; the ColdFire half matches its model on the host. The development builds of programs 5, 40 and 56 were priced on an MKII.",
     "hardwareStatus": "untested",
     "evidenceRevision": "cab0eb2039203a17f43b8ec3c599a212f7b84f59",
     "gates": [
