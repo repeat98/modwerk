@@ -32,6 +32,7 @@ These kit files hold a one-line re-export of Modwerk's own implementation instea
 | `src/bytes.ts` | [`src/engine/elektron/bytes.ts`](../../src/engine/elektron/bytes.ts), hashes, hex and byte helpers |
 | `src/py.ts` | [`src/engine/elektron/py.ts`](../../src/engine/elektron/py.ts), Python-style repr, int and JSON writing |
 | `src/pyjson.ts` | [`src/engine/elektron/pyjson.ts`](../../src/engine/elektron/pyjson.ts), Python-style UTF-8 and JSON reading |
+| `src/elek.ts` | [`src/engine/elektron/octatrack-container.ts`](../../src/engine/elektron/octatrack-container.ts), the Octatrack's ELEK container, its .syx transport and the ELUP card file |
 | `src/elemod.ts` | [`src/engine/elektron/module-package.ts`](../../src/engine/elektron/module-package.ts), module package validation, whole-build bundles and set checks |
 | `src/devices.ts` | [`src/engine/elektron/devices.ts`](../../src/engine/elektron/devices.ts), the machines and stock releases the builder knows |
 | `src/store.ts` | [`src/engine/elektron/store.ts`](../../src/engine/elektron/store.ts), module storage lockfile and allocator (Rytm MKII, A4 MKII) |
