@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FirmwareFeedbackDialog } from '../components/FirmwareFeedbackDialog'
 import { useCommunity } from './context'
 import { watchHardwareCheckIn } from './hardware-check-in'
-import { feedbackId, pendingFeedback, readHardwareFeedback, updateHardwareFeedback, type DownloadedBuild, type HardwareFeedback } from './hardware-feedback'
+import { confirmedFeedback, feedbackId, pendingFeedback, readHardwareFeedback, updateHardwareFeedback, type DownloadedBuild, type HardwareFeedback } from './hardware-feedback'
 import { Icon } from '../components/Icon'
 import { ModuleIssueDialog } from './ModuleIssueDialog'
 import { ConfigurationReportDialog } from './ConfigurationReport'
@@ -60,7 +60,7 @@ export function DownloadedBuildOverview({ build }: { build: DownloadedBuild }) {
   if (!memberId || !build.modules.length) return null
   function open() {
     const record = readHardwareFeedback(memberId).find(item => feedbackId(item) === feedbackId(build))
-    setActive(record ?? { ...build, downloadedAt: Date.now(), remindAt: 0, completed: [], dismissed: false })
+    setActive(record ?? { ...build, downloadedAt: Date.now(), remindAt: 0, completed: confirmedFeedback(memberId, build), dismissed: false })
   }
   return <section className="configuration-section downloaded-module-overview">
     <div><h2>Your downloaded modules</h2><p className="service-note">Screenshots, usage steps and feedback for the {build.modules.length} {build.modules.length === 1 ? 'module' : 'modules'} in this firmware.</p></div>
