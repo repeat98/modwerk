@@ -30,6 +30,8 @@ These kit files hold a one-line re-export of Modwerk's own implementation instea
 | kit file | Modwerk's module |
 | --- | --- |
 | `src/bytes.ts` | [`src/engine/elektron/bytes.ts`](../../src/engine/elektron/bytes.ts), hashes, hex and byte helpers |
+| `src/py.ts` | [`src/engine/elektron/py.ts`](../../src/engine/elektron/py.ts), Python-style repr, int and JSON writing |
+| `src/pyjson.ts` | [`src/engine/elektron/pyjson.ts`](../../src/engine/elektron/pyjson.ts), Python-style UTF-8 and JSON reading |
 | `src/codec/aplib.ts` | [`src/engine/elektron/codec/pack.ts`](../../src/engine/elektron/codec/pack.ts), the section packer |
 | `src/codec/elz.ts` | [`src/engine/elektron/codec/depack.ts`](../../src/engine/elektron/codec/depack.ts), the section depacker |
 | `src/codec/transport.ts` | [`src/engine/elektron/codec/transport.ts`](../../src/engine/elektron/codec/transport.ts), the SysEx transport |

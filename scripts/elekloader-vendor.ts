@@ -30,6 +30,8 @@ export const KIT_REPLACEMENTS: Readonly<Record<string, string>> = {
   'src/codec/elz.ts': 'src/engine/elektron/codec/depack.ts',
   'src/codec/transport.ts': 'src/engine/elektron/codec/transport.ts',
   'src/isa/coldfire.ts': 'src/engine/elektron/codec/coldfire-kit.ts',
+  'src/py.ts': 'src/engine/elektron/py.ts',
+  'src/pyjson.ts': 'src/engine/elektron/pyjson.ts',
 }
 /** What a replaced kit file holds: the re-export, relative to vendor/elekloader/kit/<path> unless `from` is given. */
 export const replacementText = (path: string, from = '../'.repeat(path.split('/').length + 2) + KIT_REPLACEMENTS[path]) =>
