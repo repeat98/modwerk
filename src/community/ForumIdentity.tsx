@@ -4,8 +4,10 @@ import { apiUrl, assetUrl } from '../hosting'
 import { profileHref } from '../routing'
 import { CONTRIBUTION_LABELS, ROLE_LABELS, type ContributionRoles, type MemberRole } from './member-standing'
 
-export function ForumCategoryBadge({ category }: { category: ForumCategory }) {
-  return <span className="forum-category-badge" data-category={category}><span aria-hidden="true" />{FORUM_CATEGORIES[category]}</span>
+// With `href` the badge links to the topic, the natural next step after reading a thread.
+export function ForumCategoryBadge({ category, href }: { category: ForumCategory; href?: string }) {
+  const content = <><span aria-hidden="true" />{FORUM_CATEGORIES[category]}</>
+  return href ? <a className="forum-category-badge" data-category={category} href={href}>{content}</a> : <span className="forum-category-badge" data-category={category}>{content}</span>
 }
 
 export function ForumMachineBadge({ machine }: { machine: string | null }) {
@@ -13,11 +15,19 @@ export function ForumMachineBadge({ machine }: { machine: string | null }) {
   return device ? <a className="forum-machine-badge" href={'#forum?machine=' + device.id}>{device.name}</a> : null
 }
 
-// A member's picture when they set one, otherwise their initials on a colour picked from the username.
+// Without a picture a member gets a 3x3 grid like the Modwerk mark: the centre always lit, the other eight picked from a hash
+// of the username, so the same member always looks the same. A deleted member's grid is all dim.
+function avatarDots(username: string | null) {
+  let hash = 2166136261
+  for (const character of username ?? '') hash = Math.imul(hash ^ character.charCodeAt(0), 16777619)
+  return Array.from({ length: 9 }, (_, index) => !!username && (index === 4 || ((hash >>> (index > 4 ? index - 1 : index)) & 1) === 1))
+}
+
+// A member's picture when they set one, otherwise their dot pattern on a colour picked from the username.
 export function ForumAvatar({ username, official, avatar }: { username: string | null; official?: unknown; avatar?: string | null }) {
   const tone = official ? 'official' : username ? [...username].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 5 : 'neutral'
   const picture = !official && !!username && !!avatar
-  return <span className="forum-avatar" data-tone={tone} data-picture={picture || undefined} aria-hidden="true">{official ? <img src={assetUrl('modwerk-mark.svg')} alt="" /> : picture ? <img src={apiUrl('/forum/avatars/' + avatar)} alt="" loading="lazy" decoding="async" /> : username?.slice(0, 2).toUpperCase() ?? '—'}</span>
+  return <span className="forum-avatar" data-tone={tone} data-picture={picture || undefined} aria-hidden="true">{official ? <img src={assetUrl('modwerk-mark.svg')} alt="" /> : picture ? <img src={apiUrl('/forum/avatars/' + avatar)} alt="" loading="lazy" decoding="async" /> : <svg className="forum-avatar-dots" viewBox="0 0 36 36">{avatarDots(username).map((lit, index) => <rect key={index} x={7.8 + index % 3 * 7.6} y={7.8 + Math.floor(index / 3) * 7.6} width="5.2" height="5.2" rx="1.5" opacity={lit ? 1 : .22} />)}</svg>}</span>
 }
 
 // Official module threads have no public member profile.
