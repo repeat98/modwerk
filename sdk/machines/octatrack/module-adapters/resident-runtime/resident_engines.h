@@ -108,8 +108,11 @@ int mw_engines_area_claim(unsigned core, unsigned words, unsigned *offset);
 /* The area at `offset` goes back: only once no slot's record names it. */
 void mw_engines_area_free(unsigned core, unsigned offset);
 /* The UI tick of the program areas (dsp_programs.c), and its counts (diagnostics, never an ABI): programs written,
- * switches made, refusals (no room, no code), jobs refused or lost. */
+ * switches made, refusals (no room, no code, no lane), jobs refused or lost, streams named. */
 void mw_programs_tick(void);
+/* selection.c's guard (status.c), before stock writes a pick of effect `id` on slot 0-15: 1, with the STREAM FULL box,
+ * when its record asks for a stream lane the channel cannot give beside those held or let in; the pick is then not made. */
+int mw_programs_stream_pick(unsigned slot, unsigned id);
 extern volatile uint32_t mw_programs_written, mw_programs_switched, mw_programs_refused, mw_programs_failed, mw_programs_streams;
 /* The unit may give an unused engine back (the board parks its controller): stopped, no pattern change queued, two
  * seconds after the last key or knob and no pick waiting, as an evacuation waits. */

@@ -29,6 +29,9 @@ int mw_stream_open(unsigned slot, const void *row, unsigned in_n, unsigned out_n
 int mw_stream_ready(int lane, uint32_t *in_offset, uint32_t *out_offset);
 void mw_stream_live(int lane, int on); /* the record names its blocks now (1), or is about to name them no more (0) */
 void mw_stream_close(int lane);  /* only once the record names them no more */
+/* UI task: the lanes and the halfwords a frame each way all lanes of both cores may take (dsp_programs.c's admission); 0
+ * lanes once the frame chain is given up. */
+unsigned mw_stream_room(unsigned *in, unsigned *out);
 uint32_t mw_stream_frame(void);
 /* The frame path (dsp_hooks.s): state 7's block, its completion, dl_complete's restore, state 0's read, the check
  * after the unmask; core 1's (dsp_core1.s): state 3's block and its completion, state 1's read; dsp.c's recovery. */

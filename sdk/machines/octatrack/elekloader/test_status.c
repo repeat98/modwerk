@@ -14,6 +14,11 @@ volatile uint32_t dl_frames, dl_residency_words[2], modwerk_dsp_meter_bits, modw
 volatile int32_t modwerk_dsp_meter_core;
 static unsigned machine_core = 1; static uint32_t machine_add = 726;
 void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add) { *core = machine_core, *add = machine_add; }
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+int mw_project_sidechain_notice(void) { return 0; }
+static int stream_full; /* dsp_programs.c's judgement of a pick's stream lane */
+int mw_programs_stream_pick(unsigned slot, unsigned id) { (void)slot, (void)id; return stream_full; }
+#endif
 const uint16_t modwerk_dsp_arena[2];
 int modwerk_dsp_meter_read(unsigned core, unsigned first, unsigned words) { (void)core, (void)first, (void)words; return 0; }
 uint32_t dl_buffers_in_use(void) { return 0; }
@@ -560,6 +565,27 @@ int main(void)
     modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
     dl_refusal[0] = 1, dl_refusal[1] = 9; CHECK(modwerk_status_refused(3) && !refused_machine); /* an effect's box clears the machine mark */
     for (unsigned i = 0; i < 180u; ++i) memory_tick();
+    /* STREAM FULL (dsp_programs.c): a pick whose stream lane the channel cannot give, with the slot that holds it; then
+     * a Part's slots left dry, counted on the one box; with no lane held, what is short. */
+    void modwerk_status_stream_refused(unsigned slot, unsigned id, unsigned holder, int pick);
+    modwerk_status_stream_refused(13, 27, 12, 1);
+    CHECK(open == REFUSED && refused_reason == 5 && refused[1] == 13 && !refused_machine);
+    CHECK(!strcmp(shows(), "STREAM FULL|T6 FX2|FX7|T5 FX2 HAS IT|CHANGE ONE FIRST|"));
+    modwerk_status_stream_refused(14, 27, 12, 0); CHECK(refused[1] == 13);  /* the box shows: not replaced */
+    CHECK(!modwerk_status_key(0, 1) && open == CLOSED);
+    modwerk_status_stream_refused(13, 27, 0, 0);
+    CHECK(!strcmp(shows(), "STREAM FULL|T6 FX2|FX7|T1 FX1 HAS IT|PLAYS DRY|"));
+    modwerk_status_stream_refused(14, 27, 0, 0), modwerk_status_stream_refused(7, 27, 0, 0);
+    modwerk_status_stream_refused(15, 27, 0, 1);                        /* a pick over it: not shown */
+    CHECK(refused[1] == 13 && strstr(shows(), "|DRY, +2 MORE|"));
+    for (unsigned i = 0; i < 180u; ++i) memory_tick();
+    CHECK(open == CLOSED);
+    modwerk_status_stream_refused(8, 27, 16, 1);
+    CHECK(!strcmp(shows(), "STREAM FULL|T1 FX2|FX7|NO STREAM ROOM|CHANGE ONE FIRST|"));
+    modwerk_status_key(0, 1);
+    modwerk_load_menu(0); modwerk_status_stream_refused(8, 27, 16, 0);
+    CHECK(open == SHOWN);                                              /* a page is open: not covered */
+    modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
     /* The CPU budget's refusal: the same box as CPU FULL on "Tn SRC", for three seconds, never over a page. */
     void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add, uint32_t allowed);
     modwerk_status[CPU] = 640u;
@@ -703,6 +729,11 @@ int main(void)
       frame_newest = 379u;
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && effect_wakes == 1 && effect_woken == 27u && frame_adjust == 120);
       frame_adjust = 0;
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+      effect_rests = 1, effect_wakes = 0, stream_full = 1; /* its stream lane does not fit: not made, woken or counted */
+      CHECK(modwerk_status_effect_busy(11, 27, 0) == 1 && !effect_wakes && !frame_adjust);
+      effect_rests = 0, stream_full = 0;
+#endif
       modwerk_test_costs.sum ^= 1u;                                      /* torn: nothing listed */
       CHECK(!modwerk_status_effect_busy(11, 27, 0) && !frame_adjust);
       effect_rests = 1;                                                  /* unlisted, from rest: the default wake */

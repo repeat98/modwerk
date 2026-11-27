@@ -5,7 +5,9 @@ Modelled: the manager's region claim (dl_engine_claim: FX code at the arena's bo
 loader's one job a core (WRITE 24 words a frame, op 12 into the slot records), a contributed ot_dsp_effects record whose
 code for program p at address a is made up from p and a, and the DSP: every frame, each slot that runs the effect checks
 that its record names nothing or an area of its own span holding a whole program written for that address. The WRITE
-refuses to touch an area any record names, and a span goes back only once no record names it. No hardware, timing or
+refuses to touch an area any record names, and a span goes back only once no record names it. The stream's lanes are
+judged against the channel's room both cores share: a pick past it is refused (status.c's box, a stub here), and a slot a
+Part brings past it stays dry until its effect changes, without taking a lane another holds. No hardware, timing or
 audio is claimed; the receiver's op 12 itself is test_resident_engines.py's.
 """
 import os
@@ -38,6 +40,7 @@ FIXTURE = r'''
 #define ARENA (POOL - DL_CODE_START)
 #define EFFECT 40u
 #define STREAMED 41u  /* the stream's effect: programs and a stream, as the Quadraverb's */
+#define PLATE 42u     /* ... one whose in-block takes every halfword the channel carries, as the Quadraverb's plates */
 #define SIN 40u
 #define SOUT 24u
 #define WORDS 64u
@@ -121,18 +124,31 @@ static void test_take(unsigned slot, uint32_t f, const volatile uint16_t *out)
     last_taken[slot] = (int32_t)f, ++takes[slot];
 }
 static const struct modwerk_dsp_effect streamed = {MODWERK_DSP_EFFECT_ABI, WORDS, test_program, test_code, SIN, SOUT, test_fill, test_take, 0};
+static const struct modwerk_dsp_effect plate = {MODWERK_DSP_EFFECT_ABI, WORDS, test_program, test_code, MW_STREAM_IN_MOST, SOUT, test_fill, test_take, 0};
 static int streamed_listed = 1;
-int mw_stream_test_contributed(const void *r) { return r == &streamed && streamed_listed; }
+int mw_stream_test_contributed(const void *r) { return (r == &streamed || r == &plate) && streamed_listed; }
+/* status.c's STREAM FULL box: each call, in order. */
+static unsigned boxes, box_slot[8], box_holder[8];
+static int box_pick[8];
+void modwerk_status_stream_refused(unsigned slot, unsigned id, unsigned holder, int pick)
+{
+    CHECK(id == STREAMED || id == PLATE);
+    if (boxes < 8u) box_slot[boxes] = slot, box_holder[boxes] = holder, box_pick[boxes] = pick;
+    ++boxes;
+}
 uint32_t mw_stream_test_clock(void) { return 0; }
 static uintptr_t volatile row[9];
 uintptr_t volatile *const modwerk_runtime_event_row[RUNTIME_SITE_EVENTS] = {[MODWERK_OT_DSP_EFFECTS - RUNTIME_EVENTS] = row};
 int modwerk_runtime_owner_at(uintptr_t at, struct runtime_owner *o)
 {
-    if (at != (uintptr_t)&effect && at != (uintptr_t)&streamed) return 0;
-    memset(o, 0, sizeof *o), o->module = at == (uintptr_t)&effect ? 0x51564b31u : 0x51564b32u;
+    if (at != (uintptr_t)&effect && at != (uintptr_t)&streamed && at != (uintptr_t)&plate) return 0;
+    memset(o, 0, sizeof *o), o->module = at == (uintptr_t)&effect ? 0x51564b31u : at == (uintptr_t)&streamed ? 0x51564b32u : 0x51564b33u;
     return 1;
 }
-int modwerk_dsp_catalogue_handle(uint32_t module) { return module == 0x51564b31u ? (int)EFFECT : module == 0x51564b32u ? (int)STREAMED : -1; }
+int modwerk_dsp_catalogue_handle(uint32_t module)
+{
+    return module == 0x51564b31u ? (int)EFFECT : module == 0x51564b32u ? (int)STREAMED : module == 0x51564b33u ? (int)PLATE : -1;
+}
 
 /* The loader's channel: one job a core; a WRITE lands 24 words a frame, op 12 in one. */
 static uint32_t P[2][0x2000], X[2][MW_SLOT_RECORD_WORDS];
@@ -187,7 +203,7 @@ static void frame(void)
         unsigned c = core_of(s);
         uint32_t at = X[c][record_of(s)];
         runs[s] = -1;
-        if (!at || (mw_programs_test_live[s] != EFFECT && mw_programs_test_live[s] != STREAMED)) continue;
+        if (!at || (mw_programs_test_live[s] != EFFECT && mw_programs_test_live[s] != STREAMED && mw_programs_test_live[s] != PLATE)) continue;
         int32_t found = -1;
         for (int32_t p = 0; p < 64 && found < 0; ++p) {
             int whole = 1;
@@ -233,7 +249,7 @@ static void dsp_stream(uint32_t k)
     for (unsigned s = 0; s < 16u; ++s) {
         unsigned c = core_of(s);
         uint32_t in = X[c][record_of(s) + 1u], out = X[c][record_of(s) + 2u];
-        if (mw_programs_test_live[s] != STREAMED || !(in | out)) continue;
+        if ((mw_programs_test_live[s] != STREAMED && mw_programs_test_live[s] != PLATE) || !(in | out)) continue;
         /* named out first, in last; cleared in first. The out-block is written once it is named: take() runs from then
          * on, before the in-block is named, so a DSP that starts with both named has its first frame taken. */
         if (!out) continue;
@@ -266,7 +282,7 @@ static void pick(unsigned s, unsigned id, int32_t p) { mw_programs_test_live[s] 
 int main(int argc, char **argv)
 {
     mode = argc > 1 ? atoi(argv[1]) : 0;
-    row[0] = (uintptr_t)&effect, row[1] = (uintptr_t)&streamed;
+    row[0] = (uintptr_t)&effect, row[1] = (uintptr_t)&streamed, row[2] = (uintptr_t)&plate;
     for (unsigned s = 0; s < 16u; ++s) want[s] = -1, last_taken[s] = -1;
     unsigned t5 = 12u, t6 = 13u, t7 = 14u, t1 = 8u, t2 = 9u; /* FX2 of T5, T6, T7 (core 0), T1, T2 (core 1) */
     uint32_t t5_in = 0;
@@ -392,13 +408,53 @@ int main(int argc, char **argv)
         t5_in = takes[t2] + takes[11], run_streamed(4, 46);
         CHECK(takes[t2] + takes[11] == t5_in && !mw_stream_read() && !mw_stream_read1() && !mw_stream_block1() && !mw_stream_block());
         break;
+    case 12: /* picks (selection.c's guard, status.c): a plate on T1 (core 1) takes the in-halfwords both cores share; a
+              * second on T5 (core 0) is refused naming T1, on its way and once it plays, and T1 plays on. A lane closing
+              * counts no more: T5 is let in as T1 leaves. A pick let in that never lands holds the room until the manager
+              * is idle. */
+        CHECK(!mw_programs_stream_pick(t1, PLATE) && !boxes);
+        CHECK(mw_programs_stream_pick(t5, PLATE) && boxes == 1 && box_slot[0] == t5 && box_holder[0] == t1 && box_pick[0]);
+        pick(t1, PLATE, 3), run_streamed(10, 46);
+        CHECK(runs[t1] == 3 && takes[t1] > 200 && mw_programs_streams == 1 && X[1][record_of(t1) + 1u] == MW_STREAM_IN_REGION);
+        CHECK(mw_programs_stream_pick(t5, PLATE) && mw_programs_stream_pick(t5, STREAMED) && boxes == 3 && box_holder[2] == t1);
+        CHECK(!mw_programs_stream_pick(t5, EFFECT) && mw_programs_refused == 3); /* no stream asked: not judged */
+        t5_in = takes[t1], run_streamed(4, 46);
+        CHECK(takes[t1] > t5_in + 150u && X[1][record_of(t1) + 1u] == MW_STREAM_IN_REGION && !takes[t5]); /* T1 plays on */
+        pick(t1, 0, -1), run_streamed(1, 0);                              /* T1 leaves: its lane is closing */
+        CHECK(X[1][record_of(t1) + 1u] || X[1][record_of(t1) + 2u]);
+        CHECK(!mw_programs_stream_pick(t5, PLATE) && boxes == 3);
+        pick(t5, PLATE, 4), run_streamed(100, 46);                         /* waits for the room, then streams */
+        CHECK(runs[t5] == 4 && takes[t5] > 200 && !X[1][record_of(t1) + 1u] && !X[1][record_of(t1) + 2u] && mw_programs_streams == 2);
+        pick(t5, 0, -1), run_streamed(10, 46);
+        CHECK(!mw_programs_stream_pick(t6, PLATE));                        /* let in, then refused after the guard (DSP FULL) */
+        CHECK(mw_programs_stream_pick(t7, PLATE) && box_holder[3] == t6);  /* on its way it holds the room */
+        run_streamed(1, 46);
+        CHECK(!mw_programs_stream_pick(t7, PLATE) && boxes == 4);          /* the manager idle: it never landed */
+        break;
+    case 13: /* a Part brings three plates at once (T5-T7 FX2): the first in slot order gets the lane, the other two stay
+              * dry under one box naming T5, and are not asked again; T5 leaving lets neither in until its effect
+              * changes. A plate a paste brings beside one that streams stays dry, and that one plays on. */
+        pick(t7, PLATE, 7), pick(t6, PLATE, 6), pick(t5, PLATE, 5), run_streamed(20, 46);
+        CHECK(runs[t5] == 5 && runs[t6] == 6 && runs[t7] == 7 && takes[t5] > 200 && mw_programs_streams == 1); /* their areas run */
+        CHECK(boxes == 2 && box_slot[0] == t6 && box_slot[1] == t7 && box_holder[0] == t5 && box_holder[1] == t5 && !box_pick[0]);
+        CHECK(!X[0][record_of(t6) + 1u] && !X[0][record_of(t6) + 2u] && !X[0][record_of(t7) + 2u] && !takes[t6] && !takes[t7]);
+        run_streamed(200, 46);
+        CHECK(mw_programs_refused == 2 && boxes == 2 && !takes[t6]);
+        pick(t5, 0, -1), run_streamed(10, 46);
+        CHECK(!X[0][record_of(t5) + 2u] && !X[0][record_of(t6) + 2u] && !X[0][record_of(t7) + 2u] && mw_programs_streams == 1);
+        pick(t6, 0, -1), run_streamed(2, 46), pick(t6, PLATE, 8), run_streamed(20, 46);
+        CHECK(runs[t6] == 8 && takes[t6] > 200 && mw_programs_streams == 2 && !X[0][record_of(t7) + 2u] && boxes == 2);
+        pick(t5, PLATE, 9), run_streamed(4, 46);
+        t5_in = takes[t6], run_streamed(10, 46);
+        CHECK(boxes == 3 && box_slot[2] == t5 && box_holder[2] == t6 && !X[0][record_of(t5) + 2u] && takes[t6] > t5_in + 400u);
+        break;
     default: return 2;
     }
     return 0;
 }
 '''
 
-MODES = 12
+MODES = 14
 
 
 def build(work):

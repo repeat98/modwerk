@@ -7,7 +7,10 @@
  *   names neither area does the span go back;
  * - the stream (a build with the stream channel, stream_channel.c): the base opens a lane for the slot, and once its first
  *   blocks are filled names their offsets in words 2 (out) and 1 (in) of the record; it clears them, in, then out,
- *   before the lane closes.
+ *   before the lane closes. The channel's lanes and halfwords are shared by both cores, so a slot is let in for a lane
+ *   only when it fits beside every lane held or promised: a pick that does not is refused in selection.c's guard
+ *   (status.c) and the slot keeps its effect; a slot a Part brings (a change, reload, paste or project load) is judged
+ *   once, in slot order, and one that does not fit stays dry until its effect changes. Both say STREAM FULL.
  *
  * The UI tick (ev_tick), under the stable lock. One job a core at a time on the loader's own channel, started only while
  * the manager publishes nothing, as dsp.c's meter reads wait: a pick or a Part change goes first. Nothing runs on the
@@ -41,6 +44,10 @@ __attribute__((weak)) int mw_stream_ready(int lane, uint32_t *in_offset, uint32_
 { (void)lane; (void)in_offset; (void)out_offset; return 0; }
 __attribute__((weak)) void mw_stream_live(int lane, int on) { (void)lane; (void)on; }
 __attribute__((weak)) void mw_stream_close(int lane) { (void)lane; }
+__attribute__((weak)) unsigned mw_stream_room(unsigned *in, unsigned *out) { *in = *out = 0; return 0; }
+/* status.c: the STREAM FULL box for slot's effect `id` (`holder`: a slot that holds or was let in for a lane, 16 none;
+ * `pick` 1 a pick, which is not made, 0 a Part's slot, which stays dry). */
+void modwerk_status_stream_refused(unsigned slot, unsigned id, unsigned holder, int pick);
 
 enum { IDLE, WRITING, SWITCHING, CLEARING, STUCK };                              /* the areas */
 enum { S_NONE, S_OPEN, S_NAME_OUT, S_NAME_IN, S_LIVE, S_DROP_IN, S_DROP_OUT, S_STUCK }; /* the stream's record words */
@@ -53,13 +60,17 @@ static struct slot {
     const struct modwerk_dsp_effect *srow; /* the record its stream serves */
     uint16_t in_offset, out_offset;       /* its blocks in a host bank (0 none) */
     int8_t lane;                          /* -1 none */
-    uint8_t sid, sstep, pad;
+    uint8_t sid, sstep;
+    uint8_t judged_id, judged;            /* the live effect its stream was judged for: 0 not yet, 1 let in, 2 refused */
     uint16_t swait;
+    uint16_t lane_in, lane_out;           /* what its lane carries, for one open for good after its module went */
 } slots[SLOTS];
 static uint32_t buffer[2][MOST];          /* the code being written: one job a core */
 static int8_t owner_of[2] = {-1, -1};     /* the slot whose job holds core c's channel */
 static uint8_t stream_job[2];             /* that job is the slot's stream's, not its areas' */
 static unsigned first;                    /* where the walk starts: each slot gets its turn at a core */
+static int8_t flight = -1;                /* a pick its guard let in for a lane, on its way to the slot */
+static uint8_t flight_id;
 /* Diagnostics, never an ABI: writes and switches done, refusals (no room, no code, no lane), jobs refused or lost,
  * streams named. */
 #ifdef __m68k__
@@ -98,6 +109,51 @@ static unsigned rows(const struct modwerk_dsp_effect **row, uint8_t *id)
         row[k] = e, id[k++] = (uint8_t)handle;
     }
     return k;
+}
+
+/* The record of effect `live` when it asks for a stream, 0 otherwise. */
+static const struct modwerk_dsp_effect *streams(const struct modwerk_dsp_effect *const *row, const uint8_t *id, unsigned n, unsigned live)
+{
+    for (unsigned k = 0; k < n; ++k)
+        if (id[k] == live && (row[k]->stream_in || row[k]->stream_out)) return row[k];
+    return 0;
+}
+/* 1 when slot s can have a lane for e beside every other slot's: one open for good, one held or let in for its live
+ * effect, and the pick on its way (counted beside its slot's own until it lands: the safe side). A lane whose slot left
+ * its effect counts no more while it closes. `holder`: the first such slot, 16 none. shortcut: judged on the lanes and
+ * halfwords both cores share, not on where blocks fall in a core's regions (928 words for 352): a slot let in that
+ * finds no gap left by closed lanes waits for room; judge the regions too if that is ever seen. */
+static int fits(unsigned s, const struct modwerk_dsp_effect *e, const struct modwerk_dsp_effect *const *row, const uint8_t *id,
+                unsigned n, unsigned *holder)
+{
+    unsigned in_most, out_most, lanes = mw_stream_room(&in_most, &out_most), used = 1, in = e->stream_in, out = e->stream_out;
+    *holder = 16u;
+    for (unsigned k = 0; k <= SLOTS; ++k) { /* each slot, then the pick on its way */
+        unsigned at = k, hin = 0, hout = 0;
+        const struct modwerk_dsp_effect *h = 0;
+        if (k == SLOTS) at = flight >= 0 ? (unsigned)flight : s, h = streams(row, id, n, flight_id);
+        else if (slots[k].sstep == S_STUCK) hin = slots[k].lane_in, hout = slots[k].lane_out;
+        else if (slots[k].judged == 1u && slots[k].judged_id == LIVE[k]) h = streams(row, id, n, LIVE[k]);
+        if (h) hin = h->stream_in, hout = h->stream_out;
+        if (at == s || !(hin | hout)) continue;
+        ++used, in += hin, out += hout;
+        if (at < *holder) *holder = at;
+    }
+    return used <= lanes && in <= in_most && out <= out_most;
+}
+/* Slot s's stream for its live effect, judged once: its pick's guard let it in, it fits, or it stays dry. Judged again
+ * once its effect changes, or its record comes back (a module installed again). */
+static void judge(unsigned s, const struct modwerk_dsp_effect *const *row, const uint8_t *id, unsigned n)
+{
+    struct slot *t = &slots[s];
+    unsigned live = LIVE[s], holder;
+    const struct modwerk_dsp_effect *e = streams(row, id, n, live);
+    if (t->judged_id != live || !e) t->judged_id = (uint8_t)live, t->judged = 0;
+    if (!e || t->judged) return;
+    if (flight == (int8_t)s && flight_id == live) { t->judged = 1, flight = -1; return; }
+    if (fits(s, e, row, id, n, &holder)) { t->judged = 1; return; }
+    t->judged = 2, mw_programs_refused = mw_programs_refused + 1;
+    modwerk_status_stream_refused(s, live, holder, 0);
 }
 
 static void forget(unsigned s)
@@ -204,6 +260,7 @@ static void stream_tick(unsigned s, const struct modwerk_dsp_effect *want, unsig
         int lane = mw_stream_open(s, want, want->stream_in, want->stream_out);
         if (lane < 0) { mw_programs_refused = mw_programs_refused + 1, t->swait = RETRY; return; }
         t->srow = want, t->sid = (uint8_t)live, t->lane = (int8_t)lane, t->sstep = S_OPEN;
+        t->lane_in = want->stream_in, t->lane_out = want->stream_out;
     }
     uint32_t in, out;
     if (t->sstep == S_OPEN && mw_stream_ready(t->lane, &in, &out))
@@ -229,13 +286,15 @@ void mw_programs_tick(void)
         if (stream_job[c]) streamed((unsigned)s, status > 0);
         else finished((unsigned)s, status > 0);
     }
+    for (unsigned s = 0; dl_residency_enabled && s < SLOTS; ++s) judge(s, row, id, n);
+    if (flight >= 0 && dl_publication_idle()) flight = -1; /* landed and judged above, or never made */
     for (unsigned i = 0; dl_residency_enabled && i < SLOTS; ++i) {
         unsigned s = (first + i) % SLOTS, c = core_of(s), live = LIVE[s];
         struct slot *t = &slots[s];
         const struct modwerk_dsp_effect *want = 0;
         for (unsigned k = 0; k < n; ++k) if (id[k] == live) want = row[k];
         if (owner_of[c] == (int8_t)s) continue;
-        stream_tick(s, want, live);
+        stream_tick(s, t->judged == 1u && t->judged_id == live ? want : 0, live);
         const struct modwerk_dsp_effect *areas = want && want->program_words ? want : 0;
         if (t->step != STUCK) {
             if (t->words && (areas != t->row || live != t->id) && t->step != CLEARING) {
@@ -259,6 +318,25 @@ void mw_programs_tick(void)
     first = (first + 1u) % SLOTS;
     modwerk_machine_unlock(irq);
 }
+
+/* selection.c's guard (status.c), before stock writes a pick of effect `live` on slot s: 1, with the STREAM FULL box,
+ * when it asks for a lane the channel cannot give beside the others' (the pick is not made); else 0, and a pick that
+ * asks for one goes on its way let in. */
+int mw_programs_stream_pick(unsigned s, unsigned live)
+{
+    if (s >= SLOTS || !dl_residency_enabled) return 0;
+    uint32_t irq = modwerk_machine_lock();
+    const struct modwerk_dsp_effect *row[ROWS], *e;
+    uint8_t id[ROWS];
+    unsigned n = rows(row, id), holder = 16u;
+    int refused = (e = streams(row, id, n, live)) != 0 && !fits(s, e, row, id, n, &holder);
+    if (e && !refused) flight = (int8_t)s, flight_id = (uint8_t)live;
+    if (refused) mw_programs_refused = mw_programs_refused + 1;
+    modwerk_machine_unlock(irq);
+    if (refused) modwerk_status_stream_refused(s, live, holder, 1);
+    return refused;
+}
 #else
 void mw_programs_tick(void) {}
+int mw_programs_stream_pick(unsigned s, unsigned live) { (void)s; (void)live; return 0; }
 #endif

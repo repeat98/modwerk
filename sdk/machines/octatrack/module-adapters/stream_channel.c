@@ -140,6 +140,12 @@ void mw_stream_live(int k, int on)
     if (k >= 0 && k < (int)MW_STREAM_LANES) lanes[k].live_from = frame + (on ? 1u : 0x40000000u);
 }
 
+unsigned mw_stream_room(unsigned *in, unsigned *out)
+{
+    *in = MW_STREAM_IN_MOST, *out = MW_STREAM_OUT_MOST;
+    return failed ? 0u : MW_STREAM_LANES;
+}
+
 void mw_stream_close(int k)
 {
     if (k < 0 || k >= (int)MW_STREAM_LANES) return;

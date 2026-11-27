@@ -794,6 +794,7 @@ static unsigned refused_left, refused_reason, refused_core, refused_machine, ref
 void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add); /* dsp.c: the last machine voice refused for cycles */
 static uint32_t refused[8], refused_booked, refused_words, refused_arena;
 static uint32_t refused_allowed, refused_busy, refused_dsp, refused_dsp_add; /* CPU FULL: what fits, the Part's own load the cause, the pick's DSP core as booked and what it adds (per mille) */
+static unsigned refused_holder, refused_dry; /* STREAM FULL: a slot that holds a lane (16 none); a Part's slots left dry, 0 a pick */
 static char refused_name[17];
 static int budget_slot = -1; /* the slot the pick put a module on; -1: an accept over USB (memory only) */
 /* Each core's code words before the pick: what it took is the change, so a second instance on the core or a module
@@ -1686,6 +1687,11 @@ static int runs_elsewhere(unsigned slot, unsigned id)
     for (unsigned k = 0; k < 16u; ++k) if (k != slot && LIVE[k] == id) return 1;
     return 0;
 }
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+int mw_programs_stream_pick(unsigned slot, unsigned id); /* dsp_programs.c: 1, with the STREAM FULL box, when its lane does not fit */
+#else
+static int mw_programs_stream_pick(unsigned slot, unsigned id) { (void)slot, (void)id; return 0; } /* no program areas: no stream */
+#endif
 int modwerk_status_effect_busy(unsigned slot, unsigned id, unsigned old)
 {
     uint32_t gone = slot < 16u && old != id ? effect_cost(old, !runs_elsewhere(slot, old), 0) : 0u;
@@ -1698,12 +1704,28 @@ int modwerk_status_effect_busy(unsigned slot, unsigned id, unsigned old)
     modwerk_fxmap_name(id, name);
     extern struct dl_package dl_catalog[MODWERK_FX_IDS];
     if (modwerk_status_pick_busy(slot, 0u, name, add, gone, id < MODWERK_FX_IDS ? dl_catalog[id].cycles : 0u)) return 1;
+    if (mw_programs_stream_pick(slot, id)) return 1;
     if (waking) modwerk_machine_effect_wake(id);
     /* shortcut: counted when the guard passes the pick, before the DSP places it; a pick the DSP then refuses stays
      * counted until the unit has played four seconds. Count at the DSP's commit if that ever misleads a pick. */
     if (add) modwerk_status_cpu_entered(add);
     if (gone) modwerk_status_cpu_left(gone);
     return 0;
+}
+/* dsp_programs.c: slot's effect `id` asks for a stream lane the channel cannot give beside the lanes held (`holder`: the
+ * first slot that holds or was let in for one, 16 none). A pick (`pick` 1) is not made; a Part's slot stays dry until
+ * its effect changes, and a further one while the box shows is counted on it (a Part brings several at once). */
+void modwerk_status_stream_refused(unsigned slot, unsigned id, unsigned holder, int pick)
+{
+    if (open == REFUSED && refused_reason == 5u && refused_dry && !pick) { ++refused_dry; return; }
+    if ((open != CLOSED && open != MEMORY) || slot > 15u) return;
+    for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
+    refused[1] = slot, refused_holder = holder, refused_dry = pick ? 0u : 1u;
+    refused_machine = 0, refused_reason = 5u;
+    modwerk_fxmap_name(id, refused_name);
+    refused_name[16] = 0;
+    for (char *t = refused_name; *t; ++t) if (*t >= 'a' && *t <= 'z') *t = (char)(*t - 32);
+    open = REFUSED, refused_left = 180u;
 }
 static void refused_box(unsigned char *frame)
 {
@@ -1713,8 +1735,9 @@ static void refused_box(unsigned char *frame)
     unsigned slot = refused[1], c = refused_core;
     char where[8] = {'T', (char)('1' + (slot & 7u)), ' ', 'F', 'X', (char)(slot < 8u ? '1' : '2'), 0};
     if (refused_machine) where[3] = 'S', where[4] = 'R', where[5] = 'C'; /* a machine's voice, not an effect slot */
-    const char *title = refused[0] == 3u ? "NO ROOM" : refused_reason == 4u ? "CPU FULL" : refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
-    if (TEXT_WIDTH(FONT, -1, title) + TEXT_WIDTH(FONT, -1, where) + 6 > 82) title += 4; /* "MEMORY FULL": clear of the slot */
+    const char *title = refused[0] == 3u ? "NO ROOM" : refused_reason == 5u ? "STREAM FULL" : refused_reason == 4u ? "CPU FULL" :
+                        refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
+    if (refused_reason == 2u && TEXT_WIDTH(FONT, -1, title) + TEXT_WIDTH(FONT, -1, where) + 6 > 82) title += 4; /* "MEMORY FULL": clear of the slot */
     label(23u, 15u, title), label((unsigned)(105 - TEXT_WIDTH(FONT, -1, where)), 15u, where);
     fill(frame, 18u, 22u, 109u, 22u, 1);
     char need[32], *e = need;
@@ -1724,6 +1747,19 @@ static void refused_box(unsigned char *frame)
         label(23u, 26u, "A MODULE EFFECT");
         label(23u, 34u, "IS IN THE WAY:");
         label(23u, 42u, "REMOVE + RE-ADD");
+        return;
+    }
+    if (refused_reason == 5u) { /* a stream lane: the slot that holds the channel, and what becomes of this one */
+        char line[17] = "T1 FX1 HAS IT", dry[17] = "DRY, +";
+        *e = 0, label(23u, 26u, need);
+        line[1] = (char)('1' + (refused_holder & 7u)), line[5] = refused_holder < 8u ? '1' : '2';
+        label(23u, 34u, refused_holder < 16u ? line : "NO STREAM ROOM");
+        if (refused_dry > 1u) { /* at most 15 more: 16 slots */
+            e = number(dry + 6, refused_dry - 1u);
+            for (const char *t = " MORE"; *t; ) *e++ = *t++;
+            *e = 0;
+        }
+        label(23u, 42u, !refused_dry ? "CHANGE ONE FIRST" : refused_dry == 1u ? "PLAYS DRY" : dry);
         return;
     }
     if (refused[0] == 3u) { /* a Y buffer: the slot kind's blocks on the core that this effect may take, all taken */
