@@ -12,9 +12,7 @@ from remix.schema import (BusRole, Category, Claims, Detour, DspSection, Formatt
                           MenuEntry, Module, Param, Proof, YBase)
 from remix.stock_guard import stock_guard
 
-_COUNTS = [int(n) for n in re.search(r"mv_bank_count\[3\] = \{([^}]*)\}",
-                                      (pathlib.Path(__file__).resolve().parent / "stream.h").read_text()).group(1).split(",")]
-_PROGS = max(_COUNTS)
+_PROGS = int(re.search(r"#define MV_VALUES (\d+)", (pathlib.Path(__file__).resolve().parent / "stream.h").read_text()).group(1))
 
 MODULE = Module(
     name="midiverb", key="MIDIVERB", kind=Kind.HYBRID,
@@ -27,7 +25,7 @@ MODULE = Module(
         # PROG on the dial: stock's stepped tick widget holds five positions, and forcing it to 24 crashed the
         # owner's unit on 25 Nov 2026 (it read the labels as an address, vector 11 at PC 0x524b00a2).
         Param(b"PROG", 0, _PROGS, True, Formatter.WIDE_STEPPED, labels=tuple(str(i + 1) for i in range(_PROGS)),
-              doc="the bank's program; its name shows in a message box when it turns"),
+              doc="the bank's program; its number and name show in a message box when it turns (0.1.0's programs keep their places)"),
         Param(b"LEVL", 64, 128, True, Formatter.PLAIN,
               doc="input level into the 12-bit converter: unity at 32, 64 is +6 dB"),
         Param(),
