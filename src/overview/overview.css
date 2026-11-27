@@ -109,9 +109,9 @@
 .develop-card::after { content: ''; position: absolute; right: 10px; top: 13px; width: 8px; height: 8px; border-radius: 50%; background: var(--apricot); animation: develop-pulse 2.4s ease-out infinite; }
 @keyframes develop-pulse { 0% { box-shadow: 0 0 0 0 #c7a16c90; } 70% { box-shadow: 0 0 0 9px #c7a16c00; } 100% { box-shadow: 0 0 0 0 #c7a16c00; } }
 @media (prefers-reduced-motion: reduce) { .develop-card::after { animation: none; } }
-.mobile-menu-panel a.is-highlight { border: 1px solid var(--apricot-line); background: var(--apricot-surface); color: #fff1da; }
+.mobile-menu-panel a.is-highlight { color: var(--text); }
 .mobile-menu-panel a.is-highlight svg { color: var(--apricot); }
-.mobile-menu-panel a.is-highlight small { color: var(--apricot-text); font: 10px var(--mono); letter-spacing: 1px; text-transform: uppercase; }
+.mobile-menu-panel a.is-highlight small { border-color: var(--apricot-line); color: var(--apricot-text); }
 
 @media (max-width: 600px) {
   /* .sidebar raises it over .sidebar-nav's display, which styles.css sets after this file. */

@@ -1484,14 +1484,19 @@ h1 { font-size: var(--text-xl); }
   .mobile-menu-button[aria-expanded="true"] { background: var(--accent-soft); color: var(--text); }
   .mobile-menu-scrim { position: fixed; inset: 0; z-index: 40; background: #0006; }
   .mobile-menu-panel { position: absolute; z-index: 41; top: calc(100% + 8px); right: 0; width: min(288px, calc(100vw - 24px)); padding: 6px; border: 1px solid var(--control-border); border-radius: var(--radius-lg); background: var(--surface-raised); box-shadow: var(--shadow-popover); }
-  .mobile-menu-group + .mobile-menu-group { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
-  .mobile-menu-panel a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: var(--radius-md); color: var(--text-secondary); font-size: 15px; }
-  .mobile-menu-panel a svg { color: var(--faint); }
-  .mobile-menu-panel a:active { background: var(--surface-hover); }
-  .mobile-menu-panel a[aria-current="page"] { background: var(--accent-soft); color: var(--text); }
-  .mobile-menu-panel a[aria-current="page"] svg { color: var(--accent); }
+  .mobile-menu-group { overflow: hidden; border-radius: var(--radius-lg); background: color-mix(in srgb, var(--text) 4%, transparent); }
+  .mobile-menu-group > :is(a, button) { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 0; color: var(--text); font-size: 15px; }
+  .mobile-menu-group > :is(a, button) + :is(a, button) { box-shadow: inset 0 1px color-mix(in srgb, var(--text) 7%, transparent); }
+  .mobile-menu-label { margin: 16px 14px 6px; color: var(--faint); font-size: 12px; font-weight: 500; line-height: 1.4; }
+  .mobile-menu-more { display: flex; flex-wrap: wrap; gap: 0 18px; margin-top: 10px; padding: 0 14px; }
+  .mobile-menu-more a { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted); font-size: 13px; }
+  .mobile-menu-more a[aria-current="page"] { color: var(--text); }
+  .mobile-menu-group > :is(a, button) svg { color: var(--muted); }
+  .mobile-menu-group > :is(a, button):active { background: var(--surface-hover); }
+  .mobile-menu-group > a[aria-current="page"] { background: var(--accent-soft); color: var(--text); }
+  .mobile-menu-group > a[aria-current="page"] svg { color: var(--accent); }
   .mobile-menu-panel small { margin-left: auto; padding: 2px 6px; border: 1px solid var(--control-border); border-radius: var(--radius-xs); font-size: 12px; color: var(--accent-hover); }
-  .mobile-menu-support { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+  .mobile-menu-support { margin-top: 2px; }
   .mobile-menu-support .support-link { width: 100%; min-height: 44px; padding: 0 12px; border-radius: var(--radius-md); }
   .mobile-menu-support .support-link:active { background: var(--surface-hover); }
 }
@@ -2000,7 +2005,8 @@ h1 { font-size: var(--text-xl); }
   .sheet-handle { position: absolute; top: 8px; left: 50%; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: #4a4a55; }
   .sheet-close { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--muted); }
   .sheet-close:active { background: var(--surface-hover); color: var(--text); }
-  .mobile-menu-panel a { min-height: 50px; font-size: 16px; }
+  .mobile-menu-panel { max-height: min(90dvh, 780px); padding-inline: 12px; }
+  .mobile-menu-group > :is(a, button) { min-height: 50px; font-size: 16px; }
   /* The sheet focuses the current page on open; an outside ring would run into the row below. */
   .mobile-menu-panel a:focus-visible { outline-offset: -2px; }
 }
@@ -2083,9 +2089,7 @@ h1 { font-size: var(--text-xl); }
 .configuration-browser-empty p { margin-top: 8px; }
 .configuration-browser-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 16px; margin-top: 12px; flex-shrink: 0; }
 .configuration-browser-footer > span { color: var(--muted); font-size: 12px; }
-.mobile-menu-group > button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 50px; padding: 0 12px; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--text-secondary); text-align: left; font-size: 16px; }
-.mobile-menu-group > button svg { color: var(--faint); }
-.mobile-menu-group > button:active { background: var(--surface-hover); }
+.mobile-menu-group > button { width: 100%; border: 0; background: transparent; text-align: left; }
 @media (max-width: 600px) { .configuration-launcher { display: none; } }
 @media (max-width: 600px) {
   .library-page .library-subheading { min-height: 28px; }
