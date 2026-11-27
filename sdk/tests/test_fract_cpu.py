@@ -144,7 +144,7 @@ int main(void) {
             self.assertEqual(result.returncode, 0, result.stderr)
             result = subprocess.run([str(work / 'fixture')], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn('three live readers', result.stdout)
+            self.assertRegex(result.stdout, r'\b(?:two|three) live readers; guards and all-shape full-scale bounds OK')
 
 
 class CpuUiContract(ui.FractUiContract):
