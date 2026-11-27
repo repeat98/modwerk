@@ -413,7 +413,9 @@ export async function runProcedure(ctx, deps) {
     const file = join(ctx.out, 'unit-steps.json')
     const argv = ['npm', 'run', 'unit', '--', 'run', '--note', `test:procedure ${ctx.id ?? 'base'} ${ctx.build.revision.slice(0, 8)}`, '--expect', ctx.kind === 'base' ? '45m' : '15m', '--',
       'node', 'scripts/test-procedure.mjs', ...(ctx.kind === 'base' ? ['--base', ...(other(ctx) ? [ctx.machine] : [])] : [other(ctx) ? ctx.machine + ':' + ctx.id : ctx.id]), '--package', ctx.pkg, '--share', ctx.share, '--out', ctx.out, ...(ctx.passOn ?? []),
-      '--soak-seconds', String(ctx.soakSeconds), ...soakFlags(ctx), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []), '--unit-phase', file]
+      '--soak-seconds', String(ctx.soakSeconds), ...soakFlags(ctx), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []),
+      // step 9 runs in here: without these it priced the module without writing it (USB Audio 0.4.2, 27 November 2026)
+      ...(ctx.priceBase ? ['--price-base', ctx.priceBase] : []), ...(ctx.priceModules ? ['--price-modules', ctx.priceModules.join(',')] : []), '--unit-phase', file]
     const started = deps.now(), run = await deps.exec(argv, join(ctx.out, 'logs', 'unit-queue.log'))
     const inner = deps.exists(file) ? JSON.parse(deps.read(file)) : null
     if (inner) results.push(...inner)
