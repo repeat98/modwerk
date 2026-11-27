@@ -181,7 +181,7 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
 #define CPU_DEFAULT 12u
 /* The prices bound a Part's renders at their worst. What else an installed set costs the frame interrupt (modules' hooks,
  * effects' ColdFire work, a DSP voice's glue) and what a machine costs in the frames between its worst ones no price
- * knows. So every module pick is also judged by the frame share the unit would play at with it (status.c,
+ * knows. So every module pick, and a machine a paste brings (arrivals()), is also judged by the frame share the unit would play at with it (status.c,
  * modwerk_status_pick_busy, against mw_frame_line, its longest frame): a machine by what one track of it adds there, as the site measured
  * it (frame_cost below), else by its measured meter cost (reserved[1]) or its price, a machine's renders being frame
  * interrupt time either way. Admitted by the meter instead, SYNTIZ took a Part from 50.7 % to 65.2 % of the frame and the
@@ -663,6 +663,37 @@ static void leave(Part *part, Part *mirror, unsigned track, const Machine *old)
     if (!old->assign && old->flags & MODWERK_MACHINE_PROTECT) flex_defaults(part, mirror, track);
     if (charged[track] == old) release(track); /* a priced machine that took the track was charged in its place */
 }
+/* A paste or a Part reload brings a machine onto a track of the Part that stays: judged against the frame line as a pick
+ * of it would be (status.c), and past it the track renders the silent source with the CPU FULL box until its machine
+ * changes. A tester pasted Amiga next to FM Synth where its pick was refused (CPU FULL, PART IS BUSY); that Part then
+ * clicked at pattern changes, and played clean with FLEX in its place. A Part or bank change and a project load bring
+ * another pattern, whose stock the picks were never judged on, and an install (a restore, a trial, MODULES) machines
+ * the Part already named: those stay the predicted brake's (status.c). */
+extern volatile uint32_t modwerk_project_loaded; /* fxmap.c: each completed project load */
+static const Part *arrival_part;
+static uint32_t arrival_load, arrival_epoch;
+static const Machine *arrived[8]; /* each track's machine as the last tick or pick left it */
+static uint8_t frame_over;        /* tracks a paste brought past the frame line */
+static uint8_t arrivals(const Machine *const *owners, const uint8_t over)
+{
+    const Part *part = current_part();
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    if (part != arrival_part || modwerk_project_loaded != arrival_load || epoch != arrival_epoch || modwerk_fxmap_loading()) {
+        arrival_part = part, arrival_load = modwerk_project_loaded, arrival_epoch = epoch, frame_over = 0;
+        for (unsigned t = 0; t < 8; ++t) arrived[t] = owners[t];
+        return 0;
+    }
+    for (unsigned t = 0; t < 8; ++t) {
+        const Machine *who = owners[t], *was = arrived[t];
+        if (who == was) continue;
+        arrived[t] = who, frame_over &= (uint8_t)~(1u << t);
+        if (!who || over >> t & 1u) continue; /* gone, or already past the price allowance */
+        uint32_t add = frame_cost(who, !elsewhere(part, t, who), asleep(who)), gone = was ? frame_cost(was, !elsewhere(part, t, was), 0) : 0u;
+        if (modwerk_status_pick_busy(t, elsewhere(part, t, who) ? 2u : 1u, who->label, add, gone, 0)) frame_over |= (uint8_t)(1u << t);
+        else modwerk_status_cpu_entered(add), modwerk_status_cpu_left(gone);
+    }
+    return frame_over;
+}
 /* Tracks that became a priced machine without an assignment (a project load, a Part change, a paste) are charged
  * here, and tracks charged to another machine than their own move to it; tracks no longer one are released. A track
  * its core cannot carry stays uncharged and renders silence. */
@@ -672,6 +703,7 @@ static void charge(const Machine *const *m, unsigned n)
     const Machine *owners[8];
     uint8_t over;
     unsigned booked = cpu_bill(m, n, current_part(), 8, &over, owners);
+    uint8_t pasted = arrivals(owners, over);
     for (unsigned t = 0; t < 8; ++t) {
         const Machine *who = owners[t];
         if (who && !who->source_kind) who = 0;
@@ -683,7 +715,7 @@ static void charge(const Machine *const *m, unsigned n)
             cpu_refuse(t, owners[t], booked);
             break;
         }
-    mw_cpu_refused = cpu_warned = over, mw_cpu_booked = booked;
+    mw_cpu_refused = (uint8_t)((cpu_warned = over) | pasted), mw_cpu_booked = booked;
 }
 /* Stock loads a track's live parameters from its Part (0x40001f18: bank, Part, track) where a commit changes the
  * stored type. A module machine is FLEX underneath, so FLEX <-> machine keeps the type and the live copy would stay on
@@ -737,6 +769,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             modwerk_runtime_rest_poll();
         }
         if (old != next) mc_assigned(next), modwerk_status_cpu_entered(add), guard_forget(track);
+        if (part == arrival_part) arrived[track] = next, frame_over &= (uint8_t)~(1u << track); /* judged here: no paste */
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
         if (next->assign) return next->assign(part, track, 1);

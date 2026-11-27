@@ -1,0 +1,1 @@
+Octatrack base: pasting a track brought a module machine into a Part even when picking that machine there was refused with CPU FULL, and the Part then clicked at pattern changes. A pasted machine is now judged like a pick: if the Part has no room for it, its track stays silent and the CPU FULL box says why, until you change that track's machine. Ships with the next base.

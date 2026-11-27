@@ -67,6 +67,7 @@ static unsigned rest_polls; /* the loader's resting poll, checked by sdk/runtime
 static int project_loading; /* fxmap.c's: a project load runs */
 int modwerk_fxmap_loading(void);
 int modwerk_fxmap_loading(void) { return project_loading; }
+volatile uint32_t modwerk_project_loaded; /* fxmap.c's: each completed project load */
 /* fxmap.c's effect ids: the ids the project names (bit id of project_fx), and module 700 + id holds id. */
 #include "fxids.h"
 static uint32_t project_fx;
@@ -554,6 +555,25 @@ static void check_cpu_budget(void)
     CHECK(mw_cpu_refused == (1u << 0 | 1u << 5 | 1u << 6) && !mw_cpu_booked);
     mw_cpu_allowance = 45;
     for (unsigned t = 0; t < 8; ++t) for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0;
+    mw_ui_tick();
+    CHECK(!mw_cpu_refused);
+    /* A paste the frame line refuses, as it refuses the pick: the track renders the silent source with the box, and
+     * stays so until its machine changes. The same bytes after a project load are not judged (the predicted brake's). */
+    unsigned judged = hot_boxes;
+    cpu_now = hot_line; part0()[60 + 120] = 'A', part0()[61 + 120] = 'B', part0()[62 + 120] = 1;
+    mw_ui_tick(); mw_ui_tick();
+    CHECK(mw_cpu_refused == 1u << 4 && hot_boxes == judged + 1 && hot_box_track == 4 && !hot_box_gone);
+    silent = silent_renders; CHECK(later(4) == -9 && silent_renders == silent + 1);
+    cpu_now = 0; mw_ui_tick(); CHECK(mw_cpu_refused == 1u << 4 && hot_boxes == judged + 1); /* room alone does not lift it */
+    part0()[60 + 120] = 0; mw_ui_tick(); CHECK(!mw_cpu_refused);
+    cpu_in = 0; part0()[60 + 120] = 'A'; mw_ui_tick(); CHECK(!mw_cpu_refused && cpu_in && hot_boxes == judged + 1); /* fits: counted as a pick */
+    part0()[60 + 120] = 0; mw_ui_tick();
+    cpu_now = hot_line; part0()[60 + 120] = 'A'; ++modwerk_project_loaded; mw_ui_tick();
+    CHECK(!mw_cpu_refused && hot_boxes == judged + 1);
+    part0()[60 + 120] = 0; mw_ui_tick();
+    part0()[60 + 120] = 'A'; ++owner_epoch; mw_ui_tick(); /* nor once an install brings the machine the Part names */
+    CHECK(!mw_cpu_refused && hot_boxes == judged + 1);
+    cpu_now = 0; for (unsigned k = 0; k < 3; ++k) part0()[60 + 120 + k] = 0;
     mw_ui_tick(); rows(0, 0, 0, 0);
     CHECK(!mw_cpu_refused);
 }
