@@ -12,6 +12,16 @@ Q28 = 2 ** 28
 g = [round(math.tan(math.pi * 20 * 900 ** (f / 127) / FS) * 65536) for f in range(128)]
 # DEC 0..62 (63 is INF): time constant 4 ms * 750^(DEC/62), 4 ms .. 3 s
 d = [min(0x7FFFFFFF, round(math.exp(-BLOCK_S / (0.004 * 750 ** (x / 62))) * Q31)) for x in range(63)]
+# GRANULAR: SIZ 0..127 -> a grain's frames, 4 ms * 250^(x/127) (4 ms .. 1 s);
+# DEN 0..63 -> frames between grains, 1 grain/s * 200^(x/63) (1 .. 200 a second);
+# SPR 0..63 -> the most a grain's start strays, 0, then 1 ms * 250^((x-1)/62) (.. 250 ms);
+# PIT -24..+24 semitones -> the grain's speed, Q16; a Hann window of 256 points, Q15.
+gr_size = [round(0.004 * 250 ** (x / 127) * FS) for x in range(128)]
+gr_int = [round(FS / (200 ** (x / 63))) for x in range(64)]
+gr_spr = [0] + [round(0.001 * 250 ** ((x - 1) / 62) * FS) for x in range(1, 64)]
+gr_ratio = [round(2 ** ((s - 24) / 12) * 65536) for s in range(49)]
+gr_win = [round((0.5 - 0.5 * math.cos(2 * math.pi * (i + 0.5) / 256)) * 32767) for i in range(256)]
+
 
 def coef(ms):
     return round(math.exp(-BLOCK_S / (ms / 1000)) * Q31)
@@ -30,3 +40,10 @@ print('// The detectors, a 32-frame block: release 20 ms; the slow attack 15 ms.
 print('#define SL_REL 0x%08x' % coef(20))
 print('#define SL_SLOW_ATK 0x%08x' % (Q31 - 1 - coef(15)))
 print('#define SL_HOLD_BLOCKS %d' % round(0.010 / BLOCK_S))
+print('// GRANULAR: SIZ -> frames (4 ms .. 1 s), DEN -> frames between grains (1 .. 200 a second),')
+print('// SPR -> frames a start strays (0, 1 .. 250 ms), PIT -24..+24 -> speed Q16, a Hann window Q15.')
+print('static const uint16_t GR_SIZE[128] = {\n' + rows(gr_size, 12) + '\n};')
+print('static const uint16_t GR_INTERVAL[64] = {\n' + rows(gr_int, 12) + '\n};')
+print('static const uint16_t GR_SPRAY[64] = {\n' + rows(gr_spr, 12) + '\n};')
+print('static const uint32_t GR_RATIO[49] = {\n' + rows(gr_ratio, 8) + '\n};')
+print('static const int16_t GR_WIN[256] = {\n' + rows(gr_win, 12) + '\n};')

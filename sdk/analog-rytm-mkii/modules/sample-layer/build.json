@@ -81,8 +81,8 @@
   "claims": [
     "ui:FUNC + SMPL: SAMPLE ENGINE list (stock: sample list, still on knob D)",
     "ui:UP, DOWN, YES, NO and knobs A-H while the SAMPLE ENGINE list is open",
-    "ui:SAMPLE pages with TRANSIENTS: one page, SMPL stays on it",
-    "param:hidden ids 447-451",
+    "ui:SAMPLE pages with TRANSIENTS or GRANULAR: one page, SMPL stays on it",
+    "param:hidden ids 447-456 and 458",
     "audio:sample stream before the voice mixer"
   ],
   "requires": [],
@@ -216,6 +216,138 @@
           "stockSha256": "53d1770045a4eee0b7bd342ba6071c232b278181700fb03163a475bb906c8344",
           "op": "ptr",
           "target": "sample_layer_short_shf"
+        },
+        {
+          "addr": "0x401c579c",
+          "len": 4,
+          "stockSha256": "c22ceee66b8ab104483c83053173b33f992dd4fcb457284c60ef9d699a1c7059",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c57c0",
+          "len": 4,
+          "stockSha256": "3c80ecf4481efecee3de72c7fb2858d6cb6e400f83957b10b7d48b60d92f09de",
+          "op": "ptr",
+          "target": "sample_layer_long_pos"
+        },
+        {
+          "addr": "0x401c57c8",
+          "len": 4,
+          "stockSha256": "a8769a886410b4ef6d304ae99fb84fba4cb00f02485f47f8dee5fe9d197a662c",
+          "op": "ptr",
+          "target": "sample_layer_short_pos"
+        },
+        {
+          "addr": "0x401c57d0",
+          "len": 4,
+          "stockSha256": "8092fe01b9ce31a49ce380fc2fe1ee6b6b7d5c15c5f1ecb6ad98c60c4273a435",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c57f4",
+          "len": 4,
+          "stockSha256": "f784335a72f1b0da3e33c2a96cb07fd121a81cf5666ed6deae980811177eeceb",
+          "op": "ptr",
+          "target": "sample_layer_long_siz"
+        },
+        {
+          "addr": "0x401c57fc",
+          "len": 4,
+          "stockSha256": "6f8e0dcb92e2027dd77344cf8a6ad0d6bff555cce8612be3247fc5288528df5d",
+          "op": "ptr",
+          "target": "sample_layer_short_siz"
+        },
+        {
+          "addr": "0x401c5804",
+          "len": 4,
+          "stockSha256": "7fde8eebf388fcff667a89be60430cc6e198b1a78cb603a39cdd09885a3336e3",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c5828",
+          "len": 4,
+          "stockSha256": "f56942e83ec3c67ae02bc3510bf3768f91f3ce6108f1363b5b2864ff8aecc123",
+          "op": "ptr",
+          "target": "sample_layer_long_den"
+        },
+        {
+          "addr": "0x401c5830",
+          "len": 4,
+          "stockSha256": "e9071691964b1692400d148f2d11682fb2bae94e6cf09a442b22aad3fb4b802d",
+          "op": "ptr",
+          "target": "sample_layer_short_den"
+        },
+        {
+          "addr": "0x401c5838",
+          "len": 4,
+          "stockSha256": "9246be1e9ba9f5de5baf766a256eb725e9a7551fb93d7faa793c938e0f41de35",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c585c",
+          "len": 4,
+          "stockSha256": "cda1a9aaf1c8389998de174409d7a5d7b8b4b4d4e0115d6bdbb4e2ab1cabbfa0",
+          "op": "ptr",
+          "target": "sample_layer_long_spr"
+        },
+        {
+          "addr": "0x401c5864",
+          "len": 4,
+          "stockSha256": "4c72cdad9204cf983e5212e8b0d523ebcc86044f25a30fe0fb3fe38ffe06a70b",
+          "op": "ptr",
+          "target": "sample_layer_short_spr"
+        },
+        {
+          "addr": "0x401c586c",
+          "len": 4,
+          "stockSha256": "5085cb99dbe1e374ccd321e5b58182d2c42cf4840c68cfab17b0618a8285e7d6",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c5890",
+          "len": 4,
+          "stockSha256": "858f32cae8595c0dd7534c803ad77812ed658ea41a8f6ccb2fed1c0c07a2c5aa",
+          "op": "ptr",
+          "target": "sample_layer_long_pit"
+        },
+        {
+          "addr": "0x401c5898",
+          "len": 4,
+          "stockSha256": "3017adae335e242402ac97061bbbd83d18b3137b2872e5b6ae36029d961bc69c",
+          "op": "ptr",
+          "target": "sample_layer_short_pit"
+        },
+        {
+          "addr": "0x401c58d4",
+          "len": 4,
+          "stockSha256": "390b36a09502b05d4f8c27aea2636c6b7fd05b27d742ed32074ffea1f888ebe4",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c58f8",
+          "len": 4,
+          "stockSha256": "2084829e4a2f71e1fdf34329aa31ade30e16133666e67e07063a39af679de033",
+          "op": "ptr",
+          "target": "sample_layer_long_spd"
+        },
+        {
+          "addr": "0x401c5900",
+          "len": 4,
+          "stockSha256": "7fdebbf70b8fd675b2d00f1757ce78b0f8837596d785209cbc2b956bd3205abe",
+          "op": "ptr",
+          "target": "sample_layer_short_spd"
         }
       ]
     }
@@ -230,6 +362,11 @@
       "sym": "sample_layer_flt",
       "scope": "sound",
       "bits": 14
+    },
+    {
+      "sym": "sample_layer_gx",
+      "scope": "sound",
+      "bits": 6
     }
   ]
 }

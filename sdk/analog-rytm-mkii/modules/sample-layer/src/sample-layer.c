@@ -6,6 +6,8 @@
 //   TRANSIENTS   a drum processor of the sample's own: PUNCH (a snap with a pitch blip to the
 //                right, a fade-in rising in pitch to the left), a decay, a band (a base and a
 //                width) and a shift of the sample after the analog voice
+//   GRANULAR     a grain cloud read from the sample itself: position, size, density, spray,
+//                pitch and the speed the position moves at
 //
 // The analog machine, the analog filter and the AMP envelope are left as they are: the sample is
 // shaped before its DAC, so AMP still shapes the whole sound. While the track's engine is
@@ -14,7 +16,12 @@
 //   A PUNCH   B DEC   C BR (stock's)  D SMP (stock's)
 //   E BAS     F WID   G SHF   H LEV (stock's)
 //
-// with BAS and WID drawn as one band over E and F. SAMPLER keeps stock's pages.
+// with BAS and WID drawn as one band over E and F. GRANULAR's page, the same way:
+//
+//   A POS     B SIZ   C DEN   D SMP (stock's)
+//   E SPR     F PIT   G SPD   H LEV (stock's)
+//
+// SAMPLER keeps stock's pages.
 //
 // The audio side (sample_layer_render, from the gate in sample-layer.s) works on stock's sample
 // stream before stock's voice mixer reads it: 8 voices of 32 frames, Q31, at SAMPLE_STREAM. Probe
@@ -44,6 +51,11 @@
 #define VT_CONFIG_CHANGED 16            // the accessor's change notice
 #define SOUND_CONFIG_CHANGED 0x401cb88c // SoundConfigChangedInfo's vtable
 #define SAMPLE_STREAM 0x800067f8        // 8 voices x 32 frames, Q31
+#define SAMPLE_SLOTS_AT 0x41329e70      // 131 slots of 16 bytes: +0 the data (16-bit mono), +4 the
+                                        // rate in its high half, +8 frames (Loop Sync reads them)
+#define PARAMS_EFF_AT 0x8000f7a8        // each track's 42 words (8.8) after locks, scenes and LFOs
+#define IDX_SMP 19
+#define SLOT_LAST 130
 #define VOICE_TRACK_AT 0x40291138       // the track each voice plays, a byte a voice
 #define ID_STOCK_FRQ 47                 // FILTER FRQ: its value text
 
@@ -76,8 +88,23 @@
 #define ID_WID 450
 #define ID_SHF 451
 enum { K_PUNCH, K_DEC, K_BAS, K_WID, K_SHF, KS };
+#define ID_POS 452                      // GRANULAR's, hidden TEST ids too
+#define ID_SIZ 453
+#define ID_DEN 454
+#define ID_SPR 455
+#define ID_PIT 456
+#define ID_SPD 458                      // 457 is stock's CB_OSC_SELECT: passed
+enum { G_POS, G_SIZ, G_DEN, G_SPR, G_PIT, G_SPD, GS };
+#define SIZ_DEF 69                      // 80 ms
+#define DEN_DEF 36                      // 20 grains a second
+#define PIT_MID 32                      // 0 semitones; PIT keeps to -24 .. +24
+#define SPD_DEF 48                      // the position moves at 1x: (SPD - 32) / 16
+#define GRAINS 6                        // a voice's grains at once, at most
+#define GRAIN_BUDGET 12                 // all voices' grains at once, at most: stock takes about two
+                                        // thirds of the audio block already (Analog BD's README)
+#define GR_LIFE (10 * 48000)            // frames after a trig the cloud keeps making grains
 
-enum { ENG_SAMPLER, ENG_TRANSIENTS, ENGINES };
+enum { ENG_SAMPLER, ENG_TRANSIENTS, ENG_GRANULAR, ENGINES };
 #define DEC_INF 63
 #define PUNCH_MID 32
 #define SHF_MAX_MS 30
@@ -95,16 +122,21 @@ enum { ENG_SAMPLER, ENG_TRANSIENTS, ENGINES };
 #define K_BUTTERWORTH_Q16 92682         // k = 1.414 in Q16
 #define UNITY_Q28 0x10000000
 
-// Two sound fields, zero for stock's sound (SAMPLER, every stage neutral, DEC INF):
-//   sample_layer_eng  ENG 2 | PUNCH ^ 32 6 | DEC ^ 63 6 | SHF 6
-//   sample_layer_flt  BAS 7 | WID ^ 127 7
-// PUNCH, DEC and SHF keep 64 steps (the knob moves 2 at a time), BAS and WID 128.
+// Three sound fields, zero for stock's sound and for each engine's defaults. A sound plays one
+// engine, so the engines share the bits; choosing another engine sets them back to zero.
+//   sample_layer_eng  ENG 2 | a 6 | b 6 | c 6
+//   sample_layer_flt  d 7 | e 7
+//   sample_layer_gx   f 6
+//   TRANSIENTS  a PUNCH ^ 32, b DEC ^ 63, c SHF, d BAS, e WID ^ 127
+//   GRANULAR    a DEN ^ 36, b SPR, c PIT ^ 32, d POS, e SIZ ^ 69, f SPD ^ 48
+// A 6-bit knob keeps 64 steps (it moves 2 at a time), a 7-bit one 128.
 STORE_FIELD(sample_layer_eng);
 STORE_FIELD(sample_layer_flt);
+STORE_FIELD(sample_layer_gx);
 
-struct sl_set { unsigned eng, k[KS]; };
+struct sl_set { unsigned eng, k[KS], g[GS]; };
 
-static void decode(struct sl_set *s, unsigned e, unsigned f)
+static void decode(struct sl_set *s, unsigned e, unsigned f, unsigned x)
 {
     s->eng = e >> 18 & 3;
     s->k[K_PUNCH] = (e >> 12 & 63) ^ PUNCH_MID;
@@ -112,17 +144,39 @@ static void decode(struct sl_set *s, unsigned e, unsigned f)
     s->k[K_SHF] = e & 63;
     s->k[K_BAS] = f >> 7 & 127;
     s->k[K_WID] = (f & 127) ^ 127;
+    s->g[G_DEN] = (e >> 12 & 63) ^ DEN_DEF;
+    s->g[G_SPR] = e >> 6 & 63;
+    s->g[G_PIT] = (e & 63) ^ PIT_MID;
+    s->g[G_POS] = f >> 7 & 127;
+    s->g[G_SIZ] = (f & 127) ^ SIZ_DEF;
+    s->g[G_SPD] = (x & 63) ^ SPD_DEF;
 }
 
 static unsigned encode_eng(const struct sl_set *s)
 {
+    if (s->eng == ENG_GRANULAR)
+        return s->eng << 18 | (s->g[G_DEN] ^ DEN_DEF) << 12 | s->g[G_SPR] << 6
+               | (s->g[G_PIT] ^ PIT_MID);
     return s->eng << 18 | (s->k[K_PUNCH] ^ PUNCH_MID) << 12 | (s->k[K_DEC] ^ DEC_INF) << 6
            | s->k[K_SHF];
 }
 
 static unsigned encode_flt(const struct sl_set *s)
 {
+    if (s->eng == ENG_GRANULAR)
+        return s->g[G_POS] << 7 | (s->g[G_SIZ] ^ SIZ_DEF);
     return s->k[K_BAS] << 7 | (s->k[K_WID] ^ 127);
+}
+
+static unsigned encode_gx(const struct sl_set *s)
+{
+    return s->eng == ENG_GRANULAR ? s->g[G_SPD] ^ SPD_DEF : 0;
+}
+
+// The engine's defaults: every field zero.
+static void defaults(struct sl_set *s, unsigned eng)
+{
+    decode(s, eng << 18, 0, 0);
 }
 
 typedef void *(*project_t)(void);
@@ -148,10 +202,18 @@ struct sl_coef {
     int8_t punch;               // -64 .. 62, 0 none
     uint8_t on;                 // the track's engine is TRANSIENTS and something is set
     uint8_t hp_on, lp_on, dec;
+    uint8_t eng;                // the track's engine
+    uint8_t g_pos;              // GRANULAR: POS, 0..127 of the sample
+    uint16_t g_spray;           // the most a grain's start strays, frames
+    uint32_t g_size, g_phinc;   // a grain's frames, and its window's step a frame (Q16 of 256)
+    uint32_t g_interval;        // frames between grains
+    uint32_t g_ratio;           // a grain's speed, Q16, before the sample's own rate
+    int32_t g_speed;            // the position's speed, Q16 frames a frame
+    int32_t g_norm;             // the cloud's level, 1 / sqrt(grains at once), Q31
 };
 
 static struct sl_coef sl_c[TRACKS];
-static unsigned sl_raw[TRACKS][2];
+static unsigned sl_raw[TRACKS][3];
 static uint8_t sl_known[TRACKS];
 static int32_t sl_h1[VOICES], sl_h2[VOICES], sl_l1[VOICES], sl_l2[VOICES];
 static int32_t sl_env[VOICES];          // the decay, Q31
@@ -168,16 +230,17 @@ static int32_t sl_fg[VOICES], sl_fstep[VOICES];         // the fade-in's gain an
 static uint16_t sl_ft[VOICES];                          // the fade-in's frames left
 static int16_t sl_pend[VOICES];                         // frames to a delayed trig, -1 none
 static int32_t sl_gain[VOICES];         // the last block's gain, Q28
-static int32_t sl_acc[KS];              // the turns' fractions, by knob
 volatile uint8_t sample_layer_trig;     // a bit a voice: an AMP attack this block (sample-layer.s)
 
 // the engine list
 static uint8_t list_open, list_cursor, list_track, list_redraw, swallow_key;
 static int list_counts;
 static uint8_t page_seen;       // TRANSIENTS' values were drawn in this compose
-static uint8_t page_live;       // and in the last one: the page is on screen
+static uint8_t page_live;       // and in the last one: the band may be drawn
+static uint8_t page_any;        // an engine's page was drawn in this compose
+static uint8_t page_any_live;   // and in the last one: an engine's page is on screen
 
-static const char *const ENGINE_NAME[ENGINES] = { "SAMPLER", "TRANSIENTS" };
+static const char *const ENGINE_NAME[ENGINES] = { "SAMPLER", "TRANSIENTS", "GRANULAR" };
 
 // ---- the UI task ----
 
@@ -224,6 +287,51 @@ static void svf_coef(struct svf *f, unsigned x)
     f->a3 = (int32_t)(a3 > 0x7fffffffu ? 0x7fffffffu : a3);
 }
 
+static uint32_t isqrt(uint32_t v)
+{
+    uint32_t r = 0, b = 1u << 30;
+
+    while (b > v)
+        b >>= 2;
+    while (b) {
+        if (v >= r + b) {
+            v -= r + b;
+            r = (r >> 1) + b;
+        } else
+            r >>= 1;
+        b >>= 2;
+    }
+    return r;
+}
+
+// GRANULAR's coefficients: a grain's frames and its window's step, the frames between grains,
+// the spray, the pitch, the position's speed, and the level, 1 / sqrt of the grains that sound
+// at once (at most GRAINS).
+static void coef_granular(struct sl_coef *n, const struct sl_set *s)
+{
+    uint32_t size = GR_SIZE[s->g[G_SIZ]], interval = GR_INTERVAL[s->g[G_DEN]], ov, r;
+    int pit = (int)s->g[G_PIT] - PIT_MID;
+
+    if (pit < -24)
+        pit = -24;
+    if (pit > 24)
+        pit = 24;
+    n->g_pos = (uint8_t)s->g[G_POS];
+    n->g_size = size;
+    n->g_phinc = (256u << 16) / size;
+    n->g_interval = interval;
+    n->g_spray = GR_SPRAY[s->g[G_SPR]];
+    n->g_ratio = GR_RATIO[pit + 24];
+    n->g_speed = ((int32_t)s->g[G_SPD] - 32) * 4096;
+    ov = (size << 8) / interval;                        // grains at once, Q8
+    if (ov > GRAINS << 8)
+        ov = GRAINS << 8;
+    if (ov < 256)
+        ov = 256;
+    r = isqrt(ov);                                      // 16 .. 39
+    n->g_norm = (int32_t)((0x7fffffffu / r) * 16 > 0x7fffffffu ? 0x7fffffffu : (0x7fffffffu / r) * 16);
+}
+
 static void coef(struct sl_coef *c, const struct sl_set *s)
 {
     struct sl_coef n;
@@ -244,9 +352,11 @@ static void coef(struct sl_coef *c, const struct sl_set *s)
     n.lp_on = top < 127;
     n.dec = dec < DEC_INF;
     n.on = s->eng == ENG_TRANSIENTS && (n.hp_on || n.lp_on || n.dec || n.punch || n.dly);
+    coef_granular(&n, s);
     // The audio interrupt reads the entry between any two of these stores: off first and on
     // last, so it never runs on half the new coefficients (a voice off clears its state).
     c->on = 0;
+    c->eng = ENG_SAMPLER;
     c->hp = n.hp;
     c->lp = n.lp;
     c->dmul = n.dmul;
@@ -259,37 +369,48 @@ static void coef(struct sl_coef *c, const struct sl_set *s)
     c->hp_on = n.hp_on;
     c->lp_on = n.lp_on;
     c->dec = n.dec;
+    c->g_pos = n.g_pos;
+    c->g_size = n.g_size;
+    c->g_phinc = n.g_phinc;
+    c->g_interval = n.g_interval;
+    c->g_spray = n.g_spray;
+    c->g_ratio = n.g_ratio;
+    c->g_speed = n.g_speed;
+    c->g_norm = n.g_norm;
     c->on = n.on;
+    c->eng = (uint8_t)(s->eng < ENGINES ? s->eng : ENG_SAMPLER);
 }
 
-static int read_raw(int t, unsigned raw[2])
+static int read_raw(int t, unsigned raw[3])
 {
     void *s = t >= 0 && t < TRACKS ? live_sound(accessor(t)) : 0;
 
     raw[0] = s ? core_store_get(STORE(sample_layer_eng), s, 0) : 0;
     raw[1] = s ? core_store_get(STORE(sample_layer_flt), s, 0) : 0;
+    raw[2] = s ? core_store_get(STORE(sample_layer_gx), s, 0) : 0;
     return s != 0;
 }
 
 static void read_set(int t, struct sl_set *s)
 {
-    unsigned raw[2];
+    unsigned raw[3];
 
     read_raw(t, raw);
-    decode(s, raw[0], raw[1]);
+    decode(s, raw[0], raw[1], raw[2]);
 }
 
 static void refresh(int t)
 {
-    unsigned raw[2];
+    unsigned raw[3];
     struct sl_set s;
 
     read_raw(t, raw);
-    if (!sl_known[t] || raw[0] != sl_raw[t][0] || raw[1] != sl_raw[t][1]) {
+    if (!sl_known[t] || raw[0] != sl_raw[t][0] || raw[1] != sl_raw[t][1] || raw[2] != sl_raw[t][2]) {
         sl_raw[t][0] = raw[0];
         sl_raw[t][1] = raw[1];
+        sl_raw[t][2] = raw[2];
         sl_known[t] = 1;
-        decode(&s, raw[0], raw[1]);
+        decode(&s, raw[0], raw[1], raw[2]);
         coef(&sl_c[t], &s);
     }
 }
@@ -302,6 +423,7 @@ static void write_set(int t, const struct sl_set *set)
         return;
     core_store_set(STORE(sample_layer_eng), s, 0, encode_eng(set));
     core_store_set(STORE(sample_layer_flt), s, 0, encode_flt(set));
+    core_store_set(STORE(sample_layer_gx), s, 0, encode_gx(set));
     notify(acc);
     refresh(t);
 }
@@ -324,64 +446,92 @@ void sample_layer_tick(void *ctrl)
     }
 }
 
-// ---- TRANSIENTS' page ----
+// ---- the engines' pages ----
 
-static int is_transients(void)
+static unsigned engine(void)
 {
     struct sl_set s;
 
     read_set(selected_track(), &s);
-    return s.eng == ENG_TRANSIENTS;
+    return s.eng;
 }
 
-static int knob(int32_t id)
+// A knob of either page: its engine, its index in that engine's values, and 1 for 128 steps.
+struct knob_def { uint8_t eng, i, fine; };
+static const struct knob_def KNOBS_DEF[] = {
+    { ENG_TRANSIENTS, K_PUNCH, 0 }, { ENG_TRANSIENTS, K_DEC, 0 }, { ENG_TRANSIENTS, K_BAS, 1 },
+    { ENG_TRANSIENTS, K_WID, 1 }, { ENG_TRANSIENTS, K_SHF, 0 },
+    { ENG_GRANULAR, G_POS, 1 }, { ENG_GRANULAR, G_SIZ, 1 }, { ENG_GRANULAR, G_DEN, 0 },
+    { ENG_GRANULAR, G_SPR, 0 }, { ENG_GRANULAR, G_PIT, 0 }, { ENG_SAMPLER, 0, 0 },
+    { ENG_GRANULAR, G_SPD, 0 },
+};
+
+static const struct knob_def *knob(int32_t id)
 {
-    return id >= ID_PUNCH && id <= ID_SHF ? (int)(id - ID_PUNCH) : -1;
+    const struct knob_def *k;
+
+    if (id < ID_PUNCH || id > ID_SPD)
+        return 0;
+    k = &KNOBS_DEF[id - ID_PUNCH];
+    return k->eng == ENG_SAMPLER ? 0 : k;
 }
 
-static int fine(int k) { return k == K_BAS || k == K_WID; }  // 128 steps; the rest 64
+static unsigned *value(struct sl_set *s, const struct knob_def *k)
+{
+    return k->eng == ENG_GRANULAR ? &s->g[k->i] : &s->k[k->i];
+}
 
 // get(id, *value): the dial, 8.8 on 0..127.
-static int get(int32_t id, int32_t *value)
+static int get(int32_t id, int32_t *value_out)
 {
-    int k = knob(id);
+    const struct knob_def *k = knob(id);
     struct sl_set s;
+    unsigned v;
 
-    if (k < 0)
+    if (!k)
         return 0;
     read_set(selected_track(), &s);
-    *value = (int32_t)(fine(k) ? s.k[k] : s.k[k] * 2) << 8;
+    v = *value(&s, k);
+    *value_out = (int32_t)(k->fine ? v : v * 2) << 8;
     return 1;
 }
+
+static int32_t sl_acc_k[ID_SPD - ID_PUNCH + 1];    // the turns' fractions, by knob
 
 // delta(view, id, delta, func): whole steps of the 8.8 turn, the fraction carried, clamped,
 // written to the selected track's sound. Taking the turn means stock makes no lock.
 static int delta(void *view, int32_t id, int32_t d, int32_t func)
 {
-    int k = knob(id), t, unit, steps, v, top;
+    const struct knob_def *k = knob(id);
+    int t, unit, steps, v, lo = 0, top, a;
     struct sl_set s;
 
     (void)view;
     (void)func;
-    if (k < 0)
+    if (!k)
         return 0;
     t = selected_track();
     if (t >= TRACKS)
         return 1;
-    unit = fine(k) ? 256 : 512;
-    sl_acc[k] += d;
-    steps = sl_acc[k] / unit;
-    sl_acc[k] -= steps * unit;
+    a = id - ID_PUNCH;
+    unit = k->fine ? 256 : 512;
+    sl_acc_k[a] += d;
+    steps = sl_acc_k[a] / unit;
+    sl_acc_k[a] -= steps * unit;
     if (!steps)
         return 1;
     read_set(t, &s);
-    top = fine(k) ? 127 : 63;
-    v = (int)s.k[k] + steps;
-    if (v < 0)
-        v = 0;
+    top = k->fine ? 127 : 63;
+    if (k->eng == ENG_GRANULAR && k->i == G_PIT) {
+        lo = PIT_MID - 24;
+        top = PIT_MID + 24;
+    }
+    v = (int)*value(&s, k) + steps;
+    if (v < lo)
+        v = lo;
     if (v > top)
         v = top;
-    s.k[k] = (unsigned)v;
+    *value(&s, k) = (unsigned)v;
     write_set(t, &s);
     return 1;
 }
@@ -394,28 +544,60 @@ static void put(char *b, const char *s)
 
 static void put_u(char *b, unsigned v)
 {
-    char tmp[4];
+    char tmp[6];
     int n = 0;
 
     do
         tmp[n++] = (char)('0' + v % 10);
-    while ((v /= 10) && n < 3);
+    while ((v /= 10) && n < 5);
     while (n)
         *b++ = tmp[--n];
     *b = 0;
 }
 
+static void put_signed(char *b, int v)
+{
+    if (v > 0)
+        *b++ = '+';
+    else if (v < 0)
+        *b++ = '-';
+    put_u(b, (unsigned)(v < 0 ? -v : v));
+}
+
 static int text(struct core_text *t)
 {
-    int k = knob(t->id), v;
+    const struct knob_def *k = knob(t->id);
     struct sl_set s;
+    int v;
 
-    if (k < 0)
+    if (!k)
         return CORE_TEXT_PASS;
-    page_seen = 1;
+    page_any = 1;
     read_set(selected_track(), &s);
-    v = (int)s.k[k];
-    switch (k) {
+    v = (int)*value(&s, k);
+    if (k->eng == ENG_GRANULAR) {
+        switch (k->i) {
+        case G_SIZ:                     // milliseconds
+            put_u(t->buf, (GR_SIZE[v] + 24) / 48);
+            return CORE_TEXT_DONE;
+        case G_DEN:                     // grains a second
+            put_u(t->buf, (48000u + GR_INTERVAL[v] / 2) / GR_INTERVAL[v]);
+            return CORE_TEXT_DONE;
+        case G_SPR:                     // milliseconds
+            put_u(t->buf, (GR_SPRAY[v] + 24) / 48);
+            return CORE_TEXT_DONE;
+        case G_PIT:                     // semitones
+            put_signed(t->buf, v - PIT_MID);
+            return CORE_TEXT_DONE;
+        case G_SPD:                     // percent of the sample's own speed
+            put_signed(t->buf, (v - 32) * 100 / 16);
+            return CORE_TEXT_DONE;
+        }
+        put_u(t->buf, (unsigned)v);     // POS
+        return CORE_TEXT_DONE;
+    }
+    page_seen = 1;                      // TRANSIENTS': the band goes over E and F
+    switch (k->i) {
     case K_BAS:
         t->id = ID_STOCK_FRQ;           // stock's FRQ text: hertz where Filter Hz is in the set
         t->value = v << 8;
@@ -427,12 +609,7 @@ static int text(struct core_text *t)
         put_u(t->buf, (unsigned)(v * SHF_MAX_MS + 31) / 63);
         return CORE_TEXT_DONE;
     case K_PUNCH:
-        v = (v - PUNCH_MID) * 2;
-        if (v > 0)
-            t->buf[0] = '+';
-        else if (v < 0)
-            t->buf[0] = '-';
-        put_u(t->buf + (v != 0), (unsigned)(v < 0 ? -v : v));
+        put_signed(t->buf, (v - PUNCH_MID) * 2);
         return CORE_TEXT_DONE;
     case K_DEC:
         if (v == DEC_INF) {
@@ -449,18 +626,27 @@ static const char page_name[] = "TRANSIENTS";
 static struct core_page transients_page = {
     PAGE_SAMPLE, page_name, { ID_PUNCH, ID_DEC, 0, 0, ID_BAS, ID_WID, ID_SHF, 0 }
 };
+static const char granular_name[] = "GRANULAR";
+static struct core_page granular_page = {
+    PAGE_SAMPLE, granular_name, { ID_POS, ID_SIZ, ID_DEN, 0, ID_SPR, ID_PIT, ID_SPD, 0 }
+};
 static uint8_t in_info;
 
-// SMPL's pages while the selected track's engine is TRANSIENTS: both answer TRANSIENTS' page,
-// with stock's BR, SMP and LEV (knobs C, D and H of stock's first page, read from page_info itself,
-// which passes on to stock while in_info is set). Stock's pages otherwise.
+// SMPL's pages while the selected track's engine is TRANSIENTS or GRANULAR: both answer that
+// engine's page, with stock's SMP and LEV, and BR on TRANSIENTS' (knobs D, H and C of stock's
+// first page, read from page_info itself, which passes on to stock while in_info is set).
+// Stock's pages otherwise.
 static const struct core_page *sample_info(int32_t page)
 {
     const char *const *e;
     const int32_t *ids;
+    unsigned eng;
 
     (void)page;
-    if (in_info || !is_transients())
+    if (in_info)
+        return 0;
+    eng = engine();
+    if (eng != ENG_TRANSIENTS && eng != ENG_GRANULAR)
         return 0;
     in_info = 1;
     e = ((page_info_t)PAGE_INFO_AT)(PAGE_SAMPLE);
@@ -468,6 +654,11 @@ static const struct core_page *sample_info(int32_t page)
     if (!e)
         return 0;
     ids = (const int32_t *)(e + 1);
+    if (eng == ENG_GRANULAR) {
+        granular_page.ids[3] = ids[3];  // SMP
+        granular_page.ids[7] = ids[7];  // LEV
+        return &granular_page;
+    }
     transients_page.ids[2] = ids[2];    // BR
     transients_page.ids[3] = ids[3];    // SMP
     transients_page.ids[7] = ids[7];    // LEV
@@ -476,7 +667,7 @@ static const struct core_page *sample_info(int32_t page)
 
 const struct core_page_fn sample_layer_page_fn = { PAGE_SAMPLE, sample_info };
 const struct core_page_fn sample_layer_wave_fn = { PAGE_WAVE, sample_info };
-const struct core_param sample_layer_params = { ID_PUNCH, ID_SHF, get, delta, text };
+const struct core_param sample_layer_params = { ID_PUNCH, ID_SPD, get, delta, text };
 
 const char sample_layer_long_punch[] = "Punch";
 const char sample_layer_short_punch[] = "PCH";
@@ -488,6 +679,18 @@ const char sample_layer_long_wid[] = "Band Width";
 const char sample_layer_short_wid[] = "WID";
 const char sample_layer_long_shf[] = "Sample Shift";
 const char sample_layer_short_shf[] = "SHF";
+const char sample_layer_long_pos[] = "Grain Position";
+const char sample_layer_short_pos[] = "POS";
+const char sample_layer_long_siz[] = "Grain Size";
+const char sample_layer_short_siz[] = "SIZ";
+const char sample_layer_long_den[] = "Grain Density";
+const char sample_layer_short_den[] = "DEN";
+const char sample_layer_long_spr[] = "Grain Spray";
+const char sample_layer_short_spr[] = "SPR";
+const char sample_layer_long_pit[] = "Grain Pitch";
+const char sample_layer_short_pit[] = "PIT";
+const char sample_layer_long_spd[] = "Grain Speed";
+const char sample_layer_short_spd[] = "SPD";
 
 // ---- the engine list (FUNC + SMPL) ----
 
@@ -502,7 +705,7 @@ static void list_close(void)
 // ev_key. FUNC + SMPL on a sound track opens the list with the cursor on the track's engine.
 // While it is open: UP and DOWN move the cursor, YES sets the engine and closes, NO closes with
 // nothing changed, FUNC passes, and any other key closes the list and goes on to stock. SMPL
-// alone on TRANSIENTS' page is taken, so the page stays: it is the engine's only page.
+// alone on an engine's page is taken, so the page stays: it is the engine's only page.
 int sample_layer_key(void *brain, char *ev)
 {
     int key = *(int *)(ev + EV_KEY), flags = *(int *)(ev + EV_FLAGS);
@@ -522,7 +725,7 @@ int sample_layer_key(void *brain, char *ev)
         if (t >= TRACKS)
             return 0;                   // the FX track: stock's
         if (!key_held(KEY_FUNC)) {
-            if (!page_live || !is_transients())
+            if (!page_any_live || engine() == ENG_SAMPLER)
                 return 0;
             swallow_key = KEY_SMPL;
             return 1;
@@ -554,7 +757,7 @@ int sample_layer_key(void *brain, char *ev)
         if (key == KEY_YES) {
             read_set(list_track, &s);
             if (s.eng != list_cursor) {
-                s.eng = list_cursor;
+                defaults(&s, list_cursor);  // the new engine starts from its own defaults
                 write_set(list_track, &s);
             }
         }
@@ -741,10 +944,12 @@ void sample_layer_draw(void *bmp, void *ctrl)
     bm_stride = *(int *)((char *)bmp + 12);
     bm_words = *(unsigned **)((char *)bmp + 16);
     if (bm_w < 128 || *(int *)((char *)bmp + 8) < 64) {
-        page_seen = 0;
+        page_seen = page_any = 0;
         return;
     }
     page_live = page_seen;
+    page_any_live = page_any;
+    page_any = 0;
     if (page_seen && !list_open && !window_open())
         draw_band();
     page_seen = 0;
@@ -872,6 +1077,168 @@ static void delay_line(int v, int32_t *s)
     sl_ft[v] = (uint16_t)ft;
 }
 
+// ---- GRANULAR ----
+
+#define SLOT_DATA(i) (*(const volatile int16_t *const volatile *)(SAMPLE_SLOTS_AT + (i) * 16))
+#define SLOT_RATE(i) (*(const volatile uint16_t *)(SAMPLE_SLOTS_AT + (i) * 16 + 4))
+#define SLOT_FRAMES(i) (*(const volatile uint32_t *)(SAMPLE_SLOTS_AT + (i) * 16 + 8))
+#define EFF(t, i) (((const volatile int16_t *)PARAMS_EFF_AT)[(t) * 42 + (i)])
+#define WIN_END (256u << 16)
+
+struct grain {
+    uint32_t pos, inc;          // the frame it reads, and its step a frame (Q16)
+    uint32_t ph, phinc;         // its window's phase, Q16 of 256
+    uint16_t frac;              // pos's fraction, Q16
+    uint8_t on;
+};
+
+static struct grain gr[VOICES][GRAINS];
+static int32_t gr_trav[VOICES];         // how far the position has moved since the trig, frames
+static uint16_t gr_tfrac[VOICES];       // and its fraction
+static int32_t gr_next[VOICES];         // frames to the next grain
+static uint32_t gr_age[VOICES];         // frames since the trig
+static uint8_t gr_live[VOICES];         // the cloud makes grains
+static uint32_t gr_rng[VOICES];
+static const volatile int16_t *gr_data[VOICES];
+static uint32_t gr_frames[VOICES];
+
+static void grains_off(int v)
+{
+    int i;
+
+    for (i = 0; i < GRAINS; i++)
+        gr[v][i].on = 0;
+}
+
+static uint32_t rnd(int v)
+{
+    uint32_t x = gr_rng[v] ? gr_rng[v] : 0x9e3779b9u + (uint32_t)v;
+
+    x ^= x << 13;
+    x ^= x >> 17;
+    x ^= x << 5;
+    return gr_rng[v] = x;
+}
+
+// A new grain at the cloud's position: POS, plus how far SPD has moved it, plus SPR at random.
+static void spawn(const struct sl_coef *c, int v, uint32_t frames, uint32_t inc)
+{
+    struct grain *g = 0;
+    int32_t head;
+    int i, w, total = 0;
+
+    for (w = 0; w < VOICES; w++)
+        for (i = 0; i < GRAINS; i++)
+            total += gr[w][i].on;
+    if (total >= GRAIN_BUDGET)
+        return;                                 // the CPU budget is spent: this one is skipped
+    for (i = 0; i < GRAINS; i++)
+        if (!gr[v][i].on) {
+            g = &gr[v][i];
+            break;
+        }
+    if (!g)
+        return;                                 // GRAINS sound already: this one is skipped
+    head = (int32_t)((frames >> 7) * c->g_pos + (((frames & 127) * c->g_pos) >> 7)) + gr_trav[v];
+    if (c->g_spray)
+        head += (int32_t)(rnd(v) % (2u * c->g_spray + 1)) - c->g_spray;
+    head %= (int32_t)frames;
+    if (head < 0)
+        head += (int32_t)frames;
+    g->pos = (uint32_t)head;
+    g->frac = 0;
+    g->inc = inc;
+    g->ph = 0;
+    g->phinc = c->g_phinc;
+    g->on = 1;
+}
+
+// The voice's block, in place of stock's sample: the grains of the sample the track plays now
+// (its SMP after locks and scenes), from its slot in memory, each read at PIT's speed through
+// a Hann window, summed, at 1 / sqrt of the grains at once. A trig starts the cloud again; it
+// stops making grains GR_LIFE after the last trig, and AMP shapes it all the while.
+static void granular(const struct sl_coef *c, int v, int t, int32_t *s, unsigned hit)
+{
+    const volatile int16_t *data = 0;
+    uint32_t frames = 0, rate = 0, inc;
+    int slot = EFF(t, IDX_SMP) >> 8, n, i, any = 0;
+    int32_t q, tv;
+
+    if (slot >= 1 && slot <= SLOT_LAST) {
+        data = SLOT_DATA(slot);
+        frames = SLOT_FRAMES(slot);
+        rate = SLOT_RATE(slot);
+    }
+    if (!data || frames < 64 || rate < 1000) {
+        grains_off(v);
+        gr_live[v] = 0;
+        for (n = 0; n < FRAMES; n++)
+            s[n] = 0;
+        return;
+    }
+    if (data != gr_data[v] || frames != gr_frames[v]) {
+        grains_off(v);                          // another sample: the old grains read it no more
+        gr_data[v] = data;
+        gr_frames[v] = frames;
+    }
+    if (hit) {
+        gr_live[v] = 1;
+        gr_age[v] = 0;
+        gr_trav[v] = 0;
+        gr_tfrac[v] = 0;
+        gr_next[v] = 0;
+    }
+    for (i = 0; i < GRAINS; i++)
+        any |= gr[v][i].on;
+    if (!gr_live[v] && !any) {
+        for (n = 0; n < FRAMES; n++)
+            s[n] = 0;
+        return;
+    }
+    inc = (c->g_ratio * (rate >> 4)) / 3000;    // PIT times the sample's rate over 48 kHz, Q16
+    for (n = 0; n < FRAMES; n++) {
+        int32_t acc = 0;
+
+        if (gr_live[v] && --gr_next[v] <= 0) {
+            spawn(c, v, frames, inc);
+            gr_next[v] += (int32_t)c->g_interval;
+        }
+        for (i = 0; i < GRAINS; i++) {
+            struct grain *g = &gr[v][i];
+            uint32_t j, f;
+            int32_t a, b, smp;
+
+            if (!g->on)
+                continue;
+            j = g->pos + 1 < frames ? g->pos + 1 : 0;
+            a = data[g->pos];
+            b = data[j];
+            smp = a + (((b - a) * (int32_t)(g->frac >> 1)) >> 15);
+            acc += (smp * GR_WIN[g->ph >> 16]) >> 3;            // Q27
+            f = g->frac + (g->inc & 0xffff);
+            g->pos += (g->inc >> 16) + (f >> 16);
+            g->frac = (uint16_t)f;
+            while (g->pos >= frames)
+                g->pos -= frames;
+            g->ph += g->phinc;
+            if (g->ph >= WIN_END)
+                g->on = 0;
+        }
+        s[n] = sshl(qmul(acc, c->g_norm), 4);
+    }
+    q = c->g_speed * FRAMES + gr_tfrac[v];      // the position moves at SPD
+    tv = gr_trav[v] + (q >> 16);
+    gr_tfrac[v] = (uint16_t)(q & 0xffff);
+    while (tv < 0)
+        tv += (int32_t)frames;
+    while (tv >= (int32_t)frames)
+        tv -= (int32_t)frames;
+    gr_trav[v] = tv;
+    gr_age[v] += FRAMES;
+    if (gr_age[v] > GR_LIFE)
+        gr_live[v] = 0;
+}
+
 // Once a block, before stock's voice mixer (sample-layer.s). A voice whose track's engine is
 // SAMPLER, or TRANSIENTS with every stage neutral, is left as stock wrote it, bit for bit.
 // First the delay line (SHF and PUNCH, the trig's marker delayed with it), then each frame, with
@@ -894,6 +1261,12 @@ void sample_layer_render(void)
         if (t >= TRACKS)
             continue;
         c = &sl_c[t];
+        if (c->eng == ENG_GRANULAR) {
+            sl_used[v] = 0;
+            sl_pend[v] = -1;
+            granular(c, v, (int)t, s, trig & (1u << v));
+            continue;
+        }
         dly = c->on && (c->dly || c->punch);
         if (dly && !sl_used[v]) {               // a delay line taken up: cleared, no old hit
             for (n = 0; n < DLY_LEN; n++)
