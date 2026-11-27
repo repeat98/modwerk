@@ -268,6 +268,8 @@ export async function runSteps(ids, ctx, deps, results = []) {
     if (step.unit && ctx.target === 'emulator') result.emulator = true
     results.push(result)
     const stop = failed()
+    // Step 9 asks for an instance curve only when the package has instances: read here, as the unit steps run in a process of their own.
+    if (step.id === 'cost-unit' && ctx.kind === 'module' && ctx.instances === undefined) try { ctx.instances = deps.instances?.(ctx.id, ctx.pkg ?? builtPackage(ctx)) } catch { /* unread: it still asks */ }
     const p = plan(step, ctx)
     result.commands = [...(p.trial ? [p.trial] : []), ...(p.commands ?? [])].map(shown)
     if (p.emulator) result.emulator = true
@@ -330,7 +332,6 @@ export async function runSteps(ids, ctx, deps, results = []) {
         ctx.pkg ??= builtPackage(ctx)
         if (!deps.exists(ctx.pkg)) { code = 1; result.reason = 'no package at ' + ctx.pkg }
         else ctx.build.package = { path: ctx.pkg, sha256: deps.sha256(ctx.pkg) }
-        if (code === 0 && ctx.kind === 'module') try { ctx.instances = deps.instances?.(ctx.id, ctx.pkg) } catch { /* unread: step 9 still asks for the curve */ }
       }
       if (code === 0 && step.id === 'unit-read') { ctx.startInventory = reading(outputs.at(-1)); if (part?.banks) ctx.partStart = part }
       // The inventory is compared whenever its own command ran, also when the Part could not be put back after it.
