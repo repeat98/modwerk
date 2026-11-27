@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.5.0-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "CLYPS opens in Clip View; the big plate shows the source that plays, the line below the one waiting for the bar (pulsing) or the home pattern.",
+      "Empty slots show a dot instead of a number in Clip View and in the Panorama; they stay reachable.",
+      "FUNC, FUNC + TRACK mutes and TEMPO reach the Octatrack without leaving CLYPS; a stock popup pauses CLYPS and it comes back.",
+      "In the Panorama, FUNC + LEVEL moves the column and the footer names the focused Row, its TRIG or its state."
+    ]
+  },
+  {
     "version": "0.4.0-experimental",
     "date": "2026-11-26",
     "changes": [

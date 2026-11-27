@@ -5,6 +5,7 @@
 enum { CAPTURE, CELL, RESTORE_HOME };
 enum { UP = 0x33, DOWN = 0x20, LEFT = 0x34, RIGHT = 0x21, PAGE_KEY = 0x1b };
 enum { SCENE_A = 0x19, SCENE_B = 0x1a, LEVEL_KNOB = 6 };
+enum { TEMPO_KEY = 0x18, FUNC_KEY = 0x2d };
 #define STOCK_TRACK (BYTE(0x100b14ccu) & 7u)   /* the track the stock tabs highlight */
 static uint32_t stock_edges[2];
 
@@ -49,10 +50,20 @@ static int sound_key(unsigned key)
     return alone(key) && ((key >= SRC && key <= SRC + 4) || clyps_meta_track_key(key));
 }
 
-/* Track focus is the stock selection (D33): TRACK keys reach the stock, CLYPS reads it back. */
+/* FUNC + TRACK is the stock mute (D36.01, R1): the pair always reaches the stock. */
+static int mute_gesture(unsigned key)
+{
+    return clyps_meta_track_key(key) && held(FUNC_KEY) && pair(key, FUNC_KEY);
+}
+
+/* Track focus is the stock selection (D33): TRACK keys reach the stock, CLYPS reads it back.
+ * FUNC + LEVEL may move the Panorama column on its own (D36.01); the next stock track change
+ * takes the focus back, and Clip View always shows the stock track. */
 static void follow_track(void)
 {
     unsigned t = STOCK_TRACK;
+    if (t == seen_stock) return;
+    seen_stock = t;
     if (t == track) return;
     track = t;
     if (view == CLIP) src_cursor = (requested >> (4 * t)) & 15;
@@ -61,6 +72,8 @@ static void follow_track(void)
 static void open_view(enum panel_view target)
 {
     if (target == NATIVE && view != NATIVE) mem_track = track;
+    if (target == CLIP) { track = seen_stock = STOCK_TRACK; }
+    if (target != NATIVE && view == NATIVE) occupancy_all();
     if (target == ROW || target == CLIP) last_view = target;
     view = target;
     visible = target != NATIVE;
@@ -82,12 +95,14 @@ static void resume_view(void)
 
 static void performance_context(void)
 {
-    if (mode && (stock_window() || GRID_REC || LIVE_REC || REC_HELD ||
-                 BYTE(0x80000015u) || !supported())) {
+    /* A stock popup (TEMPO, a toast, a dialog) only suspends CLYPS: it keeps its view, its
+     * setup and every pending request, gives the popup every key and encoder, draws nothing
+     * while it is open and comes back when it closes (D43.04, Jannik 22/11 on Row Edit). */
+    if (mode && (GRID_REC || LIVE_REC || REC_HELD || BYTE(0x80000015u) || !supported())) {
         mode = 0;
         open_view(NATIVE);
     }
-    if (mode && view != SETUP) follow_track();
+    if (mode && view != SETUP && !stock_window()) follow_track();
 }
 
 static void cancel_pending(void)
@@ -169,6 +184,13 @@ static int performance_press(unsigned key, int early)
         return 0;
     }
     if (key == PLAY) return 0;
+    /* FUNC is a modifier and never leaves CLYPS (D43.03); FUNC + TRACK mutes (R1 native mutes);
+     * TEMPO opens the stock tempo popup on the stock clock (D43.04). None of them edits a
+     * sequence, so they reach the stock in every view and under the edit lock. */
+    if (key == FUNC_KEY || mute_gesture(key) || (key == TEMPO_KEY && alone(key))) {
+        if (locked && lock_note) { lock_note = 0; redraw(); }
+        return 0;
+    }
     if (locked) {
         if (alone(key) && key == ARR && supported()) {
             mode = 1;
@@ -190,8 +212,9 @@ static int performance_press(unsigned key, int early)
         resume_view();
         return 1;
     }
-    if (key == 0x29 || key == 0x2d || key == 0x2e || key == 0x2f || key == 0x35) {
-        /* Yield the complete chord at home. Keep foreign native edits interlocked. */
+    if (key == 0x29 || key == 0x2e || key == 0x2f || key == 0x35) {
+        /* REC, PATTERN, BANK and MIDI open their stock modes: yield the complete chord at home.
+         * Keep foreign native edits interlocked. */
         mode = 0;
         open_view(NATIVE);
         return locked;
@@ -201,7 +224,7 @@ static int performance_press(unsigned key, int early)
         unsigned lane = held_track(key);
         if (lane < TRACKS) {                              /* TRACK first, then TRIG */
             if (view == ROW) cell_launch(lane, key);
-            else if (view == CLIP) submit_lane(lane, key);
+            else if (view == CLIP) { submit_lane(lane, key); if (lane == track && !refused) src_cursor = key; }
             return view != NATIVE;
         }
     }
@@ -223,7 +246,10 @@ static int performance_press(unsigned key, int early)
             set_operation(clyps_focus_step(operation, key == UP ? -1 : 1, RESTORE_HOME));
         if (key < 16 && operation == CELL) draft = key;
     } else if (clyps_meta_track_key(key)) {
-        return 0;                                         /* the stock selects; CLYPS follows */
+        /* The stock selects and CLYPS follows. The key also takes the Panorama column back
+         * when FUNC + LEVEL moved it away from a stock track that does not change. */
+        track = key - 0x10;
+        return 0;
     } else if (view == ROW && key == PAGE_KEY) {
         open_view(SETUP);
         set_operation(CAPTURE);
@@ -234,6 +260,8 @@ static int performance_press(unsigned key, int early)
             if (!missing) submit(rows[key], key + 1);
         } else {
             submit_lane(track, key);
+            /* The hand that launched is where the eye looks: focus follows a TRIG launch. */
+            if (view == CLIP && !refused) src_cursor = key;
             if (view == NATIVE) open_view(NATIVE);
         }
     } else if (key == YES && view == ROW) {
@@ -278,11 +306,12 @@ int module_key(int code, int pressed)
 int module_enc(int encoder, int delta)
 {
     performance_context();
+    if (stock_window()) return 0;          /* the TEMPO popup or a dialog owns the encoders */
     if (!visible) {
-        if (!locked || stock_window()) return 0;
-        /* A plain turn (or with a scene key, a scene lock) edits the Part. With a trig held it
-         * would write a lock into the home pattern. */
-        if ((alone(64) || alone(SCENE_A) || alone(SCENE_B)) && !GRID_REC && !LIVE_REC && !REC_HELD) {
+        if (!locked) return 0;
+        /* A plain turn (with FUNC, a fine turn; with a scene key, a scene lock) edits the Part.
+         * With a trig held it would write a lock into the home pattern. */
+        if ((alone(64) || alone(FUNC_KEY) || alone(SCENE_A) || alone(SCENE_B)) && !GRID_REC && !LIVE_REC && !REC_HELD) {
             if (lock_note) { lock_note = 0; redraw(); }
             return 0;
         }
@@ -290,8 +319,14 @@ int module_enc(int encoder, int delta)
         redraw();
         return 1;
     }
-    if (!alone(64)) return 1;
     unsigned knob = (unsigned)encoder & ~0x100u;
+    /* FUNC + LEVEL moves the Panorama column (D36.01). Focus only: no launch, no source. */
+    if (view == ROW && knob == LEVEL_KNOB && held(FUNC_KEY) && alone(FUNC_KEY)) {
+        track = clyps_focus_step(track, delta, TRACKS - 1);
+        redraw();
+        return 1;
+    }
+    if (!alone(64)) return 1;
     /* LEVEL navigates only: it never launches (D33). */
     if (view == ROW && knob == LEVEL_KNOB) focus_row(clyps_focus_step(slot, delta, 15));
     if (view == CLIP && knob == LEVEL_KNOB) src_cursor = clyps_focus_step(src_cursor, delta, 15);

@@ -1,0 +1,473 @@
+{
+  "module": "2a9b497e29935d2869d27d6f3ca956fbe8b6bed2afef5f6ee9cc5aacaa060c17",
+  "observations": [
+    [
+      "A2 first entry opens Clip View",
+      {
+        "view": 2,
+        "mode": 1,
+        "playing": 0
+      }
+    ],
+    [
+      "open row",
+      {
+        "view": 1,
+        "mode": 1,
+        "playing": 0
+      }
+    ],
+    [
+      "cursor row 2, T2 through the stock tab",
+      {
+        "slot": 1,
+        "track": 1,
+        "playing": 0
+      }
+    ],
+    [
+      "capture R02",
+      {
+        "defined": 2,
+        "last_row": 0
+      }
+    ],
+    [
+      "T2 selects A02",
+      {
+        "view": 2,
+        "track": 1,
+        "src_cursor": 1,
+        "playing": 16
+      }
+    ],
+    [
+      "capture R05",
+      {
+        "view": 1,
+        "defined": 18,
+        "slot": 4,
+        "last_row": 0
+      }
+    ],
+    [
+      "advance to R02 independently of cursor",
+      {
+        "playing": 0,
+        "last_row": 2,
+        "slot": 4
+      }
+    ],
+    [
+      "advance to R05",
+      {
+        "playing": 16,
+        "last_row": 5
+      }
+    ],
+    [
+      "end retains R05",
+      {
+        "playing": 16,
+        "last_row": 5
+      }
+    ],
+    [
+      "override T2 retains path",
+      {
+        "playing": 32,
+        "last_row": 5
+      }
+    ],
+    [
+      "direct R02 pending during play",
+      {
+        "playing": 32,
+        "pending_row": 2,
+        "last_row": 5
+      }
+    ],
+    [
+      "STOP cancels pending",
+      {
+        "playing": 32,
+        "requested": 32,
+        "pending_row": 0,
+        "last_row": 5
+      }
+    ],
+    [
+      "exit with foreign edit lock",
+      {
+        "view": 0,
+        "locked": 1
+      }
+    ],
+    [
+      "stopped restore",
+      {
+        "playing": 0,
+        "requested": 0,
+        "last_row": 0,
+        "mode": 0
+      }
+    ],
+    [
+      "S03 ARR returns to the remembered Panorama",
+      {
+        "view": 1,
+        "mode": 1,
+        "locked": 0
+      }
+    ],
+    [
+      "S03 crossfader under Panorama",
+      {
+        "view": 1
+      }
+    ],
+    [
+      "S03 Scene A under Panorama, no launch",
+      {
+        "view": 1,
+        "playing": 0,
+        "requested": 0
+      }
+    ],
+    [
+      "S03 Clip",
+      {
+        "view": 2
+      }
+    ],
+    [
+      "S03 pause keeps the pending Row",
+      {
+        "view": 1,
+        "pending_row": 5,
+        "playing": 0,
+        "last_row": 0
+      }
+    ],
+    [
+      "S03 resume commits at the next boundary",
+      {
+        "pending_row": 0,
+        "last_row": 5,
+        "playing": 16
+      }
+    ],
+    [
+      "S03 T3 + TRIG 2: cell from R02",
+      {
+        "requested": 16,
+        "org_req": 84018437,
+        "pending_row": 0,
+        "last_row": 5
+      }
+    ],
+    [
+      "S03 T2 + TRIG 2: second cell pending",
+      {
+        "requested": 0,
+        "playing": 16,
+        "org_req": 84017669,
+        "org_play": 84215045,
+        "last_row": 5
+      }
+    ],
+    [
+      "S03 cells commit, path unchanged",
+      {
+        "playing": 0,
+        "org_play": 84017669,
+        "last_row": 5,
+        "pending_row": 0
+      }
+    ],
+    [
+      "S03 Row Advance ends after R05",
+      {
+        "last_row": 5,
+        "pending_row": 0
+      }
+    ],
+    [
+      "S03 T2 A02 from R05",
+      {
+        "playing": 16
+      }
+    ],
+    [
+      "S03 native with foreign sources",
+      {
+        "view": 0,
+        "locked": 1
+      }
+    ],
+    [
+      "S03 AMP page passes",
+      {
+        "locked": 1,
+        "lock_note": 0
+      }
+    ],
+    [
+      "S03 trig edit held under the lock",
+      {
+        "lock_note": 1,
+        "playing": 16
+      }
+    ],
+    [
+      "S03 Clip remembered",
+      {
+        "view": 2
+      }
+    ],
+    [
+      "S03 AMP page from Clip",
+      {
+        "view": 0,
+        "locked": 1
+      }
+    ],
+    [
+      "S03 ARR back to Clip",
+      {
+        "view": 2
+      }
+    ],
+    [
+      "S03 stop and restore home",
+      {
+        "playing": 0,
+        "requested": 0,
+        "last_row": 0,
+        "mode": 0
+      }
+    ],
+    [
+      "A2 reference at home",
+      {
+        "mode": 0,
+        "playing": 0,
+        "requested": 0
+      }
+    ],
+    [
+      "A2 Clip before FUNC+T2",
+      {
+        "view": 2,
+        "mode": 1
+      }
+    ],
+    [
+      "A2 Clip FUNC+T2 mutes through the stock",
+      {
+        "view": 2,
+        "mode": 1
+      }
+    ],
+    [
+      "A2 Clip FUNC alone stays",
+      {
+        "view": 2,
+        "mode": 1
+      }
+    ],
+    [
+      "A2 Panorama before FUNC+T2",
+      {
+        "view": 1,
+        "mode": 1
+      }
+    ],
+    [
+      "A2 Panorama FUNC+T2 mutes through the stock",
+      {
+        "view": 1,
+        "mode": 1
+      }
+    ],
+    [
+      "A2 Panorama FUNC alone stays",
+      {
+        "view": 1,
+        "mode": 1
+      }
+    ],
+    [
+      "A2 Clip before TEMPO",
+      {
+        "view": 2,
+        "mode": 1
+      }
+    ],
+    [
+      "A2 TEMPO keeps CLYPS",
+      {
+        "view": 2,
+        "mode": 1
+      }
+    ],
+    [
+      "A2 back in Clip after TEMPO",
+      {
+        "view": 2,
+        "mode": 1
+      }
+    ],
+    [
+      "A2 Clip T6 empty slots",
+      {
+        "view": 2,
+        "track": 5
+      }
+    ],
+    [
+      "A2 empty slot reachable",
+      {
+        "src_cursor": 1
+      }
+    ],
+    [
+      "A2 back from the stock message",
+      {
+        "view": 2,
+        "mode": 1
+      }
+    ],
+    [
+      "A2 Panorama",
+      {
+        "view": 1,
+        "track": 0
+      }
+    ],
+    [
+      "A2 FUNC+LEVEL moves the column only",
+      {
+        "view": 1,
+        "track": 3,
+        "playing": 0
+      }
+    ],
+    [
+      "A2 TRACK takes the column back",
+      {
+        "track": 0
+      }
+    ],
+    [
+      "A2 stop and restore home",
+      {
+        "playing": 0,
+        "requested": 0,
+        "mode": 0
+      }
+    ]
+  ],
+  "alpha2_occupancy": {
+    "occ": [
+      7,
+      7,
+      7,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "usable": 65535
+  },
+  "sprint03": {
+    "crossfader": [
+      0,
+      64,
+      127,
+      0
+    ],
+    "scene": [
+      "0008",
+      "0308"
+    ],
+    "beats": [
+      "0c0c0c0c0c0f0d0d0d0d0d0f0d0d0d0d0d0f0d0d0d0d0d0f",
+      "0d0d0d0d0d0f0c0c0c0c0c0f0d0d0d0d0d0f0d0d0d0d0d0f"
+    ],
+    "lock": {
+      "part": [
+        "20f4e86ac989d57c7b4e12ccf4e2c37fb0dbb6663597db63e75991e1bab6f436",
+        "e81d8c06f44cc028ddc5a5be10a4b4b4ec2f3d8699612dbf321aa4219117a3fd"
+      ],
+      "pattern": "5e5298575f9f75623d99981391b4b722cc16cee4fc72e1aae5fcb9ad2bef7070"
+    }
+  },
+  "alpha2": {
+    "mute_reference": {
+      "0x8000000a": [
+        8,
+        10
+      ],
+      "0x8000546a": [
+        108,
+        0
+      ],
+      "0x800054ea": [
+        108,
+        0
+      ],
+      "0x8000556a": [
+        108,
+        0
+      ],
+      "0x800055ea": [
+        108,
+        0
+      ]
+    },
+    "tempo": {
+      "windows": {
+        "0x460d1e70": 0,
+        "0x460d175c": 1187500876,
+        "0x460e70e0": 0,
+        "0x460e5e30": 0,
+        "0x460e5cd0": 0,
+        "0x460d16a0": 1187500876
+      },
+      "before": 2880,
+      "after": 2976
+    },
+    "stock_message_after_track": true,
+    "focus": {
+      "slot": 5,
+      "track": 3
+    },
+    "pending_pulse": [
+      "ffffffffefe0e0efff63616c6e6ffffcfcfde0e0ffefffe0eee0ffff",
+      "ffffffffefe0e0efffe3e1eceeefff7c7c7d6060ffefffe0eee0ffff"
+    ]
+  },
+  "free_before_after": 786432,
+  "composed_frames": {
+    "a2-first-clip": "374cbdd12143effd6cf8d32e8287124b35a0cc4ad0c3164f17e637578aaafd3d",
+    "first-arr": "fc4586e971fdc1a2b06b8543a404e7f932e1141eee5d8d3d300d9d58d8dfbd86",
+    "setup": "d0751ac887ca9cf603e02c77ab9715ffdd7a9beba6f7a34a0aedbfe7dcb7975d",
+    "clip": "e90ea3a7cdbae46684f4bb97b82b192432532dc28ce18c909b7ad9626f2a7267",
+    "row": "a4dd7555f6a9688d4902ac67fa352a51dfc971177d63d7f75c2b20fcad828daf",
+    "s03-scene": "0bb08de7be1e843abb0663efef86c387fdf9cb30dfb1efde2cdb75b866542eaf",
+    "s03-clip-playing": "afa51eb23e018fa5b0da4e518abc825261f1d232e9ca14033af537c900789505",
+    "s03-pause": "401cf0ff28658af7e941e17d9c73dca387527b1432b94ad8b660b868c826d230",
+    "s03-cell-pending": "498fb490071efa87c3ec90495733532f2ffbab390934afe83ea8d006182413ee",
+    "s03-lock-note": "f61efa898f710209926723d83918c3f9ace5eeda85c66f4e92b71a0d8554950e",
+    "a2-clip-muted": "7a6010706837e2a44bd3ab9179fd143847f4ecbad283db916aa38379d5b37268",
+    "a2-panorama-muted": "411b5584d4b18d7ed48ceb9bfcfea2dba489b8634893309502f81d47991aea25",
+    "a2-tempo-popup": "335da269d1b07e8eeb60547dc0b73eb0f787f04265450e058510cd1f2753d0c1",
+    "a2-tempo-closed": "0f52d8c8b0408d9dc81a1ddcca2b3901f85c0780469e05b37638aeb3d29692d7",
+    "a2-clip-empty-track": "4e4ee04ff2f6ca1e58a4cc4f708f79c685514d5ef96537e37ed5c172d235e5bc",
+    "a2-row-focus-footer": "4bd9d3ed566a71815b7302dfe7bcc27c2fa94381ad9ff1eaa948b7c50c0dffbf",
+    "a2-clip-pending": "8f06d71965e87564b56f353753a66c739f59f68628869d8bbcdd27c545e1ede8",
+    "a2-clip-playing": "e38c4dec15e9a8d84c0e919155b09041f5a5598ebaac6b62a513b736e86ded8c"
+  }
+}

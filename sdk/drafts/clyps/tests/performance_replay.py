@@ -15,6 +15,7 @@ for name in ('emulator', 'base_dir', 'card', 'module', 'module_symbols', 'octaba
 
 parser.add_argument('--stock-controls',action='store_true',help='Also compare native sound, Scenes and mode selection')
 parser.add_argument('--sprint03',action='store_true',help='Also observe live stock data, pause, the selective edit lock, Cell Launch and view memory')
+parser.add_argument('--alpha2',action='store_true',help='Sprint 06-A: Clip View first, occupancy, FUNC, TEMPO, FUNC+TRACK mutes, 2D focus, footer')
 args = parser.parse_args()
 if not __debug__:
     parser.error('Assertions must be enabled')
@@ -209,6 +210,110 @@ with tempfile.TemporaryDirectory() as tmp:
             check('S03 stop and restore home',playing=0,requested=0,last_row=0,mode=0)
             return obs
 
+        def alpha2():
+            obs={}
+            regions=[(0x80000000,0x8000),(0x460d1000,0x1000)]
+            def snap():
+                out={}
+                for b,n in regions:
+                    data=b''.join(peek(cmd,b+i,min(256,n-i)) for i in range(0,n,256))
+                    assert len(data)==n,(hex(b),len(data))
+                    out[b]=data
+                return out
+            def diff(a,b):
+                return {base+i:(a[base][i],b[base][i]) for base in a for i in range(len(a[base])) if a[base][i]!=b[base][i]}
+            def mute(t):
+                edge(0x2d,True); tap(0x10+t); edge(0x2d,False); cmd('run 300')
+            # FUNC + TRACK reference with CLYPS off screen (mode 0, home, stopped).
+            check('A2 reference at home',mode=0,playing=0,requested=0)
+            s0=snap(); cmd('run 300'); s1=snap(); noise=set(diff(s0,s1))
+            def at(sn,a):
+                base=next(b for b,n in regions if b<=a<b+n); return sn[base][a-base]
+            mute(1); s2=snap(); mute(1); s3=snap(); mute(1); s4=snap(); mute(1); s5=snap()
+            # Mute state: bytes that flip the same way on two mute/unmute cycles and not with time.
+            marks={a:v for a,v in diff(s1,s2).items() if a not in noise and
+                   at(s3,a)==v[0] and at(s4,a)==v[1] and at(s5,a)==v[0]}
+            print('A2 FUNC+T2 stock mute bytes',{hex(a):v for a,v in marks.items()},flush=True)
+            assert marks,'no stock mute state found'
+            obs['mute_reference']={hex(a):v for a,v in marks.items()}
+            # The same gesture over each CLYPS view must make the same stock change and keep CLYPS.
+            for name,view_id in (('Clip',2),('Panorama',1)):
+                tap(arr)
+                if num(origin+module['offsets']['view'])!=view_id: tap(arr)
+                check(f'A2 {name} before FUNC+T2',view=view_id,mode=1)
+                before=snap(); mute(1); after=snap()
+                bad={hex(a):(v,(at(before,a),at(after,a))) for a,v in marks.items() if (at(before,a),at(after,a))!=v}
+                assert not bad,(name,'mute differs',bad)
+                check(f'A2 {name} FUNC+T2 mutes through the stock',view=view_id,mode=1)
+                shot(f'a2-{name.lower()}-muted')
+                mute(1); back=snap()
+                bad={hex(a):at(back,a) for a,v in marks.items() if at(back,a)!=v[0]}
+                assert not bad,(name,'unmute differs',bad)
+                tap(0x2d)
+                check(f'A2 {name} FUNC alone stays',view=view_id,mode=1)
+                tap(no); tap(no)
+            # TEMPO from Clip: the stock popup takes over, CLYPS keeps its view and comes back.
+            tap(arr)
+            if num(origin+module['offsets']['view'])!=2: tap(arr)
+            check('A2 Clip before TEMPO',view=2,mode=1)
+            t0=num(0x8000181c)
+            edge(0x18,True); edge(0x18,False,300)
+            win={hex(a):num(a) for a in (0x460d1e70,0x460d175c,0x460e70e0,0x460e5e30,0x460e5cd0,0x460d16a0)}
+            print('A2 TEMPO windows',win,flush=True)
+            check('A2 TEMPO keeps CLYPS',view=2,mode=1)
+            shot('a2-tempo-popup')
+            for knob in ('0x36','0x30'):
+                cmd(f'knob {knob} 4'); cmd('run 200')
+            t1=num(0x8000181c)
+            print('A2 tempo x24',t0,t1,flush=True)
+            obs['tempo']=dict(windows=win,before=t0,after=t1)
+            tap(no); cmd('run 400')
+            win2={hex(a):num(a) for a in (0x460d1e70,0x460d175c,0x460e70e0,0x460e5e30,0x460e5cd0,0x460d16a0)}
+            print('A2 after NO',win2,flush=True)
+            check('A2 back in Clip after TEMPO',view=2,mode=1)
+            shot('a2-tempo-closed')
+            assert t1!=t0,'tempo did not change through the popup'
+            # Clip View on an empty track: dots, still reachable.
+            tap(0x15)
+            check('A2 Clip T6 empty slots',view=2,track=5)
+            shot('a2-clip-empty-track')
+            tap(down); check('A2 empty slot reachable',src_cursor=1)
+            tap(0x10)
+            # Panorama: FUNC + LEVEL moves the column, footer names the focused Row.
+            print('A2 before ARR',{hex(a):num(a) for a in (0x460d1e70,0x460d175c,0x460e70e0,0x460e5e30,0x460e5cd0)},
+                  'rows',peek(cmd,0x46100b18,8).hex(),{k:num(origin+module['offsets'][k]) for k in ('mode','view','locked','track','seen_stock')},flush=True)
+            if num(0x460d1e70) or num(0x460d175c):
+                # A stock message is up: CLYPS is suspended under it (the frame is the stock's).
+                lcd.png(lcd.pixels(frame()),args.output/'a2-stock-message.png')
+                obs['stock_message_after_track']=True
+                for _ in range(8):
+                    cmd('run 1000')
+                    if not num(0x460d1e70) and not num(0x460d175c): break
+                else:
+                    tap(no); cmd('run 300')
+                check('A2 back from the stock message',view=2,mode=1)
+            tap(arr)
+            print('A2 after ARR',{k:num(origin+module['offsets'][k]) for k in ('mode','view','locked','track')},flush=True)
+            check('A2 Panorama',view=1,track=0)
+            edge(0x2d,True); cmd('knob 0x36 3'); cmd('run 200'); edge(0x2d,False)
+            assert num(0x100b14cc,1)==0,'stock track moved'
+            check('A2 FUNC+LEVEL moves the column only',view=1,track=3,playing=num(origin+module['offsets']['playing']))
+            cmd('knob 0x36 1'); cmd('run 200')
+            shot('a2-row-focus-footer')
+            obs['focus']=dict(slot=num(origin+module['offsets']['slot']),track=3)
+            tap(0x10); check('A2 TRACK takes the column back',track=0)
+            # Pending pulse in Clip: launch during play, two frames a beat apart.
+            tap(arr); tap(0x28); cmd('run 400')
+            tap(3); cmd('run 60'); a=frame(); cmd('run 500'); b=frame()
+            pend=[region(a,11,38,1).hex(),region(b,11,38,1).hex()]
+            print('A2 pending line',pend,flush=True)
+            obs['pending_pulse']=pend
+            shot('a2-clip-pending')
+            cmd('run 3000'); shot('a2-clip-playing')
+            tap(0x27); tap(no); tap(yes)
+            check('A2 stop and restore home',playing=0,requested=0,mode=0)
+            return obs
+
         arr,yes,no,down,right=0x1f,0x31,0x32,0x20,0x21
         cmd('run 3000'); tap(no); cmd('run 3000'); tap(no); cmd('run 500'); tap(yes); cmd('run 2000')
         assert call('modwerk_runtime_active')==0
@@ -225,7 +330,21 @@ with tempfile.TemporaryDirectory() as tmp:
         row=num(symbols['modwerk_runtime_event_row']+4*(42-4))
         origin=num(row)-module['offsets']['clyps_project_init']
         print("stock context", {hex(a):num(a,n) for a,n in [(0x80000034,1),(0x460d1aec,4),(0x80006546,4),(0x80000028,1),(0x800065bd,4),(0x80000015,1),(0x460d1736,4),(0x460d172a,4),(0x460d1726,4),(0x460d1e70,4),(0x460d175c,4),(0x400eb030,4),(0x46100b18,4)]},flush=True)
-        tap(arr)
+        if args.alpha2:
+            tap(arr)
+            check('A2 first entry opens Clip View',view=2,mode=1,playing=0)
+            shot('a2-first-clip')
+            occ=[num(origin+module['offsets']['occ']+2*t,2) for t in range(8)]
+            usable=num(origin+module['offsets']['usable'],2)
+            print('A2 occupancy',[hex(w) for w in occ],'usable',hex(usable),flush=True)
+            # Independent of CLYPS's offsets: make_fixture.py writes T1-T3 trigs into A01-A03
+            # through the bank file, T4-T8 stay clear, and A01-A03 are 16-step 1X grids.
+            assert all(w&7==7 for w in occ[:3]) and all(w&7==0 for w in occ[3:]),occ
+            assert usable&7==7,usable
+            receipt['alpha2_occupancy']=dict(occ=occ,usable=usable)
+            tap(arr)
+        else:
+            tap(arr)
         shot('first-arr')
         check('open row',view=1,mode=1,playing=0)
         tap(down,0x11)
@@ -266,6 +385,8 @@ with tempfile.TemporaryDirectory() as tmp:
             tap(yes)
         if args.sprint03:
             receipt['sprint03']=sprint03()
+        if args.alpha2:
+            receipt['alpha2']=alpha2()
         switch(0)
         assert call('modwerk_runtime_active')==0 and call('modwerk_runtime_free',0)==free
         receipt['free_before_after']=free

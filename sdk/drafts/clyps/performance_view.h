@@ -29,7 +29,9 @@ static void setup_draw(unsigned char *f)
     const char *hint = refused ? (operation == RESTORE_HOME ? "STOP FIRST" : "SOURCE NOT GRID") :
                        missing ? "CAPTURE ROW FIRST" :
                        operation == CAPTURE ? "YES STORE PLAYING" :
-                       operation == CELL ? "TRIG OR A YES SET" :
+                       operation == CELL ? (slot_state(track, draft) == SLOT_EMPTY ? "EMPTY: TRIG OR A" :
+                                            slot_state(track, draft) == SLOT_FOREIGN ? "SOURCE NOT GRID" :
+                                            "TRIG OR A YES SET") :
                        run ? "STOP FIRST" : "YES ALL HOME PATH";
     ui_bar(f, 0, 74, hint, -1, 0, 0);
 }
@@ -38,8 +40,10 @@ static void setup_draw(unsigned char *f)
  * held, and a refused gesture names the way out in the page bar until the next free control. */
 static void lock_draw(unsigned char *f)
 {
-    ui_plate(f, 10, 49, 31, 7);
-    ui_text(f, "LOCKED", 14, 50, &UI_M3, 0);
+    /* SEQ LOCK (D37.05, proposed for the artist): the sequences are held, the sound is free. */
+    static const char label[] = "SEQ LOCK";
+    ui_plate(f, 10, 49, ui_width(&UI_M3, label) + 8, 7);
+    ui_text(f, label, 14, 50, &UI_M3, 0);
     if (lock_note) ui_bar(f, 10, 78, RUNNING ? "LOCK: ARR>CLYPS" : "LOCK: YES>HOME", -1, 0, 0);
 }
 

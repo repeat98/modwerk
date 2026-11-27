@@ -64,8 +64,8 @@ static int stock_src_available(void)
 static volatile unsigned last_row, pending_row;
 #ifdef CLYPS_PERFORMANCE
 enum panel_view { NATIVE, ROW, CLIP, SETUP };
-static enum panel_view view, last_view = ROW;
-static unsigned mode, operation, end_of_path, lock_note, mem_track;
+static enum panel_view view, last_view = CLIP;   /* Clip View first (D39.02) */
+static unsigned mode, operation, end_of_path, lock_note, mem_track, seen_stock = TRACKS, was_window;
 #endif
 static unsigned first_row, zoom, editing, draft, missing;
 #ifdef CLYPS_PERFORMANCE
@@ -155,6 +155,70 @@ static int valid(unsigned refs)
     return 1;
 }
 
+#ifdef CLYPS_PERFORMANCE
+/* Sequence occupancy (D37.03, D38.02): one shared answer to "does this track of this pattern
+ * hold a sequence?" for Clip View, the Panorama, Capture and Cell Source. A grid source plays
+ * steps 1-16 only, so only that page counts: the trig, trigless and four recorder masks of the
+ * audio track record (pattern + t * 0x91a; each 64-step mask keeps steps 1-16 in bytes 6-7).
+ * Conditional, micro-timed and locked trigs set the trig or trigless bit, so they count; a
+ * silent sequence is not an empty one. Locks without a trig play nothing and do not count.
+ * The UI tick rescans one pattern per call (12 byte reads per track), never the audio path or
+ * the frame, so a full refresh takes 16 ticks and edits show within a quarter second. */
+#define TRACK_BYTES 0x91au
+static const unsigned char occ_bytes[12] = {0x06, 0x07, 0x0e, 0x0f, 0x26, 0x27, 0x2e, 0x2f, 0x36, 0x37, 0x3e, 0x3f};
+static uint16_t occ[TRACKS], usable;           /* occ[t] bit p: A(p+1) has a sequence on track t */
+static unsigned occ_next, occ_known;            /* occ_known: patterns scanned since the reset */
+
+static void occupancy_scan(unsigned p)
+{
+    uintptr_t base = BANK_BASE + p * PATTERN_BYTES;
+    uint16_t bit = (uint16_t)(1u << p);
+    if (grid(p)) usable |= bit; else usable &= (uint16_t)~bit;
+    for (unsigned t = 0; t < TRACKS; ++t) {
+        unsigned any = 0;
+        for (unsigned i = 0; i < sizeof occ_bytes; ++i) any |= BYTE(base + t * TRACK_BYTES + occ_bytes[i]);
+        if (any) occ[t] |= bit; else occ[t] &= (uint16_t)~bit;
+    }
+    occ_known |= bit;
+}
+
+static void occupancy_step(void)
+{
+    if (bank_read_active || BYTE(0x80000034u)) return;   /* never read a bank stock is replacing */
+    occupancy_scan(occ_next);
+    occ_next = (occ_next + 1) & 15u;
+}
+
+static void occupancy_all(void)
+{
+    if (bank_read_active || BYTE(0x80000034u)) return;
+    for (unsigned p = 0; p < 16; ++p) occupancy_scan(p);
+}
+
+static void occupancy_reset(void)
+{
+    for (unsigned t = 0; t < TRACKS; ++t) occ[t] = 0;
+    usable = 0;
+    occ_next = occ_known = 0;
+}
+
+static uint32_t occupancy_sig(void)
+{
+    uint32_t s = (uint32_t)usable << 16 | occ_known;
+    for (unsigned t = 0; t < TRACKS; ++t) s = (s << 3 | s >> 29) ^ occ[t];
+    return s;
+}
+
+/* Until a pattern is scanned it counts as available: never hide material by default. */
+enum { SLOT_EMPTY, SLOT_AVAILABLE, SLOT_FOREIGN };
+static unsigned slot_state(unsigned t, unsigned p)
+{
+    if (!(occ_known >> p & 1u)) return SLOT_AVAILABLE;
+    if (!(usable >> p & 1u)) return SLOT_FOREIGN;
+    return occ[t & 7u] >> p & 1u ? SLOT_AVAILABLE : SLOT_EMPTY;
+}
+#endif
+
 /* These notifications bracket the stock card task's serialized bank reader.
  * Only bank A is qualified. Never read its grid while stock replaces it. */
 void clyps_bank_load(unsigned mask, uint32_t caller)
@@ -175,8 +239,10 @@ void clyps_project_init(void)
     unsigned sr = critical();
 #ifdef CLYPS_PERFORMANCE
     view = NATIVE;
-    mode = operation = end_of_path = lock_note = 0;
-    last_view = ROW;
+    mode = operation = end_of_path = lock_note = was_window = 0;
+    last_view = CLIP;
+    seen_stock = TRACKS;
+    occupancy_reset();
     ORIGIN_CLEAR();
 #endif
     playing = requested = 0;
@@ -287,8 +353,14 @@ void module_tick(struct modwerk_runtime_api *api)
     performance_context();
     /* Beat markers and BPM are drawn by CLYPS in Clip: refresh them with the music. */
     unsigned live = (BYTE(0x800065b5u) >> 2 & 3u) | LONG(0x8000181cu) << 2;
-    if (visible && (track != seen_track || live != last_live)) redraw();
+    /* A stock popup (TEMPO, a toast) suspends CLYPS without leaving it: redraw when it closes. */
+    unsigned window = !!stock_window();
+    uint32_t seen_occ = occupancy_sig();
+    if (mode) occupancy_step();
+    if (visible && (track != seen_track || live != last_live || window != was_window ||
+                    seen_occ != occupancy_sig())) redraw();
     last_live = live;
+    was_window = window;
 #else
     check_src_context();
 #endif

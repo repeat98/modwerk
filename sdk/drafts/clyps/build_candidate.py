@@ -51,7 +51,8 @@ if args.symbols:
     if args.performance:
         names.extend(['last_row', 'pending_row', 'view', 'slot', 'track',
                       'src_cursor', 'mode', 'locked', 'lock_note', 'last_view',
-                      'operation', 'org_play', 'org_req'])
+                      'operation', 'org_play', 'org_req', 'occ', 'usable', 'occ_known',
+                      'seen_stock'])
     args.symbols.write_text(json.dumps({
         'sha256': hashlib.sha256(package).hexdigest(),
         'offsets': {name: symbols[name] for name in names},

@@ -3,6 +3,7 @@
 #define CLYPS_HOST_TEST
 #define CLYPS_PERFORMANCE
 #include "../live_module.c"
+static unsigned char content[16][8];   /* nonzero: that track of that pattern has a trig */
 static unsigned running, popup, midi, record, live_record, bank, pattern_chain, bad_grid, held_key = 64, held_key2 = 64, stock_track;
 
 static uint32_t host_long(uintptr_t addr)
@@ -30,6 +31,8 @@ static uint8_t host_byte(uintptr_t addr)
         if (offset == 0x8e51 || offset == 0x8e53)
             return bad_grid && addr >= BANK_BASE+PATTERN_BYTES ? 32 : 16;
         if (offset == 0x8e52 || offset == 0x8e54) return 2;
+        if (offset < 8 * TRACK_BYTES && offset % TRACK_BYTES == 0x07)   /* steps 1-8 of the trig mask */
+            return content[(addr-BANK_BASE)/PATTERN_BYTES][offset / TRACK_BYTES];
     }
     return 0;
 }
@@ -61,7 +64,8 @@ int main(void)
     held_key=0x2d;
     assert(!module_key(ARR,1));
     held_key=64;
-    tap(ARR); tap(YES);
+    tap(ARR); assert(view == CLIP);                      /* Clip View first (D39.02) */
+    tap(ARR); assert(view == ROW); tap(YES);
     assert(end_of_path && !pending_row && !last_row);
     tap(DOWN); tap(PAGE_KEY); tap(YES);
     tap(ARR); select_track(1); tap(2);
@@ -88,9 +92,10 @@ int main(void)
     tap(PAGE_KEY); tap(DOWN); tap(9); tap(YES);
     assert(rows[4]==0x90 && playing==0x30);
     bad_grid=1; tap(4); assert(refused && !pending_row); bad_grid=0;
-    popup=1;
-    assert(!module_key(YES,1)); popup=0; assert(!module_key(YES,1)); assert(!module_key(YES,0));
-    assert(!mode && locked);
+    popup=1;                                              /* a stock popup suspends, never closes, CLYPS */
+    assert(!module_key(YES,1)); assert(!module_enc(LEVEL_KNOB,1)); popup=0; assert(!module_key(YES,1)); assert(!module_key(YES,0));
+    assert(mode && view == ROW && visible && playing == 0x30 && last_row == 5);
+    tap(NO); assert(view == NATIVE && locked);
     running=0; tap(YES);
     assert(!locked && !playing && !last_row);
     tap(ARR); tap(YES);
@@ -106,6 +111,7 @@ int main(void)
 
     /* D33 · A1: the stock tab and CLYPS name the same track in every view. */
     stock_track = 2;
+    tap(ARR); assert(view == CLIP && track == 2);
     tap(ARR); assert(view == ROW && track == 2);
     tap(RIGHT); tap(LEFT); assert(track == 2);          /* no silent split from the stock tab */
     select_track(5); assert(module_key(DOWN,1) && module_key(DOWN,0)); assert(track == 5);
@@ -121,7 +127,7 @@ int main(void)
 
     /* C1/C2: Panorama TRACK + TRIG launches one cell; the path and the other lanes stay. */
     clyps_project_init(); stock_track = 0;
-    tap(ARR); tap(PAGE_KEY); tap(YES);                   /* R01 = home */
+    tap(ARR); tap(ARR); tap(PAGE_KEY); tap(YES);         /* R01 = home */
     tap(DOWN); tap(DOWN); tap(PAGE_KEY); tap(YES);
     tap(PAGE_KEY); tap(DOWN); tap(7); tap(YES);          /* R03: T1 = A08 */
     select_track(2); tap(DOWN); tap(PAGE_KEY); tap(YES);
@@ -161,7 +167,11 @@ int main(void)
     held_key = SCENE_B; assert(!module_enc(1, 1)); assert(!module_key(4,1)); assert(!module_key(4,0)); held_key = 64;
     assert(module_key(5,1) && lock_note); assert(module_key(5,0));       /* trig edit held */
     held_key = 6; assert(module_enc(0, 1)); held_key = 64;               /* p-lock held */
-    assert(module_key(0x2d,1) && module_key(0x2d,0));                    /* FUNC */
+    assert(!module_key(0x2d,1));                                         /* FUNC is a modifier (D43.03) */
+    held_key = 0x2d; assert(!module_enc(0, 1));                          /* FUNC + knob: a fine Part edit */
+    assert(!module_key(0x13,1) && !module_key(0x13,0));                  /* FUNC + TRACK: stock mute */
+    assert(module_key(5,1) && module_key(5,0)); held_key = 64;            /* FUNC + TRIG stays held */
+    assert(!module_key(0x2d,0));
     assert(module_key(0x2e,1) && module_key(0x2e,0));                    /* PATTERN */
     assert(!module_key(0x24,1) && !lock_note); assert(!module_key(0x24,0));
     assert(!module_key(64,1));
@@ -182,5 +192,55 @@ int main(void)
     tap(PAGE_KEY); assert(module_enc(LEVEL_KNOB, 2) && operation == RESTORE_HOME);
     tap(YES); assert(refused && playing == 0x7);         /* Restore All refuses during play */
     running = 0; tap(YES); assert(!playing && !last_row && !org(org_play,0));
+
+    /* Sprint 06-A · WP-A1: FUNC, TEMPO and mutes never leave CLYPS. */
+    clyps_project_init(); stock_track = 0;
+    tap(ARR); assert(view == CLIP);
+    assert(!module_key(0x2d,1) && !module_key(0x2d,0) && view == CLIP && mode);
+    held_key = 0x2d; assert(!module_key(0x11,1)); assert(!module_key(0x11,0)); held_key = 64;
+    assert(view == CLIP && mode && track == 0);
+    assert(!module_key(0x18,1));                         /* TEMPO reaches the stock */
+    popup = 1; assert(!module_key(0x18,0)); assert(!module_enc(LEVEL_KNOB, 4)); assert(!module_key(NO,1));
+    assert(mode && view == CLIP && src_cursor == 0);     /* suspended, not closed */
+    assert(!module_key(NO,0)); popup = 0;
+    assert(module_enc(LEVEL_KNOB, 1) && src_cursor == 1);
+
+    /* WP-A1 sidebar: a TRIG launch moves the focus with it, so plate, grid and bar agree. */
+    running = 1; tap(2); assert(requested == 2 && src_cursor == 2 && !playing);
+    clyps_wrap(); assert(playing == 2);
+    assert(!module_key(STOP,1) && !module_key(STOP,0)); running = 0;
+
+    /* WP-A3: FUNC + LEVEL moves the Panorama column only; the next stock track takes it back. */
+    tap(ARR); assert(view == ROW && track == 0);
+    unsigned req = requested, s0 = slot;
+    held_key = 0x2d; assert(module_enc(LEVEL_KNOB, 3)); held_key = 64;
+    assert(track == 3 && stock_track == 0 && requested == req && slot == s0);
+    assert(module_enc(LEVEL_KNOB, 2) && slot == s0 + 2 && track == 3);
+    select_track(6); assert(track == 6);
+    tap(ARR); assert(view == CLIP && track == 6);         /* Clip View always shows the stock track */
+    select_track(0); tap(ARR);
+
+    /* The TRACK key of the unchanged stock track also takes the column back (emulator, 27/11). */
+    held_key = 0x2d; assert(module_enc(LEVEL_KNOB, 2)); held_key = 64;
+    assert(track == 2 && stock_track == 0);
+    select_track(0); assert(track == 0);
+
+    /* SETUP survives a stock popup (Jannik 22/11): the draft and the view come back. */
+    tap(PAGE_KEY); assert(view == SETUP); tap(DOWN); assert(operation == CELL);
+    popup = 1; assert(!module_key(YES,1)); assert(!module_key(YES,0)); popup = 0;
+    assert(view == SETUP && operation == CELL && visible);
+    tap(NO); assert(view == ROW);
+
+    /* WP-A2: one occupancy model. Unscanned counts as available; then trigs decide. */
+    clyps_project_init();
+    assert(slot_state(0, 5) == SLOT_AVAILABLE);
+    content[0][0] = 1; content[1][2] = 0x80; content[4][7] = 4;
+    tap(ARR);                                           /* entry scans every pattern */
+    assert(slot_state(0, 0) == SLOT_AVAILABLE && slot_state(1, 0) == SLOT_EMPTY);
+    assert(slot_state(2, 1) == SLOT_AVAILABLE && slot_state(7, 4) == SLOT_AVAILABLE && slot_state(7, 3) == SLOT_EMPTY);
+    bad_grid = 1; occupancy_all(); assert(slot_state(2, 1) == SLOT_FOREIGN && slot_state(0, 0) == SLOT_AVAILABLE); bad_grid = 0;
+    content[1][2] = 0; for (unsigned n = 0; n < 16; ++n) module_tick(&(struct modwerk_runtime_api){0});
+    assert(slot_state(2, 1) == SLOT_EMPTY);             /* an edit shows within one rolling pass */
+    tap(5); assert(requested == 5 || playing == 5);     /* an empty slot is still launchable as before */
     return 0;
 }

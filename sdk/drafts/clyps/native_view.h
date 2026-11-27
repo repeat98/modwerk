@@ -126,6 +126,15 @@ static int ui_mark(unsigned char *f, enum ui_mark m, int x, int y, int v)
     return g[0];
 }
 static void ui_two(char *s, unsigned n) { s[0] = (char)('0' + n / 10); s[1] = (char)('0' + n % 10); s[2] = 0; }
+/* Slot content (D37.02, one model for every view): a source with no sequence on the track is a
+ * single dot where its number would be, a source that is not a 16-step grid (it cannot launch)
+ * a small x. Both stay reachable; a Panorama cell of an undefined Row keeps its dash. */
+static void ui_slot_mark(unsigned char *f, unsigned state, int cx, int cy, int v)
+{
+    if (state == SLOT_EMPTY) { ui_px(f, cx, cy, v); return; }
+    ui_px(f, cx - 1, cy - 1, v); ui_px(f, cx + 1, cy - 1, v); ui_px(f, cx, cy, v);
+    ui_px(f, cx - 1, cy + 1, v); ui_px(f, cx + 1, cy + 1, v);
+}
 
 /* ---------------------------------------------------------------- shared reading of the state */
 struct ui_state {
@@ -190,9 +199,11 @@ static void clip_native_draw(unsigned char *f)
     ui_fill(f, 9, 1, 111, 56, 0);
     char path[8], word[8];
     unsigned focus = src_cursor, now = source(st.play, track), want = source(st.req, track);
-    int state = focus == now ? (st.run ? 2 : 1) : (focus == want && want != now ? 3 : 0);  /* 0 focus, 1 set, 2 fill, 3 pending */
+    int idle = focus != now && focus != want;   /* the focus names a source that YES would launch */
     ui_path(path, &st);
-    if (state == 0) { word[0] = 'Y'; word[1] = 'E'; word[2] = 'S'; word[3] = '>'; word[4] = 'A'; ui_two(word + 5, focus + 1); ui_bar(f, 10, 63, word, -1, 0, 0); }
+    if (idle && slot_state(track, focus) == SLOT_FOREIGN) {
+        word[0] = 'A'; ui_two(word + 1, focus + 1); ui_bar(f, 10, 63, word, -1, "NOT GRID", 0);
+    } else if (idle) { word[0] = 'Y'; word[1] = 'E'; word[2] = 'S'; word[3] = '>'; word[4] = 'A'; ui_two(word + 5, focus + 1); ui_bar(f, 10, 63, word, -1, 0, 0); }
     else ui_bar(f, 10, 63, path, -1, 0, 0);
     /* tempo plate, digits on the SRC page proportions */
     ui_plate(f, 11, 3, 28, 17);
@@ -209,25 +220,35 @@ static void clip_native_draw(unsigned char *f)
     }
     ui_mark(f, st.run == 1 ? MARK_PLAY : st.run == 2 ? MARK_PAUSE : MARK_STOP, 14, 24, 1);   /* U1: pause is not play */
     ui_mark(f, GRID_REC || LIVE_REC ? MARK_DISC : MARK_RING, 30, 24, 1);
-    char src[4] = {'A', 0, 0, 0}; ui_two(src + 1, focus + 1);
-    if (state == 2) { ui_plate(f, 11, 35, 28, 11); ui_text(f, src, 17, 37, &UI_C7, 0); }
-    else {
-        if (state == 3) ui_contour(f, 11, 35, 28, 11); else if (state == 1) ui_dotted(f, 11, 35, 28, 11); else ui_corners(f, 11, 35, 28, 11);
-        ui_text(f, src, 17, 37, &UI_C7, 1);
+    /* Sidebar (D43.02): the plate is the source this track plays now, committed at the boundary
+     * (filled while running, dotted stopped). The line under it is the source that waits for the
+     * next boundary (NXT, pulsing on the beat), else the native home pattern CLYPS never changes
+     * (HOM). The focus is only the grid corners and YES>Ann in the bar. */
+    char src[4] = {'A', 0, 0, 0}; ui_two(src + 1, now + 1);
+    if (st.run) { ui_plate(f, 11, 35, 28, 11); ui_text(f, src, 17, 37, &UI_C7, 0); }
+    else { ui_dotted(f, 11, 35, 28, 11); ui_text(f, src, 17, 37, &UI_C7, 1); }
+    char low[4] = {'A', 0, 0, 0};
+    if (want != now) {
+        int pulse = st.run == 1 && (beat & 1);           /* one gentle beat-locked swap, no timer */
+        ui_two(low + 1, want + 1);
+        if (pulse) ui_plate(f, 11, 49, 28, 7); else ui_contour(f, 11, 49, 28, 7);
+        ui_text(f, "NXT", 13, 50, &UI_M3, !pulse); ui_text_r(f, low, 37, 50, &UI_M3, !pulse);
+    } else {
+        low[0] = (char)('A' + (PLAY_BANK & 15)); ui_two(low + 1, (PLAY_PATTERN & 15) + 1);
+        ui_text(f, "HOM", 13, 50, &UI_M3, 1); ui_text_r(f, low, 37, 50, &UI_M3, 1);   /* 25 px, as NXT */
     }
-    char ptn[4] = {(char)('A' + (PLAY_BANK & 15)), 0, 0, 0}; ui_two(ptn + 1, (PLAY_PATTERN & 15) + 1);
-    ui_text(f, "PTN", 13, 50, &UI_M3, 1); ui_text_r(f, ptn, 37, 50, &UI_M3, 1);
     ui_vline(f, 42, 1, 56, 1);
     unsigned home = ui_override(&st, track) ? source(rows[st.pos - 1], track) : 16;
     for (unsigned i = 0; i < 16; ++i) {
         int xb = 47 + 18 * (int)(i % 4), yb = 8 + 11 * (int)(i / 4);
+        unsigned content = slot_state(track, i);
         char lab[3]; ui_two(lab, i + 1);
-        if (i == now && st.run) { ui_plate(f, xb, yb, 15, 9); ui_text(f, lab, xb + 2, yb + 1, &UI_C7, 0); }
-        else {
-            if (i == now) ui_dotted(f, xb, yb, 15, 9);
-            else if (i == want) ui_contour(f, xb, yb, 15, 9);
-            ui_text(f, lab, xb + 2, yb + 1, &UI_C7, 1);
-        }
+        int fill = i == now && st.run;
+        if (fill) ui_plate(f, xb, yb, 15, 9);
+        else if (i == now) ui_dotted(f, xb, yb, 15, 9);
+        else if (i == want) ui_contour(f, xb, yb, 15, 9);
+        if (content == SLOT_AVAILABLE) ui_text(f, lab, xb + 2, yb + 1, &UI_C7, !fill);
+        else ui_slot_mark(f, content, xb + 7, yb + 4, !fill);
         if (i == focus) ui_corners(f, xb - 2, yb - 1, 19, 11);
         if (i == home) ui_vline(f, xb, yb + 1, 7, 1);
     }
@@ -258,10 +279,24 @@ static void panorama_draw(unsigned char *f)
         if (active && (!op || !VISIBLE(op))) play_exc |= 1u << i;
         if (ui_moving(&st, i) && !(oq && VISIBLE(oq))) pend_exc |= 1u << i;
     }
-    char path[8], bpm[4], detail[5] = {0};
-    ui_path(path, &st);
-    if (pend_exc >> track & 1) { detail[0] = '>'; detail[1] = 'A'; ui_two(detail + 2, source(st.req, track) + 1); }
-    else if (play_exc >> track & 1) { detail[0] = 'A'; ui_two(detail + 1, source(st.play, track) + 1); }
+    char path[8], bpm[4], detail[8] = {0};
+    unsigned focus = slot + 1;
+    /* Contextual footer (artist decision, option C): BPM and transport always stay. The rest
+     * speaks about the focused Row. On the position Row it keeps the YES path R02>R03 (Row
+     * Advance stays a separate action); on another Row it names the Row and its state (WAIT
+     * pending, EMPTY undefined, NEXT on the YES path) or the TRIG that launches it. Nothing
+     * permanent is added to the grid. */
+    if (focus == st.pos && focus != st.pend) {
+        ui_path(path, &st);
+        if (pend_exc >> track & 1) { detail[0] = '>'; detail[1] = 'A'; ui_two(detail + 2, source(st.req, track) + 1); }
+        else if (play_exc >> track & 1) { detail[0] = 'A'; ui_two(detail + 1, source(st.play, track) + 1); }
+    } else {
+        const char *word = focus == st.pend ? "WAIT" : !(defined >> slot & 1u) ? "EMPTY" :
+                           focus == st.next ? "NEXT" : 0;
+        path[0] = 'R'; ui_two(path + 1, focus);
+        if (word) { unsigned n = 0; while (word[n]) { detail[n] = word[n]; ++n; } }
+        else { detail[0] = 'T'; detail[1] = 'R'; detail[2] = 'I'; detail[3] = 'G'; ui_two(detail + 4, focus); if (focus < 10) { detail[4] = detail[5]; detail[5] = 0; } }
+    }
     unsigned b = TEMPO24 / 24; bpm[0] = (char)('0' + b / 100); bpm[1] = (char)('0' + b / 10 % 10); bpm[2] = (char)('0' + b % 10); bpm[3] = 0;
     ui_bar(f, 0, 74, b >= 100 ? bpm : bpm + 1, st.run == 1 ? MARK_PLAY5 : st.run == 2 ? MARK_PAUSE5 : MARK_STOP5, path, detail[0] ? detail : 0);
     for (int k = 0; k < UI_ROWS; ++k) ui_hline(f, 15, 6 + 10 * k, 113, 1);
@@ -288,21 +323,24 @@ static void panorama_draw(unsigned char *f)
         unsigned r = first + k + 1, def = !!(defined & (1u << (r - 1)));
         int y = CY(k);
         ui_two(two, r);
+        /* Row number column: plate = position Row, frame = pending Row, corners = focused Row. */
         if (r == st.pos) { ui_plate(f, 3, y + 1, 11, 7); ui_text(f, two, 4, y + 2, &UI_K5, 0); }
         else ui_text(f, two, 4, y + 2, &UI_K5, 1);
+        if (r == st.pend) ui_rect(f, 2, y, 13, 9);
+        else if (r == focus) ui_corners(f, 2, y, 13, 9);
         if (r == st.next) ui_mark(f, MARK_NEXT, 0, y + 2, 1);
         for (unsigned i = 0; i < 8; ++i) {
             int x = GX(i) + 1;
-            unsigned value = source(rows[r - 1], i);
+            unsigned value = source(rows[r - 1], i), content = slot_state(i, value);
             int lit = def && ui_from(st.op, i) == r;                    /* only the real origin lights */
             int pend = ui_from(st.oq, i) == r && ui_moving(&st, i);
-            if (lit && st.run && !pend) { ui_plate(f, x + 1, y + 1, 11, 7); ui_two(two, value + 1); ui_text(f, two, x + 2, y + 2, &UI_K5, 0); }
-            else {
-                if (pend) ui_rect(f, x, y, 13, 9);
-                else if (lit) ui_dotted(f, x + 1, y + 1, 11, 7);
-                if (!def) ui_hline(f, x + 5, y + 4, 3, 1);
-                else { ui_two(two, value + 1); ui_text(f, two, x + 2, y + 2, &UI_K5, 1); }
-            }
+            int fill = lit && st.run && !pend;
+            if (fill) ui_plate(f, x + 1, y + 1, 11, 7);
+            else if (pend) ui_rect(f, x, y, 13, 9);
+            else if (lit) ui_dotted(f, x + 1, y + 1, 11, 7);
+            if (!def) ui_hline(f, x + 5, y + 4, 3, 1);
+            else if (content == SLOT_AVAILABLE) { ui_two(two, value + 1); ui_text(f, two, x + 2, y + 2, &UI_K5, !fill); }
+            else ui_slot_mark(f, content, x + 6, y + 4, !fill);
             if (r == slot + 1 && i == track) {                          /* focus: the cell border opens */
                 int bx = GX(i), by = y - 1;
                 ui_hline(f, bx + 3, by, 9, 0); if (by + 10 < 56) ui_hline(f, bx + 3, by + 10, 9, 0);
