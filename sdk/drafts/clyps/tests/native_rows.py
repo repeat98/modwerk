@@ -246,6 +246,10 @@ with tempfile.TemporaryDirectory() as tmp:
             origin = callbacks()[0] - witness['offsets']['clyps_project_init']
             defined_at = origin + witness['offsets']['defined']
             assert num(defined_at, 2) == 8 and num(0x80000002, 1) == 0
+            if args.performance_overlay:
+                rows_at = origin + witness['offsets']['rows']
+                rows_before = peek(cmd, rows_at, 64)
+                assert int.from_bytes(rows_before[12:16], 'big') == 6
             tap(ARR); tap(0); tap(NO)  # Yield stock controls at home.
             heads = callbacks()[:3]
             cmd('watch ' + ','.join(hex(pc) for pc in heads))
@@ -268,10 +272,22 @@ with tempfile.TemporaryDirectory() as tmp:
             for _ in range(160):
                 advance(100)
                 seen.update(int(hit.split(':')[1], 16) for hit in cmd('hits').split()[2:])
+            if args.performance_overlay and args.project_reload == 'stored':
+                # B's display identity can change before the masked reader returns.
+                for _ in range(120):
+                    if heads[2] in seen: break
+                    advance(1000)
+                    seen.update(int(hit.split(':')[1], 16) for hit in cmd('hits').split()[2:])
+                assert heads[2] in seen, 'stock masked reader did not return'
             heads = callbacks()
             receipt = dict(bank=num(0x80000002, 1), defined=num(defined_at, 2),
                            active=call('modwerk_runtime_active'),
                            observed=[pc in seen for pc in heads[:3]])
+            if args.performance_overlay:
+                assert rows_before == peek(cmd, rows_at, 64)
+                receipt['rows_sha256'] = hashlib.sha256(rows_before).hexdigest()
+                receipt['uncertain'] = num(origin + witness['offsets']['bank_uncertain'])
+                assert receipt['uncertain'] == int(args.project_reload != 'missing')
             args.output.write_text(json.dumps(receipt))
             assert receipt['active'] == 1 and heads[0] == origin + witness['offsets']['clyps_project_init']
             if args.project_reload == 'missing':
