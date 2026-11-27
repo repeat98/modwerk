@@ -17,17 +17,17 @@
     {
       "from": "dsp.c",
       "to": "src/dsp.c",
-      "sha256": "3910c94549a6d4814cb8ceefc282cb55822dbafa44e210737e9b16c48f5d97ab"
+      "sha256": "908d3573f3b589e75c8c238e94e5bc48ed3ec5c73bf61ffcb8649a229d15169c"
     },
     {
       "from": "ui.c",
       "to": "src/ui.c",
-      "sha256": "35f0cd1d5106462c717c58d4b33a562993ed423c3103b3e78c61b314e3e67698"
+      "sha256": "540cf4a2b824e9f7b6ddade3ffc95fcdbdb58134f0e7fd931bbe697ec46ed025"
     },
     {
       "from": "dreel.h",
       "to": "src/dreel.h",
-      "sha256": "1fa16d42c188ac9cd40b87433b7dbd8884478bb62981080862706c644026ecaf"
+      "sha256": "4ef75cbd7d1c7e70cd9d8f17b527b9365b40f7bbd19ad9541dc1a62b0b864b9a"
     },
     {
       "from": "pedal.h",
@@ -42,7 +42,7 @@
     {
       "from": "pedal_ui.inc",
       "to": "src/pedal_ui.inc",
-      "sha256": "4b078ddb65900825ba142836b8b58faabfb3eea20545503d416041240a423ba4"
+      "sha256": "7e604afee9f0e1e4b41a44b6499522660206259ca61ef8c7b4ccee7af2728e41"
     },
     {
       "from": "tables.h",
@@ -76,7 +76,8 @@
     "gentables.py and pedal_tables.py (the generators of tables.h, which is included)"
   ],
   "transformations": [
-    "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json."
+    "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json.",
+    "CRLF line endings normalised to LF by the repository (.gitattributes): src/dsp.c, src/ui.c, src/dreel.h, src/pedal_ui.inc; their hashes are of the committed files."
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata.",
   "evidence": "sdk/digitone/modules/digireel/TESTING.md",

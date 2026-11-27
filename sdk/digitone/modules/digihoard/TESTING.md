@@ -22,6 +22,40 @@ The author tested DigiHoard 0.2 on a Digitone mk1 (release v0.2, 18 October 2026
 - Not run on a Digitone Keys.
 - Not tested in Modwerk on a unit.
 
+## Test procedure: digihoard 0.2.0, 2026-11-27
+
+Build: revision `193a17aa8c6f`, package `imp-digihoard.syx` SHA-256 `250e181a875ee284ddb0b45faa803989ca73ec8169946d24ce71cca77155335e`. `npm run test:procedure -- digihoard --no-unit --package <private>/imp-digihoard.syx --out <private>/procedure`, 8 s. Emulator results are not hardware evidence; only what ran on the unit is.
+
+| # | Step | Layer | Result | Command | Evidence |
+|---|---|---|---|---|---|
+| 1 | Software checks | host | passed | `npm run module:doctor -- digihoard` | logs/01-software.log |
+| 2 | Beside every other module | contract | not run: modules:compat compares the Octatrack's modules only; Digitone has no gate beside every other module yet: its link refuses two modules on one site, so link the image beside the modules it must work with |  |  |
+| 3 | Name the build | host | passed |  | logs/03-build.log |
+| 4 | DSP cost model | contract | not run: the DSP cycle scan models the Octatrack's DSP only |  |  |
+| 5 | Emulator rehearsal | emulator | not run: Digitone has no scripted emulator rehearsal yet |  |  |
+| 6 | Read the unit | unit | not run: Digitone has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 7 | Scripted unit pass | unit | not run: Digitone has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 8 | Soak | unit | not run: no soak for Digitone yet (scripts/octatrack-soak.mjs drives the Octatrack) |  |  |
+| 9 | Cost on the unit | unit | not run: no price on the unit for Digitone yet (device:price reads the Octatrack's frame interrupt) |  |  |
+| 10 | Put back | unit | not run: Digitone has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 11 | Agent by hand | unit | emulator only: the captures and checks above; no unit |  |  |
+| 12 | Submitter's own stage | unit | not run: no unit; the owner takes the author's hardware report |  |  |
+
+### Edge cases for this change
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| Mod Menu entry and page 1 | core_menu, fxkit's effects list and the audio owner | emulator, OS 1.44 build with core 5.4 and fxkit 0.1 | pass: DIGIHOARD in the menu, YES opened its page (Hoard (1/6)) |
+| Beside the other five effect pedals and all six together | shared fxkit, separate buffer regions | linked through the site build path, OS 1.43 and 1.44 | pass |
+| Beside the Digitone library mods | core 5.4 and the library | linked, OS 1.43 and 1.44 | pass, except KitBank on 1.44 (core 2.x only) |
+| Sound through the inputs, CCs, locks | it owns the audio while active | not run: no Digitone unit here | not run: no Digitone unit here |
+| NO gives the synths and the stock effects back | the audio owner must let go | not run: no Digitone unit here | not run: no Digitone unit here |
+
+### For the pull request
+
+Not tested on a unit: Digitone has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands).
+Edge cases: the table above, one row a case (or "Edge cases: none, because …").
+
 ## Not tested
 
 - Any Modwerk build on a unit: behaviour, CPU, saving and reloading a project, a power cycle.

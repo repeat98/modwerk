@@ -42,7 +42,7 @@
     {
       "from": "pedal_ui.inc",
       "to": "src/pedal_ui.inc",
-      "sha256": "4b078ddb65900825ba142836b8b58faabfb3eea20545503d416041240a423ba4"
+      "sha256": "7e604afee9f0e1e4b41a44b6499522660206259ca61ef8c7b4ccee7af2728e41"
     },
     {
       "from": "tables.h",
@@ -76,7 +76,8 @@
     "gentables.py and pedal_tables.py (the generators of tables.h, which is included)"
   ],
   "transformations": [
-    "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json."
+    "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json.",
+    "CRLF line endings normalised to LF by the repository (.gitattributes): src/pedal_ui.inc; their hashes are of the committed files."
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata.",
   "evidence": "sdk/digitone/modules/digihoard/TESTING.md",
