@@ -50,7 +50,7 @@
 
 ### Test procedure on the unit, 27 November 2026
 
-**Steps 1-4 and 6-10 passed on the release package; step 5 (the emulator) was left out for the unit.** Package `c2597a32fa3d8634…` on the owner's MKII, OS 1.40C, development twin `ed5474c6` of base 0.8.3 (`35a5231e5`, the code 0.8.3 ships), the owner's project, bank C pattern C04, Part 2 (its working copy equal to the saved one), a Mac connected, INPUTS AB. `npm run test:procedure` at `67f9c368` with the test-tool fixes of #2306 and #2307 applied uncommitted (they change the tools, not the module).
+**Steps 1-4 and 6-10 passed on the release package; step 5 (the emulator) was left out for the unit.** Package `c2597a32fa3d8634…` on the owner's MKII, OS 1.40C, development twin `ed5474c6` of base 0.8.3 (`35a5231e5`, the code 0.8.3 ships), the owner's project, bank C pattern C04, Part 2 (its working copy equal to the saved one), a Mac connected, INPUTS AB. `npm run test:procedure -- usb-audio-out-tracks-main-cue --package public/octatrack-modules/usb-audio-out-tracks-main-cue/0.4.2-experimental.mwrm --no-emulator --price-base "development twin ed5474c6 of base 0.8.3 (35a5231e5), MKII" --scene "…"` at `67f9c368`, with the test-tool fixes of #2306 and #2307 applied uncommitted (they change the tools, not the module).
 
 - **Scripted pass (step 7):** installed as a RAM trial and rolled back, nothing kept; self-test passed, longest frame 374 µs; 12 of 12 Part switches; the inventory as before.
 - **Soak (step 8):** 2,400 operations in 122 s, no crash, stall or loader error, health reads 13 ms median and 39 ms p95. The project's PROG CH RECV is off, so its program changes were ignored (no pattern changes); its CCs, mutes, scenes and knobs went over USB MIDI beside USB Audio's function.
