@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { context, LAYER, largeSet, packageRunsDsp, plan, preflightCommand, reading, record, recordMarkdown, rehearsal, runProcedure, STEPS, suggestEdgeCases, unitSteps } from './test-procedure.mjs'
+import { context, LAYER, largeSet, packageRunsDsp, plan, preflightCommand, priceTracks, reading, record, recordMarkdown, rehearsal, runProcedure, STEPS, suggestEdgeCases, unitSteps } from './test-procedure.mjs'
 import { bodyProblems } from './pr-body.mjs'
 
 const INVENTORY = '[{"name":"KITS","version":"0.2.0"}]'
@@ -66,6 +66,28 @@ describe('the steps', () => {
       'unit-pass': 'passed', soak: 'passed', 'cost-unit': 'passed', restore: 'passed', 'by-hand': 'to do', developer: 'to do' })
     expect(steps.find(step => step.id === 'soak').reason).toMatch(/inside the scripted pass as device:test --soak 120.*#1770/)
     expect(steps.find(step => step.id === 'cost-model').reason).toMatch(/cycle-scan.mjs\) is not in this checkout/)
+  })
+
+  it('keeps the normal curve and carries an explicit single-owner scope through the unit queue', async () => {
+    expect(priceTracks()).toBe('T1,T3,T6,T7')
+    expect(priceTracks(' t1 ')).toBe('T1')
+    expect(priceTracks('T8,T2')).toBe('T8,T2')
+    for (const invalid of ['', 'T0', 'T9', 'T1,T1', 'T1,,T2', '1']) expect(() => priceTracks(invalid)).toThrow(/price-tracks/)
+    const direct = fakeDeps()
+    await runProcedure(moduleCtx({ curveTracks: 'T1' }), direct)
+    expect(direct.ran.find(line => line.includes('device:price'))).toContain('--curve T1 /out/vibrato.mwrm')
+    const queued = fakeDeps()
+    await runProcedure(moduleCtx({ curveTracks: 'T1', tools: { unitQueue: true } }), queued)
+    expect(queued.ran.find(line => line.startsWith('npm run unit'))).toContain('--price-tracks T1 --unit-phase')
+  })
+
+  it('keeps admission on a separate medium pattern when the curve needs more room', async () => {
+    const direct = fakeDeps()
+    await runProcedure(moduleCtx({ pickPattern: '16', measurePattern: '1', admissionPattern: '4' }), direct)
+    expect(direct.ran.find(line => line.includes('device:price'))).toContain('--pick-pattern 16 --measure-pattern 1 --admission-pattern 4 /out/vibrato.mwrm')
+    const queued = fakeDeps()
+    await runProcedure(moduleCtx({ pickPattern: '16', measurePattern: '1', admissionPattern: '4', tools: { unitQueue: true } }), queued)
+    expect(queued.ran.find(line => line.startsWith('npm run unit'))).toContain('--pick-pattern 16 --measure-pattern 1 --admission-pattern 4 --unit-phase')
   })
 
   it('stops at the first failure and records every later step as not run, with the step that stopped it', async () => {
@@ -376,8 +398,12 @@ describe('the record', () => {
   it('reads the checkout: a module id, a draft, a base and the unit session', () => {
     const root = join(import.meta.dirname, '..'), out = mkdtempSync(join(tmpdir(), 'procedure-'))
     const listed = context(root, { out, share: '/nonexistent.sock' }, ['vibrato'], {})
+    expect(context(root, { out, 'admission-pattern': '4' }, ['vibrato'], {}).admissionPattern).toBe('4')
     expect(listed).toMatchObject({ kind: 'module', id: 'vibrato', source: true, draft: false, machine: 'octatrack', unit: { available: false } })
     expect(listed.unit.reason).toMatch(/no unit session on \/nonexistent.sock/)
+    expect(listed.curveTracks).toBe('T1,T3,T6,T7')
+    expect(context(root, { out, 'no-unit': true, 'price-tracks': ' t1 ' }, ['vibrato'], {}).curveTracks).toBe('T1')
+    expect(() => context(root, { out, 'price-tracks': 'T1,T1' }, ['vibrato'], {})).toThrow(/price-tracks/)
     const published = context(root, { out, published: true, 'no-unit': true }, ['vibrato'], {})
     expect(published.pkg).toMatch(/public\/octatrack-modules\/vibrato\/.+\.mwrm$/)
     expect(published.unit.reason).toMatch(/--no-unit/)
