@@ -1,6 +1,6 @@
 # USB Audio testing
 
-## 0.4.2-experimental (draft), 26 November 2026
+## 0.4.2-experimental, 26-27 November 2026
 
 **#2263 reproduced with 0.4.1 on macOS and its cause found; 0.4.2's fix held a 10-minute run with no buzz and no frame spikes, and the release build more than halves what a Main + Cue recording costs.** Release package `c2597a32fa3d8634…`. Owner's MKII, macOS, development twins of the 0.8.3 base draft (`65f8604c`, `ec9f6ccc`, `764b6e71`, `005817e4`), Main + Cue, INPUTS AB, a 1 kHz tone from the Mac through a Thru on T7 of a test Part, Main recorded back over USB (`rec.swift`, `tone.swift`).
 
@@ -44,9 +44,33 @@
 - **The release on the base musicians have** (the flashed 0.8.2 `24e480c4`, 27 November 2026; a release base takes no keys or development reads, so the transport stayed stopped): installed as a trial, the Mac listed it at once (4 in, 2 out with the unit's saved INPUTS AB), a 30 s recording came in whole (4 channels, 30.24 s), the rollback finished cleanly, the unit stayed on USB and the battery-RAM log gained no incident.
 - **Every setting, changed on the unit** (the release on the 0.8.2 development twin `8a341725`, a Mac connected): LAYOUT, TRACK TAP, OUTPUT MODE and INPUTS changed idle (13 changes), while the Mac recorded (6) and while it played a tone in (3). After each the Mac showed the new channel counts, the Modwerk link came back by itself, no `usb` incident, no late entry or wait; the longest frame 32-34 % idle and up to 52.6 % when a reconnect closed an open stream. A change re-enumerates only when the USB profile changes (LAYOUT across widths, INPUTS); TRACK TAP, OUTPUT MODE and MAIN to TRACK 8 apply in place. The base applies a choice when it is confirmed, never per knob step, after a 1 s grace, and defers it while the transport plays: chosen while playing, MAIN waited 10 s for STOP and came 2 s after it; an idle change took 6 s until the Mac listed the new device. A reconnect ends the Mac's open recording or playback cleanly (the application reopens it). Quick toggles could not be driven over USB (the first reconnect cuts the key requests); by hand they are on the owner's list.
 - **A freeze at an install, the base's (0.8.3 fixes it):** on that twin a USB Audio install a minute after a rollback froze the screen and USB until a power cycle, the audio running: stock's USB DISK reply sender spinning in the USB interrupt on a transfer descriptor a reconnect had left active (the base's record for 0.8.3, docs/verification/2026-11-26-octatrack-base-0-8-3.md). No change of 0.4.2 touches that path: they are the producer, the packet copy, the per-packet frame count while the host plays in and one vendor reply's length; the package's only stock descriptor references (the EP0 descriptors) are those 0.4.1 has.
-- **Open: USB lost after a reconnect** (0.8.3 twin `9cf5c4a8` with the freeze fix, the fourth of five install-PLAY-rollback cycles): the Mac logged the unit's removal at the second reconnect after the install (the saved profile latching, 2.4 s after the first) and never saw it again; the unit's screen ran on, no freeze and no `usb` record, back only after a power cycle. The 26 November stall runs' losses were transient instead (back within 6 s, `recover` finished each). Cause not found; a base-side record is being added. The release waits for it (owner, 27 November 2026).
+- **Known issue: USB lost after a reconnect, rarely** (0.8.3 twins with the freeze fix, install-PLAY-rollback cycles through a USB hub): about one cycle in 30, the Mac resets its port just as the base takes the unit off USB for its own reconnect. The Mac then logs a reset that did not enable the port, then repeated enumeration failures, and the unit stays off USB, its screen and audio running, until a power cycle; a replug does not bring it back. The base's record for 0.8.3 holds the details. The owner chose to ship with it named in the release notes (27 November 2026).
 - **Windows:** after the release, on the owner's PC (owner, 27 November 2026), with `usb-audio-windows-watch.ps1` (Code 10 or a function that does not come back is a failure).
 - **Not yet run:** 20 channels, an MKI, a Keep and a power cycle.
+
+### Test procedure on the unit, 27 November 2026
+
+**Steps 1-4 and 6-10 passed on the release package; step 5 (the emulator) was left out for the unit.** Package `c2597a32fa3d8634…` on the owner's MKII, OS 1.40C, development twin `ed5474c6` of base 0.8.3 (`35a5231e5`, the code 0.8.3 ships), the owner's project, bank C pattern C04, Part 2 (its working copy equal to the saved one), a Mac connected, INPUTS AB. `npm run test:procedure` at `67f9c368` with the test-tool fixes of #2306 and #2307 applied uncommitted (they change the tools, not the module).
+
+- **Scripted pass (step 7):** installed as a RAM trial and rolled back, nothing kept; self-test passed, longest frame 374 µs; 12 of 12 Part switches; the inventory as before.
+- **Soak (step 8):** 2,400 operations in 122 s, no crash, stall or loader error, health reads 13 ms median and 39 ms p95. The project's PROG CH RECV is off, so its program changes were ignored (no pattern changes); its CCs, mutes, scenes and knobs went over USB MIDI beside USB Audio's function.
+- **Price (step 9):** installed with no stream, 0.9 points of the frame interrupt, three 8 s readings while playing (longest frame 81.2 % without it, 83.0 % with it). No instance curve: USB Audio has no instances. The at-rest rule refuses a release above 0.2 that does not rest while unused, so the price stays on the pending list for 0.4.2, as it did for 0.4.0 and 0.4.1, and the next release rests while no computer streams (owner, 27 November 2026).
+- Every trial waited for the USB function to settle: 2.5-2.7 s after the install and after the rollback.
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Install, rollback, install again | its USB function reconnects USB at each | 12 trials on twin `764b6e71`; every trial of the day's procedure runs on `ed5474c6` (30 reconnects by the base's count) | stayed on USB |
+| Every setting, idle, recording and playing in | a profile change re-enumerates | the settings matrix above, twin `8a341725` | 22 changes passed; a choice made while playing waits for STOP |
+| The Mac playing in for 10 minutes (#2263) | the recording follows the host's clock | twin `764b6e71`, 1 kHz into INPUTS AB | no buzz, sidebands -67 to -74 dB |
+| The base musicians have | bound to the flashed 0.8.2 | trial and a 30 s recording on `24e480c4` | passed, stayed on USB |
+| A host reset meeting the base's reconnect | each install and removal reconnects | install-PLAY-rollback cycles through a hub on 0.8.3 twins | about 1 in 30 lost USB until a power cycle: the known issue above |
+| An install soon after a rollback | a reconnect left a stock reply active | twin `8a341725` (0.8.2's code) | froze until a power cycle; 0.8.3 fixes it (not 0.4.2's) |
+| Beside other modules | the shared sites and pool | `modules:compat` (step 2) | passed; not run on the unit beside others |
+| Persistence: Keep and power cycle | the saved settings | not run | the owner's, after release |
+| USB unplugged mid-transfer | the USB link | not run for 0.4.2 | |
+
+Tested on a unit: package c2597a32fa3d, MKII OS 1.40C, test:procedure steps 6, 7, 8, 9, 10; the developer's stage done (the owner, 26-27 November 2026, on his MKII).
+Edge cases: the table above.
 
 ## 0.4.1-experimental (draft), 25 November 2026
 
