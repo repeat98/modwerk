@@ -4,7 +4,7 @@ qv_runtime.c's code() relocates it, with the stream named by the slot's record; 
 
   python3 -B verify_area.py <programs.json> <lfo_dir> <index> [--samples N] [--cycles DSP_HOST_WITH_STEPTRACE [--only]]
 
-index: the program's place in manifest.REVERBS (what PROG stores). The test's proc is a stand-in for the base:
+index: the program's place in manifest.PROGRAMS (what PROG stores). The test's proc is a stand-in for the base:
 - the slot's record at X:$7fb0 + 4 ((r7 >> 8) & 15) names the area (placed at AT, not where it was assembled) and the
   blocks' offsets in the frame's bank;
 - each frame's bank is X:$2000 or X:$4000, alternating; the stand-in puts the dispatcher's parameter page there (its
@@ -237,7 +237,7 @@ def faded(audio_wet, left, right, mix, f0, away):
 def main(argv):
     programs, lfo_dir, index = argv[0], argv[1], int(argv[2])
     plan = qvcf.plans(programs, lfo_dir)[index]
-    p = qvcf.REVERBS[index]
+    p = qvcf.PROGRAMS[index]
     gates = G.Gates(f"Quadraverb area, index {index} (program {p} {qvc.load(programs, p)[0].strip()})")
     G.require_tools()
     tmp = G.workdir("qv-area-")

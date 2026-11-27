@@ -7,7 +7,7 @@ and so both in gen/, which .gitignore ignores.
                                                                            --areas: {index: {words, relocs, origin}})
   python3 -B qvcf.py asm                                                   gen/qv_runtime.s, as Midiverb's stream.s
 
-A program's index is its place in manifest.REVERBS, the value PROG stores.
+A program's index is its place in manifest.PROGRAMS, the value PROG stores.
 """
 import json
 import pathlib
@@ -21,7 +21,7 @@ sys.path.insert(0, str(DRAFT))
 sys.path.insert(0, str(next(up for up in HERE.parents if (up / "package.json").exists()) / "sdk/octabam/tools"))  # remix, for manifest.py
 import qvc  # noqa: E402
 import qvs  # noqa: E402
-from manifest import REVERBS  # noqa: E402
+from manifest import PROGRAMS  # noqa: E402
 
 LAT = 3  # MODWERK_DSP_STREAM_LAG: fill(f) has every out-block up to f - 3
 SRC = DRAFT / "runtime" / "qv_runtime.c"
@@ -33,7 +33,7 @@ CF_FLAGS = ["-mcpu=5475", "-msoft-float", "-O2", "-ffreestanding", "-fno-builtin
 
 def plans(programs, lfo_dir):
     out = []
-    for p in REVERBS:
+    for p in PROGRAMS:
         pl = qvs.make_plan(programs, p, lfo_dir, lat=LAT, reserve=qvc.DRY_WORDS)   # the area build's dry scratch
         if pl is None or not pl.fits:
             raise SystemExit(f"program {p}: no stream plan that fits")
@@ -71,7 +71,7 @@ def tables(plans, areas):
             raise ValueError(f"index {i}: an area of at most 2048 24-bit words, relocations inside it")
         progs.append(f"{{{len(pl.streamed)}, {line0}, {len(pl.windows)}, {win0}, {mv}, {pl.in_words}, {at}, "
                      f"{len(words)}, {len(a['words'])}, {len(relocs)}, {len(a['relocs'])}, {a['origin']}}}, "
-                     f"/* {i}: program {REVERBS[i]} */")
+                     f"/* {i}: program {PROGRAMS[i]} */")
         words += a["words"]
         relocs += a["relocs"]
         rings.append(at)

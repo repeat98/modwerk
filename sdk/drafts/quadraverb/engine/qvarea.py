@@ -124,7 +124,7 @@ def main(argv):
     for index, plan in enumerate(qvcf.plans(programs, lfo_dir)):
         _, info, ar = area(plan, index, work)
         areas[index] = ar
-        print(f"{index:2d} program {qvcf.REVERBS[index]:2d}: {len(ar['words'])} words, {len(ar['relocs'])} relocated; "
+        print(f"{index:2d} program {qvcf.PROGRAMS[index]:2d}: {len(ar['words'])} words, {len(ar['relocs'])} relocated; "
               f"ring {plan.size}, in {plan.in_words}, out {plan.out_words}")
     out.write_text(json.dumps(areas))
     print(f"wrote {out}; the longest area {max(len(a['words']) for a in areas.values())} words")
