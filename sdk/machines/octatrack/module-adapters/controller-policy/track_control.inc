@@ -4,6 +4,7 @@
  * Four controls per core, all checked before reserve/submit. DSP maps to its
  * ledger's state cells; no package can supply a DSP address.
  */
+extern volatile uint8_t modwerk_controller_lease_seen;
 int modwerk_dsp_track_charge(uint32_t,unsigned,unsigned,int);
 int modwerk_dsp_track_fits(uint32_t,unsigned,unsigned);
 void modwerk_dsp_track_tick(void);
@@ -73,6 +74,10 @@ static void track_poll(void)
 int modwerk_track_controls(uintptr_t entry,uint32_t epoch,uint32_t revision,uint32_t tracks_lo,uint32_t tracks_hi)
 {
     uint32_t irq=modwerk_machine_lock();int result=-2;
+#ifdef MW_RETURNING_TRACKS
+    result=tp_scoped_controls(entry,(uintptr_t)__builtin_return_address(0),epoch,revision,tracks_lo,tracks_hi);
+    modwerk_machine_unlock(irq);return result;
+#endif
     struct runtime_owner o;uintptr_t image;
     if(closed || tc.stuck || !epoch ||
        modwerk_controller_write_resolve(entry,&o,&image)!=1)goto done;

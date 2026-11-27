@@ -25,7 +25,7 @@ VERSION = '0.3.1-modwerk-dev.1'
 # Resident controller trust: association, the scoped write lease, its resolver and the board-compiled policy table.
 CONTROLLER_POLICY_SOURCES = ('controller_policy.c', 'controller_policy.h', 'controller_association.c', 'controller_association.h',
                              'controller_write_lease.c', 'controller_write_lease.h', 'controller_write_policy.c',
-                             'controller_transport.c', 'controller_transport.h', 'controller_board.c', 'controller_board.h', 'controller_features.h', 'track_control.inc')
+                             'controller_transport.c', 'controller_transport.h', 'controller_board.c', 'controller_board.h', 'controller_features.h', 'track_control.inc', 'processor_contract.h', 'processor_contract.c', 'processor_board.inc', 'processor_package.inc')
 # Built for size (RAM boot keeps MAIN under 1.25 MiB): engine-task and boot-only units, never reached from the USB
 # or frame interrupts or with interrupts masked. boot_anim.c is paced by DTIM3, not by instruction counts, so it
 # can only draw fewer frames in its 3.5 s. Units an interrupt reaches (ep0, vendor, transfer, manager, selection,
@@ -2251,7 +2251,7 @@ modwerk_retained_end:
     if args.resident_stock_hooks:
         recipe['cflags'].append('-DMODWERK_RESIDENT_STOCK_HOOKS')
     if args.resident_on_demand:
-        recipe['cflags'].append('-DMODWERK_RESIDENT_ON_DEMAND')
+        recipe['cflags'] += ['-DMODWERK_RESIDENT_ON_DEMAND', '-DRUNTIME_OWNER_GENERATION_LIMIT=0x3fffffffu']
     if args.site_events:  # the base owns these stock sites; packages subscribe (sdk/machines/octatrack/EVENTS.md)
         recipe['cflags'].append('-DMODWERK_RUNTIME_EVENTS')
         recipe['sources'] += ['runtime_events.s', 'machine_registry.s', 'midi_generators.s']

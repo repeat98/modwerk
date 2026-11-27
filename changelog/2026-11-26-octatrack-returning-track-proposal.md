@@ -1,6 +1,5 @@
-Octatrack Base proposal: a packaged track processor can adjust audio before
-FX1 and FX2 while leaving both slots available. Shared support includes scoped
-controls, DSP reservation/retirement, publication identity and direct settings
-actions. Optional declarative engine recipes carry module-owned DSP, tables
-and initial state; existing C-only recipes keep their path. This source draft
-is under review; it is not a released capability.
+Octatrack Base proposal: multiple packaged processors can share the track's
+pre-FX audio while leaving both FX slots available. Controllers, DSP and private
+state travel with their module packages, without per-version Base trust rows.
+Base owns allocation, scoped controls, cycle reservation and safe retirement.
+This source draft is under review and has not run on a unit; it is not released.

@@ -12,15 +12,45 @@ void ms_track_budget_unlock(uint16_t);
 static uint16_t ms_track_budget_lock(void){uint16_t s;__asm__ volatile("move.w %%sr,%0\n\tmove.w #0x2700,%%sr":"=d"(s)::"memory","cc");return s;}
 static void ms_track_budget_unlock(uint16_t s){__asm__ volatile("move.w %0,%%sr"::"d"(s):"memory","cc");}
 #endif
+uint32_t modwerk_dsp_track_price(unsigned cycles,unsigned kind)
+{return cycles && cycles<=65535u && (kind==RUNTIME_EXECUTED || kind==RUNTIME_HARDWARE)?charged(cycles,(uint8_t)kind):0u;}
 void modwerk_dsp_track_tick(void){++track_clock;}
 static void track_pause_request(void){track_pause_until=track_clock+3u;}
+/* Equivalent to voice_slots(0/1), sharing this check's native reads. Stored
+ * and working Parts contribute stock floors; live + four working Parts still
+ * compete for each core's dearest total, including packaged effects. Fold a
+ * slot only after its full stock floor and pending charge have been read.
+ * No cross-call cache or change to publication/retirement fences. */
+static void track_slot_charges(uint32_t sum[2])
+{
+    uintptr_t bank=BANK;
+    unsigned sets=bank?5u:1u;
+    uint32_t booked[5][2]={{0}};
+    for(unsigned i=0;i<16u;++i){
+        uint32_t prices[5]={0},least=0;
+        for(unsigned n=0;n<(bank?9u:1u);++n){
+            unsigned id=n?PART(bank,n-1u)[i]:LIVE_FX[i];
+            uint32_t price=id<MODWERK_FX_IDS?dl_catalog[id].cycles:0u;
+            if(n<sets)prices[n]=price;
+            if(id<MODWERK_FX_IDS && !owner[id] && price>least)least=price;
+        }
+        uint32_t pending=dl_slot_cycles(i);
+        if(pending>least)least=pending;
+        unsigned core=source_core(i&7u);
+        for(unsigned n=0;n<sets;++n)booked[n][core]+=prices[n]>least?prices[n]:least;
+    }
+    sum[0]=sum[1]=0;
+    for(unsigned n=0;n<sets;++n)for(unsigned c=0;c<2u;++c)
+        if(booked[n][c]>sum[c])sum[c]=booked[n][c];
+}
 int modwerk_dsp_track_fits(uint32_t module,unsigned cycles,unsigned kind)
 {
     if(!module || !cycles || cycles>65535u || !kind || kind>RUNTIME_HARDWARE ||
        (track_owner && track_owner!=module) || (int32_t)(track_pause_until-track_clock)>0)return 0;
     uint32_t charge=charged(cycles,(uint8_t)kind);
+    uint32_t slots[2];track_slot_charges(slots);
     for(unsigned c=0;c<2;++c){
-        uint32_t sum=voice_slots(c)+modwerk_dsp_source_charge(c)-track_cycles+charge;
+        uint32_t sum=slots[c]+modwerk_dsp_source_charge(c)-track_cycles+charge;
         if(sum>(c?MODWERK_DSP_ALLOWANCE1:MODWERK_DSP_ALLOWANCE0))return 0;
     }
     return 1;

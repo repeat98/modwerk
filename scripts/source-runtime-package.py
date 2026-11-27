@@ -232,7 +232,7 @@ def compile_image(root, filename, cross, work):
         _, _, _, _, engine_paths = engine_api.declaration(folder, doc['engine'])
         paths.update(engine_paths)
         paths.update(root / name for name in (
-            'scripts/source-runtime-engine.py', 'sdk/runtime/loader/abi9.py',
+            'scripts/source-runtime-engine.py', 'scripts/processor-contract.py', 'sdk/runtime/loader/abi9.py',
             'sdk/machines/octatrack/elekloader/dsp_packages.py',
             'sdk/machines/octatrack/dsp-sites.json'))
     inputs = {(('module/' + str(p.relative_to(folder))) if p.is_relative_to(folder)

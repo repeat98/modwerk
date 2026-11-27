@@ -217,6 +217,12 @@ __attribute__((weak)) int modwerk_machine_dsp_claims_admit(unsigned requires, co
 /* ABI 10: a machine without hook sites admits no engine. */
 __attribute__((weak)) int modwerk_machine_dsp_engine_admit(const struct runtime_dsp *d) { (void)d; return RUNTIME_CONFLICT; }
 #endif
+/* Optional machine admission of bounded wire words before native pool allocation.
+ * Existing machines retain their metadata-only predicate. */
+#ifndef MODWERK_RUNTIME_ENGINE_DATA_EXTERNAL
+__attribute__((weak)) int modwerk_machine_dsp_engine_data_admit(struct runtime_dsp *d,const uint8_t *words,const uint8_t *relocations)
+{ (void)words;(void)relocations;return modwerk_machine_dsp_engine_admit(d); }
+#endif
 /* Two claims meet: the same core (an ABI 10 claim on both cores meets either) and space, or both in the window both
  * cores see (any space: the window is one memory on the Octatrack, whatever the bus), with a word in common. */
 static int claims_meet(const struct runtime_dsp_claim *a, const struct runtime_dsp_claim *b)
@@ -1186,13 +1192,13 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     if (claims_taken(slot, claim, claims)) return refuse(RUNTIME_CONFLICT); /* another live module's claim */
     uint32_t admission_lock = modwerk_machine_lock();
     enum runtime_check check = RUNTIME_CHECK_CLAIMS;
-    int why = engine ? modwerk_machine_dsp_engine_admit(&dsp) : modwerk_machine_dsp_claims_admit(dsp.requires, claim, claims);
+    int why = engine ? modwerk_machine_dsp_engine_data_admit(&dsp,words,dsp_relocation) : modwerk_machine_dsp_claims_admit(dsp.requires, claim, claims);
     if (!why) check = RUNTIME_CHECK_METADATA, why = modwerk_machine_metadata_admit(dsp_of(live[slot]), &dsp, context, RUNTIME_METADATA_PREPARE);
     if (!why) check = RUNTIME_CHECK_DSP, why = modwerk_machine_dsp_admit(dsp_of(live[slot]), &dsp);
     modwerk_machine_unlock(admission_lock);
     if (why) return refuse_at(check, (enum runtime_refusal)why);
     if (image || sites || dsp.count || engine) {
-        if (owner_generation == UINT32_MAX) return refuse(RUNTIME_FULL);
+        if (owner_generation >= RUNTIME_OWNER_GENERATION_LIMIT) return refuse(RUNTIME_FULL);
         reclaim(context);
         uint32_t head = ((uint32_t)sizeof(struct runtime_module) + sites * (uint32_t)sizeof(struct runtime_site) + 15u) & ~15u,
                  code = (end + 15u) & ~15u, words_end = (4u * dsp_words_n + 2u * dsp_relocations_n + 3u) & ~3u,

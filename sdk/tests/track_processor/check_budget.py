@@ -12,7 +12,11 @@ machine=SDK/'machines/octatrack/elekloader';dyn=SDK/'octabam/platform/dsp-dynloa
 flags=['clang','-std=c11','-Wall','-Wextra','-Werror','-O1','-fsanitize=undefined','-fno-sanitize-recover=all']
 with tempfile.TemporaryDirectory(prefix='ms-budget-') as td:
     work=Path(td)
-    (work/'dsp.c').write_text(dsp((machine/'dsp.c').read_text(),(SDK/'machines/octatrack/module-adapters/resident-runtime/track_budget.c').read_text()))
+    actual=dsp((machine/'dsp.c').read_text(),(SDK/'machines/octatrack/module-adapters/resident-runtime/track_budget.c').read_text())
+    marker='static void floors(const uint8_t ids[16], uint32_t least[16])\n{'
+    assert actual.count(marker)==1,'Native floor-scan fixture source drift'
+    actual=actual.replace(marker,'static unsigned budget_floor_calls;\n'+marker+'\n    ++budget_floor_calls;',1)
+    (work/'dsp.c').write_text(actual)
     fixture=(machine/'test_dsp.c').read_text()
     declarations='''
 static unsigned budget_locks,budget_inject,budget_nudges;
@@ -27,6 +31,33 @@ void dl_residency_nudge(void){++budget_nudges;}
 '''
     fixture=fixture.replace('/* The compaction planner:',declarations+'\n/* The compaction planner:',1)
     cases='''
+    /* Share only this call's floor reads, never cache a bank or pending plan.
+       Compare both outputs with the old independent-core paths over changing
+       working/stored Parts, live effects, pending charges and module owners. */
+    static uint8_t budget_bank[0x9504a+4u*6322u];
+    uint32_t budget_seed=17;
+    for(unsigned trial=0;trial<128u;++trial){
+        modwerk_test_bank=trial%5u?budget_bank:0;
+        for(unsigned id=0;id<MODWERK_FX_IDS;++id){
+            budget_seed=budget_seed*1664525u+1013904223u;
+            dl_catalog[id].cycles=(budget_seed>>8)%900u;
+            owner[id]=(budget_seed>>7)&1u;
+        }
+        for(unsigned p=0;p<8u;++p)for(unsigned i=0;i<16u;++i){
+            budget_seed=budget_seed*1664525u+1013904223u;
+            unsigned at=(p<4u?0x8ed80u+p*6322u:0x9504au+(p-4u)*6322u)+i;
+            budget_bank[at]=(uint8_t)((budget_seed>>16)%(MODWERK_FX_IDS+1u));
+        }
+        for(unsigned i=0;i<16u;++i){
+            budget_seed=budget_seed*1664525u+1013904223u;
+            modwerk_test_live_fx[i]=(uint8_t)((budget_seed>>8)%MODWERK_FX_IDS);
+            slot_cycles[i]=(budget_seed>>16)%1000u;
+        }
+        uint32_t both[2];unsigned scans=budget_floor_calls;
+        track_slot_charges(both);CHECK(budget_floor_calls==scans);
+        CHECK(both[0]==voice_slots(0) && both[1]==voice_slots(1));
+        CHECK(budget_floor_calls==scans+2u);
+    }
     modwerk_test_bank=0;memset(modwerk_test_live_fx,0,16);
     memset(source_voice,0,sizeof source_voice);memset(source_owner,0,sizeof source_owner);
     memset(source_engine,0,sizeof source_engine);memset(slot_cycles,0,sizeof slot_cycles);

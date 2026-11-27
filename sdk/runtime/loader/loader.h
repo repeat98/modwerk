@@ -7,6 +7,10 @@
 #include <stdint.h>
 #include "upload.h"
 #include "modwerk_module.h"
+/* Machines may reserve a disjoint namespace for Base-owned transport jobs. */
+#ifndef RUNTIME_OWNER_GENERATION_LIMIT
+#define RUNTIME_OWNER_GENERATION_LIMIT UINT32_MAX
+#endif
 #define RUNTIME_ABI 10u
 #define RUNTIME_GROUP_METADATA 4u       /* ABI8 MWMG prefix; machine must explicitly admit its lifetime */
 #define RUNTIME_CAPABILITY_FLAGS 7u     /* CF sites, hash-backed stock copies, authored constant fills; and 128, site events, when the machine has them (64 is the volatile journal) */
@@ -281,5 +285,9 @@ int modwerk_machine_dsp_claims_admit(unsigned requires, const struct runtime_dsp
 /* ABI 10, locked, at admission, in place of the claims' check: may this engine take its hook sites and its claims (a
  * runtime_refusal)? `d` holds its counts, claims and entries; its words are not yet kept. Weak: refuses every engine. */
 int modwerk_machine_dsp_engine_admit(const struct runtime_dsp *d);
+/* Stable lock. Encoded words/relocations are already bounded by the parser.
+ * A machine may materialize native scratch for its predicate and PREPARE;
+ * these pointers are replaced with owned pool words before publication. */
+int modwerk_machine_dsp_engine_data_admit(struct runtime_dsp *,const uint8_t *words,const uint8_t *relocations);
 void modwerk_machine_dsp_switch(const struct runtime_dsp *from, const struct runtime_dsp *to);
 #endif

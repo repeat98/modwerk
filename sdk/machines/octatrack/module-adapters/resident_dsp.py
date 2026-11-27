@@ -622,12 +622,16 @@ def receiver_control(bundle):
     tag = bundle['tag']
     if bundle['allowed'] != ALLOWED[tag] or len(bundle['descriptors']) != descriptor_count(tag):
         raise ValueError('Resident hook descriptor layout changed')
+    # A successful resident CAS refreshes the Base-owned current-chain pointer.
+    # Ordinary nonresident receiver builds retain the zero pointer and refuse op13.
     on_demand = bundle.get('onDemand', 0)
     if not isinstance(on_demand, int) or on_demand & ~ALLOWED[tag] or bool(on_demand) != ('engines' in bundle):
         raise ValueError('Resident on-demand layout changed')
     end = bundle['origin'] + len(bundle['words'])
     # Word 7 (0 for every CAS the board sends) selects PLACE (the engine's words, 1..$1fff) on an on-demand build.
     lines = ['move x:(r0+7),a', 'tst a', 'bne hplace'] if on_demand else []
+    if on_demand & 16:
+        lines = ['move #>$%x,a' % _base_word(bundle,16,end), 'move #>tpbase,r3', 'move a1,p:(r3)'] + lines
     lines += ['move x:(r0+4),x0', 'move #>hookstate,r1', 'move p:(r1),a',
               'cmp x0,a', 'bne badsaved', 'move x:(r0+5),x1', 'move x1,a',
               'and #>$%x,a' % (0xffffff ^ ALLOWED[tag]), 'bne badsaved',

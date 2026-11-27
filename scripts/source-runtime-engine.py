@@ -48,8 +48,10 @@ def declaration(folder, filename):
     path = confined(folder, filename)
     doc = json.loads(path.read_text())
     keys = {'schema', 'feature', 'sources', 'entry', 'tableMarker', 'tableFile',
-            'claims', 'site', 'cores', 'cycles', 'cycleKind'}
-    if not isinstance(doc, dict) or set(doc) != keys or type(doc['schema']) is not int or doc['schema'] != 1:
+            'site', 'cores', 'cycles', 'cycleKind'}
+    schema=doc.get('schema') if isinstance(doc,dict) else None
+    keys |= {'claims'} if schema==1 else {'state'}
+    if not isinstance(doc, dict) or set(doc) != keys or type(schema) is not int or schema not in (1,2):
         raise ValueError('Invalid returning-engine recipe')
     for key, low, high in [('feature', 1, 32768), ('site', 0, 255), ('cores', 1, 3), ('cycles', 1, 65535)]:
         if type(doc[key]) is not int or not low <= doc[key] <= high:
@@ -69,6 +71,18 @@ def declaration(folder, filename):
         raise ValueError('Returning-engine sources must be .asm files')
     table_path = confined(folder, doc['tableFile'])
     table = words_file(table_path)
+    if schema==2:
+        state=doc['state']
+        expected={'marker','initialFile','stride','control','reset','minimum','maximum','neutral','order'}
+        if not isinstance(state,dict) or set(state)!=expected or not isinstance(state['marker'],str) or not re.fullmatch(r'\$[a-fA-F0-9]{6}',state['marker']):
+            raise ValueError('Invalid relocatable private state')
+        initial=confined(folder,state['initialFile'])
+        values=words_file(initial)
+        contract=load('returning_processor_contract',Path(__file__).with_name('processor-contract.py'))
+        contract.container([12],[],[],values,**{k:v for k,v in state.items() if k not in ('marker','initialFile')})
+        if doc['feature']!=16 or doc['cores']!=3 or doc['site']!=0:
+            raise ValueError('Returning processors enter the shared both-core PRE-FX chain')
+        return doc,sources,table,[],[path,*sources,table_path,initial]
     if not isinstance(doc['claims'], list) or not 1 <= len(doc['claims']) <= 16:
         raise ValueError('An engine needs bounded initialized claims')
     paths, claims = [path, *sources, table_path], []
@@ -97,6 +111,10 @@ def ledger_check(root, doc, claims):
     wanted_cores = {name for bit, name in [(1, 'A'), (2, 'B')] if doc['cores'] & bit}
     if not wanted_cores <= set(feature['cores']):
         raise ValueError('Engine cores exceed its Base feature')
+    if doc['schema']==2:
+        if claims or doc['feature']!=16 or doc['site']!=0 or doc['cores']!=3:
+            raise ValueError('Returning state is allocated by Base, never claimed by a module')
+        return
     wanted = set()
     for row in registry['regions']:
         if row['feature'] == doc['feature']:
@@ -125,6 +143,8 @@ def assemble(root, folder, filename, work):
     instructions = '\n'.join(line.split(';', 1)[0] for line in text.splitlines())
     if re.search(r'(?:^|\s)\.?(?:include|incbin|org)(?=\s|$)', instructions, re.I | re.M):
         raise ValueError('Engine source cannot include files or change origin')
+    if doc['schema']==2:
+        return assemble_returning(root,folder,doc,text,table,paths,work,sdk)
     built = []
     for origin in ORIGINS:
         sized, _ = sdk.assemble(text.replace(doc['tableMarker'], '$%x' % origin), origin, str(work))
@@ -156,3 +176,64 @@ def assemble(root, folder, filename, work):
                                          'sdk/machines/octatrack/dsp-sites.json')}
     report['adapterSha256'] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     return attach, report, normalized, relocations, claims
+
+
+def assemble_returning(root,folder,doc,text,table,paths,work,sdk):
+    contract=load('returning_processor_encoder',Path(__file__).with_name('processor-contract.py'))
+    state=doc['state'];marker=int(state['marker'][1:],16)
+    initial=words_file(confined(folder,state['initialFile']))
+    virtual=0x400000
+    def build(p,y):
+        source=text.replace(doc['tableMarker'],'$%x'%p)
+        source=re.sub(r'\$[a-fA-F0-9]+',lambda m:'$%x'%(y+int(m[0][1:],16)-marker)
+                      if marker<=int(m[0][1:],16)<marker+len(initial) else m[0],source)
+        sized,_=sdk.assemble(source,p,str(work))
+        # Resolve only the declared table marker, without touching code addresses.
+        source=text.replace(doc['tableMarker'],'$%x'%(p+len(sized)))
+        source=re.sub(r'\$[a-fA-F0-9]+',lambda m:'$%x'%(y+int(m[0][1:],16)-marker)
+                      if marker<=int(m[0][1:],16)<marker+len(initial) else m[0],source)
+        words,labels=sdk.assemble(source,p,str(work))
+        if len(words)!=len(sized) or labels.get(doc['entry'])!=p:
+            raise ValueError('Returning processor entry or instruction size drift')
+        return words+table
+    base=build(ORIGINS[0],virtual);other=build(ORIGINS[1],virtual)
+    if len(base)!=len(other):raise ValueError('P relocation changes processor size')
+    preloc=[];normalized=list(base)
+    for i,(a,b) in enumerate(zip(base,other)):
+        if a==b:continue
+        delta=(ORIGINS[1]-ORIGINS[0])&0xffffff
+        if (b-a)&0xffffff==delta:
+            preloc.append(i);normalized[i]=(a-ORIGINS[0])&0xffffff
+        elif (a-b)&0xffffff==delta:
+            preloc.append(i|0x8000);normalized[i]=(a+ORIGINS[0])&0xffffff
+        else:raise ValueError('Nonlinear P relocation')
+    yother=build(ORIGINS[0],virtual+0x10000)
+    if len(base)!=len(yother):raise ValueError('Y relocation changes processor size')
+    yreloc=[i for i,(a,b) in enumerate(zip(base,yother)) if a!=b]
+    pat={r&0x7fff for r in preloc}
+    if any(i in pat or yother[i]-base[i]!=0x10000 for i in yreloc):
+        raise ValueError('Nonlinear or overlapping Y relocation')
+    layout={k:v for k,v in state.items() if k not in ('marker','initialFile')}
+    contract.container(normalized,preloc,yreloc,initial,y_origin=virtual,**layout)
+    proofs=0
+    for p in ORIGINS:
+        for y in (0x800,0xcc1,0xd00):
+            fresh=build(p,y);expected=list(normalized)
+            for r in preloc:
+                at=r&0x7fff;expected[at]=(expected[at]-p if r&0x8000 else expected[at]+p)&0xffffff
+            for at in yreloc:expected[at]=expected[at]-virtual+y
+            if fresh!=expected:raise ValueError('P/Y relocation differs from fresh assembly')
+            proofs+=1
+    abi=load('returning_processor_abi',root/'sdk/runtime/loader/abi9.py')
+    def attach(controller):
+        return contract.package(abi,controller,normalized,preloc,yreloc,initial,
+                                cycles=doc['cycles'],cycle_kind=doc['cycleKind'],y_origin=virtual,**layout)
+    report=dict(words=len(normalized),relocations=len(preloc),yRelocations=len(yreloc),
+                privateStateWords=len(initial),site=0,cores=3,feature=16,cycles=doc['cycles'],
+                cycleKind=doc['cycleKind'],sha256=sdk.digest(normalized),placementProofs=proofs,
+                sources={str(p.relative_to(folder)):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths},
+                hardwareTested=False,fxSlotsRequired=0,moduleUpdateNeedsBaseRebuild=False,
+                adapterSha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+    report['toolSources']={name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in
+        ('scripts/processor-contract.py','sdk/runtime/loader/abi9.py','sdk/machines/octatrack/elekloader/dsp_packages.py','sdk/machines/octatrack/dsp-sites.json')}
+    return attach,report,normalized,preloc,[]

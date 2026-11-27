@@ -31,7 +31,7 @@ struct mw_engine mw_engines[2][MW_ENGINE_FEATURES];
 volatile uint32_t mw_engines_jobs, mw_engines_placed_count, mw_engines_unplaced_count, mw_engines_refused;
 volatile uint8_t mw_engines_wait[2][MW_ENGINE_FEATURES], mw_engines_admitted[MW_ENGINE_FEATURES];
 /* ABI 9 (loader.h): a package may require the key bus; the board holds it for them (controller_board.c). */
-unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS; }
+unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_TRACK_PROCESSOR; }
 #ifdef MODWERK_DEV
 struct mw_engines_view mw_engines_view = {.magic = {'M', 'W', 'E', 'V'}}; /* initialized: in .data, inside the dev MEM window */
 #endif

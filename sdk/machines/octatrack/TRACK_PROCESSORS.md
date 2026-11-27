@@ -1,104 +1,105 @@
 # Returning track processors (proposal)
 
-This is shared Base infrastructure under review, not a released capability.
-It lets a packaged DSP processor return a track's audio before both FX slots.
-The first consumer is the separately developed M/S Balance module. Its DSP,
-tables, controller, AMP overlay and project files do not belong in the Base.
+This shared Base service is under review. It is not a released capability.
+The separately developed M/S Balance module processes stereo before both FX
+slots; its controller, DSP, AMP control and project files remain module-owned.
 
-## Route and ownership
+## Shared route and package contract
 
-`dsp-sites.json` keeps site 0's original two-word guard and turns that site
-into a returning chain: packaged feature 16, the resident key-bus tap, the
-displaced instruction, then native FX1 and FX2. Source chains retain their
-existing skip exit. Post-FX Sidechain MON/commit is unchanged. This service
-occupies no source voice or FX slot. There is currently room for one returning
-processor owner, not an arbitrary number of these processors in series.
+Guarded site0 calls the returning processor aggregate, then the existing key-bus
+tap, replays the displaced instruction and enters FX1/FX2. Source-chain skip
+exits and post-FX Sidechain MON remain intact. Neither FX slot is occupied.
 
-The ledger reserves Y:$d00..$dbf on each core for feature 16. Four 32-word
-states hold its controls/reset flags; the remaining 64 words are processor
-scratch. The module supplies the engine and initial data in its ABI 10 package.
-The receiver accepts no caller-selected DSP address. A future layout or
-control format needs an explicit ledger/contract change; this is not a general
-DSP memory-write API.
+Up to16 independently owned processors share the aggregate, sorted by declared
+order then module ID. Real P/Y/cycle capacity can refuse a combination. Base
+allocates private Y state within800..bff andcc1..fef on both cores, excluding
+stock data on both cores, Matrixc00..cc0 and Sidechainff0..fff. Modules declare
+virtual state references instead of physical claims or allegedly spare bytes.
 
-## Control and publication API
+The existing ABI10 engine carries a versioned returning descriptor (long BRA
+past metadata, magicMWT), authored code, P/Y relocation records, initialized
+state, track stride, control/reset offsets, byte range, neutral and order.
+processor_contract.h/c define and validate it. Base copies a deterministic
+returning program plus state; transport retains no pointers into module code.
+The Base-owned aggregate alone occupies feature16 in the existing allocator.
 
-Include `include/modwerk_track.h`. Call `modwerk_track_controls` from the
-module's own published controller image, outside the audio interrupt. Pass a
-nonzero epoch, a revision, and two packed words: T1..T4 then T5..T8, most
-significant byte first. Each byte must be 0..128. Core A handles T5..T8;
-core B handles T1..T4. Epoch changes reset the processor's private state.
+Optional source-runtime engine schema2 declares confined .asm sources, a P table
+and a virtual-state layout/initial file. Independent fresh P/Y assemblies prove
+relocation before the real ABI10 encoder attaches it. Filesystem escape, symlink,
+undeclared includes, overlapping relocations and malformed layouts refuse.
+Existing C-only recipes and engine schema1 retain their paths. Legacy Sidechain,
+Matrix and Analog BD trust rows are unchanged. Returning controllers do not
+require a digest row compiled into Base; their controller, DSP, table and state
+updates travel in their own packages.
 
-The Base resolves the exact trusted controller identity and caller PC, reserves
-both owned transport jobs before submitting either, and copies values rather
-than retaining module pointers. Result 1 means both cores acknowledged the
-exact epoch, revision and bytes. Zero means pending; negative means unavailable
-or closed. Unknown jobs retain ownership and fail closed. A new activation
-invalidates old acknowledgements, including when all values are unchanged.
+## Native admission and controls
 
-`modwerk_track_publication` returns the serial of that execution image. An
-unrelated module's MODULES READY event preserves it; Undo/reactivation changes
-it. Zero means absent or sequence exhausted. Modules must not infer continuity
-from a global owner epoch or a reused image address. The runtime owner ABI is
-unchanged, including its cached-versus-execution address distinction.
+The loader offers a narrow optional engine-data admission seam after validating
+encoded bounds. A machine can materialize native words for its predicate and
+PREPARE under the stable lock. The ordinary fallback invokes the existing
+metadata-only predicate. Pool allocation overwrites all scratch pointers with
+owned native arrays before publication; PREPARE scratch is never a lease.
 
-## Admission and retirement
+modwerk_track_controls(entry,epoch,revision,lo,hi) validates the actual owner
+generation, tick entry and caller PC. Eight bytes name T1..4 thenT5..8, MSB first.
+The declared byte range is checked before requests change. CoreA handlesT5..8,
+coreB handlesT1..4. Opcode13 carries only member index/reset and four bytes;
+the currently placed Base metadata supplies that member's private Y cells.
+All fields validate before any write. No caller-selected DSP address is accepted.
 
-The package declares its worst-case per-core cost using existing executed or
-hardware units. The Base applies the existing conservative scaling and reserves
-the charge before ENABLE. Every effect admission includes it. The reservation
-stays until both core hooks are known off, the exact controller is RETIRING,
-and all owned jobs have drained. Release nudges a refused automatic selection.
+Result1 certifies both cores' exact epoch/revision/value ACKs;0 is pending and
+negative unavailable/closed/invalid. New membership or activation invalidates
+old ACKs. Latest intent survives a capacity pause and in-flight older updates.
+Unchanged placed code can reset/re-enable after capacity returns without STOP.
+Controller changes quiesce the chain through both known-off ACKs and drained
+jobs before old program storage is reused. Unknown jobs retain resources and
+close the boot. Reserved Base transport generations and runtime owner generations
+have disjoint bounded namespaces; exhaustion refuses.
 
-A mandatory bank change or incoming publication can request a bounded pause
-while retaining its original request/context. Ordinary uncommitted FX picks
-retain their existing refusal behavior. The final reservation publication uses
-a short IPL7 fence because the IPL5 sequencer can preempt an IPL4 controller
-lock. Part scans, transport waits, allocation and DSP work stay outside it.
-These decisions have host regression coverage; heavy-bank timing is unmeasured.
+modwerk_track_publication exposes only the actual execution image's publication
+serial: unrelated MODULES READY preserves it; Undo/reactivation changes it.
+Zero means absent/exhausted. Modules never infer it from addresses or owner epoch.
 
-A completely published, nonpreparing temporary module set can receive MODULES
-READY while its trial is active. Partial publication, rollback and volatile
-journal work cannot. This does not enable saved-set writes during a trial.
+## Budget, settings and lifecycle
 
-## Direct action rows
+The aggregate sums existing executed/hardware prices plus a conservative wrapper
+allowance, reserves before ENABLE and retains capacity until known-off/drained.
+Mandatory bank/publication plans can pause it while preserving request context.
+Ordinary uncommitted FX picks keep their refusal policy. Heavy scans stay outside
+the short full-mask publication fence. Each fresh budget check shares one bank
+scan across cores; no bank-dependent result is cached between checks.
 
-`ot_settings` adds `MODWERK_SETTING_ACTIONS_ABI` (4) using the existing grouped
-record shape. Its field page provides labels/values; YES calls
-`choose(0, MODWERK_SETTING_FIELDS, row)` directly, stays in that list and refreshes
-it. `page.label` can supply a dynamic header. It has no persistent choice and
-never calls `apply` during installation/restart. Existing settings, groups and
-presets retain their behavior. This keeps project edits out of settings replay.
+The direct nonpersistent settings action-group ABI keeps YES on its row and
+refreshes the fields. It never replays project edits at installation. Existing
+settings/presets/status behavior remains. Completed temporary whole-set readiness
+does not permit saved-set writes during a trial.
 
-## Checks and release requirements
+## Evidence and limits
 
-`scripts/source-runtime-package.py` accepts an optional schema-2 `engine`
-recipe. Assembly sources, P-table data and initialized claims belong to that
-module; the shared adapter hashes every declared input, refuses traversal,
-symlinks and undeclared assembler-file reads, checks the exact Base ledger,
-proves relocation against six fresh assemblies and attaches the engine using
-the existing ABI 10 encoder. The entry is word zero and the processor returns.
-Existing schema-1 C-only recipes keep their original path and dependencies.
+The prepared private Base identity is
+57cf36e6af98cd7215f3bd6e62d4049266c4e6544ed13ef2d4b7c97c07eaa3e8.
+The separate M/S package SHA is
+c974ee3929ced354fbb37942d83f27698ec25b04704a9c1ba13cfbc5462821af.
+No firmware, package or stock bytes are committed.
 
-`test_source_runtime_engine.py` uses an original tiny assembly fixture and the
-actual SDK encoder; it needs no OS, private package or unit. It covers malformed
-inputs, ledger claims, file confinement, placement and stable controller digest
-across DSP-only changes. These checks also cover macOS /var path aliases.
+23 unchanged SDK behavioral tests pass with documented native adapters (UBSan,
+ledger include path, host handling of GCC-only attributes, weak budget facts
+for older non-M/S controller fixtures). Actual budget/publication code has its
+own passing tests. Three old assertions expect absent feature16 or exact old
+strings; they remain unchanged and need the proper test-maintenance review.
+The unmodified broad SDK suite and full pr:ready are not claimed green.
 
-`python3 -B -m unittest discover -s sdk/tests -p test_track_processor.py -v`
-runs native loader/modset, settings/status, controller and DSP admission
-fixtures. The fixtures substitute native calls; they execute no firmware or
-DSP audio. All helper inputs are included in the Base source identity.
+Native contract/lifecycle fixtures cover16 members, separate state, owner/PC,
+updated controller identity, ACK freshness, capacity pause and unknown work.
+Actual generated transport tests cover32 member packets, legacy CAS, reset
+boundaries and exact ownership.23 compatibility cases,18 fresh P/Y assemblies,
+actual final package admission including unchanged Apply Scene, strict whole-
+package stock-free checks and268 receiver instruction/operand comparisons per
+core pass. Runtime owner/allocator/DSP ACK facts in native lifecycle tests are
+modelled. No firmware, DSP execution harness, emulator or physical test ran for
+this chain. Older private hardware results do not qualify this exact build.
 
-Earlier private M/S/Base pairs were tried temporarily on an MKII, including
-normal 20- and 300-second Undo results. Those results do not qualify this port
-onto the cumulative 0.8.3 branch. An older long-trial Undo failure remains
-unresolved. The current proposal needs exact-build unit testing, physical CPU
-measurements with stock workloads, persistence/normal-set qualification, and
-owner review of the API, resource claim and controller trust policy.
-
-The current trust mechanism pins reviewed controller digests in a Base build.
-The adapter prepares the engine-bearing package path; controller updates still
-need the accepted trust/import policy so they can ship without rebuilding the
-Base. Do not publish a CF-only replacement, claim an FX slot is required, or
-call this a publicly installable module until that path is accepted and qualified.
+The maintainer requested scheduling after0.8.3. Exact-build live-FX/both-core,
+CPU/load, persistence, normal-set and longer Undo qualification remain pending;
+an older1,562-second Undo failure is unresolved. Keep the proposal a draft.
+The later module release needs its own PR and the owner's library-copy approval.
