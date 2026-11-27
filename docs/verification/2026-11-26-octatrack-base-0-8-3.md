@@ -231,15 +231,53 @@ store+0x2fe+30·track+6·fx.
   a RAM boot does about once in six anyway. Shipped as a known issue (owner, 27 November 2026).
 - **Not tested:** a Mac without a hub, Windows.
 
+## 27 November 2026: the base test procedure, and the release image booted
+
+On the owner's MKII, OS 1.40C, the owner's project, bank C pattern C04, Part 2 (working copy equal to the saved one), a
+Mac connected, no stream. Development twin `ed5474c6` is built from `35a5231e5`, the code 0.8.3 ships: the
+controller-reset attempt and its revert after it cancel out. Main merged with USB Audio 0.4.2 does not change the
+base (`5af431bd`).
+
+- **Steps 1-4** (`npm run test:procedure -- --base --no-emulator`): `sdk:check`, `modules:compat` (0 problems), the
+  base named, the cycle scan current.
+- **Step 7, the large set:** refused whole, RUNTIME_CONFLICT. Bisected to RINGMOD SC alone, which a twin without
+  controller rows does not admit, as on 0.8.1 and 0.8.2. The release image admits it (below). Without it, the 41
+  packages go in halves (the pool), as in 0.8.2's record:
+  - The first half (20 packages, 30 s) ran with no crash, stall, freeze or skipped track, and rolled back.
+  - The second half was cut at 10 s of publication twice: once after the first half's rollback, once after a
+    `recover`. 13 packages were published, then progress stopped, the frames ran on and nothing was recorded; `recover`
+    rolled each back.
+  - The last six of that half (Resonator, Mackity, Butter Fingers, Screen Off, Songbook, Midiverb) were cut once more
+    the same way. Each alone, and both threes, published.
+  - Then the same sets published every time: the six in 2.8-2.9 s and the nineteen in 7.0-7.2 s, 8 of 8 on the twin
+    and 6 of 6 on the release image, also straight after the first half's rollback.
+  - Not reproduced; cause not found. The site gives a set max(10 s, 0.5 s a row), so the same cut would reach a
+    player's sync.
+  - Amiga and Grain were left out, since the loaded project names them (the trap in 0.8.1's record).
+- **Step 8, the soak:** 2,400 operations in 122 s, no failure, health reads 12 ms median and 13 ms p95. The project
+  ignores program changes (PROG CH RECV off), so the pattern never changed.
+- **Step 9, at rest:** all 40 packages but RINGMOD SC, Amiga and Grain, three 8 s readings each. Median +0.0 points of
+  the frame interrupt. None moved a point or more against its own record. Above 0.2: POLY8 2.0, Repitch 1.9 (no
+  record yet), Euclid 1.7 (2.5 recorded), Slow LFO 0.5 (0.5), Tape Echo 0.3 (0.4).
+- **Step 10:** nothing left installed; Part 2 equal to its save.
+- **The release image** (`5af431bd`, RAM-booted after the owner's power cycle from the flashed 0.8.2 `24e480c4`):
+  - It booted and stayed on USB.
+  - It did not load the kept set 0.8.2 had written (Tape Echo, Euclid, Air Chorus), as every base reads only its own
+    (`modset.c`). That set stays on the card for the flashed base.
+  - USB Audio 0.4.2 as a 20 s trial: the Mac listed 4 inputs and 2 outputs (the unit's saved INPUTS AB), no fault, and
+    it rolled back.
+  - RINGMOD SC as a 5 s trial: admitted, rolled back.
+- **Not run:** Amiga and Grain trials (the project), the frame interrupt A/B on the release image, a Keep with two power
+  cycles, Euclid's SETUP pages, an MKI, Windows.
 
 ## Builds and pending
 
 - Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `5af431bd3e42d93c…`,
   browser = native `.bin` `cf4fef8f637d8336…` (837,908 bytes; 13,820 container bytes free). Every change inside a declared site; the bootloader copy
   identical. Base-bound packages (Sidechain Compressor, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) bound to it
-  with their bytes unchanged. Not yet booted on a unit.
-- Pending for #2251 on a unit: the per-width figures, the release image, an MKI, and why the stretch differed between
-  boots.
+  with their bytes unchanged. USB Audio 0.4.2 (`c2597a32`) moves onto it with main. The release image booted on the
+  owner's MKII, 27 November 2026 (above).
+- Pending for #2251 on a unit: the per-width figures, an MKI, and why the stretch differed between boots.
 - Pending on a unit: Euclid on two tracks (one AMP, one LP), switching between their main and FX1/FX2 SETUP pages,
   each showing its own names, with the UI and frame cost of the three hooks; a Keep, then two power cycles; the frame
-  interrupt A/B on the release image.
+  interrupt A/B on the release image; the publication cut above.
