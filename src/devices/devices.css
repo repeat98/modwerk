@@ -30,7 +30,7 @@
 .device-hero-art { display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius-md); background: radial-gradient(circle at 50% 30%, #2d2d36, var(--surface) 72%); aspect-ratio: 4 / 3; }
 .device-hero.is-open .device-hero-art, .device-hero.is-research .device-hero-art { background: repeating-linear-gradient(135deg, var(--surface) 0 10px, var(--surface) 10px 20px); }
 .device-hero-art .device-art { width: 86%; height: auto; }
-.device-hero-copy > p { color: var(--muted); font-size: 14px; line-height: 1.6; margin-top: 8px; max-width: 60ch; }
+.device-hero-copy > p { color: var(--muted); font-size: .9375rem; line-height: var(--reading-line-height); margin-top: 8px; max-width: 60ch; }
 .device-variants { color: var(--muted); font-weight: 450; font-size: var(--text-lg); letter-spacing: -.2px; }
 .device-hero-meta { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
 .device-hero-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
@@ -83,7 +83,7 @@
 .digi-mod-list li.is-selected { border-color: var(--accent-line); }
 .digi-mod-copy { display: flex; flex-direction: column; gap: 5px; min-width: 0; font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
 .digi-mod-copy > small { color: var(--muted); font-size: 12px; }
-.digi-mod-copy a { color: var(--accent-hover); }
+.digi-mod-copy a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 .digi-mod-title { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .digi-mod-title strong { color: var(--text); font-size: 14px; }
 .digi-mod-title small { color: var(--muted); font-size: 12px; }
@@ -116,7 +116,7 @@
 .module-preview[data-module="digi-sampling"] { --signal: #83c7bc; --signal-rgb: 131,199,188; }
 .module-preview[data-module="digi-synthesis"] { --signal: #e9ab83; --signal-rgb: 233,171,131; }
 .module-preview[data-module="digi-performance"] { --signal: #9eb4ed; --signal-rgb: 158,180,237; }
-.status-dot.preview { background: #c7a16c; }
+.status-dot.preview { background: var(--warn); }
 .firmware-drop.is-disabled { opacity: .75; border-style: dashed; margin-bottom: 18px; }
 .firmware-drop.is-disabled code { font: 12px var(--mono); }
 .detail-section .device-facts { max-width: 760px; }

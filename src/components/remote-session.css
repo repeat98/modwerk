@@ -1,6 +1,6 @@
 .app-dialog.remote-session-dialog { width: min(560px, calc(100% - 32px)); }
 .remote-session-dialog h2 { margin-bottom: 14px; }
-.remote-session-reason { margin: 0 0 16px; padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--surface-raised); color: var(--text); font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.remote-session-reason { margin: 0 0 16px; padding: 10px 14px; border-left: 2px solid var(--accent); background: var(--surface-raised); color: var(--text); font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .remote-session-limit { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--control-border); border-radius: var(--radius-md); }
 .remote-session-limit svg { flex: none; margin-top: 3px; }
 .remote-session-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 20px; }
@@ -17,5 +17,5 @@
 .remote-session-message { display: flex; gap: 8px; align-items: center; margin-top: 10px !important; color: var(--text) !important; }
 .remote-session-log { list-style: none; margin: 12px 0 0; padding: 0; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .remote-session-log li { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; padding: 2px 0; border-top: 1px solid var(--line); }
-.remote-session-log .is-refused, .remote-session-log .is-failed { color: #e5554f; }
+.remote-session-log .is-refused, .remote-session-log .is-failed { color: var(--danger); }
 @media (max-width: 600px) { .remote-session-banner { right: 16px; left: 16px; width: auto; } }

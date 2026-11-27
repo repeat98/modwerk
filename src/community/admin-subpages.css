@@ -52,7 +52,7 @@
 .admin-record-body a, .admin-related a { color: var(--accent); }
 .admin-record-body blockquote { margin-inline: 0; padding-inline-start: 12px; border-inline-start: 2px solid var(--accent-line); }
 .admin-record .pill[data-overdue="true"] { color: var(--issue-confirmed); }
-.admin-empty { margin-top: 14px; padding: 20px; border: 1px dashed var(--control-border); border-radius: var(--radius-md); color: var(--muted); font-size: var(--text-base); }
+.admin-empty { margin-top: 14px; padding: 20px; border: 1px dashed var(--control-border); border-radius: var(--radius-md); background: var(--surface); color: var(--muted); font-size: var(--text-base); }
 .admin-table-wrap { overflow-x: auto; }
 .admin-delivery { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .admin-delivery caption { padding-block: 10px; text-align: start; font-weight: 600; }

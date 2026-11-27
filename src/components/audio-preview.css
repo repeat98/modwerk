@@ -30,7 +30,6 @@
 .audio-preview-player .audio-player-duration { color: #a9a6b0; }
 .audio-preview-player .audio-player-placeholder::before, .audio-preview-player .audio-player-fallback-progress { top: 16px; }
 .audio-preview-player .audio-player-hover > span { background: #1c1c22; }
-.audio-preview-player .audio-player-error { color: var(--warn); }
 .module-audio-detail { grid-area: preview; min-width: 0; }
 .module-audio-art { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); }
 .detail-hero .module-audio-art > .module-preview { height: auto; min-height: 210px; aspect-ratio: 2.18; }

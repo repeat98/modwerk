@@ -9,7 +9,7 @@
 
 .developer-path { counter-reset: step; margin: 0; padding: 0; list-style: none; }
 .developer-path > li { counter-increment: step; position: relative; padding: 0 0 56px 64px; }
-.developer-path > li::before { content: counter(step); position: absolute; left: 0; top: -4px; display: grid; place-items: center; width: 40px; height: 40px; border: 1.5px solid var(--path); border-radius: 50%; background: var(--background); color: var(--path); font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.developer-path > li::before { content: counter(step); position: absolute; left: 0; top: -4px; display: grid; place-items: center; width: 40px; height: 40px; color: var(--path); font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .developer-path > li:not(:last-child)::after { content: ''; position: absolute; left: 19.5px; top: 44px; bottom: 4px; width: 1px; background: var(--line); }
 .developer-path > li:last-child { padding-bottom: 0; }
 .developer-path h2 { margin: 0 0 10px; font-size: 26px; line-height: 1.2; letter-spacing: -.2px; }
@@ -17,11 +17,11 @@
 .developer-hint { max-width: 52ch; margin: 16px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
 
 .start-developing .copy-button { min-height: 40px; padding: 8px 14px; font-size: 14px; }
-.start-developing .copy-button.button-primary { min-height: 52px; padding: 12px 24px; border-radius: var(--radius-md); font-size: 17px; }
+.start-developing .copy-button.button-primary { min-height: 52px; padding: 12px 24px; border-radius: var(--radius-sm); font-size: 17px; }
 .developer-path details { margin-top: 6px; }
 .developer-path .developer-hint + details { margin-top: 14px; }
-.developer-path summary { width: fit-content; padding: 6px 0; cursor: pointer; color: var(--accent); font-size: 15px; }
-.developer-path summary:hover { color: var(--accent-hover); }
+.developer-path summary { width: fit-content; padding: 6px 0; cursor: pointer; color: var(--muted); font-size: 15px; }
+.developer-path summary:hover { color: var(--text); }
 .developer-path summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
 .start-developing .starter-prompt { border: 0; border-radius: 0; background: transparent; overflow: visible; }
 .start-developing .starter-prompt pre, .start-developing .start-code pre { max-height: 320px; margin-top: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-md); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; }
@@ -40,7 +40,7 @@
 .start-developing .starter-field { gap: 8px; color: var(--text-secondary); font-size: 15px; }
 .start-developing .starter-field small { font-size: 13px; }
 /* 16px fields also keep iPhone Safari from zooming in on focus. */
-.start-developing .starter-field input, .start-developing .starter-field textarea, .start-developing .starter-field select { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: var(--radius-md); background-color: var(--field); color: var(--text); font: inherit; font-size: 16px; }
+.start-developing .starter-field input, .start-developing .starter-field textarea, .start-developing .starter-field select { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background-color: var(--field); color: var(--text); font: inherit; font-size: 16px; }
 .start-developing .starter-field select { padding-right: 42px; }
 .start-developing .starter-field textarea { min-height: 96px; line-height: 1.5; }
 .developer-prompt-actions { display: flex; flex-direction: row-reverse; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px 18px; margin: 22px 0 8px; }

@@ -11,9 +11,9 @@
 .instrument-picture { position: relative; display: inline-flex; flex: 0 0 auto; } /* not the label's flex: 1 */
 .instrument-item small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .instrument-dot { position: absolute; right: -4px; bottom: -4px; width: 11px; height: 11px; border: 2px solid var(--surface-raised); border-radius: 50%; background: #8a8a98; }
-.instrument-dot.is-connected { background: #7fd39b; }
+.instrument-dot.is-connected { background: var(--grade-in-use); }
 .instrument-dot.is-busy { background: var(--accent); animation: link-pulse 1.5s ease-in-out infinite; }
-.instrument-dot.is-stock { background: #e0b26a; }
+.instrument-dot.is-stock { background: var(--warn); }
 /* A base update over USB: red and blinking until it is done, so nobody unplugs the cable. */
 .instrument-dot.is-updating, .status-dot.is-updating { background: #ef6b61; animation: link-pulse .8s ease-in-out infinite; }
 .unit-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -8px 0 18px; color: var(--muted); font-size: 13px; }
@@ -39,7 +39,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .module-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
 .module-tile { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); }
 .module-tile-open { display: flex; flex-direction: column; align-items: stretch; width: 100%; padding: 0 0 10px; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
-.module-tile-open:hover strong { color: var(--accent-hover); }
+.module-tile-open:hover { background: var(--surface-hover); }
 .module-tile .module-tile-open .compact-preview { width: 100%; height: 112px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
 .module-tile-open strong { margin: 8px 10px 0; font-size: 13px; }
 .module-tile-open small { overflow: hidden; margin: 2px 10px 0; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
@@ -175,7 +175,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-heading-actions, .hub-heading-actions nav { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1rem; }
 .hub-heading-actions a { display: inline-flex; align-items: center; min-height: 2.25rem; color: var(--text-secondary); font-size: .875rem; }
 .hub-heading-actions a:hover { color: var(--text); text-decoration: underline; }
-.hub-heading-actions .button { min-height: 2.25rem; font-size: .875rem; }
+.hub-heading-actions .button { min-height: 44px; }
 .hub-split { display: grid; flex: 1 0 16rem; grid-template-columns: clamp(13.5rem, 22%, 16rem) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; border: 1px solid var(--chrome-edge); border-radius: var(--radius-lg); background: var(--sidebar); }
 .octatrack-hub:not(.zoom-hub) > .hub-split { background: var(--surface); }
 .hub-hero { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--chrome-edge); }
@@ -184,11 +184,11 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-hero > div { flex: 1; min-width: 0; }
 .hub-hero p { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; margin: 6px 0 0; color: var(--muted); font-size: 13px; }
 .hub-hero p b { color: var(--text-secondary); font-weight: 600; }
-.hub-browser-note { display: flex; align-items: flex-start; gap: .625rem; max-width: 37rem; margin-top: .625rem; padding: .625rem .875rem; border: 1px solid var(--control-border); border-radius: var(--radius-md); background: var(--accent-soft); font-size: var(--text-base); line-height: 1.5; }
+.hub-browser-note { display: flex; align-items: flex-start; gap: .625rem; max-width: 37rem; margin-top: .625rem; padding: .625rem .875rem; border: 1px solid var(--control-border); border-radius: var(--radius-md); background: var(--surface-raised); font-size: var(--text-base); line-height: 1.5; }
 .hub-browser-note > svg { flex: none; margin-top: .125rem; color: var(--accent); }
 .hub-browser-note strong, .hub-browser-note span { display: block; }
 .hub-browser-note span { margin-top: .125rem; color: var(--text-secondary); }
-.hub-hero > .button { flex: none; min-height: 40px; }
+.hub-hero > .button { flex: none; min-height: 44px; }
 .hub-facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 14px 0 0; }
 .hub-facts dt { color: var(--muted); font-size: 11px; }
 .hub-facts dd { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
@@ -208,7 +208,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-nav-item:focus-visible, .hub-set-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .hub-set { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-radius: var(--radius-sm); }
 .hub-set-open { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 3px 10px; min-width: 0; padding: 9px 2px 9px 10px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
-.hub-set strong { overflow: hidden; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.hub-set strong { overflow: hidden; font-size: var(--text-base); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .hub-set b { color: var(--muted); font-size: 12px; font-weight: 500; }
 .hub-set small, .hub-set em { grid-column: 2 / -1; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .hub-set em { color: var(--accent); font-style: normal; }
@@ -223,7 +223,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-section, .hub-view .octatrack-diagnostics { margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); }
 .hub-section h3, .hub-cell h3 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; }
 .hub-section p { margin: 6px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
-.hub-section .button { min-height: 40px; }
+.hub-section .button { min-height: 44px; }
 .hub-base h3 { color: var(--text); font-size: var(--text-md); }
 .hub-base > p:first-of-type { color: var(--text); }
 .hub-base > .button { min-height: 44px; margin: 8px 0 6px; }
@@ -275,7 +275,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 /* Size containment: their lists never size the row, so a long history can't stretch the graph; they scroll instead. */
 .hub-cell-unit, .hub-cell-history { display: flex; flex-direction: column; contain: size; }
 /* Modules the unit's project uses but the unit lacks: a yellow-edged note, one band wide where there is room. */
-.usb-missing { padding: 14px 16px; border: 1px solid var(--line); border-left: 3px solid var(--warn); border-radius: var(--radius-md); background: var(--surface-raised); }
+.usb-missing { padding: 14px 16px; border: 1px solid var(--warn-line); border-radius: var(--radius-md); background: var(--warn-soft); }
 .usb-missing h3 { margin: 0; color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.5; }
 .usb-missing ul { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 7px 0 0; padding: 0; list-style: none; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
 .usb-missing li { min-width: 0; overflow-wrap: anywhere; }
@@ -289,7 +289,6 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-view .usb-missing ul li + li::before { content: '·'; margin-right: 14px; color: var(--muted); }
 .hub-view .usb-missing [role="status"] > p { flex-basis: 100%; margin: 0; }
 .hub-view .usb-missing-action { margin: 0; }
-.hub-view .usb-missing-action .button { min-height: 36px; }
 /* A narrow pane keeps the meters in one row, the graph on its own and the rest in halves. */
 @container hub-pane (max-width: 640px) {
   .hub-console { grid-template-rows: auto minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 1fr); grid-template-areas: "cpu cpu dsp1 dsp1 dsp2 dsp2" "chart chart chart chart chart chart" "health health health unit unit unit" "history history history history history history"; }
@@ -333,7 +332,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-view-set .usb-missing, .hub-fill { margin: 0 0 16px; }
 .hub-fill { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 16px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-md); background: var(--surface-raised); }
 .hub-fill p { margin: 0; color: var(--text-secondary); font-size: 13px; }
-.hub-fill .button { min-height: 40px; }
+.hub-fill .button { min-height: 44px; }
 .module-grid-empty { display: grid; justify-items: start; gap: .75rem; margin-top: .875rem; }
 .module-grid-empty p { margin: 0; color: var(--muted); font-size: var(--text-base); line-height: 1.5; }
 .module-grid-empty .button { min-height: 2.75rem; font-size: .875rem; }
@@ -474,14 +473,13 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-dialog .link-hint { margin: 0 0 12px; }
 .load-dialog .base-install-footer { flex-wrap: wrap; }
 .load-check { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px; cursor: pointer; }
-.load-check input { width: 16px; height: 16px; accent-color: var(--accent); }
+.load-check input { width: 20px; height: 20px; accent-color: var(--accent); }
 @media (max-width: 600px) {
   .toolbar-load span { display: none; }
   .toolbar-load { width: 36px; padding: 0; justify-content: center; }
 }
 
 /* One installation task at a time; actions remain reachable at large text sizes. */
-.base-install-dialog .base-install-close { width: 44px; height: 44px; top: 8px; right: 8px; }
 .base-install-dialog .base-install-footer .button { min-height: 44px; font-size: 14px; }
 .base-install-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 28px; padding: 0 0 20px; border-bottom: 1px solid var(--line); list-style: none; }
 .base-install-progress li { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; }
@@ -579,7 +577,6 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .base-update-plan .is-failed { border-color: #6a4348; }
 .base-update-plan .is-failed .base-update-mark { color: #e4b0b4; }
 .base-install-stage .base-update-error p { margin: 4px 0 0; }
-.base-update-error strong { color: #f3cfd2; }
 @media (max-width: 600px) {
   .base-update-plan { grid-template-columns: 1fr; gap: 8px; }
   .base-update-plan li { display: grid; grid-template-columns: 24px 1fr; column-gap: 12px; row-gap: 2px; align-items: center; padding: 10px 0 0; }

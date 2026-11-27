@@ -20,7 +20,7 @@
 .audio-player-time > span { padding: 0 4px; border-radius: 2px; background: var(--background, #18181b); }
 .audio-player-elapsed { color: var(--audio-accent); }
 .audio-player-duration { color: var(--text, #ececf1); }
-.audio-player-error { grid-column: 1 / -1; color: var(--muted); font-size: 11px; line-height: 1.4; }
+.audio-player-error { grid-column: 1 / -1; color: var(--danger); font-size: 11px; line-height: 1.4; }
 .audio-player[data-variant="compact"] { --audio-height: 40px; gap: 8px; }
 .audio-player[data-variant="card"] { --audio-height: 64px; gap: 10px; }
 .audio-player[data-variant="card"] .audio-player-wave { grid-column: 1 / -1; grid-row: 2; }

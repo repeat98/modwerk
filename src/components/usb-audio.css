@@ -21,7 +21,7 @@
 .usb-setup-cpu summary::-webkit-details-marker { display: none; }
 .usb-setup-cpu strong { color: var(--accent-hover); background: color-mix(in srgb, var(--accent) 7%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 19%, transparent); padding: 1px 7px; border-radius: var(--radius-xs); font-size: var(--text-xs); font-weight: 500; }
 .usb-setup-cpu p { padding: 10px 12px; margin-top: 6px; background: var(--field); border: 1px solid var(--line); border-radius: var(--radius-sm); }
-.usb-setup-cpu a, .usb-setup-routing a { color: var(--accent); }
+.usb-setup-cpu a, .usb-setup-routing a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 .usb-setup-outbox, .usb-setup-computer { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
 .usb-setup h3 { margin: 0; font-size: 13px; font-weight: 600; color: var(--text); }
 .usb-setup-routing-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
@@ -34,7 +34,7 @@
 .usb-setup-routing { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 4px 16px; margin-top: 16px; font-size: var(--text-sm); line-height: 1.65; color: var(--muted); }
 .usb-setup-routing p { flex: 1 1 350px; }
 .usb-setup-routing .text-button { font-size: 11px; min-height: var(--control-h); }
-.usb-setup-notice { padding: 9px 12px; margin-top: 14px; border-left: 2px solid var(--accent-line); background: color-mix(in srgb, var(--accent) 3%, transparent); color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.65; }
+.usb-setup-notice { padding: 9px 12px; margin-top: 14px; border-left: 2px solid var(--accent); background: var(--surface-raised); color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.65; }
 .usb-setup-channels { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .usb-setup-channels > span { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); font-size: var(--text-sm); color: var(--text-secondary); }
 .usb-setup-channels small { font: var(--text-xs) var(--mono); color: var(--muted); }
