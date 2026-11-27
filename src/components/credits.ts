@@ -40,7 +40,7 @@ export const USB_AUDIO_MIDI_CREDITS: readonly Credit[] = [
 ]
 
 // Attribution follows sdk/octabam/THIRD_PARTY.md, the retained licence manifest,
-// sdk/imports/, vendor/elekloader/kit/NOTICE and each module's author/source record.
+// sdk/imports/ and each module's author/source record.
 // Describe the retained contribution, rather than implying every linked project
 // is bundled with the website. Source revisions remain in those provenance files.
 export const DSP56300_CREDIT: Credit = {
@@ -80,11 +80,6 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
         name: 'octa-panel', author: 'Tim Hastie (@timhastie)',
         description: 'The virtual Octatrack panel and emulator improvements, including interactive execution, timing, card write-back and audio taps, retained through octabam.',
         links: [repo('timhastie/octa-panel')],
-      },
-      {
-        name: 'elekloader', author: 'irpina and contributors',
-        description: 'The vendored TypeScript kit for local Digitakt and Digitone firmware builds, shared cores and elemod format. Its public ABI and adaptation guides also inform Modwerk’s core research.',
-        links: [repo('irpina/elekloader')],
       },
     ],
   },
@@ -128,26 +123,6 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
         name: 'digi1_mods', author: 'gdeo607 and contributors',
         description: 'Digi EQ, Digi Mono, Digi Poly, Digi Matrix, Digi utilities and digichain: the original Digitakt engines, tools and module implementations.',
         links: [repo('gdeo607/digi1_mods')],
-      },
-      {
-        name: 'Digislicer', author: 'irpina',
-        description: 'The Digitakt slicing module, with its original source and documentation preserved in the machine SDK.',
-        links: [repo('irpina/digislicer')],
-      },
-      {
-        name: 'Digineighbor', author: 'irpina',
-        description: 'The Digitakt neighbor-processing module, with its original source and documentation preserved in the machine SDK.',
-        links: [repo('irpina/digineighbor')],
-      },
-      {
-        name: 'Digihealth', author: 'irpina',
-        description: 'System information and diagnostic modules for Digitakt and Digitone, including the Digitakt FAST AUDIO work.',
-        links: [repo('irpina/digihealth')],
-      },
-      {
-        name: 'digitables', author: 'irpina',
-        description: 'The Digitone module for custom pitch tables, with its original implementation and attribution retained in the machine SDK.',
-        links: [repo('irpina/digitables')],
       },
       {
         name: 'Digisophie', author: 'Sjoerd (@soejrd)',
@@ -222,7 +197,7 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
       },
       {
         name: 'Pyodide', author: 'The Pyodide and CPython contributors',
-        description: 'Python in WebAssembly powered the earlier Digitakt and Digitone browser builder. Current builds use elekloader’s TypeScript kit; Pyodide remains part of the project’s history.',
+        description: 'Python in WebAssembly powered the earlier Digitakt and Digitone browser builder. Current builds use Modwerk’s own builder; Pyodide remains part of the project’s history.',
         links: [repo('pyodide/pyodide')],
       },
       {
