@@ -31,7 +31,7 @@
 .developer-setup-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
 /* New or update: one segmented control instead of two cards. */
-.developer-task-choice { display: inline-flex; margin: 6px 0 22px; padding: 2px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--field); }
+.developer-task-choice { display: inline-flex; margin: 6px 0 22px; padding: 4px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--field); }
 .developer-task-choice button { min-height: 44px; padding: 8px 18px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted); font-size: 16px; font-weight: 500; }
 .developer-task-choice button:hover { color: var(--text); }
 .developer-task-choice button[aria-pressed="true"] { background: var(--surface-hover); color: var(--text); }

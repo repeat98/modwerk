@@ -5,7 +5,7 @@
 .samples-drop { border: 1px dashed var(--line); border-radius: var(--radius-md); padding: 1.1rem; }
 .samples-drop p { margin-top: 0; }
 .samples-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
-.octatrack-samples button, .samples-tree summary { min-height: var(--control-h); }
+.octatrack-samples button, .samples-tree summary { min-height: 44px; }
 .samples-local-note, .samples-notice { font-size: var(--text-sm); }
 .samples-notice { min-height: 1.5em; }
 .samples-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.25rem; }

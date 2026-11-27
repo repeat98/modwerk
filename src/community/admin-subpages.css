@@ -3,7 +3,7 @@
   flex-wrap: wrap;
   gap: 2px;
   margin: 0 0 18px;
-  padding: 2px;
+  padding: 4px;
   width: fit-content;
   max-width: 100%;
   border: 1px solid var(--line);
@@ -13,11 +13,11 @@
 .admin-views a {
   display: inline-flex;
   align-items: center;
-  min-height: calc(var(--control-h) - 6px);
-  padding: 0 12px;
+  min-height: 44px;
+  padding: 7px 13px;
   border-radius: var(--radius-xs);
   color: var(--muted);
-  font-size: var(--text-base);
+  font-size: 13px;
 }
 .admin-views a[aria-current="page"] { color: var(--text); background: var(--surface-hover); }
 .admin-views a:not([aria-current="page"]):hover { color: var(--text); background: var(--surface); }
@@ -70,13 +70,13 @@
 .admin-history li:last-child { padding-bottom: 0; }
 .admin-history p, .admin-comment p { margin-block: 8px; }
 .admin-search { display: grid; gap: 6px; max-width: 32rem; margin-block: 14px; font-size: 13px; }
-.admin-search input { min-height: var(--control-h); padding-inline: 12px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--field); color: var(--text); }
+.admin-search input { min-height: 42px; padding-inline: 12px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--field); color: var(--text); }
 .admin-comment { border-top: 1px solid var(--line); padding-block: 15px; overflow-wrap: anywhere; }
 .admin-comment small { margin-inline-start: 10px; }
 .admin-comment p { margin-block: 8px; }
 .admin-contribution .admin-module-row > .forum-actions { flex-direction: row; align-items: center; flex-wrap: wrap; }
 @media (max-width: 620px) {
-  .admin-views a { min-height: 44px; padding-inline: 10px; }
+  .admin-views a { padding-inline: 10px; }
   .admin-record > summary { grid-template-columns: minmax(0, 1fr) 16px; gap: 8px; }
   .admin-record > summary > :nth-child(2) { grid-column: 1; justify-self: start; white-space: normal; }
   .admin-record > summary > svg { grid-column: 2; grid-row: 1 / 3; }

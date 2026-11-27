@@ -27,7 +27,8 @@
 .device-art .device-led { stroke: none; fill: #c7a16c; }
 
 .device-hero { display: grid; grid-template-columns: minmax(220px, 340px) minmax(0, 1fr); gap: 32px; align-items: center; margin-bottom: 30px; }
-.device-hero-art { display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--preview); aspect-ratio: 4 / 3; }
+.device-hero-art { display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius-md); background: radial-gradient(circle at 50% 30%, #2d2d36, var(--surface) 72%); aspect-ratio: 4 / 3; }
+.device-hero.is-open .device-hero-art, .device-hero.is-research .device-hero-art { background: repeating-linear-gradient(135deg, var(--surface) 0 10px, var(--surface) 10px 20px); }
 .device-hero-art .device-art { width: 86%; height: auto; }
 .device-hero-copy > p { color: var(--muted); font-size: 14px; line-height: 1.6; margin-top: 8px; max-width: 60ch; }
 .device-variants { color: var(--muted); font-weight: 450; font-size: var(--text-lg); letter-spacing: -.2px; }
@@ -146,7 +147,7 @@
 .machine-section + .machine-section { margin-top: 34px; }
 .machine-section .library-subheading .text-button { display: inline-flex; align-items: center; gap: 5px; color: var(--accent); font-size: 12px; }
 .machine-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.machine-chip { display: inline-flex; align-items: baseline; gap: 4px; padding: 8px 12px; border: 1px dashed var(--control-border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-secondary); font-size: 13px; min-height: var(--control-h); }
+.machine-chip { display: inline-flex; align-items: baseline; gap: 4px; padding: 8px 12px; border: 1px dashed var(--control-border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-secondary); font-size: 13px; min-height: 36px; }
 .machine-chip small { color: var(--muted); font-size: 11px; }
 .machine-chip:hover, .machine-chip:focus-visible { border-color: var(--line-hover); background: var(--surface-hover); }
 .machine-chip.is-research { border-color: var(--accent-line); }

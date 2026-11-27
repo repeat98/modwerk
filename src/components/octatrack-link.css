@@ -83,7 +83,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .sync-bar-actions { display: flex; flex: none; align-items: center; gap: 8px; }
 /* Stock effects as tiles like the modules': the effect's name as art, a click switches it in or out. */
 .stock-tiles { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
-.stock-tile-art { display: flex; align-items: flex-end; justify-content: center; height: 72px; padding-bottom: 14px; border-bottom: 1px solid var(--line); background: var(--preview); color: var(--accent); font: var(--text-xs) var(--mono); letter-spacing: 1px; }
+.stock-tile-art { display: flex; align-items: flex-end; justify-content: center; height: 72px; padding-bottom: 14px; border-bottom: 1px solid var(--line); background: radial-gradient(ellipse at 60% 100%, #a5adff18, transparent 75%), var(--preview); color: var(--accent); font: var(--text-xs) var(--mono); letter-spacing: 1px; }
 .stock-tile.is-off .module-tile-open { opacity: .45; }
 /* Most stock effects just stay: their LED alone says so (the label stays for screen readers), so changes stand out. */
 .stock-tile.is-on .module-tile-state { gap: 0; padding: 5px; font-size: 0; }
@@ -173,9 +173,9 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-page-heading h1 { font-size: var(--text-xl); line-height: 1.2; letter-spacing: -.2px; }
 .hub-page-heading p { margin-top: .25rem; color: var(--muted); font-size: var(--text-sm); line-height: 1.45; }
 .hub-heading-actions, .hub-heading-actions nav { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1rem; }
-.hub-heading-actions a { display: inline-flex; align-items: center; min-height: var(--control-h); color: var(--text-secondary); font-size: var(--text-base); }
+.hub-heading-actions a { display: inline-flex; align-items: center; min-height: 2.25rem; color: var(--text-secondary); font-size: .875rem; }
 .hub-heading-actions a:hover { color: var(--text); text-decoration: underline; }
-.hub-heading-actions .button { min-height: var(--control-h); font-size: var(--text-base); }
+.hub-heading-actions .button { min-height: 2.25rem; font-size: .875rem; }
 .hub-split { display: grid; flex: 1 0 16rem; grid-template-columns: clamp(13.5rem, 22%, 16rem) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; border: 1px solid var(--chrome-edge); border-radius: var(--radius-lg); background: var(--sidebar); }
 .octatrack-hub:not(.zoom-hub) > .hub-split { background: var(--surface); }
 .hub-hero { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--chrome-edge); }
@@ -188,7 +188,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-browser-note > svg { flex: none; margin-top: .125rem; color: var(--accent); }
 .hub-browser-note strong, .hub-browser-note span { display: block; }
 .hub-browser-note span { margin-top: .125rem; color: var(--text-secondary); }
-.hub-hero > .button { flex: none; min-height: var(--control-h); }
+.hub-hero > .button { flex: none; min-height: 40px; }
 .hub-facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 14px 0 0; }
 .hub-facts dt { color: var(--muted); font-size: 11px; }
 .hub-facts dd { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
@@ -199,7 +199,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-nav-label .subtle { margin-right: auto; font-weight: 500; }
 .hub-nav-label .icon-button { padding: 6px; }
 .hub-nav-list, .hub-set-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
-.hub-nav-item { display: flex; align-items: center; gap: 10px; min-height: var(--control-h); padding: 6px 10px; border-radius: var(--radius-sm); color: var(--text-secondary); font-size: var(--text-base); text-decoration: none; }
+.hub-nav-item { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--text-secondary); font-size: 14px; text-decoration: none; }
 .hub-nav-item > svg { color: var(--muted); }
 .hub-nav-item .samples-wip { margin-left: auto; padding: .1rem .35rem; }
 .hub-nav-item:hover, .hub-set:hover { background: var(--surface-hover); }
@@ -208,7 +208,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-nav-item:focus-visible, .hub-set-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .hub-set { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; border-radius: var(--radius-sm); }
 .hub-set-open { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 3px 10px; min-width: 0; padding: 9px 2px 9px 10px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
-.hub-set strong { overflow: hidden; font-size: var(--text-base); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.hub-set strong { overflow: hidden; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .hub-set b { color: var(--muted); font-size: 12px; font-weight: 500; }
 .hub-set small, .hub-set em { grid-column: 2 / -1; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .hub-set em { color: var(--accent); font-style: normal; }
@@ -223,10 +223,10 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-section, .hub-view .octatrack-diagnostics { margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); }
 .hub-section h3, .hub-cell h3 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; }
 .hub-section p { margin: 6px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
-.hub-section .button { min-height: var(--control-h); }
+.hub-section .button { min-height: 40px; }
 .hub-base h3 { color: var(--text); font-size: var(--text-md); }
 .hub-base > p:first-of-type { color: var(--text); }
-.hub-base > .button { margin: 8px 0 6px; }
+.hub-base > .button { min-height: 44px; margin: 8px 0 6px; }
 /* Help that only some need: folded under its question. */
 .hub-help > summary { min-height: var(--control-h); align-content: center; cursor: pointer; color: var(--muted); }
 .hub-help[open] > summary { margin-bottom: 6px; }
@@ -250,18 +250,18 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 }
 .hub-screen .hub-screen-empty h3 { margin: 0; color: var(--text); font-size: var(--text-md); line-height: 1.3; }
 .hub-screen .hub-screen-empty p { max-width: 37ch; margin: 0; color: var(--muted); font-size: var(--text-base); }
-.hub-screen .hub-screen-empty .button { min-height: var(--control-h); margin-top: 6px; }
+.hub-screen .hub-screen-empty .button { min-height: 44px; margin-top: 6px; }
 .hub-screen-actions, .hub-screen-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
 .hub-screen-actions { padding: 10px 2px 0; }
 .hub-screen-controls { margin-inline-start: auto; }
 .hub-screen-rate { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
-.hub-screen-rate select { min-height: var(--control-h); padding: 0 2rem 0 10px; background-color: var(--field); }
+.hub-screen-rate select { min-height: 40px; padding: 0 2rem 0 10px; background-color: var(--field); }
 .hub-screen-live { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 600; }
 .hub-screen-live.is-recording .unit-led { background: #ec9297; box-shadow: none; }
 .hub-screen .hub-screen-demo { margin: 0 2px 8px; }
 .hub-screen .hub-screen-notice, .hub-screen .hub-screen-note { margin: 10px 2px 0; color: var(--muted); }
 .hub-screen .hub-screen-notice { color: var(--text-secondary); }
-.hub-screen-download { min-height: var(--control-h); padding: 0 2px; }
+.hub-screen-download { min-height: 40px; padding: 0 2px; }
 .hub-section .hub-code { margin: 8px 0; padding: 10px 12px; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); font: 12px/1.6 var(--mono); white-space: pre; user-select: all; }
 .hub-view p.hub-empty { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
 /* Status: a control room's panel, divided by hairlines. Its rows are fixed; long lists scroll in their cell. */
@@ -282,14 +282,14 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .usb-missing p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .usb-missing-action { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-top: 10px; }
 .usb-missing-action p { margin: 0; }
-.usb-missing-action .button { min-height: var(--control-h); }
+.usb-missing-action .button { min-height: 44px; }
 .hub-view .usb-missing { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding: 10px 14px; }
 .hub-view .usb-missing > [role="status"] { display: flex; flex: 1 1 320px; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; min-width: 0; }
 .hub-view .usb-missing ul { margin: 0; }
 .hub-view .usb-missing ul li + li::before { content: '·'; margin-right: 14px; color: var(--muted); }
 .hub-view .usb-missing [role="status"] > p { flex-basis: 100%; margin: 0; }
 .hub-view .usb-missing-action { margin: 0; }
-.hub-view .usb-missing-action .button { min-height: var(--control-h); }
+.hub-view .usb-missing-action .button { min-height: 36px; }
 /* A narrow pane keeps the meters in one row, the graph on its own and the rest in halves. */
 @container hub-pane (max-width: 640px) {
   .hub-console { grid-template-rows: auto minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 1fr); grid-template-areas: "cpu cpu dsp1 dsp1 dsp2 dsp2" "chart chart chart chart chart chart" "health health health unit unit unit" "history history history history history history"; }
@@ -329,19 +329,19 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-sync { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 14px 0 20px; padding: 12px 0; border-block: 1px solid var(--line); }
 .hub-sync p { flex: 1 1 220px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
 .hub-insync { display: flex; align-items: center; gap: 8px; }
-.hub-sync .button { min-height: var(--control-h); }
+.hub-sync .button { min-height: 44px; }
 .hub-view-set .usb-missing, .hub-fill { margin: 0 0 16px; }
 .hub-fill { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 16px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: var(--radius-md); background: var(--surface-raised); }
 .hub-fill p { margin: 0; color: var(--text-secondary); font-size: 13px; }
-.hub-fill .button { min-height: var(--control-h); }
+.hub-fill .button { min-height: 40px; }
 .module-grid-empty { display: grid; justify-items: start; gap: .75rem; margin-top: .875rem; }
 .module-grid-empty p { margin: 0; color: var(--muted); font-size: var(--text-base); line-height: 1.5; }
-.module-grid-empty .button { min-height: var(--control-h); font-size: var(--text-base); }
+.module-grid-empty .button { min-height: 2.75rem; font-size: .875rem; }
 .hub-view-set .module-tiles { margin-bottom: 4px; }
 .hub-empty-set { display: flex; flex-direction: column; align-items: flex-start; gap: .375rem; }
 .hub-empty-set > svg { color: var(--accent); margin-bottom: .25rem; }
 .hub-empty-set p { margin: 0 0 14px; color: var(--muted); font-size: var(--text-base); line-height: 1.55; }
-.hub-empty-set .button { min-height: var(--control-h); }
+.hub-empty-set .button { min-height: 44px; }
 /* Setup: the base and the module file for the card. */
 .card-set-steps { margin: 10px 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: var(--reading-line-height); }
 .card-set-dialog { width: min(440px, calc(100vw - 32px)); }
@@ -451,9 +451,9 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 /* On its own Diagnostics page the page title already names it. */
 .hub-view-diagnostics .octatrack-diagnostics h3 { display: none; }
 .octatrack-diagnostics p { margin: 8px 0; }
-.octatrack-diagnostics .load-check { min-height: var(--control-h); }
-.octatrack-diagnostics summary { cursor: pointer; min-height: var(--control-h); align-content: center; color: var(--muted); }
-.octatrack-diagnostics .text-button { min-height: var(--control-h); }
+.octatrack-diagnostics .load-check { min-height: 44px; }
+.octatrack-diagnostics summary { cursor: pointer; min-height: 44px; align-content: center; color: var(--muted); }
+.octatrack-diagnostics .text-button { min-height: 44px; }
 .diagnostic-json { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
 .load-change { display: flex; align-items: center; gap: 12px; padding: 8px 12px 8px 8px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); }
 .load-change-name { flex: 1; min-width: 0; }
@@ -481,8 +481,8 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 }
 
 /* One installation task at a time; actions remain reachable at large text sizes. */
-.base-install-dialog .base-install-close { width: var(--control-h); height: var(--control-h); top: 12px; right: 12px; }
-.base-install-dialog .base-install-footer .button { min-height: var(--control-h); font-size: var(--text-base); }
+.base-install-dialog .base-install-close { width: 44px; height: 44px; top: 8px; right: 8px; }
+.base-install-dialog .base-install-footer .button { min-height: 44px; font-size: 14px; }
 .base-install-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 28px; padding: 0 0 20px; border-bottom: 1px solid var(--line); list-style: none; }
 .base-install-progress li { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 13px; }
 .base-install-progress li > span { display: inline-flex; align-items: center; justify-content: center; flex: none; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }

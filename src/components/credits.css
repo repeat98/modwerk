@@ -10,7 +10,7 @@
 .credit-links a:hover { color: var(--accent-hover); text-decoration: underline; text-underline-offset: 3px; }
 .credit-links a > span { flex-shrink: 0; }
 .credits-nav { display: flex; flex-wrap: wrap; gap: 4px 20px; padding: 16px 0; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
-.credits-nav button { padding: 0; min-height: var(--control-h); border: 0; background: none; color: var(--muted); font-size: var(--text-base); line-height: 1.6; text-align: left; }
+.credits-nav button { padding: 5px 0; min-height: 36px; border: 0; background: none; color: var(--muted); font-size: 12px; line-height: 1.6; text-align: left; }
 .credits-nav button:hover { color: var(--text); }
 .credits-section { margin-top: 32px; }
 .credits-section-heading { margin-bottom: 10px; }

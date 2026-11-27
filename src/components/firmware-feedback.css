@@ -48,7 +48,7 @@
 .firmware-feedback-carousel-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
 .firmware-feedback-dialog .firmware-feedback-carousel-toolbar p { color: var(--text-secondary); font-size: 12px; }
 .firmware-feedback-screen-paging { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
-.firmware-feedback-screen-paging button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: var(--control-h); min-height: var(--control-h); padding: 0 12px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text); font-size: var(--text-sm); }
+.firmware-feedback-screen-paging button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--surface-raised); color: var(--text); font-size: 12px; }
 .firmware-feedback-screen-paging button:hover:not([aria-disabled="true"]) { background: var(--surface-hover); border-color: var(--line-hover); }
 .firmware-feedback-screen-paging button[aria-disabled="true"] { color: var(--faint); background: transparent; cursor: default; }
 .firmware-feedback-dialog .firmware-feedback-carousel-help { color: var(--muted); font-size: 11px; line-height: 1.5; margin-top: 8px; }
@@ -70,14 +70,14 @@
 .firmware-feedback-dialog .firmware-feedback-capture-details p { font-size: 11px; margin: 8px 0; }
 .firmware-feedback-test-actions { margin-top: 16px; }
 .firmware-feedback-module-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.firmware-feedback-module-actions .button { min-height: var(--control-h); font-size: 13px; padding: 8px 12px; }
+.firmware-feedback-module-actions .button { min-height: 40px; font-size: 13px; padding: 8px 12px; }
 .firmware-feedback-dialog .firmware-feedback-help { color: var(--faint); font-size: 11px; margin-top: 8px; }
 .firmware-feedback-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; flex-shrink: 0; padding: 12px 28px; border-top: 1px solid var(--line); }
 .firmware-feedback-footer-actions { display: flex; align-items: center; gap: 20px; }
-.firmware-feedback-footer .text-button { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; min-height: var(--control-h); }
+.firmware-feedback-footer .text-button { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; min-height: 40px; }
 .firmware-feedback-flash-toggle > svg:last-child { transform: rotate(90deg); }
 .firmware-feedback-footer .firmware-feedback-later { font-size: 11px; color: var(--faint); }
-.firmware-feedback-next { min-height: var(--control-h); font-size: var(--text-base); }
+.firmware-feedback-next { min-height: 44px; font-size: 14px; }
 .firmware-feedback-install > p { margin-top: 14px; }
 .firmware-feedback-install ol { display: grid; gap: 24px; padding-left: 22px; margin-top: 26px; }
 .firmware-feedback-install li { padding-left: 6px; color: var(--muted); font-size: 14px; line-height: 1.7; }
