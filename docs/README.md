@@ -100,6 +100,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 
 History, not current instructions.
 
+- [What hurts Octatrack musicians](verification/2026-11-27-octatrack-ux-findings.md): refusals, dropped renders, late frames, sync failures and stalls on bases 0.8 to 0.8.2, recounted from shared diagnostics, Discord and the issues, 27 November 2026.
 - The Analog BD Undo recording and BBD Delay buffer check are in the [Octatrack 0.7.10 test record](verification/2026-11-19-octatrack-0710-checks.md).
 - [Unused module cost](verification/2026-11-20-octatrack-unused-module-cost.md): what 24 installed, unused modules cost the frame interrupt, module by module, and resting machines, 20 November 2026.
 - The DSP stall on a project load with modules restored from the card, and its 0.7.11 fix, are in the [project-load record](verification/2026-11-19-octatrack-project-load-dsp.md).
