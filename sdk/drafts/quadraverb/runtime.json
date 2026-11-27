@@ -1,5 +1,8 @@
 {
   "schema": 1,
+  "subscribe": [
+    {"event": "ev_knob_store", "fn": "qv_take_knob", "order": 68}
+  ],
   "contribute": [
     {"to": "ot_dsp_effects", "order": 50, "data": "qv_effect"}
   ]

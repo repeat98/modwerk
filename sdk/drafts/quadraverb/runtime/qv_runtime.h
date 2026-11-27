@@ -38,6 +38,8 @@ int32_t qv_program(unsigned slot);
 uint32_t qv_code(unsigned slot, int32_t program, uint32_t at, uint32_t *out);
 void qv_fill(unsigned slot, uint32_t frame, volatile uint16_t *in);
 void qv_take(unsigned slot, uint32_t frame, const volatile uint16_t *out);
+const char *qv_name(unsigned value);  /* runtime/qv_entry.s: PROG's message box line */
+uint32_t qv_page(void);               /* runtime/qv_entry.s: our installed FX2 page, or 0 */
 
 /* Diagnostics, never an ABI: resyncs, takes with no room in the pool, samples asked before they arrived, out-blocks
  * missed, blocks with a tag that is not ours. */

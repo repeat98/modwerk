@@ -7,12 +7,19 @@
  *
  * Out-block (DSP to here): the tag 0x5100 | index, K (the DSP's frame since the program started, modulo 0x8000;
  * 0xffff while it waits), then each streamed line's 16 head words newest first, then each moving window's published U.
- * In-block (here to DSP): each window's run, as qvs.ColdFire.compose, zeros past the program's words. */
+ * In-block (here to DSP): each window's run, as qvs.ColdFire.compose, zeros past the program's words.
+ *
+ * qv_page and qv_name serve runtime/qv_entry.s, which names the program in stock's message box when PROG turns. */
 #include "qv_runtime.h"
 #ifndef QV_TABLES
 #define QV_TABLES "../gen/qv_tables.h"
 #endif
 #include QV_TABLES
+#ifndef QV_NAMES
+#define QV_NAMES "../gen/qv_names.h"
+#endif
+#include QV_NAMES
+_Static_assert(QV_NAMES_COUNT == QV_PROGRAMS, "gen/qv_names.h names another program list than gen/qv_tables.h");
 
 #ifndef QV_POOL_HALFWORDS
 #define QV_POOL_HALFWORDS QV_RING_MAX /* the dearest program alone; two chambers fit side by side */
@@ -50,12 +57,44 @@ static struct slot slots[16] SEEN;
 static uint16_t pool[QV_POOL_HALFWORDS]; /* never assumed zero: a slot reads only what it filed since it started */
 volatile uint32_t qv_resyncs SEEN, qv_no_room SEEN, qv_missing SEEN, qv_gaps SEEN, qv_bad_tags SEEN;
 
+/* PROG's value to its program's index: past the list, the last. */
+static unsigned qv_index(unsigned v) { return v < QV_PROGRAMS ? v : QV_PROGRAMS - 1u; }
+
 int32_t qv_program(unsigned slot)
 {
     if (slot < 8u || slot >= 16u) return -1; /* FX1: never ours */
     uint32_t bank = *(volatile uint32_t *)AT(0x800000e0u) & 1u;
     unsigned v = *(volatile uint8_t *)AT(0x80000110u + bank * 512u + (slot - 8u) * 64u + 24u); /* FX2 knob A */
-    return v < QV_PROGRAMS ? (int32_t)v : QV_PROGRAMS - 1;
+    return (int32_t)qv_index(v);
+}
+
+/* What stock's message box shows when PROG stores `value`: the number and name of the program qv_program then picks. */
+const char *qv_name(unsigned value) { return qv_names[qv_index(value)]; }
+
+/* The FX2 page the base installed for this module (its descriptor), or 0: qv_entry.s takes only turns on that page, so
+ * another module's page with a PROG of its own never shows these names.
+ * shortcut: as Midiverb's mv_installed, through the page recipe the builder puts before this code ('MWPG' at the
+ * module's start; the base keeps the page's address at recipe + 48, fxpage.c); upgrade when the loader hands a module
+ * its handle. */
+#ifdef QV_HOST
+uint8_t qv_host_image[0x4000]; /* the host test's module: the image starts at its end */
+#define IMAGE_START (qv_host_image + sizeof qv_host_image)
+#else
+extern const uint8_t __image_start[];
+#define IMAGE_START __image_start
+#endif
+static const volatile uint8_t *recipe SEEN;
+
+uint32_t qv_page(void)
+{
+    if (!recipe) {
+        const volatile uint8_t *p = IMAGE_START - 4;
+        for (unsigned n = 0; n < 16384u && !recipe; n += 4u, p -= 4)
+            if (p[0] == 'M' && p[1] == 'W' && p[2] == 'P' && p[3] == 'G') recipe = p;
+        if (!recipe) return 0;
+    }
+    uint32_t d = (uint32_t)recipe[48] << 24 | (uint32_t)recipe[49] << 16 | (uint32_t)recipe[50] << 8 | recipe[51];
+    return d < 0x40000000u || d >= 0x48000000u ? 0 : d; /* 0: no page installed yet */
 }
 
 uint32_t qv_code(unsigned slot, int32_t program, uint32_t at, uint32_t *out)
