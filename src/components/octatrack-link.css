@@ -170,7 +170,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .workspace-content:has(> .octatrack-hub) > :not(.octatrack-hub) { flex-shrink: 0; }
 .octatrack-hub { container: hub / inline-size; display: flex; flex-direction: column; flex: 1 0 0; min-height: 0; }
 .hub-page-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .375rem 1.5rem; margin-bottom: 1rem; }
-.hub-page-heading h1 { font-size: var(--text-xl); line-height: 1.2; letter-spacing: -.2px; }
+.hub-page-heading h1 { font-size: var(--text-xl); line-height: 1.1; letter-spacing: -.035em; }
 .hub-page-heading p { margin-top: .25rem; color: var(--muted); font-size: var(--text-sm); line-height: 1.45; }
 .hub-heading-actions, .hub-heading-actions nav { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem 1rem; }
 .hub-heading-actions a { display: inline-flex; align-items: center; min-height: 2.25rem; color: var(--text-secondary); font-size: .875rem; }
