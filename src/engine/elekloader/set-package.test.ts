@@ -95,6 +95,10 @@ describe('one module-set offer', () => {
     const { stream, streamDuplex, ...older } = shipped.stock
     expect(stream && streamDuplex).toBeTruthy()
     expect(frameCostTable({}, older).map(c => c.module)).toEqual(Array.from({ length: 15 }, (_, i) => 0xfffffff1 + i)) // a table without them still encodes
+    // and one per stream width, up to 2, 4, 8, 16 and 20 channels, after those two
+    expect(frameCostTable({}, { ...older, streamByWidth: [10, 20, 30, 40, 50] }).slice(0, 5)).toEqual(
+      [10, 20, 30, 40, 50].map((figure, n) => ({ module: 0xffffffe2 + n, use: figure * 10, wake: 0, rest: 0 })))
+    expect(() => frameCostTable({}, { ...older, streamByWidth: [10, 20] })).toThrow('20 channels')
     expect(frameCostTable({ x: { first: 1, each: 1 } }, null)).toHaveLength(1) // no stock: the base's compiled figures
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], table)).not.toThrow()
     expect(() => encodeModuleSet(base, baseline, [pkg(11)], [{ module: 5, use: 0, wake: 0, rest: 0 }])).not.toThrow() // measured free

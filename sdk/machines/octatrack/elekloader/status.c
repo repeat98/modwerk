@@ -591,11 +591,13 @@ static uint32_t tuned(uint32_t id, uint32_t compiled)
 /* What an open stream adds to the frame interrupt's work, per mille of it: to a computer, and with the computer also
  * playing into the unit (INPUTS). On the owner's MKII a 16-channel stream stretched a playing Part's frames 1.19 to 1.23
  * times on one boot and 1.63 to 1.76 times on another (2 channels: 1.43); playing into the unit added nothing measurable
- * on top. Both are the 1.65 a Part dropped renders at. The set's `stock` carries newer ones.
- * shortcut: one figure for every stream; by channel count, or measured live as the stream opens, once picks made beside
- * a light stereo stream are refused for it. */
+ * on top. Both are the 1.65 a Part dropped renders at. The set's `stock` carries newer ones: one per width (up to 2, 4,
+ * 8, 16 and 20 channels, STREAM_WIDTH_ID + 0-4), read from the active profile's EP3 IN packet, else one for every stream.
+ * shortcut: a full-speed stream (one pair) takes its high-speed profile's width; measured live as the stream opens
+ * would follow the module's own cost too. */
 #define STREAM_ID 0xffffffe0u
 #define STREAM_DUPLEX_ID 0xffffffe1u
+#define STREAM_WIDTH_ID 0xffffffe2u
 #ifndef MW_STREAM
 #define MW_STREAM 650u
 #endif
@@ -603,16 +605,22 @@ static uint32_t tuned(uint32_t id, uint32_t compiled)
 #define MW_STREAM_DUPLEX 650u
 #endif
 #ifdef MODWERK_HOST
-unsigned modwerk_test_streams;
+unsigned modwerk_test_streams, modwerk_test_stream_bytes;
 static unsigned modwerk_usb_function_streams(void) { return modwerk_test_streams; }
+static unsigned modwerk_usb_function_stream_bytes(void) { return modwerk_test_stream_bytes; }
 #else
 __attribute__((weak)) unsigned modwerk_usb_function_streams(void) { return 0; } /* usb_function.c, when the base has it */
+__attribute__((weak)) unsigned modwerk_usb_function_stream_bytes(void) { return 0; }
 #endif
 static uint32_t stream_factor(void)
 {
     unsigned streams = modwerk_usb_function_streams();
     if (!streams) return 1000u;
-    return 1000u + (streams & 2u ? tuned(STREAM_DUPLEX_ID, MW_STREAM_DUPLEX) : tuned(STREAM_ID, MW_STREAM));
+    uint32_t single = streams & 2u ? tuned(STREAM_DUPLEX_ID, MW_STREAM_DUPLEX) : tuned(STREAM_ID, MW_STREAM);
+    unsigned channels = modwerk_usb_function_stream_bytes() / 48u;  /* 4 bytes and 12 frames a high-speed packet */
+    if (!channels) return 1000u + single;
+    unsigned width = channels <= 2u ? 0u : channels <= 4u ? 1u : channels <= 8u ? 2u : channels <= 16u ? 3u : 4u;
+    return 1000u + tuned(STREAM_WIDTH_ID + width, single);
 }
 static uint32_t frame_line(void)
 {
