@@ -6,7 +6,7 @@
 #include "../../../machines/octatrack/include/modwerk_events.h"
 
 #ifndef CX_CPU_RENDER_PERCENT
-#define CX_CPU_RENDER_PERCENT 0
+#define CX_CPU_RENDER_PERCENT 6
 #endif
 
 const struct modwerk_machine cx_machine = {

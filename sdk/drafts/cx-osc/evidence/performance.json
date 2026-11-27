@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "cx-osc",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": null,
+    "method": "Not run: cfmeter flood on built image. Frame curve and machine-render priced on MKII dev twin (device:price, device:test, 27 Nov 2026)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "device:test on twin 46c30886: peak guarded render 19.4 % T1, 16.4 % T5; mean machine-render price 6 %."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": ""
+  }
+}

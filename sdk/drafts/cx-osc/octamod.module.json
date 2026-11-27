@@ -106,14 +106,23 @@
     ],
     "uiClaims": [],
     "limitations": [
-      "First experimental catalogue release; USB on the author's MKII only.",
-      "Cannot combine with FM Synth (synth): same Tim Hastie engine hook surface; compatibility.json group-owns the shared sites.",
-      "MIDI chromatic drawer, legato, multi-track stress, Part save/load persistence and power-cycle retention are not fully qualified.",
-      "CPU/frame cost not measured on hardware; host gate checks registration, import pins and package build."
+      "Draft PR: not in sdk/catalog.json yet; modules:compat group-owned relation for synth waits for listing.",
+      "Cannot combine with FM Synth (synth): same Tim Hastie engine hook surface.",
+      "Table patches on ot_machines chooser sites still use detours; migrate to runtime contribute before listing (46 compat findings with --with cx-osc, 27 Nov 2026).",
+      "MIDI chromatic drawer, legato, power-cycle retention and listening pass remain open."
     ]
   },
   "resources": {
-    "recorded": "Not measured",
+    "cpuPrice": {
+      "value": 6,
+      "unit": "percent-of-frame",
+      "measure": "machine-render",
+      "tool": "npm run device -- do 'PLAY w2500 guard w6000 guard STOP'",
+      "date": "2026-11-27",
+      "conditions": "MKII, dev twin 46c30886 of base 0.8.2, bank A Part 1, device:test audition on T1 and T5 with package f52815ad: mean frame interrupt +5.0 and +5.6 points above quiet when TRACK+PLAY retriggered the machine track (descriptor charged 12 until this build set 6).",
+      "source": "TESTING.md"
+    },
+    "recorded": "Frame curve, machine-render price, and device:test on MKII dev twin 27 Nov 2026",
     "storage": {
       "label": "Package",
       "display": "~30 KiB code and data (module:dev --build-only)",
@@ -125,12 +134,12 @@
     },
     "processing": {
       "label": "ColdFire render",
-      "display": "Not measured on hardware",
-      "value": null,
-      "unit": "unknown",
-      "method": "unmeasured",
-      "conditions": "octabam verify_cxosc Unicorn estimate only; no MKII frame-cost audit yet.",
-      "source": "upstream/cxosc/README.md"
+      "display": "6 % of a frame (mean, one playing track)",
+      "value": 6,
+      "unit": "percent-of-frame",
+      "method": "machine-render",
+      "conditions": "device:test audition on dev twin; peak guarded render 19.4 % on T1, 16.4 % on T5 in the same run.",
+      "source": "TESTING.md"
     },
     "impact": {
       "conditions": "One CX OSC track per Part, mono FLEX voice; FM engine hooks shared with FM Synth.",
@@ -156,7 +165,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author MKII USB (Nov 2026): trial, accept, CX OSC select/play, SETUP_ALL/FDBK; host gate test_cx_osc_port.py. Stock-flow matrix, perf audit and full qualification still open.",
+    "summary": "MKII dev twin: device:price curve, device:test passed; manual USB trials for CX select/FDBK. Host gate test_cx_osc_port.py. Catalog listing, table contribute migration and listening pass still open.",
     "hardwareStatus": "reported",
     "evidenceRevision": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
     "gates": [

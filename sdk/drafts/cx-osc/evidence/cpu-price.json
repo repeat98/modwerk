@@ -1,0 +1,18 @@
+{
+  "module": "cx-osc",
+  "version": "0.1.0-experimental",
+  "base": "0.8.2",
+  "scene": "MKII OS 1.40C, RAM-booted development twin 46c30886 of base 0.8.2, selected pattern playing for at-rest readings; transport stopped between readings",
+  "seconds": 8,
+  "measuredAt": "2026-11-27T00:06:59.691Z",
+  "result": {
+    "id": "cx-osc",
+    "version": "0.1.0-experimental",
+    "packageSha256": "f52815adb0d5cdb0f1926c519f8319ce4527f1adcc52313d502023fb306065ad",
+    "atRestAdds": {
+      "frame": 11.2,
+      "cpu": 11.4
+    },
+    "rolledBack": true
+  }
+}

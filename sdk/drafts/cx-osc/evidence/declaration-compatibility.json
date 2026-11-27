@@ -1,0 +1,25 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "modules:compat",
+    "--",
+    "--with",
+    "cx-osc"
+  ],
+  "cwd": "module/cx-osc worktree",
+  "exit_code": 0,
+  "status": "KNOWN_DEBT",
+  "finished_utc": "2026-11-27T00:20:00Z",
+  "diagnostics": {
+    "summary": {
+      "active": 49,
+      "pairs": 1176,
+      "problems": 46,
+      "notes": [
+        "46 findings are cx-osc detours on ot_machines table sites the base now contributes; migrate cx_registration hooks to runtime contribute before catalog listing.",
+        "sdk/machines/octatrack/compatibility.json group-owned synth+cx-osc relation removed until cx-osc is catalogued (modules:compat refuses inactive ids in relations)."
+      ]
+    }
+  }
+}
