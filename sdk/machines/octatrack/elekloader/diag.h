@@ -12,7 +12,7 @@
 #define DIAG_PAGE 244u        /* ep0.c's LOG reply: never a whole multiple of 64 bytes (OCTATRACK_HARDWARE_TRAPS.md) */
 #define DIAG_LOG_REQUEST 37u  /* bRequest of LOG (0xC1, wValue the page, wLength DIAG_PAGE); 31-36 are taken, 38 sets, 39 SLOTS (flash.h) */
 
-enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12, DIAG_RESTORE = 13, DIAG_FREEZE_PC = 14, DIAG_USB_GONE = 15 };
+enum diag_kind { DIAG_START = 1, DIAG_HOT = 2, DIAG_FREEZE = 3, DIAG_CRASH = 4, DIAG_STALL = 5, DIAG_SET = 6, DIAG_BASE = 7, DIAG_SHED = 8, DIAG_CPU = 9, DIAG_BRAKE = 10, DIAG_USB = 11, DIAG_LATE = 12, DIAG_RESTORE = 13, DIAG_FREEZE_PC = 14, DIAG_USB_GONE = 15, DIAG_DETAIL = 16 };
 /* After the log: crash.c's record (struct crash, 0x100ff800) and dsp.c's stall record (struct stall, 0x100ff900),
  * byte for byte, so the site uploads what a crash or a DSP stall left; each starts with its magic ("MWCR", "MWST"). */
 #define DIAG_CRASH_BYTES 180u
@@ -109,6 +109,15 @@ struct diag_load {
  * 56 bytes, big-endian: DEVICEADDR and FRINDEX, then uf_state, uf_off_ticks, uf_flags, wd_tries, flags, `stopped`,
  * `ticks`, `ep0` and `uf` (255 at most), uf_reconnects and two zero bytes, then at 4, 5 and 6 s 12 bytes each: OTGSC,
  * PORTSC1, USBCMD's low byte, uf_state, flags, wd_tries (all 0 when the frames came back before that sample).
+ * DETAIL (bases from 0.8.4, right after the CPU or LATE record it belongs to, once for both in one tick, with no other
+ * context) what those two cannot say. Of CPU's refusals since the start: `a` the frame line's (status.c's pick check)
+ * in the low 16 bits and the Part budget's (machine_registry.c) in the high, 65,535 at most each; `screen` the last
+ * refused pick's name, its first four characters; `tempo24` why: status.c's WHY_* in the low byte (0 change one first,
+ * 1 the Part is busy, 2 unused modules, 3 a USB stream; 4 the Part budget), the track or slot in the next, bit 16 a
+ * machine. Of LATE's held entries since the log's first tick (so without stock's start): `cpu` the ones after a frame
+ * interrupt of 450 µs or more, `dsp0` the ones less than 110 µs late (65,535 at most each); and what the first tick
+ * found, which LATE's counts include: `dsp1` the entries held, `machine[0..1]` the ones later than the wait can hold
+ * (big-endian, 65,535 at most each).
  * `machine`: each track's type byte and machine signature
  * (machine_registry.c), `fx` what each slot runs (FX1 T1-T8, then FX2), `keys` the last 16 key codes pressed,
  * oldest first (0xff none), `screen` stock's top input layer, `tempo24` the tempo times 24. */

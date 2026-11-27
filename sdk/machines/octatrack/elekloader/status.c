@@ -1554,6 +1554,7 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
+extern volatile uint32_t mw_cpu_line_refusals, mw_cpu_pick_label, mw_cpu_pick_why; /* ... which check refused, and what */
 extern volatile uint8_t mw_cpu_track_refusals[8]; /* machine_registry.c: each track's refusals, for diag.c's CPU record */
 /* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame interrupt, per mille
  * of a frame, on each further track or slot it takes (its `each`) and on top for the first of the Part (its `first`
@@ -1670,6 +1671,7 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
      * to change. */
     unsigned why = g > 1000u && load * 1000u / g < line ? WHY_USB : rest > add && load - scaled(rest, g) < line ? WHY_UNUSED :
                    before > scaled(base, g) ? WHY_PART : WHY_CHANGE;
+    mw_cpu_line_refusals = mw_cpu_line_refusals + 1u, mw_cpu_pick_label = modwerk_label4(label), mw_cpu_pick_why = (machine ? 1u << 16 : 0u) | (slot & 0xffu) << 8 | why;
     cpu_refusal_box(slot, machine, label, before, stretched, line, why, dsp);
     return 1;
 }

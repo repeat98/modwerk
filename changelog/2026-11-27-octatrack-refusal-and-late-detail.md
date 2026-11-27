@@ -1,0 +1,1 @@
+Octatrack base: the unit's log now says which check refused a pick for CPU (the frame line or the Part budget) and which machine or effect it was, and whether a late frame came after a long one. Shared diagnostics could not tell these apart before. Nothing changes in what you hear or see. Ships with the next base.

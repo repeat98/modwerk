@@ -535,6 +535,7 @@ static void check_cpu_budget(void)
     CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);
     CHECK(mw_assign(part0(), 3, 5) == (unsigned)-1 && part0()[60 + 90] == 0);  /* a fourth at 12: 48 of 45, nothing written */
     CHECK(cpu_boxes == boxes + 1 && cpu_box_track == 3 && cpu_box_booked == 360 && cpu_box_add == 120 && cpu_box_allowed == 450); /* per mille of a frame */
+    CHECK(mw_cpu_pick_why == (1u << 16 | 3u << 8 | 4u) && mw_cpu_pick_label >> 24 && !mw_cpu_line_refusals); /* diag.c's DETAIL: the Part budget, a machine on T4, by name */
     CHECK(mw_assign(part0(), 3, 6) == (unsigned)-1);                           /* nor the dear one */
     CHECK(mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes + 2);            /* the same machine again asks nothing */
     CHECK(mw_assign(part0(), 2, 6) == (unsigned)-1);                           /* its own 12 back, 30 more: 54 */
@@ -937,11 +938,20 @@ static void check_late_entry(void)
     /* In it (81 µs; stall 56's entry, under 110 µs by this clock; the two logged stalls' 149 and 155 µs; 189 µs) it waits
      * until it is 190 µs late: 110 µs at most. */
     static const uint16_t inside[] = {81, 105, 111, 120, 149, 155, 189, 190};
+    uint32_t low = mw_late_low, after_long = mw_late_after_long;
+    mw_frame_last = LATE_LONG - 1u;
     for (unsigned i = 0; i < sizeof inside / sizeof *inside; ++i) {
         uint32_t over = mw_late_over;
         CHECK(late_by(inside[i]) && entry_late == inside[i] * US - 66u && mw_late_max == entry_late);
         CHECK(mw_late_hits == 1u && mw_late_waits == 1u && mw_late_wait_max >= LATE_HI - entry_late && mw_late_over == over);
     }
+    /* Of those eight waits, the two under 110 µs late count as barely late, and none came after a long frame; one after
+     * a frame interrupt of 450 µs does, and an entry that does not wait counts as neither. */
+    CHECK(mw_late_low == low + 2u && mw_late_after_long == after_long);
+    mw_frame_last = LATE_LONG;
+    CHECK(late_by(149) && mw_late_after_long == after_long + 1u && mw_late_low == low + 2u);
+    CHECK(!late_by(75) && mw_late_after_long == after_long + 1u && mw_late_low == low + 2u);
+    mw_frame_last = 0;
     /* A held entry's next one, two frames on, is on the grid: not counted. One past the window after a skipped frame
      * (two frames and 250 µs) is; four frames or more without an entry start again at 0 and are not. */
     { uint32_t over = mw_late_over;

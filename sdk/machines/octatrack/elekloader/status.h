@@ -63,4 +63,11 @@ void modwerk_machine_map_begin(void);
 void modwerk_machine_map_stage(const uint8_t *sig, unsigned lo, unsigned hi, uint32_t module, const char *name);
 void modwerk_machine_map_loaded(int ok);
 int modwerk_machine_map_line(unsigned k, uint8_t *sig, unsigned *lo, unsigned *hi, uint32_t *module, char *name);
+/* A refused pick's name for diag.c's DETAIL record: its first four characters, the first in the top byte, 0 past its end. */
+static inline uint32_t modwerk_label4(const char *s)
+{
+    uint32_t v = 0;
+    for (unsigned i = 0; i < 4u; ++i) v = v << 8 | (uint8_t)(s && *s ? *s++ : 0);
+    return v;
+}
 #endif

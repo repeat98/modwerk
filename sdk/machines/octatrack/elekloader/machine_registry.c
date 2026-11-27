@@ -322,10 +322,16 @@ static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, 
 }
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* for diagnostics, as the guard's skips */
 volatile uint8_t mw_cpu_track_refusals[8]; /* each track's refusals, wrapping: diag.c names the tracks refused since its last CPU record */
+/* Which check refused, and what (diag.c's DETAIL record): of mw_cpu_refusals, the ones status.c's frame line made (the
+ * rest are the Part budget's, below), and the last refusal: its name (modwerk_label4) and why: status.c's WHY_* in the
+ * low byte (4: the Part budget), the track or slot in the next, bit 16 a machine. In the field (0.8.x, November 2026)
+ * 274 refusals on 28 units could not be told apart by check or by module. */
+volatile uint32_t mw_cpu_line_refusals, mw_cpu_pick_label, mw_cpu_pick_why;
 static void cpu_refuse(unsigned track, const Machine *who, unsigned booked);
 static void cpu_refuse(unsigned track, const Machine *who, unsigned booked)
 {
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track, ++mw_cpu_track_refusals[track];
+    mw_cpu_pick_label = modwerk_label4(who->label), mw_cpu_pick_why = 1u << 16 | track << 8 | 4u;
     modwerk_status_cpu_refused(track, who->label, 10u * booked, 10u * cpu_price(who), 10u * mw_cpu_allowance);
 }
 /* The PROTECT machines this base knows by signature (module-adapters/machine-ports.json; sdk/tests checks the list).
@@ -1199,6 +1205,14 @@ volatile uint32_t mw_late_over;
  * switch), but a module-heavy Part could keep one going; past WAIT_RUN in a row the brake silences the module machines,
  * which ends it. The wait itself never stops: an entry let through in the window is what stalls the DSP for good. */
 #define WAIT_RUN 16u
+/* Of the waits since boot, for diag.c's DETAIL record: the ones after a frame interrupt that ran LATE_LONG or more,
+ * the shape of the stall the wait exists for (an entry 131 to 162 µs late after a 465 to 530 µs frame, above), and the
+ * ones under LATE_MID late, which wait only since LATE_LO came down from 110 µs. A wait is a click, so the field has
+ * to show how many the window could spare. Counted before the wait's loop, which runs to a time: the wait absorbs the
+ * work and no frame is longer for it. */
+#define LATE_MID 14520u  /* 110 µs */
+#define LATE_LONG 59400u /* 450 µs */
+volatile uint32_t mw_late_after_long, mw_late_low;
 static uint32_t entry_at, entry_late, wait_run;
 /* The last eight entries' lateness, DTCN3 counts, as this clock saw it: diag.c keeps them with a stall ("MWLR"). The
  * stall trace is stamped later in the frame (dl_frame), so the two can differ by tens of µs. */
@@ -1220,6 +1234,8 @@ void mw_frame_enter(void)
         mw_late_hits = mw_late_hits + 1u;
         if (mw_late_wait_on) {
             uint32_t need = LATE_HI - l, waited;
+            if (mw_frame_last >= LATE_LONG) mw_late_after_long = mw_late_after_long + 1u;
+            if (l < LATE_MID) mw_late_low = mw_late_low + 1u;
             do waited = DTCN3 - now; while (waited < need);
             mw_late_waits = mw_late_waits + 1u, mw_frame_skips = mw_frame_skips + 1u;
             if (waited > mw_late_wait_max) mw_late_wait_max = waited;
