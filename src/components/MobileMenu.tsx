@@ -48,7 +48,7 @@ export function MobileMenu({ route, online, selectedCount, configurationHref, ad
     [
       { href: '#base', label: 'Base firmware', icon: 'shield', current: route === 'base', isNew: true },
       { href: '#faq', label: 'Help & FAQ', icon: 'help', current: route === 'faq' },
-      { href: '#credits', label: 'Credits & acknowledgements', icon: 'heart', current: route === 'credits' },
+      { href: '#credits', label: 'Credits', icon: 'heart', current: route === 'credits' },
       { href: '#modding-guidelines', label: 'Modding guidelines', icon: 'file', current: route === 'modding-guidelines' },
       { href: '#privacy', label: 'Privacy', icon: 'shield', current: route === 'privacy' },
     ],

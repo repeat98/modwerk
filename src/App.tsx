@@ -559,7 +559,7 @@ export default function App() {
   const resourcesRef = useRef<HTMLDetailsElement>(null)
   const moduleTitle = detailModule?.name ?? digiMod?.title ?? zoomEffect?.name ?? communityModule?.title
   const breadcrumbSection = hubRoute ? 'Your Octatrack' : unitPageName ? 'Your ' + unitPageName
-    : projectsRoute ? PROJECT_TITLE : faqRoute ? 'Help & FAQ' : route === 'credits' ? 'Credits & acknowledgements'
+    : projectsRoute ? PROJECT_TITLE : faqRoute ? 'Help & FAQ' : route === 'credits' ? 'Credits'
     : route === 'base' ? 'Base firmware' : configuration || machineView === 'configuration' ? w.Set
     : route === 'privacy' ? 'Privacy' : route === 'impressum' ? 'Impressum' : route === 'community-rules' ? 'Community rules'
     : route === 'modding-guidelines' ? 'Modding guidelines' : route === 'report-content' ? 'Report content'
@@ -613,7 +613,7 @@ export default function App() {
                 {!DEVELOP_HIGHLIGHT && <a href="#submit" aria-current={route.startsWith('submit') ? 'page' : undefined}><Icon name="plus" /><span>Start developing</span></a>}
                 <a href="#base" aria-current={route === 'base' ? 'page' : undefined}><Icon name="shield" /><span>Base firmware</span><span className="sidebar-feature-new">New</span></a>
                 <a href="#faq" aria-current={faqRoute ? 'page' : undefined}><Icon name="help" /><span>Help &amp; FAQ</span></a>
-                <a href="#credits" aria-current={route === 'credits' ? 'page' : undefined}><Icon name="heart" /><span>Credits &amp; acknowledgements</span></a>
+                <a href="#credits" aria-current={route === 'credits' ? 'page' : undefined}><Icon name="heart" /><span>Credits</span></a>
                 <a href="#modding-guidelines" aria-current={route === 'modding-guidelines' ? 'page' : undefined}><Icon name="file" /><span>Modding guidelines</span></a>
               </nav>
               {SUPPORT_URL && <div className="sidebar-footer"><SupportButton onClick={() => setSupportOpen(true)} /></div>}
@@ -676,7 +676,7 @@ export default function App() {
             {drawerLayout && <button type="button" className="drawer-control" aria-label="Open navigation" title="Open navigation" aria-haspopup="dialog" aria-controls="navigation-drawer" onClick={() => drawerRef.current?.showModal()}><Icon name="menu" /></button>}
             <nav className="toolbar-breadcrumb" aria-label="Breadcrumb">
               <a className="breadcrumb-home" href="#overview" aria-label="Overview" title="Overview" aria-current={overviewRoute ? 'page' : undefined}>
-                <Icon name="home" size={16} />
+                <Icon name="home" size={16} /><span>Overview</span>
               </a>
               {!overviewRoute && <><span className="breadcrumb-divider" aria-hidden="true">/</span>
                 {moduleTitle ? <><a className="breadcrumb-parent" href={libraryHref()}>Modules</a><span className="breadcrumb-divider" aria-hidden="true">/</span></> : null}
