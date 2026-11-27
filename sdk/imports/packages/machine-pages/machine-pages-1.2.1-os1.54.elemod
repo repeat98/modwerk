@@ -2431,14 +2431,6 @@
    "relocs": []
   },
   {
-   "addr": "0x400318b2",
-   "len": 6,
-   "stock_sha256": "ede057d369e3202ba1cec508618dd69dfd072fb66ba2aa50750cbf1d434dc4aa",
-   "new": "0c85000000ab",
-   "kind": "code",
-   "relocs": []
-  },
-  {
    "addr": "0x400328b2",
    "len": 6,
    "stock_sha256": "0b7b9eeffefc6aa86b122b1735a50aadbf45723373cd9ed4fab17d1cde5cab75",
