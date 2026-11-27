@@ -68,9 +68,9 @@
     },
     "processing": {
       "label": "ColdFire worst event",
-      "display": "13,799 cycles/event (0.05 % of UI budget)",
-      "value": 13799,
-      "unit": "cycles/event",
+      "display": "13799 cycles/event",
+      "value": null,
+      "unit": "see display",
       "method": "static",
       "conditions": "[YES] after rhythm edits (ef_yes plus ef_draw); static instruction model in evidence/performance.json.",
       "source": "evidence/performance.json"
@@ -97,18 +97,18 @@
       }
     },
     "cpuPrice": {
-      "value": 0.0,
+      "value": 0,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
-      "date": "2026-11-26",
-      "conditions": "author's project, A02, Part 1, stopped; development twin 4c7eb79b, MKII, OS 1.40C; 3 readings of 8 s. Frame interrupt 60.3 % before and with SEQ installed and unused; CPU meter within noise.",
+      "date": "2026-11-27",
+      "conditions": "author's project, A02 pattern 2, Part 1, stopped; base development twin 43ac2465, MKII, OS 1.40C; 3 readings of 8 s a state. Frame interrupt 24.1 % before, 24.1 % installed and used nowhere; CPU meter 36.2 % before, 36.2 % at rest.",
       "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "MKII over USB on development twin 4c7eb79b, 26 November 2026: test:procedure passed steps 6 to 10; by-hand TRIG and PLCK writes, Harmony, FUNC+BANK clear, and CUE rollback fixes (fix36) in TESTING.md. Release-base procedure not yet run.",
+    "summary": "MKII over USB, 27 November 2026: development twin 43ac2465, package 5c88a76b, CPU price 0.0 at rest, hardware LCD capture; earlier twin 4c7eb79b procedure and by-hand rows in TESTING.md.",
     "hardwareStatus": "reported",
     "evidenceRevision": "faff374b9d136f48d4e0159fe480f8f65d27cacc",
     "gates": [
@@ -118,7 +118,7 @@
     ],
     "qualification": {
       "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "c95e6a354155bffbd2067a398f7e5acac1893a52f9aef2c33cbb3dbd1201ae72",
+      "sourceSha256": "8a368a0630641da96f74c7b668aa95944e0280106447bb8ce1df046cae889b33",
       "cycles": [
         {
           "processor": "coldfire",
@@ -147,21 +147,13 @@
             "wordBits": 8,
             "bytes": 38356,
             "scope": "shared"
-          },
-          {
-            "name": "seq.work per project",
-            "space": "card",
-            "words": 9216,
-            "wordBits": 8,
-            "bytes": 9216,
-            "scope": "per project"
           }
         ],
-        "perInstanceBytes": 9216,
+        "perInstanceBytes": 0,
         "sharedBytes": 38356,
         "maxInstances": 1,
-        "totalBytes": 47572,
-        "conditions": "Package header from module:dev; seq.work size from octabam layout in test_seq_port.py.",
+        "totalBytes": 38356,
+        "conditions": "Package header from module:dev; seq.work on the card is about 9 KB a project (test_seq_port.py), not loader pool RAM.",
         "report": "evidence/memory.md"
       },
       "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
@@ -169,7 +161,7 @@
         "kind": "functional",
         "status": "reported",
         "model": "MKII",
-        "testedOn": "2026-11-26",
+        "testedOn": "2026-11-27",
         "tester": "ilia-murzinov",
         "sourceRevision": "faff374b9d136f48d4e0159fe480f8f65d27cacc",
         "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
@@ -192,7 +184,9 @@
             "Turn C to PLCK, pick a parameter with D and a depth with E, then press [YES]. Press [NO] to close SEQ."
           ]
         },
-        "screenshots": [],
+        "screenshots": [
+          "media/seq-rhythm-open.png"
+        ],
         "screenshotStyle": "black-and-white"
       }
     }
@@ -202,7 +196,25 @@
     "file": "LICENSE",
     "declaration": "SEQ is ilia-murzinov's original work, ported from his octabam module (MIT). No Elektron firmware, extracted routines or tables: stock sites are named by address, length and SHA-256."
   },
-  "media": [],
+  "media": [
+    {
+      "path": "media/seq-rhythm-open.png",
+      "captureType": "hardware",
+      "caption": "Hold [TRACK 1] and press [PAGE]: SEQ opens on track 1 with the rhythm page, PULS/ROT and the step grid.",
+      "alt": "Octatrack SEQ window: PULS 5, ROT 0, TRIG lane, SRC/PTCH, the Euclidean grid and LEN 16.",
+      "credit": "SEQ by Ilia Murzinov; underlying Octatrack interface by Elektron Music Machines.",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SEQ rhythm",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
+        "setup": "MKII over USB, 27 November 2026: development twin 43ac24652a89f28b RAM-booted, SEQ package 5c88a76b accepted, pattern A02. LCD read at integer scale 2, greyscale, not edited."
+      }
+    }
+  ],
   "access": {
     "location": "Any track page: hold [TRACK] and press [PAGE]",
     "steps": [
@@ -210,6 +222,8 @@
       "Turn A to D to set the rhythm, the lane and the parameter; [LEFT] and [RIGHT] switch between the rhythm and Harmony pages.",
       "Press [YES] to write the rhythm and locks into the pattern, or [NO] to close SEQ."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/seq-rhythm-open.png"
+    ]
   }
 }

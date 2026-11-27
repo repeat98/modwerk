@@ -1,67 +1,67 @@
 {
   "module": "seq",
   "version": "0.1.0-experimental",
-  "base": "development twin 4c7eb79b, MKII, OS 1.40C",
-  "scene": "author's project, A02, Part 1, stopped",
+  "base": "development twin 43ac2465, MKII, OS 1.40C",
+  "scene": "author's project, A02 pattern 2, Part 1, stopped",
   "inputs": {
     "transport": "playing"
   },
   "seconds": 8,
   "readings": 3,
-  "measuredAt": "2026-11-26T09:39:20.157Z",
+  "measuredAt": "2026-11-27T20:38:49.322Z",
   "result": {
     "id": "seq",
     "version": "file",
-    "packageSha256": "880a54b116acd605f4efcd31113024b7520c28118f6b7166e49428058aba2b26",
+    "packageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
     "before": {
-      "frame": 60.3,
-      "frameMax": 103.6,
-      "frames": 67131,
+      "frame": 24.1,
+      "frameMax": 33,
+      "frames": 67058,
       "skipped": 0,
-      "cpu": 84.7,
-      "dsp1to4": 40.4,
-      "dsp5to8": 48.8,
-      "dsp1to4Peak": 41.4,
-      "dsp5to8Peak": 49.7,
-      "readings": 3,
-      "spread": {
-        "frame": 0.1,
-        "cpu": 2,
-        "dsp1to4": 0.3,
-        "dsp5to8": 0.9,
-        "frameMax": 4,
-        "dsp1to4Peak": 0.1,
-        "dsp5to8Peak": 0
-      }
-    },
-    "atRest": {
-      "frame": 60.3,
-      "frameMax": 103.6,
-      "frames": 67069,
-      "skipped": 0,
-      "cpu": 84.6,
-      "dsp1to4": 40.2,
-      "dsp5to8": 48.9,
-      "dsp1to4Peak": 41.4,
-      "dsp5to8Peak": 49.9,
+      "cpu": 36.2,
+      "dsp1to4": 32.5,
+      "dsp5to8": 41.6,
+      "dsp1to4Peak": 33.5,
+      "dsp5to8Peak": 42.6,
       "readings": 3,
       "spread": {
         "frame": 0,
-        "cpu": 2.4,
-        "dsp1to4": 0.2,
-        "dsp5to8": 0.7,
-        "frameMax": 3.5,
+        "cpu": 0.2,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 0.7,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "atRest": {
+      "frame": 24.1,
+      "frameMax": 33.9,
+      "frames": 67090,
+      "skipped": 0,
+      "cpu": 36.2,
+      "dsp1to4": 32.5,
+      "dsp5to8": 41.6,
+      "dsp1to4Peak": 33.6,
+      "dsp5to8Peak": 42.6,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.2,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 1.3,
         "dsp1to4Peak": 0.1,
-        "dsp5to8Peak": 0
+        "dsp5to8Peak": 0.9
       }
     },
     "atRestAdds": {
       "frame": 0,
-      "cpu": -0.1,
-      "dsp1to4": -0.2,
-      "dsp5to8": 0.1,
-      "dsp1to4Peak": 0,
-      "dsp5to8Peak": 0.2
+      "cpu": 0,
+      "dsp1to4": 0,
+      "dsp5to8": 0,
+      "dsp1to4Peak": 0.1,
+      "dsp5to8Peak": 0
     },
     "rolledBack": true
   }

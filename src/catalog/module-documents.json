@@ -15340,6 +15340,235 @@
     },
     {
       "schemaVersion": 2,
+      "id": "seq",
+      "key": "SEQ",
+      "name": "SEQ",
+      "version": "0.1.0-experimental",
+      "category": "machines",
+      "access": {
+        "location": "Any track page: hold [TRACK] and press [PAGE]",
+        "steps": [
+          "Hold a [TRACK] key and press [PAGE]: the SEQ window opens on that track.",
+          "Turn A to D to set the rhythm, the lane and the parameter; [LEFT] and [RIGHT] switch between the rhythm and Harmony pages.",
+          "Press [YES] to write the rhythm and locks into the pattern, or [NO] to close SEQ."
+        ],
+        "screenshots": [
+          "media/seq-rhythm-open.png"
+        ]
+      },
+      "author": {
+        "github": "ilia-murzinov",
+        "credits": [
+          "ilia-murzinov: SEQ and its octabam module",
+          "repeat98: the Euclidean rhythm math SEQ shares with the EUCLID filter"
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "Euclidean SEQ",
+        "family": "Sequencer",
+        "summary": "A track window that writes Euclidean rhythms, parameter lock rhythms and in-scale melodies into the pattern, for audio and MIDI tracks.",
+        "overview": "Hold [TRACK] and press [PAGE] to open SEQ on that track. The rhythm page spreads PULS hits over the track length and turns them with ROT. LANE chooses whether A, B and the step grid edit the TRIG rhythm (sample trigs or note trigs) or the PLCK rhythm (parameter locks on their own steps). D picks the page and parameter to lock, E (DPTH) how far the locks move around the Part's value. [RIGHT] opens Harmony for PTCH or NOTE: a scale, a root, a phrase shape and a jump size, plus voices and chords on MIDI tracks. [YES] writes the result into the pattern as ordinary trigs and locks, so it plays, saves and copies like anything you program by hand.",
+        "highlights": [
+          "Euclidean TRIG and PLCK rhythms up to 64 steps, drawn as a 4 x 16 step grid.",
+          "Parameter lock rhythms for any page-1 parameter the LFO can reach on audio tracks, and every page-1 parameter on MIDI tracks.",
+          "Harmony page for PTCH and NOTE: scale, root, phrase (RAND, UP, DOWN, ALT, TRI) and jump size; voices and chords on MIDI tracks.",
+          "[CUE] released alone places random hits on the focused lane; [FUNC] + [BANK] clears SEQ's locks or trigs on the track."
+        ],
+        "usage": [
+          "Hold [TRACK] and press [PAGE]: SEQ opens on that track. Press another [TRACK] to switch, [MIDI] to move between the audio and MIDI track.",
+          "Turn A (PULS) and B (ROT) to shape the rhythm in the step grid, then press [YES] to write it into the pattern.",
+          "Turn C to PLCK, pick a parameter with D and a depth with E, then [YES]: that parameter gets locks on its own rhythm. [NO] closes SEQ."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Project sequencer",
+        "conflicts": [],
+        "uiClaims": [
+          "key:TRACK+PAGE",
+          "key:FUNC+BANK@SEQ",
+          "key:CUE@SEQ",
+          "key:MIDI@SEQ",
+          "key:LEFT@SEQ",
+          "key:RIGHT@SEQ",
+          "key:YES@SEQ",
+          "key:NO@SEQ",
+          "key:LEVEL@SEQ",
+          "screen:SEQ"
+        ],
+        "limitations": [
+          "OS 1.40C on the Modwerk base, over USB. Tested on the author's MKII with RAM-booted development twin 4c7eb79b; emulator rollback cases are recorded in TESTING.md.",
+          "The octabam module's FX page-2 destinations and CX OSC SETUP destinations are left out: D offers page-1 parameters only. A seq.work from octabam keeps them and loads here unchanged.",
+          "Keep SEQ installed while you save, reload or copy a project that uses it: without it, seq.work is not saved or reloaded with the project.",
+          "A seq.work SEQ cannot read is left as it is and SEQ starts from its defaults; the next save copies it to seq.bak before writing a new one."
+        ]
+      },
+      "resources": {
+        "recorded": "2026-11-27",
+        "storage": {
+          "label": "ColdFire code",
+          "display": "38,356 bytes",
+          "value": 38356,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "USB package from module:dev --build-only on this source; about 9 KB per project for seq.work on the card.",
+          "source": "evidence/memory.md"
+        },
+        "processing": {
+          "label": "ColdFire worst event",
+          "display": "13799 cycles/event",
+          "value": null,
+          "unit": "see display",
+          "method": "static",
+          "conditions": "[YES] after rhythm edits (ef_yes plus ef_draw); static instruction model in evidence/performance.json.",
+          "source": "evidence/performance.json"
+        },
+        "impact": {
+          "conditions": "SEQ open on one track; worst UI event is a [YES] write.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "measured-comparison",
+            "rationale": "Installed and used nowhere: 0.0 points of the frame interrupt on the development twin (evidence/cpu-price.json). Work happens in the UI task when the window is open.",
+            "source": "evidence/cpu-price.json"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP program or effect slot.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "low",
+            "basis": "measured-comparison",
+            "rationale": "About 38 KB in the loader pool plus seq.work on the card.",
+            "source": "evidence/memory.md"
+          }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-27",
+          "conditions": "author's project, A02 pattern 2, Part 1, stopped; base development twin 43ac2465, MKII, OS 1.40C; 3 readings of 8 s a state. Frame interrupt 24.1 % before, 24.1 % installed and used nowhere; CPU meter 36.2 % before, 36.2 % at rest.",
+          "source": "evidence/cpu-price.json"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "MKII over USB, 27 November 2026: development twin 43ac2465, package 5c88a76b, CPU price 0.0 at rest, hardware LCD capture; earlier twin 4c7eb79b procedure and by-hand rows in TESTING.md.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "faff374b9d136f48d4e0159fe480f8f65d27cacc",
+        "gates": [
+          "modules/seq/verify.py",
+          "python3 sdk/octatrack/modules/seq/perf.py static",
+          "npm run perf:audit -- check evidence/performance.json"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "Hold a [TRACK] key and press [PAGE]: the SEQ window opens on that track.",
+                "Turn A (PULS) and B (ROT) to shape the rhythm in the step grid, then press [YES] to write it into the pattern.",
+                "Turn C to PLCK, pick a parameter with D and a depth with E, then press [YES]. Press [NO] to close SEQ."
+              ]
+            },
+            "screenshots": [
+              "media/seq-rhythm-open.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "8a368a0630641da96f74c7b668aa95944e0280106447bb8ce1df046cae889b33",
+          "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 13799,
+              "maxConfiguration": 13799,
+              "maxInstances": 1,
+              "budget": 26600000,
+              "unit": "cycles/event",
+              "method": "static",
+              "conditions": {
+                "parameterExtremes": "PULS and ROT at their limits, PLCK on page-1 parameters, Harmony on MIDI with VOIC and CHRD.",
+                "parameterModulation": "Encoder turns while the window is open; the dearest count is [YES] writing trigs and locks.",
+                "modeSwitching": "TRACK+PAGE open and close, LEFT and RIGHT between rhythm and Harmony, FUNC+BANK clear lists.",
+                "maxLoad": "One open window on one track; no frame-interrupt hook.",
+                "inputConditions": "Static disassembly bound for ef_yes plus ef_draw; not wall-clock hardware timing."
+              },
+              "report": "evidence/performance.json"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "Runtime package code and data",
+                "space": "cpu-ram",
+                "words": 38356,
+                "wordBits": 8,
+                "bytes": 38356,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 38356,
+            "maxInstances": 1,
+            "totalBytes": 38356,
+            "conditions": "Package header from module:dev; seq.work on the card is about 9 KB a project (test_seq_port.py), not loader pool RAM.",
+            "report": "evidence/memory.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-27",
+            "tester": "ilia-murzinov",
+            "sourceRevision": "faff374b9d136f48d4e0159fe480f8f65d27cacc",
+            "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
+            "summary": "On an MKII with RAM-booted development twin 4c7eb79b: test:procedure passed unit steps 6 to 10; by-hand checks wrote Euclidean trigs, PLCK lanes and FUNC+BANK clear; fix36 emulator and hardware rolls back after CUE-on-track navigation. Project save and power cycle with seq.work, MKI paths, and release-base trial are not yet recorded.",
+            "limitations": [
+              "CPU price and procedure steps 6 to 10 used the development twin, not the flashed release base.",
+              "seq.work save, reload and power-cycle survival are not yet checked on the unit.",
+              "No monochrome UI captures in media/ yet.",
+              "Static cycle count is disassembly only, not ot_emu executed instructions on [YES].",
+              "Procedure log package 880a54b; listing build is 5c88a76b unless re-measured on the same bytes."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "SEQ is ilia-murzinov's original work, ported from his octabam module (MIT). No Elektron firmware, extracted routines or tables: stock sites are named by address, length and SHA-256."
+      },
+      "media": [
+        {
+          "path": "media/seq-rhythm-open.png",
+          "captureType": "hardware",
+          "caption": "Hold [TRACK 1] and press [PAGE]: SEQ opens on track 1 with the rhythm page, PULS/ROT and the step grid.",
+          "alt": "Octatrack SEQ window: PULS 5, ROT 0, TRIG lane, SRC/PTCH, the Euclidean grid and LEN 16.",
+          "credit": "SEQ by Ilia Murzinov; underlying Octatrack interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SEQ rhythm",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
+            "setup": "MKII over USB, 27 November 2026: development twin 43ac24652a89f28b RAM-booted, SEQ package 5c88a76b accepted, pattern A02. LCD read at integer scale 2, greyscale, not edited."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
       "id": "grain",
       "key": "GRAIN",
       "name": "Grain",

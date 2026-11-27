@@ -70,9 +70,9 @@ files, and saved with the project.
 
 ## Quick tutorial
 
-1. Hold **`[TRACK 1]`** and press **`[PAGE]`**. SEQ opens with **PULS** 5.
-2. Turn A to 3 and press **`[YES]`**, then **`[PLAY]`**: three evenly spread sample trigs play.
-3. Press **`[FUNC]`** + **`[BANK]`**, choose **CLEAR ALL+TRIGS** to remove them, and **`[NO]`** to close SEQ.
+1. Hold a [TRACK] key and press [PAGE]: the SEQ window opens on that track.
+2. Turn A (PULS) and B (ROT) to shape the rhythm in the step grid, then press [YES] to write it into the pattern.
+3. Turn C to PLCK, pick a parameter with D and a depth with E, then press [YES]. Press [NO] to close SEQ.
 
 ## Compatibility and limitations
 
@@ -132,4 +132,4 @@ SEQ is by [ilia-murzinov](https://github.com/ilia-murzinov), MIT
 
 ## Screens and audio
 
-No screenshots or audio captures are included.
+![SEQ rhythm page on track 1, stopped, with PULS and ROT knobs and the step grid.](media/seq-rhythm-open.png)

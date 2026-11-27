@@ -2,20 +2,30 @@
   "schema": 1,
   "module": "seq",
   "version": "0.1.0-experimental",
-  "sourceSha256": "c95e6a354155bffbd2067a398f7e5acac1893a52f9aef2c33cbb3dbd1201ae72",
+  "sourceSha256": "cdda4ad8bb3a208cd22ff89319c2fc3773b8c91f0418cd22cb57ed57e0d827bc",
   "kind": "coldfire",
-  "trigger": "key",
   "cycles": {
     "unit": "cycles/event",
     "static": 13799,
     "measured": 13799,
     "budget": 26600000,
-    "method": "Static instruction count on seq.s linked with MODWERK_EVENTS=1 (perf.py static, 27 November 2026): dearest UI event is [YES] after setting rhythms (ef_yes, 4913 instructions) plus a full redraw (ef_draw through ef_fill, 624). Stock LCD helpers inside ef_draw are included in the disassembly. 5537 instructions at 2.49216 cycles per instruction gives 13,799. Not hardware wall-clock timing."
+    "method": "Static instruction count on seq.s with MODWERK_EVENTS=1 (perf.py static): dearest UI event is [YES] after rhythm edits on the rhythm page. SEQ has no frame-interrupt hook; cycles are priced in the UI task when a key is handled."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 87.5,
+    "moduleLongestUs": 87.5,
+    "stockIdlePercent": 63.8,
+    "moduleIdlePercent": 63.8,
+    "method": "Hardware, 27 November 2026, development twin 43ac2465, package 5c88a76b, MKII over USB: npm run device:price on author's project bank A pattern 2 Part 1 stopped then playing, three 3 s samples. Frame interrupt share 24.1 % with and without SEQ installed and the window closed (evidence/cpu-price.json); converted with a 362.8 us frame to 87.5 us longest frame-interrupt share and CPU meter 36.2 % (63.8 % idle) on both runs, so the comparison adds 0 us and 0 idle points."
   },
   "stress": {
-    "events": 2400,
-    "playing": true,
+    "floodMessagesPerSecond": 1000,
+    "clockBpm": 250,
+    "seconds": 12,
+    "stuckNotes": 0,
     "hangs": 0,
-    "method": "Hardware, development twin 4c7eb79b: test:procedure step 8 soak, 120 s on A02 Part 1 with programs 0-3 (2,400 program-change attempts; the project's program-change receive is likely off so the pattern did not switch). No crash, stall, freeze or skipped track."
+    "dropped": 0,
+    "droppedExplanation": "Hardware, 27 November 2026: twin 43ac2465 with SEQ 5c88a76b, bank A pattern 2 playing; python flood to octatrack-midi-bridge.py on port 50124 (note on/off and CC on channels 1-8, 1 kHz, plus 250 BPM clock) for 12 s while USB opened SEQ and delivered twenty-one [YES] writes across seven PLAY/STOP/Part rounds (device.mjs). health ended stalls 0; MIDI replies ok throughout."
   }
 }
