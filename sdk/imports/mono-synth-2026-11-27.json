@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/mono-synth",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-27",
+  "changes": [
+    "First release. SY MONO, a digital voice machine (slot 40, SY section) on the base's digital voices: a saw, a pulse, a sub one or two octaves down and noise, and a triangle pitch LFO, offered on pads 1 to 8. A read-only ev_amp_record follower at order 80 lets a voice stop once its AMP has closed."
+  ],
+  "runtimeSourceSha256": "06e440fa7bfd9b99229a47e9d5194d981ae044a79e14ec9b2d8e501029db6686",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/mono-synth/mono-synth-0.1.0-experimental-os1.74.elemod",
+      "sha256": "64d9877cfa8bfe5e2aa00ab85b3aa7b513dbd7a2cd715c9744677b04af1b59c3"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/mono-synth/TESTING.md",
+  "requires": []
+}
