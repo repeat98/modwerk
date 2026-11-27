@@ -535,6 +535,46 @@ bit for bit against qvs.SplitEngine and qvs.ColdFire at MIX 127, 64 and 0, trig 
 Y, and two instances. `engine/test_qv_runtime.py` holds the C runtime to qvs.ColdFire on all 73 programs in the base's
 call order, a switch, a resync, a full pool, bad tags and the K wrap, and `code()` to the real areas.
 
+## Live knobs (27 November 2026)
+
+The owner's decision: B LEN, C TIME, D SPD and E DEP ship in 0.1.0, each relative to the program's factory value, so
+64 (drawn 0) is the factory program bit for bit and the ends are the ends of the original's range. `engine/qvk.py` has
+the rules and the arithmetic, `engine/extract_knobs.mjs` reads their inputs by running the firmware (knobs.json in the
+cache, ROM-derived). Changes apply in place, as the original applies a turn: no clear, no mute, no glide.
+
+| Knob | Reverb programs | Delay-led programs (no reverb, or the delay mixed louder) | Words it moves |
+| --- | --- | --- | --- |
+| B LEN | DECAY 0-99 | FEEDBACK 0-99 %, L and R | c = round(1991 sin(pi v / 198)) on 4-9 steps; c = 16 v on one step a side |
+| C TIME | PRE-DELAY 1-140 ms | DELAY TIME 1-800/400/1500/750 ms; R keeps its factory ratio to L | taps at 42 a ms from the factory ones |
+| D SPD, E DEP | the sweep's SPEED and DEPTH 0-98 (chorus, flange, the reverbs' own sweep) | the same | rate R[s]; depth (H[d / B] K[s]) >> 8, B 1 or 3; a flange's centre moves with its depth |
+
+Reverse programs keep LEN and TIME; a pre-delay tap nothing hears (its mix sends nothing) leaves TIME absent; pitch
+shifts, Leslies and the static programs have no sweep for SPD and DEP. The message box says so ("NO DECAY ON
+REVERSE", "NO PRE-DELAY HERE", "NO SWEEP HERE") and otherwise what a turn sets ("DECAY 45", "PRE 30 MS",
+"DELAY 320/160 MS", "FBK 60 %", "SPEED 12", "DEPTH 40"). Where the firmware's edit page writes a step otherwise than a
+recall builds it (the mono cfg 2 delays' R taps), the recall decides; a formula that fails at any value leaves the
+parameter alone (none in the release).
+
+**How the values reach the DSP.** The ColdFire computes them each frame from the frame record and sends them after
+the windows: a marker (`$4B00 | index`), each LEN group's coefficient << 4, the rate, the depth and a moving centre.
+The area copies them at the frame's first call into the coefficient table and the sweep's r7 words ($73 rate, $74
+depth << 8, $75 centre), only when the marker is its own, so a stream that is not in step changes nothing. A LEN step
+is a product at every value, 0 included. The plates (17-19, 52, 53, 66, 78, 79) use the base's whole channel (352
+halfwords in), so their areas carry three 128-word tables after their data and read knobs B, D and E from the
+dispatcher's page themselves (`qvs.knob_tables`). The tick reads rate, depth and centre from r7; every read a sweep
+can reach at any depth and centre is relocated on its line, and no swept read streams.
+
+**TIME** moves taps, not coefficients: each TIME tap reads a static window of its own, and the ColdFire starts that
+window's run at b + 42 (ms - factory ms). A delay under the stream's latency (1 ms, 42 samples) the area copies from
+the line's own head at the frame's first call while knob C is at or under the threshold where TIME reaches 1 ms, at
+24 bits; at the centre that is the factory program where its tap sat at 1 ms. A jump in a delay may click, as on the
+original.
+
+**Checked** (on the developer's computer): `verify_area.py` holds every area to the models at the centre and with
+knobs B-E turned off it and back (the page and the in-blocks together); `test_qv_runtime.py` holds the C runtime's
+in-blocks to `qvs.ColdFire` with the knobs turning on every program, every knob position's words to the firmware's own
+(knobs.json), the message box lines to `qvk`, and an absent knob to moving nothing.
+
 ## Not settled
 
 - **The gate's detector:** an envelope on the DSP, threshold and time constant assumed (FIRMWARE.md, "The gate").

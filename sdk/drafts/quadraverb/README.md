@@ -13,15 +13,21 @@ Nobody has compared it with a real Quadraverb: there was none to hand. Every cla
 | Knob | Name | Range | Default | What it does |
 | --- | --- | --- | --- | --- |
 | A | PROG | 00-89 (73 programs) | 10 | The factory program, by its number on the original: for example 10-12 rooms, 13-16 halls, 17-19 plates, 20-22 chambers, 04 and 33 choruses, 05 and 30 flanges, 34-36 chorus with room, reverb or delay, 40-43 delays, 44-48 echoes, 07 and 37 pitch shifts, 08, 38 and 39 Leslies, 66 HOLMES' Plate. Programs not in this release are skipped. When it turns, a message box shows the program's number and name for about a second, for example 15 CONCERT HALL 1. |
+| B | LEN | -64 to +63 | 0 | DECAY on a reverb program, FEEDBACK on a delay-led one (L and R together). 0 is the factory value, the ends are the ends of the original's range (DECAY 0-99, FEEDBACK 0-99 %). |
+| C | TIME | -64 to +63 | 0 | PRE-DELAY (1-140 ms) on a reverb program, DELAY TIME on a delay-led one, where R keeps its ratio to L. A jump may click, as on the original. |
+| D | SPD | -64 to +63 | 0 | The sweep's SPEED (0-98): the chorus, the flange, the reverbs' own slow sweep. |
+| E | DEP | -64 to +63 | 0 | The sweep's DEPTH (0-98). |
 | F | MIX | 0-127 | 40 | Dry and wet: 0 is exactly dry, 127 wet only. |
 
-Both are ordinary FX2 knobs, so parameter locks, LFOs and scenes reach them as any effect's (not tried on a unit). A new program starts from silence; the dry signal keeps playing at its MIX level meanwhile.
+"Delay-led": a program with no reverb, or with its delay mixed louder than its reverb. At 0 each of B-E plays the factory program exactly; turned, it moves the words the original's own edit page would move for that value, in place, with no clear or fade. When B-E turn, the message box says what the turn sets on this program, for example DECAY 45, PRE 30 MS, DELAY 320/160 MS, FBK 60 %, SPEED 12 or DEPTH 40, or that it has none: NO DECAY ON REVERSE (the reverse programs keep their decay and pre-delay), NO PRE-DELAY HERE (a pre-delay the program does not send anywhere), NO DELAY HERE, NO SWEEP HERE (pitch shifts, Leslies, the static delays and MEDIUM HALL).
+
+All are ordinary FX2 knobs, so parameter locks, LFOs and scenes reach them as any effect's (not tried on a unit). A new program starts from silence; the dry signal keeps playing at its MIX level meanwhile.
 
 ## Usage
 
 1. Select a track and press **FX2**, then **FUNC + FX2** for FX2 SETUP.
 2. Turn **LEVEL** to QUADRAVERB and press **YES**, then press **FX2** for the main page.
-3. Turn **A** for the program and **F** for the mix.
+3. Turn **A** for the program and **F** for the mix; **B**-**E** move its decay or feedback, pre-delay or delay time, and its sweep from the factory value.
 
 ## Quick tutorial
 
@@ -38,7 +44,7 @@ Both are ordinary FX2 knobs, so parameter locks, LFOs and scenes reach them as a
 - Not like the original: 44.1 kHz instead of about 42 kHz, so reverb times, delays and sweeps are about 5 % shorter and faster; the input is the average of left and right; words are 24 bits in the DSP and 16 bits where they cross to the ColdFire. Nothing records the original's own width.
 - Not in this release: the gated programs and the sweeps a signal onset restarts (03, 23-29, 31, 32, 86-88), whose gate needs a signal detector the original has in hardware, and 73 VERB SHIFTER; and the pitch shifts 51 AMAZING BASS, 59 GREASE GUITAR and 60 CONCERT GUITAR, the three longest programs, which do not fit in the 256 KiB a module may take beside the others.
 - A new program fades the old one's wet out over 256 samples and starts from silence; unlike the original, the old tail does not run on into the new program (TESTING.md, "The fade at a pick").
-- MIDI modulation of sweep rate and depth, which the original takes, is not taken.
+- MIDI modulation of sweep rate and depth, which the original takes, is not taken; SPD and DEP set them instead. The Leslies' speed and the pitch shifts' detune are not on a knob.
 - Built from the owner's own Quadraverb 1.07 ROM image on the developer's computer. The program sources compiled from it (`gen/`) are in this repository under the owner's waiver of 27 November 2026; the ROM is not.
 
 ## Tests and measurements
