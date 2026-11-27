@@ -2,16 +2,16 @@
   "kind": "owner-approved-update",
   "id": "euclid",
   "version": "0.1.6-experimental",
-  "sourceSha256": "e99fa5d15beef67bab9591134d4de50db66aaaeeebac971dadedddf9e50587d3",
+  "sourceSha256": "f5afcf2336e56347f4b7919fcf68699f99da5660c7f741b2176811a5e15b8124",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-25",
+  "approvedOn": "2026-11-27",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
     "complete-memory-bounds",
     "release-documentation"
   ],
-  "ownerStatement": "Approved by repeat98 on 25 Nov 2026 in the session that priced every module at rest (\"yes push euclid as one 0.1.6\", then \"approve euclid 0.1.6, write the approval\"): release Euclid 0.1.6-experimental (#1868, with #2057 closed into it).",
-  "reason": "0.1.6 joins two changes. runtime.json marks Euclid's three ColdFire detours (eu_frame_hook 0x4000d562, eu_start_hook 0x4009c3d4, eu_resume_hook 0x4009c4d4) \"rests\", so on a base that judges effect modules (loader capability 2048) they hold stock's bytes while no slot of the project names Euclid. filter.asm takes octabam's three bit-identical DSP speed-ups (one lua for the frame advance, the parked input from x0, three short immediates): the emulator's widened identity gate reads IDENTICAL on 41 of 41 settings. On the owner's MKII (development twin 493c9cc5 of base 0.8.1, Dev17, three readings of 8 s a state, 25 Nov 2026) it adds +0.0 points of the frame interrupt at rest against +1.1 for 0.1.5, and in use +3.9 / DSP +5.7 against +3.7 / +4.8; the 0.7.11 twin run of 21 Nov covered Part and project Save/Reload, playback and Undo with the resting detours. The UI is 0.1.3's, so its captures are retained. Waived for this exact source: the instance curve and test procedure on this build, an MKI, a listen, chip worst-case cycles and complete memory bounds.",
+  "ownerStatement": "Re-signed by repeat98 on 27 Nov 2026 (\"signed\", his answer to re-signing Euclid 0.1.6 with its measured curve and performance record, as in #1868).",
+  "reason": "0.1.6 joins two changes. runtime.json marks Euclid's three ColdFire detours (eu_frame_hook 0x4000d562, eu_start_hook 0x4009c3d4, eu_resume_hook 0x4009c4d4) \"rests\", so on a base that judges effect modules (loader capability 2048) they hold stock's bytes while no slot of the project names Euclid. filter.asm takes octabam's three bit-identical DSP speed-ups (one lua for the frame advance, the parked input from x0, three short immediates): the emulator's widened identity gate reads IDENTICAL on 41 of 41 settings. On the owner's MKII (development twin 493c9cc5 of base 0.8.1, Dev17, three readings of 8 s a state, 25 Nov 2026) it adds +0.0 points of the frame interrupt at rest against +1.1 for 0.1.5, and in use +3.9 / DSP +5.7 against +3.7 / +4.8; the 0.7.11 twin run of 21 Nov covered Part and project Save/Reload, playback and Undo with the resting detours. The UI is 0.1.3's, so its captures are retained. Performance, on a computer (evidence/performance.json, perf.py, 26 November 2026): 182 static cycles a sample, worst 187.75 executed instructions a sample under the stock cases against FILTER 284.88 and DJ EQ 330.94, and an eight-instance 2 s stress run with no clobber and no hang; the cycle scan models 223.38 chip cycles at RATE 1/32 and the unit read about 267 at the in-use peak. On the owner's MKII (development twin 46c30886 of base 0.8.2, Dev17 C04 at 80.5 % with stock alone, 26 November 2026): instance curve first 4.2, each 0.5, rest 0 % of a frame, admitted alone on the empty and the medium pattern with nothing dropped; price 4.2 % of a frame in use; module pool 10,480 bytes in rolled-back trials. Waived for this exact source: the test procedure on this build, an MKI, a listen, chip worst-case cycles and complete memory bounds.",
   "retainedUiVersion": "0.1.3-experimental"
 }
