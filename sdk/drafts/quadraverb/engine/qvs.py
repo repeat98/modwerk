@@ -452,12 +452,17 @@ def stream_code(plan, info, P="qv", area=None):
                  f"        beq     {P}KCDN",
                  "        add     x0,b",
                  f"        move    b1,{x7(MBIN)}",
+                 # until LAT frames are sent the copy runs with y1 = 0: the windows hold zeros, as the model's in-blocks
+                 # (a small ring's pointer walks line heads into the windows within LAT frames: 06 PINGPONG DELAY)
                  f"        move    {x7(Q)},b",
                  f"        move    {imm(L)},x0",
+                 "        move    #>$000080,y1",
                  "        cmp     x0,b",
-                 f"        blt     {P}KCDN"]
+                 f"        bge     {P}KCQ",
+                 "        move    #>$000000,y1",
+                 f"{P}KCQ:"]
     head += [f"        move    {x7(MBIN)},r3",
-            "        move    #>$000080,y1",
+            *([] if area else ["        move    #>$000080,y1"]),
             f"        move    {imm(S - 1)},m5"]
     statics = [x for x in plan.windows if x.kind == "static"]
     if statics:
