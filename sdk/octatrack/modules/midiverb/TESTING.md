@@ -33,7 +33,7 @@ Record what you ran, on which build and which unit, and what you saw. "Not teste
     - Core 1 runs about 3 % above core 0. The dearest program, #69 (595 modelled), reads 613.3 / 593.0 twice.
     - Single readings went up to 631.9 (#64) and 622.2 (#61); both read 612.5 when repeated.
     - Not timed stopped: #51 and #54. The timing script overshot their PROG values; playing, they read like the others.
-  - *Release build:* `npm run module:dev -- midiverb --listed --build-only --slots fx2 --cycles 632 --cycles-kind hardware --state 32 --buffer 15870`, with the derived page. Package `1c2e43f69e96e82b…`, 59,348 bytes, DSP 929 words. 632 is the highest single reading, rounded up; one instance may be charged 726.
+  - *Release build:* `npm run module:dev -- midiverb --listed --build-only --slots fx2 --cycles 632 --cycles-kind hardware --state 32 --buffer 15870`, with the derived page. Package `1c2e43f69e96e82b…`, 59,348 bytes, DSP 929 words (timed and priced below); after PROG's range followed BANK the same command gives `d554753cf04faaf5…`, the shipped package, with the same DSP code. 632 is the highest single reading, rounded up; one instance may be charged 726.
   - *Price and curve* (`npm run device:price -- --write --memory --curve T1,T3,T6,T7 --pick-pattern 2 --measure-pattern 4`, package `1c2e43f6`):
     - At rest: frame +0, CPU +0.6.
     - In use on T1 FX2: frame +1.5, CPU +2, DSP T1-4 +11. DSP T5-8 also read about +11, at rest and in use.
@@ -42,28 +42,39 @@ Record what you ran, on which build and which unit, and what you saw. "Not teste
   - *PROG and BANK, package `1c2e43f6`* (a 300-s trial, transport stopped, T1 FX2; C04 Part 2 as the unit was left). Each value was set with the knobs and read back from the frame record; 30 of 30 passed.
     - PROG 1, 30 and 59 on MV1, MV2 and FEX play the program 0.1.0 played at that value: MV1 1, 34, 63; MV2 4, 73, 99; FEX 1, 32, 63. The screen names them, e.g. "34 2.85 SMALL BRIGH".
     - MV2 PROG 83 to 102 play MV2 50 to 69 in order. Two more turns past 102 stay on 102 ("69 FAST CHORUS 2").
-  - Not run: a Part saved with 0.1.0 and opened with 0.2.0 (the value map above is what it reads), a listen.
+  - Not run: a Part saved with 0.1.0 and opened with 0.2.0 (the value map above is what it reads).
 
 ### Test procedure: midiverb 0.2.0-experimental, 27 November 2026
 
-On the owner's MKII, through the unit queue: development twin `ed5474c6` of base 0.8.3 (main `80ea1e584`, `build_core.py` with the beta flags plus `--dev`), RAM-booted from twin `46c30886`. Package `public/octatrack-modules/midiverb/0.2.0-experimental.mwrm`, SHA-256 `1c2e43f69e96e82b…`: the shipped package, rebuilt from source with the isolated build. It is byte-identical to the package timed and priced on `46c30886` above. Dev17 bank C, C04, Part 2 (working copy equal to its saved one), transport stopped.
+On the owner's MKII through the unit queue: development twin `ed5474c6` of base 0.8.3 (main `80ea1e584`, `build_core.py` with the beta flags plus `--dev`). Package `public/octatrack-modules/midiverb/0.2.0-experimental.mwrm`, SHA-256 `d554753cf04faaf5…`: the shipped package, rebuilt from source by the isolated build, with PROG's range following BANK. Built from `8bfd17721`; the checkout's only uncommitted changes were the step-1 Fix's two scripts (`scripts/module-doctor.mjs`, `scripts/test-procedure.mjs`), without which step 1 refuses every update of a listed module. Dev17 bank C: C04 Part 2 (working = saved), picks on the empty C02, the curve on C04, transport stopped.
 
-`npm run test:procedure -- midiverb --package public/octatrack-modules/midiverb/0.2.0-experimental.mwrm --share /tmp/modwerk-share.sock --no-emulator` stopped at step 1. The release doctor refuses an update until its qualification record names the new version, and that record is written from this run. Steps 2 to 10 were run one by one with the runner's own commands (`--plan`), as Mini Verb's 23 November run did:
+`npm run test:procedure -- midiverb --package public/octatrack-modules/midiverb/0.2.0-experimental.mwrm --share /tmp/modwerk-share.sock --no-emulator --measure-pattern 4`
 
 | # | Step | Result |
 | --- | --- | --- |
-| 1 | module:doctor | refused: the qualification record and its `moduleVersion` are still 0.1.0's. After the packages were rebuilt, its packages, USB package, CPU price, cost at rest and frame cost lines passed |
-| 2 | modules:compat | passed: 48 active modules, 1,128 pairs and the whole set, 0 problems |
-| 3 | name the build | `1c2e43f6`, as above |
-| 4 | `cycle-scan.mjs check` | passed: 10 records current. Midiverb has no scan record yet (its stream is not a static program) |
+| 1 | module:doctor (`--procedure`) | passed; the qualification record waited for this run |
+| 2 | modules:compat | passed: 48 active modules, 0 problems |
+| 3 | name the build | `d554753c` |
+| 4 | `cycle-scan.mjs check` | passed |
 | 5 | emulator | left out (`--no-emulator`) |
 | 6 | status, Part state, inventory | twin `ed5474c6`, empty inventory, C04 Part 2 clean |
-| 7 | `device:test` | passed: self-test (longest frame 383 µs). T1 admitted in 115 ms (peak 516 per mille), T5 in 115 ms (552). All at once, 6 of 8 placed and 2 refused by admission (CPU 554, core peaks 714 and 746 per mille). Part switches 12 of 12. Rolled back |
-| 8 | soak | passed: 2,400 operations in 122 s inside a 420-s trial (health p95 21 ms, CPU at most 481 per mille). No pattern changed: the program changes on channel 1 did not switch patterns in this project. Part 2 restored, trial rolled back |
-| 9 | `device:price --curve T1,T3,T6,T7` | at rest frame +0, CPU +0.1. In use on T1 FX2: frame +1.2, CPU +1.4, DSP T1-4 +9.7, T5-8 +0 (0.8.2's +11 on the other core is gone). Admitted alone on the empty and the medium pattern, nothing dropped, no stalls. **The curve was refused**: on 0.8.3 the medium pattern C01 reads 35.6 % of a frame with stock alone (81.6 % on 0.8.2 this morning), under the 75 % its rule needs. Read twice, on Part 2 and on Part 1: first 1.6 / 2.4, each 0.4 / 0. The released curve stays the 0.8.2 one above |
-| 10 | inventory, Part state | unchanged, empty; C04 Part 2 reloaded, working = saved |
-| 11 | by hand | PROG and BANK above (on `46c30886`). Not run: the other screens, MAIN and CUE recorded over USB |
-| 12 | the owner's own stage | not run yet |
+| 7 | `device:test` | passed: self-test; T1 admitted in 116 ms (peak 437 per mille), T5 in 117 ms (515); all at once three a core placed, the fourth on each refused by admission (CPU 576, core peaks 632 and 714); Part switches 12 of 12; rolled back |
+| 8 | soak | passed: 120 s of scenes, crossfader and program changes inside a trial; Part 2 reloaded; rolled back |
+| 9 | `device:price --curve T1,T3,T6,T7 --measure-pattern 4` | at rest frame +0, CPU +0; in use on T1 FX2 frame +2.3, CPU +2, DSP T1-4 +9.8, T5-8 +0. Curve on C04 first 2, each 2. Admitted alone on the empty pattern (longest frame 37.8 %) and the medium one (88.7 %), nothing dropped, no stalls |
+| 10 | inventory, Part state | unchanged, empty; C04 Part 2, working = saved |
+| 11 | by hand | 32 of 32 PROG and BANK cases on this package (below). Not done: the other screens (0.1.0's captures, unchanged), MAIN and CUE recorded over USB |
+| 12 | the owner's own stage | he played this exact package in a RAM trial and called the PROG knob great (reported). Not done: a full listen item by item, MIDI, a large set, project save and reload, a Keep and a power cycle |
+
+Edge cases, by hand in a 300-s trial of `d554753c` (each value set with the knobs and read back from the frame record):
+
+| Case | Why this change makes it a risk | Result |
+| --- | --- | --- |
+| PROG 1, 30 and 59 on MV1, MV2 and FEX | 0.2.0 inserts programs; a 0.1.0 Part must open on the same program | passed: MV1 1, 34, 63; MV2 4, 73, 99; FEX 1, 32, 63, as 0.1.0 |
+| MV2 PROG 83 to 102 | the Midiverb II's added chorus and flange programs | passed: MV2 50 to 69 in order |
+| PROG turned 140 detents past the end on each bank | PROG's range now follows BANK | passed: stops at 102 on MV2 and at 63 on MV1 and Midifex, on each bank's last program |
+| A Part saved with 0.1.0 opened with 0.2.0 | the stored value reads through the same map | not run on the unit; the first case reads the same values |
+
+The earlier run on 27 November (package `1c2e43f6`, before the PROG range: steps 2 to 10 one by one, as step 1 then refused every update) passed the same steps. Its curve was read on C01, a light pattern (35.6 % of a frame with stock alone), so it was refused there.
 
 - **Trial, 25 Nov 2026, the owner's Octatrack** on flashed base `eb6679620d0c`, from commit ede56e7b6: package `midiverb.mwrm`, SHA-256 `8184ae0826318eced0dd1053b638dd58db4eb09097fd8ed0fb30c48b87dea653`, built by `npm run module:dev -- midiverb --slots fx2 --cycles 400 --cycles-kind executed --state 32 --buffer 15870`. The base admitted it and ran it as a RAM trial. The owner reported it "working great" (reported, not observed by the agent). Not run: the test procedure, its edge cases, scenes, locks, LFOs, several instances.
 - The first attempts were refused at verify, loader refusal 6 (RUNTIME_CYCLES): 824 declared cycles, then the builder's placeholder. One instance must fit beside seven stock slots on a core: 3,120 − 7 × 342 = 726 chip cycles, a draft's figure charged at 7/4, so at most 414 declared.

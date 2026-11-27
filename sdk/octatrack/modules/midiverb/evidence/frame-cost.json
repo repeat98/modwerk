@@ -1,10 +1,10 @@
 {
   "module": "midiverb",
   "version": "0.2.0-experimental",
-  "base": "46c30886 (main 0.8.2 development twin of 48f4a9b9c), MKII",
-  "scene": "Dev17 bank C, Part 1 as loaded after the RAM boot, stopped; picks on C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7; T2 and T4 play samples) at 126 BPM; owner's MKII, OS 1.40C",
+  "base": "development twin ed5474c6 of base 0.8.3 (main 80ea1e584), the owner's MKII, OS 1.40C",
+  "scene": "Dev17 bank C: C04 Part 2 (working = saved), picks on the empty C02, the curve on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7), transport stopped; twin ed5474c6 of base 0.8.3 (main 80ea1e584)",
   "seconds": 8,
-  "measuredAt": "2026-11-27T12:47:21.924Z",
+  "measuredAt": "2026-11-27T16:20:59.219Z",
   "tracks": [
     "T1",
     "T3",
@@ -12,20 +12,20 @@
     "T7"
   ],
   "rest": 0,
-  "first": 1.6,
-  "each": 1.6,
+  "first": 2,
+  "each": 2,
   "points": [
-    80.1,
-    81.5,
-    80.5,
-    82.1,
-    82
+    88,
+    88.9,
+    88.2,
+    90.2,
+    89
   ],
   "adds": [
-    1.4,
-    0.4,
-    2,
-    1.9
+    0.9,
+    0.2,
+    2.2,
+    1
   ],
   "admission": [
     {
@@ -34,8 +34,8 @@
       "track": "T1",
       "seconds": 8,
       "admitted": true,
-      "frameMax": 39.5,
-      "frame": 30,
+      "frameMax": 37.8,
+      "frame": 28.8,
       "dropped": 0,
       "stalls": 0
     },
@@ -45,8 +45,8 @@
       "track": "T1",
       "seconds": 8,
       "admitted": true,
-      "frameMax": 81.6,
-      "frame": 37.1,
+      "frameMax": 88.7,
+      "frame": 38.9,
       "dropped": 0,
       "stalls": 0
     }
