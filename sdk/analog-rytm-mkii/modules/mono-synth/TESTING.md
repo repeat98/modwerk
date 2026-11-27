@@ -43,6 +43,10 @@ SM03 (a probe, not kept) followed `ev_amp_record` and kept each voice's state an
 
 By ear: not checked whether a long decay is ever cut before it ends.
 
+## Screenshots (27 Nov 2026)
+
+`media/machine-list.png`, `synth-t16.png` and `synth-t8.png`: SM04 on the author's unit, read over the link at 3x after the steps in `media/capture.json`. The list shows SY MONO last in the SY section of BD's machine list; a tap of A stepped the range to 8' (header TUNE 8FT) and three more brought it back to 16'.
+
 ## Not tested
 
 - On a unit: whether a long decay is ever cut short by ear, the range tap, locks, the analog filter after it, several voices at once, a project save and a power cycle.

@@ -27,9 +27,11 @@
       "Tap encoder A for the range: 16', 8', 4', 2'."
     ],
     "usage": [
-      "Select the BD track, press FUNC + SRC, choose SY MONO and press YES.",
-      "Shape it with the FLTR and AMP pages, as any Rytm voice.",
-      "MOD 20 is a vibrato; raise LFO for a trill."
+      "Select the BD track, press FUNC + SRC, choose SY MONO (the last of the SY section) and press YES.",
+      "Play a few notes in CHROMATIC mode: you hear the saw. Turn FLTR's frequency and AMP's decay to shape it.",
+      "Turn SUB to 40 for a sub an octave down, or to 100 for one two octaves down.",
+      "Turn MOD to 20 for a vibrato, then LFO up for a fast trill; MOD at 100 and LFO at 20 wobble.",
+      "Tap encoder A to step the range (T16, T8, T4, T2)."
     ]
   },
   "access": {
@@ -39,7 +41,11 @@
       "Choose SY MONO and press YES.",
       "On the SYNTH page, tap encoder A to step the range."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/machine-list.png",
+      "media/synth-t16.png",
+      "media/synth-t8.png"
+    ]
   },
   "controls": [],
   "compatibility": {
@@ -58,7 +64,9 @@
     "kind": "elemod",
     "core": "0.7",
     "build": "build.json",
-    "events": ["ev_amp_record"],
+    "events": [
+      "ev_amp_record"
+    ],
     "claims": [
       "machine:40",
       "ui:SYNTH page of the SY MONO machine"
@@ -83,7 +91,25 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host: 31 checks of the oscillators, sub, noise, LFO, smoothing and clipping (tools/host_test.c). Not run on a unit or in rytm-emu."
+    "summary": "Host: 37 checks of the oscillators, sub, noise, LFO, smoothing, clipping and the AMP gate (tools/host_test.c). Unit (author's MKII, RAM boot, SM01-SM04): the SYNTH page, six voices on pads 1 to 8, mw_voice_meter 3.3 % mean and 4.3 % dearest a voice, the voice stopping once its AMP closes. Not run in rytm-emu.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Select the BD track, press FUNC + SRC, choose SY MONO (the last of the SY section) and press YES.",
+          "Play a few notes in CHROMATIC mode: you hear the saw. Turn FLTR's frequency and AMP's decay to shape it.",
+          "Turn SUB to 40 for a sub an octave down, or to 100 for one two octaves down.",
+          "Turn MOD to 20 for a vibrato, then LFO up for a fast trill; MOD at 100 and LFO at 20 wobble.",
+          "Tap encoder A to step the range (T16, T8, T4, T2)."
+        ]
+      },
+      "screenshots": [
+        "media/machine-list.png",
+        "media/synth-t16.png",
+        "media/synth-t8.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -98,7 +124,55 @@
       "alt": "A saw wave whose pitch a triangle LFO bends.",
       "credit": "chevyone",
       "license": "GPL-3.0-or-later",
-      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+      "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+    },
+    {
+      "path": "media/machine-list.png",
+      "kind": "screenshot",
+      "caption": "SY MONO in the SY section of BD's machine list (FUNC + SRC), after SY DUAL VCO, SY CHIP and SY RAW.",
+      "alt": "The machine list over the SYNTH page: BD ACOUSTIC, then the SY section with SY DUAL VCO, SY CHIP, SY RAW and SY MONO under the cursor.",
+      "credit": "chevyone documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "hardware",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "d8532a31ac6f69e417f27739ec74293495fcdc9554a8ac3de8d39644060c875f",
+        "setup": "The author's Analog Rytm MKII running SM04 from RAM: the Modwerk development base's voices variant (879c6c23) and this folder's SY MONO 0.1.0-experimental, linked by Modwerk on stock OS 1.74. The unit's 128x64 screen read over the development link at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/synth-t16.png",
+      "kind": "screenshot",
+      "caption": "SY MONO's SYNTH page at the 16' range: A reads T16.",
+      "alt": "SYNTH page: T16, LFO, MOD, PLS above SAW, SUB, NSE, LEV; the bottom bar shows BD's level.",
+      "credit": "chevyone documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "hardware",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "d8532a31ac6f69e417f27739ec74293495fcdc9554a8ac3de8d39644060c875f",
+        "setup": "The author's Analog Rytm MKII running SM04 from RAM: the Modwerk development base's voices variant (879c6c23) and this folder's SY MONO 0.1.0-experimental, linked by Modwerk on stock OS 1.74. The unit's 128x64 screen read over the development link at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/synth-t8.png",
+      "kind": "screenshot",
+      "caption": "After a tap of encoder A: the range is 8' and the header names it.",
+      "alt": "The SYNTH page with the header TUNE 8FT and A's value 0, the other knobs as before.",
+      "credit": "chevyone documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "hardware",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "d8532a31ac6f69e417f27739ec74293495fcdc9554a8ac3de8d39644060c875f",
+        "setup": "The author's Analog Rytm MKII running SM04 from RAM: the Modwerk development base's voices variant (879c6c23) and this folder's SY MONO 0.1.0-experimental, linked by Modwerk on stock OS 1.74. The unit's 128x64 screen read over the development link at 3x. UI documentation only."
+      }
     }
   ]
 }
