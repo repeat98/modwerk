@@ -28,7 +28,7 @@ export function ForumHighlights() {
         <p>{post.excerpt}</p>
       </li>)}</ol></div>}
       {data.topMembers.length > 0 && <div className="forum-highlight-group"><h3>{PEOPLE}</h3><ol className="forum-highlight-people">{data.topMembers.map(member => <li key={member.username}><span className="forum-author"><ForumAvatar username={member.username} avatar={member.avatar} /><ForumAuthorName username={member.username} /></span><small>{likes(member.likes)}</small></li>)}</ol></div>}
-      {data.newMembers.length > 0 && <div className="forum-highlight-group"><h3>New members</h3><ul className="forum-highlight-members">{data.newMembers.map(member => <li key={member.username}><a href={'#forum/profile/' + encodeURIComponent(member.username)}><ForumAvatar username={member.username} avatar={member.avatar} />@{member.username}</a></li>)}</ul></div>}
+      {data.newMembers.length > 0 && <div className="forum-highlight-group"><h3>New members</h3><ul className="forum-highlight-people">{data.newMembers.map(member => <li key={member.username}><span className="forum-author"><ForumAvatar username={member.username} avatar={member.avatar} /><ForumAuthorName username={member.username} /></span></li>)}</ul></div>}
     </div>}
   </section>
 }
