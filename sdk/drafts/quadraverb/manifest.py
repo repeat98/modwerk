@@ -20,10 +20,11 @@ from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Harn
 # The release's programs, by their number on the original (user memory 0-89; owner, 27 Nov 2026: "as many programs as
 # possible"): every one that plays bit for bit as an area (engine/verify_area.py), less what does not fit. Left out: the
 # gated ones and the sweeps a signal onset restarts (FIRMWARE.md, "The gate": the detector is hardware), 73 VERB SHIFTER
-# (gated, no tick for its coefficient sweep), and the three longest pitch areas (1,825-1,874 words): with them the
-# image is about 12.7 KB past the 256 KiB a module may take (loader.h RUNTIME_IMAGE_BYTES on base/octatrack-pool-raise).
+# (gated, no tick for its coefficient sweep), and two of the three longest pitch areas: 59 GREASE GUITAR, the shortest,
+# came back once the areas were stored as indices into their distinct words (27 Nov 2026); 51 and 60 would raise every
+# slot's program_words (two areas a slot, the longest program's) past 1,900 words.
 GATED = (3, 23, 24, 25, 26, 27, 28, 29, 31, 32, 73, 86, 87, 88)
-TOO_LONG = (51, 59, 60)
+TOO_LONG = (51, 60)
 LEFT_OUT = GATED + TOO_LONG
 PROGRAMS = tuple(p for p in range(90) if p not in LEFT_OUT)
 # Base features the release package requires (sdk/runtime/loader/abi9.py base_features): the program areas and the
