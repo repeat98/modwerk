@@ -13,9 +13,12 @@ const audioPackage = JSON.parse(await readFile(resolve(root, 'node_modules/waves
 const audioCredits = ['WaveSurfer.js ' + audioPackage.version, 'SPDX: BSD-3-Clause',
   'Used in: website audio players', 'Notice source: https://github.com/katspaugh/wavesurfer.js/blob/' + audioPackage.version + '/LICENSE', '',
   (await readFile(resolve(root, 'node_modules/wavesurfer.js/LICENSE'), 'utf8')).trimEnd()].join('\n') + '\n'
+const fontCredits = ['Host Grotesk', 'SPDX: OFL-1.1', 'Used in: website page titles', 'Notice source: https://github.com/Element-Type/HostGrotesk/blob/main/OFL.txt', '',
+  (await readFile(resolve(root, 'public/fonts/host-grotesk-OFL.txt'), 'utf8')).trimEnd()].join('\n') + '\n'
 const site = await renderPlatformNotices(root) + '\n' + '='.repeat(72) + '\n\n' + notices + '\n' + '='.repeat(72) + '\n\n' + await renderVendorNotices(root)
   + '\n' + '='.repeat(72) + '\n\n' + usbCredits
   + '\n' + '='.repeat(72) + '\n\n' + audioCredits
+  + '\n' + '='.repeat(72) + '\n\n' + fontCredits
 for (const [relativePath, content] of [
   ['sdk/octabam/licenses/' + NOTICE_NAME, notices],
   ['public/licenses/' + NOTICE_NAME, site],

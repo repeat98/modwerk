@@ -14,7 +14,7 @@ export function ProfileLinksView({ profile }: { profile: ProfileLinks }) {
   return <div className="forum-profile-social">
     <nav className="forum-profile-links" aria-label="Social and music profiles">{links.map(link => <article className="forum-profile-link-card" data-service={link.key} key={link.key}>
       <a className="forum-profile-link-main" href={link.href} target="_blank" rel="noopener noreferrer" aria-label={'Open ' + link.label + ' profile for ' + link.account + ' (opens in a new tab)'}>
-        <span className="forum-profile-link-cover"><ProfilePlatformIcon service={link.key} /><span>{link.label}</span><Icon name="external" size={13} /></span>
+        <span className="forum-profile-link-cover"><ProfilePlatformIcon service={link.key} /><span>{link.label}</span><Icon name="external" size={13} /><span className="forum-profile-link-art" aria-hidden="true" /></span>
         <span className="forum-profile-link-copy"><strong>{link.account}</strong></span>
       </a>
       {link.key === 'soundcloudUrl'
