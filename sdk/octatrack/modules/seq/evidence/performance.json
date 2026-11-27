@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "module": "seq",
+  "version": "0.1.0-experimental",
+  "sourceSha256": "c95e6a354155bffbd2067a398f7e5acac1893a52f9aef2c33cbb3dbd1201ae72",
+  "kind": "coldfire",
+  "trigger": "key",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 13799,
+    "measured": 13799,
+    "budget": 26600000,
+    "method": "Static instruction count on seq.s linked with MODWERK_EVENTS=1 (perf.py static, 27 November 2026): dearest UI event is [YES] after setting rhythms (ef_yes, 4913 instructions) plus a full redraw (ef_draw through ef_fill, 624). Stock LCD helpers inside ef_draw are included in the disassembly. 5537 instructions at 2.49216 cycles per instruction gives 13,799. Not hardware wall-clock timing."
+  },
+  "stress": {
+    "events": 2400,
+    "playing": true,
+    "hangs": 0,
+    "method": "Hardware, development twin 4c7eb79b: test:procedure step 8 soak, 120 s on A02 Part 1 with programs 0-3 (2,400 program-change attempts; the project's program-change receive is likely off so the pattern did not switch). No crash, stall, freeze or skipped track."
+  }
+}

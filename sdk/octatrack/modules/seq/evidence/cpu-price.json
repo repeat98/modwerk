@@ -1,0 +1,68 @@
+{
+  "module": "seq",
+  "version": "0.1.0-experimental",
+  "base": "development twin 4c7eb79b, MKII, OS 1.40C",
+  "scene": "author's project, A02, Part 1, stopped",
+  "inputs": {
+    "transport": "playing"
+  },
+  "seconds": 8,
+  "readings": 3,
+  "measuredAt": "2026-11-26T09:39:20.157Z",
+  "result": {
+    "id": "seq",
+    "version": "file",
+    "packageSha256": "880a54b116acd605f4efcd31113024b7520c28118f6b7166e49428058aba2b26",
+    "before": {
+      "frame": 60.3,
+      "frameMax": 103.6,
+      "frames": 67131,
+      "skipped": 0,
+      "cpu": 84.7,
+      "dsp1to4": 40.4,
+      "dsp5to8": 48.8,
+      "dsp1to4Peak": 41.4,
+      "dsp5to8Peak": 49.7,
+      "readings": 3,
+      "spread": {
+        "frame": 0.1,
+        "cpu": 2,
+        "dsp1to4": 0.3,
+        "dsp5to8": 0.9,
+        "frameMax": 4,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 0
+      }
+    },
+    "atRest": {
+      "frame": 60.3,
+      "frameMax": 103.6,
+      "frames": 67069,
+      "skipped": 0,
+      "cpu": 84.6,
+      "dsp1to4": 40.2,
+      "dsp5to8": 48.9,
+      "dsp1to4Peak": 41.4,
+      "dsp5to8Peak": 49.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 2.4,
+        "dsp1to4": 0.2,
+        "dsp5to8": 0.7,
+        "frameMax": 3.5,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 0
+      }
+    },
+    "atRestAdds": {
+      "frame": 0,
+      "cpu": -0.1,
+      "dsp1to4": -0.2,
+      "dsp5to8": 0.1,
+      "dsp1to4Peak": 0,
+      "dsp5to8Peak": 0.2
+    },
+    "rolledBack": true
+  }
+}
