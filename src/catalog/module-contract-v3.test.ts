@@ -84,7 +84,8 @@ describe('module contract v3', () => {
     const digitakt = machines.find(machine => machine.id === 'digitakt')!
     const document = JSON.parse(readFileSync(resolve('sdk/digitakt/dependencies/dt-support/dependency.json'), 'utf8'))
     expect(parseElemodDependency(document, digitakt).platform.core).toBe('2.1')
-    const { core: _core, ...platform } = document.document.platform
+    const platform = { ...document.document.platform }
+    delete platform.core
     expect(parseElemodDependency({ ...document, document: { ...document.document, platform } }, digitakt).platform.core).toBe(digitakt.sdk!.core!.version)
     expect(() => parseElemodDependency({ ...document, document: { ...document.document, platform: { ...platform, core: 'new' } } }, digitakt)).toThrow('core release')
   })
