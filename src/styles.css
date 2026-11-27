@@ -184,11 +184,10 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .module-card { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-md); overflow: hidden; transition: background .15s, border-color .15s; }
 .module-card:hover { background: var(--surface-raised); }
 .module-card.is-selected { border-color: var(--accent-line); }
-.module-card .module-preview { background: var(--preview); }
+.module-card .module-preview { background-color: var(--preview); }
 .module-card .preview-label { height: auto; min-height: 30px; gap: 8px; font-size: .625rem; line-height: 1.4; letter-spacing: .04em; }
 .preview-label .module-caution-badge { position: relative; z-index: 1; flex: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: normal; }
-.module-card .signal-art { flex: 1 1 0; min-height: 0; }
-.module-card .preview-controls { display: none; }
+.module-card .signal-art { flex-shrink: 1; min-height: 0; }
 .module-cover { display: block; position: relative; overflow: hidden; }
 .module-cover:focus-visible { outline-offset: -3px; }
 @media (min-width: 821px) {
@@ -1086,9 +1085,9 @@ h1 { font-size: var(--text-xl); }
 .module-set-list { border-top: 1px solid var(--line); }
 .module-set-row { display: grid; grid-template-columns: 150px minmax(0,1fr) auto; gap: 24px; align-items: center; padding: 22px 0; border-bottom: 1px solid var(--line); }
 .module-set-art { overflow: hidden; border-radius: var(--radius-sm); border: 1px solid var(--line); }
-.module-set-art .module-preview { height: 110px; background: var(--preview); }
-.module-set-art .preview-label, .module-set-art .preview-controls { display: none; }
-.module-set-art .signal-art { height: 100%; }
+.module-set-art .module-preview { height: 110px; }
+.module-set-art .preview-label { font-size: 7px; }
+.module-set-art .preview-controls { font-size: 6px; }
 .module-set-row h2 { font-size: var(--text-md); margin: 0 0 6px; }
 .module-set-row p { color: var(--muted); font-size: 13px; line-height: 1.75; }
 .module-set-row small { display: block; font-size: var(--text-xs); color: var(--faint); margin-top: 10px; }

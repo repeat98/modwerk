@@ -165,7 +165,7 @@
 .photo-credits ul { margin: 10px 0 0; padding-left: 18px; columns: 2 280px; }
 .photo-credits a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--line-hover); }
 
-.device-photo.is-cutout { object-fit: contain; padding: 14px 18px; }
+.device-photo.is-cutout { object-fit: contain; padding: 14px 18px; filter: drop-shadow(0 10px 18px #00000070); }
 .device-hero-art .device-photo.is-cutout { padding: 26px 32px; }
 .sidebar-device .device-photo.is-cutout, .machine-menu a .device-photo.is-cutout { padding: 1px 2px; border-color: transparent; background: transparent; filter: none; }
 
