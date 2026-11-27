@@ -595,6 +595,40 @@ unsigned pm_project_line(const char *line, unsigned parse_only) {
     return 1;
 }
 
+/* --- PROJECT > NEW (#810) ------------------------------------------------------
+ * A new project reads no project file, so nothing above resets the table and
+ * the last project's modes would play on in it. The Modwerk base raises
+ * ev_project_new when stock makes a new project (0x400909d8, runtime.json),
+ * but on a unit PROJECT > CHANGE and RELOAD PROJECT raise it too, as the second
+ * card job of their load (#1739, the Songbook notes): CHANGE raises
+ * ev_banks_load first, RELOAD ev_project_reloaded (and sometimes
+ * ev_banks_load). So a load marks itself at those two, and ev_project_new
+ * empties the table only when no load is marked; a load then reads
+ * project.work as before (pm_project_begin, pm_project_line), whichever side
+ * of ev_project_new its storing pass falls on. The handlers run in stock's
+ * project task, C convention (d2-d7/a2-a6 kept). */
+extern uint8_t pm_loading;               /* 1 = a CHANGE or RELOAD is under way */
+
+void pm_ev_banks_load(void) { pm_loading = 1; }
+
+unsigned pm_ev_project_reloaded(void) {
+    pm_loading = 1;
+    return 0;
+}
+
+void pm_ev_project_new(void) {
+    if (pm_loading) {                   /* CHANGE or RELOAD: its own modes follow */
+        pm_loading = 0;
+        return;
+    }
+    pm_ensure();
+    for (unsigned p = 0; p < PM_PATTERNS; ++p)
+        for (unsigned i = 0; i < PM_SLOTS; ++i) pm_table[p][i] = PM_NORMAL;
+    pm_cur = 0;                         /* the playing pattern re-reads its row */
+    pm_restart = 1;                     /* every track from its first step, no REPEAT held */
+    pm_nv_store();
+}
+
 /* --- pattern copy, paste and undo ------------------------------------------
  * Stock moves whole patterns (0x8ed8 bytes) with memcpy 0x40020898 between
  * the bank RAM, its clipboard and its undo buffer: copy (0x40026ece), the

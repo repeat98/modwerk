@@ -1,0 +1,1 @@
+Development: the Digitakt and Digitone capture script takes `--prune`, which keeps only the screenshots and the capture report instead of about 0.4 GB of firmware and +Drive a run, and the capture guide names the panel traps that cost reruns (the swallowed first encoder turn, the first-boot project refusing a temp save, CC Select on the AMP page).

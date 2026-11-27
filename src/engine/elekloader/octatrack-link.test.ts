@@ -273,7 +273,7 @@ describe('sending a module', () => {
           connectionTrusted: { get: () => trusted },
           stage: { value: async () => {
             trusted = false; unit.staged = true
-            if (unit.ep0) unit.ep0 = [10, 6, 2, 50, 50, 0] // eight submissions refused at their SETUP, across the wrap
+            if (unit.ep0) unit.ep0 = [10, 6, 2, 50, 50, 0, 0x0fc00020] // eight submissions refused at their SETUP, across the wrap; a data buffer error
             throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause, {command: 'chunk', chunkOffset: 4043, sequence: 9})
           } },
         })
@@ -285,7 +285,7 @@ describe('sending a module', () => {
     }
     const upload = {command: 'chunk', chunkOffset: 4043}
     expect(failures).toEqual([{ error: 'transport', kind: 'NetworkError', upload },
-      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0], upload }))])
+      ...['TimeoutError', 'OtherError', 'NetworkError', 'VendorTransportError'].map(kind => ({ error: 'transport', kind, usb: [0, 8, 0, 0, 0, 0, 0x20], upload }))])
   })
   it.each([[56, 0, 1, 56], [0, 0, 1, 0], [65535, 0, 1, undefined], [56, 1, 1, undefined], [56, 0, 0, undefined]] as const)(
     'matches an EP0 sample (%s bytes, %s resets, %s primes) to the failed attempt', async (residual, resets, primes, expected) => {
@@ -447,12 +447,58 @@ describe('sending a module', () => {
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toMatch(/hasn’t loaded its saved modules yet, so nothing changed/)
   })
+  it('says the last change is not on the card yet when a sync comes while its save keeps failing', async () => {
+    const { unit, link } = await linked()
+    unit.saveFailed = true // rejected with no loader refusal, the record's saved 8
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/^The Octatrack couldn’t save your last change to its card yet, so nothing changed\./)
+  })
   it('names the modules a track may be using, once each and at most five', () => {
     expect(inUseHint([])).toBe('')
     expect(inUseHint(['Tape Echo', 'Tape Echo'])).toBe(' Look for Tape Echo on the tracks.')
     expect(inUseHint(['Tape Echo', 'BBD Delay', 'Deja Vu'])).toBe(' Look for Tape Echo, BBD Delay, or Deja Vu on the tracks.')
     expect(inUseHint(['A', 'B', 'C', 'D', 'E'])).toBe(' Look for A, B, C, D, or E on the tracks.')
     expect(inUseHint(['A', 'B', 'C', 'D', 'E', 'F'])).toBe(' Look for A, B, C, D, or 2 more on the tracks.')
+  })
+  it('names the pending card save when the unit stays busy past the wait (refusal 5)', async () => {
+    const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit), 100)
+    await link.connect()
+    unit.refusal = 5 // the last Keep's save is still pending: minutes, not a moment
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/still saving your last change to its card.*Press STOP.*Saved and checked/)
+  })
+  it('offers the card file from the second sync in a row that stops while sending, until one is refused or kept', async () => {
+    const unit = fakeUnit(), base = fakeSession(unit)
+    let drop = true
+    const connect: typeof base = async (...args) => {
+      const session = await base(...args)
+      return Object.create(session, { stage: { value: (...stage: Parameters<typeof session.stage>) => {
+        if (drop) throw new UploadUnconfirmedError('fixture', session.status)
+        return session.stage(...stage)
+      } } })
+    }
+    const link = new OctatrackLink(unit.usb, connect, 100)
+    await link.connect(); await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice).toMatchObject({ tone: 'error' }); expect(link.getState().notice?.card).toBeUndefined()
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.card).toBe(true); expect(link.getState().notice?.text).toMatch(/load this set from the card instead:$/)
+    drop = false; unit.refusal = 7
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.card).toBeUndefined()
+    drop = true; unit.refusal = undefined
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.card).toBeUndefined() // the count started again
+  })
+  it('says so when the device picker closes with no Octatrack chosen', async () => {
+    const unit = fakeUnit()
+    vi.spyOn(unit.usb, 'getDevices').mockResolvedValue([])
+    vi.spyOn(unit.usb, 'requestDevice').mockRejectedValueOnce(new DOMException('No device selected.', 'NotFoundError'))
+    const link = new OctatrackLink(unit.usb, fakeSession(unit)), stop = link.start()
+    await settle(); await link.connect()
+    expect(link.getState()).toMatchObject({ status: 'idle', noDevice: true })
+    await link.connect(); await settle()
+    expect(link.getState().noDevice).toBeUndefined() // gone once a unit is picked
+    stop()
   })
   it('stages again when the loader was busy for a moment', async () => {
     const { unit, link } = await linked()
@@ -848,7 +894,7 @@ describe('loading a module set', () => {
   })
   it('says a kept set is still to be saved when the unit has not saved it in time, and that a save failed only when it did', async () => {
     const reading = (saved: number) => ({ state: 0, failed: 0, modules: 0, dsp: 0, intact: 0, ran: 0, peaks: { cpu: 0, tracks1to4: 0, tracks5to8: 0 }, done: 0, total: 0, frameGap: 0, saved, savedCount: 0, live: 2, culprit: 0, culpritName: '', refusal: 0 })
-    for (const [saved, tone, text, event] of [[2, 'success', /^Synced\. The Octatrack is still busy and saves Live to the card once/, 'kept'], [8, 'error', /^Kept, but the Octatrack couldn’t save Live/, 'sync_failed']] as const) {
+    for (const [saved, tone, text, event] of [[2, 'success', /^Synced\. The Octatrack is still busy and saves Live to the card once/, 'kept'], [8, 'error', /^Kept, but the Octatrack couldn’t save Live to the card yet\. It keeps trying/, 'sync_failed']] as const) {
       const { link } = await loaded(), events: string[] = []
       link.subscribeDiagnostics(diagnostic => events.push(diagnostic.event))
       vi.spyOn(UsbVendorTransport.prototype, 'selftest').mockResolvedValue(reading(saved))

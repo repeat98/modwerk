@@ -341,6 +341,9 @@ export type ElemodBuildSpec = {
   collections: Record<string, number>; copied: { lo: string; hi: string; to: string }[]; regions: { name: string; lo: string; hi: string }[]
   storage: { sym: string; scope: 'sound' | 'kit' | 'global' | 'track' | 'pattern' | 'project'; bits: number }[]   // mod storage fields, for a core that keeps them
   claims: string[]; requires: string[]
+  // A Digitakt II machine module's sound-chip player: its source, assembled into the package's build.dt2_sharc, and
+  // the machine types (7-10, each claimed as machine:<type>) whose voices it plays from which entry label.
+  sharc?: { source: string; players: { type: number; entry: string }[] }
   // Steps that need the stock OS run only during the owner's local build, never in CI.
   derive: { kind: string; note: string; release: string; releases: string[]; block: [string, string]; sram: [string, string]; callSites: { addr: string; len: number; stockSha256: string; target: string }[] } | null
   releases: Record<string, ElemodRelease>
@@ -399,7 +402,7 @@ export function parseElemodBuild(value: unknown, document: Pick<ModwerkModule, '
   const platform = document.platform
   if (platform.kind !== 'elemod') fail('build', 'only elemod modules have a build.json')
   const keys = ['schemaVersion', 'sources', 'defsym', 'cflags', 'weak', 'subscribe', 'contribute', 'collections', 'copied', 'regions', 'claims', 'requires', 'derive', 'releases'] as const
-  const item = object(value, 'build', keys, ['strings', 'storage'])
+  const item = object(value, 'build', keys, ['strings', 'storage', 'sharc'])
   if (item.schemaVersion !== 1) fail('build.schemaVersion', 'expected 1')
   const sources = list(item.sources, 'build.sources', 1, 64).map((path, index) => {
     const file = modulePath(path, 'build.sources[' + index + ']')
@@ -456,7 +459,22 @@ export function parseElemodBuild(value: unknown, document: Pick<ModwerkModule, '
   if (derive && (derive.releases.some(release => !document.compatibility.releases.includes(release)) || !derive.releases.includes(derive.release))) fail('build.derive.releases', 'expected supported releases including the base release')
   const stringsValue = object(item.strings ?? {}, 'build.strings', Object.keys((item.strings ?? {}) as object))
   const strings = Object.fromEntries(Object.entries(stringsValue).map(([name, value]) => [symbol(name, 'build.strings.' + name), text(value, 'build.strings.' + name, 120)]))
-  return { schemaVersion: 1, sources, strings, defsym: defines(item.defsym, 'build.defsym'), cflags: texts(item.cflags, 'build.cflags', 0, 16, 60), weak: list(item.weak, 'build.weak', 0, 64).map((name, index) => symbol(name, 'build.weak[' + index + ']')), subscribe, contribute, collections, copied, regions, storage, claims, requires, derive, releases }
+  let sharc: ElemodBuildSpec['sharc']
+  if (item.sharc !== undefined) {
+    const value = object(item.sharc, 'build.sharc', ['source', 'players'])
+    const source = modulePath(value.source, 'build.sharc.source')
+    if (!/^src\/.+\.sharc$/.test(source)) fail('build.sharc.source', 'expected a .sharc source under src/')
+    const players = list(value.players, 'build.sharc.players', 1, 4).map((entry, index) => {
+      const at = 'build.sharc.players[' + index + ']', player = object(entry, at, ['type', 'entry'])
+      const type = count(player.type, at + '.type')
+      if (type === null || type < 7 || type > 10) fail(at + '.type', 'expected an added machine type, 7 to 10')
+      if (!claims.includes('machine:' + type)) fail(at + '.type', 'claim the machine type as machine:' + type)
+      return { type: type!, entry: symbol(player.entry, at + '.entry') }
+    })
+    if (new Set(players.map(player => player.type)).size !== players.length) fail('build.sharc.players', 'one player per machine type')
+    sharc = { source, players }
+  }
+  return { schemaVersion: 1, sources, strings, defsym: defines(item.defsym, 'build.defsym'), cflags: texts(item.cflags, 'build.cflags', 0, 16, 60), weak: list(item.weak, 'build.weak', 0, 64).map((name, index) => symbol(name, 'build.weak[' + index + ']')), subscribe, contribute, collections, copied, regions, storage, claims, requires, derive, releases, ...(sharc ? { sharc } : {}) }
 }
 
 // Framework sources are compiled and resolved, but are not library/UI modules.
@@ -470,7 +488,8 @@ export function parseElemodDependency(value: unknown, machine: MachineProfile) {
   const releases = texts(c.releases, 'dependency.releases', 1, 12, 20)
   if (new Set(releases).size !== releases.length || releases.some(release => !machine.firmware?.releases.some(r => r.version === release))) fail('dependency.releases', 'expected unique supported releases')
   const ids = (v: unknown, path: string) => texts(v, path, 0, 20, 60).map(id => { if (!/^[a-z][a-z0-9-]*$/.test(id)) fail(path, 'invalid module id'); return id })
-  const platform = object(d.platform, 'dependency.platform', ['build', 'events', 'claims'])
+  // A framework names the oldest core it links with when that is older than the machine's newest (Core 2.1 for the Digitakt's).
+  const platform = object(d.platform, 'dependency.platform', ['build', 'events', 'claims'], ['core'])
   return {
     id, version: coreVersion(d.version, 'dependency.version'), name: text(d.name, 'dependency.name', 60), machine: machine.id,
     category: 'system', exclusive: false,
@@ -478,6 +497,6 @@ export function parseElemodDependency(value: unknown, machine: MachineProfile) {
     author: { github: login(object(d.author, 'dependency.author', ['github']).github, 'dependency.author.github') },
     license: { spdx: text(object(d.license, 'dependency.license', ['spdx']).spdx, 'dependency.license.spdx', 120) },
     compatibility: { releases, requires: ids(c.requires, 'dependency.requires'), conflicts: ids(c.conflicts, 'dependency.conflicts'), limitations: [] },
-    platform: { kind: 'elemod' as const, core: machine.sdk?.core?.version ?? '1.0', build: modulePath(platform.build, 'dependency.build'), events: texts(platform.events, 'dependency.events', 0, 32, 40), claims: texts(platform.claims, 'dependency.claims', 0, 32, 80) },
+    platform: { kind: 'elemod' as const, core: platform.core === undefined ? machine.sdk?.core?.version ?? '1.0' : coreVersion(platform.core, 'dependency.platform.core'), build: modulePath(platform.build, 'dependency.build'), events: texts(platform.events, 'dependency.events', 0, 32, 40), claims: texts(platform.claims, 'dependency.claims', 0, 32, 80) },
   }
 }

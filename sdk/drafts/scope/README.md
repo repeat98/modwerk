@@ -1,6 +1,6 @@
 # Scope
 
-Version 0.1.0-experimental · by @ilia-murzinov · draft, not Modwerk-qualified.
+Version 0.2.0-experimental · by @ilia-murzinov · draft, not Modwerk-qualified.
 
 ## Overview
 
@@ -35,10 +35,10 @@ returns. Clip `!` appears only when the recent peak reaches 0 dBFS.
 
 ## Compatibility and limitations
 
-- Lists **Tuner** as a conflict: both patch the TEMPO opener, frame ISR tail
-  and UI-loop head. A Modwerk set cannot install both until a base hook owns
-  those sites (octabam shares them through HOOKS). Propose that hook for a
-  later release if both should coexist.
+- **0.2.0** subscribes to `module_key`, `module_tick` and `ev_usb_frame` and
+  patches no stock site, so **Tuner** can share a set. Confirm on your base
+  that `ev_usb_frame` runs every audio block (ring fill and draw depend on it).
+- **0.1.0** patched three stock sites; see PR #2182.
 - Hold **[DOWN]** before **[TEMPO]**. TEMPO alone stays stock.
 - Standalone: TUNER is not required.
 - Draft only: no Modwerk USB package or `device:qualify` evidence yet.

@@ -14,16 +14,16 @@ import { refreshModuleIssues, type BugReportResult } from './issue-tracker'
 import { MemberPrompt } from './MemberPrompt'
 import { describeOtLog, OT_LOG_NAME } from './ot-log'
 import { defaultConfigurationChoice, resolveReportConfiguration, type ResolvedConfiguration } from './report-configuration'
-import { REPORT_OS, useWorkspaceReportContext } from './report-context'
+import { REPORT_OS, useWorkspaceReportContext, type WorkspaceReportContext } from './report-context'
 import { useOtLogFile } from './useOtLogFile'
 
 /**
  * Report a problem with a whole saved configuration, for when no single module is known to be at fault. No author is
  * pinged until it is narrowed down; a problem with one module belongs on that module's own page.
  */
-export function ConfigurationReportDialog({ machine, configurationId, onClose }: { machine: string; configurationId: string; onClose: () => void }) {
+export function ConfigurationReportDialog({ machine, configurationId, workspaceContext, onClose }: { machine: string; configurationId: string; workspaceContext?: WorkspaceReportContext; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null), heading = useId(), success = useRef<HTMLDivElement>(null), logHelp = useId()
-  const { session } = useCommunity(), workspace = useWorkspaceReportContext(machine), device = DEVICES_BY_ID[machine]
+  const { session } = useCommunity(), savedWorkspace = useWorkspaceReportContext(machine), workspace = workspaceContext ?? savedWorkspace, device = DEVICES_BY_ID[machine]
   const { file, input: logInput, read: readLog, remove: removeLog } = useOtLogFile(), digi = machine !== 'octatrack'
   // The USB link fills in what it knows, all of it editable: what the Octatrack runs, the last error the page showed,
   // and its recent USB events, which the reporter sees and can remove before posting (support-report.ts). IDENTIFY names

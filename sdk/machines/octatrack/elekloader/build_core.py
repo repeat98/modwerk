@@ -206,6 +206,11 @@ DYNLOAD_HOOKS = (
     (0x4008540e, 6, 'c607734f7f97b4a13e2047f38d5e2feace1aa3018ec9f19742f612139e7ac0bd', 'mw_project_end'),
     # Modwerk's: the shared wide dial for module pages' controls with more than five labels (fxpage.s).
     (0x40047a3c, 6, '9b2c003ba4d776237ad71bef15451bfea4447f2acca77ef6922dcea6ac52ca78', 'mw_wide_dial'),
+    # Modwerk's: MODE renames follow the track being drawn (fxpage.s, issue #2042): the main page drawer right after
+    # it resolved an audio track's page, and both FX SETUP drawers before their six slots.
+    (0x4004e4d2, 6, '43fb8971d058934152f99193cacc35348c6d8adede3bc870c64a201d67413995', 'mw_names_main'),
+    (0x40037b8c, 8, '7011c8e9e3666bd3caebbb2a519ace70b675a1c5000be08263a69a681271dc93', 'mw_names_fx1_setup'),
+    (0x400377f0, 8, '7011c8e9e3666bd3caebbb2a519ace70b675a1c5000be08263a69a681271dc93', 'mw_names_fx2_setup'),
     # Modwerk's: main's idle spin counts the ColdFire's idle time (status.s, status.c). Its last init call only:
     # stock's spin stays, where ot_emu parks main again after a bench call.
     (0x4001fc96, 6, '2edb8c17ea73bf5ecd097ec929f3bfd6f8a74c81b11080d0d74efd55bec6b416', 'mw_idle'),
@@ -245,6 +250,13 @@ BASE_OWNS = {'usb-audio-out-tracks-main-cue': 'the base owns the USB configurati
              'midi-scenes': 'its writes meet Elekloader\'s own sites; it needs a port',
              'output-matrix': 'resident bases own its CUE CFG project-load clamp and CS1 power-up widening (cue_cfg.s); '
                               'its controller package leaves those sites out'}
+# Modwerk's: the frame interrupt's per-track call 0x400068e4 (twice a track, 16 times a frame, from 0x4000d340 and
+# 0x4000d36c) reads the current Part from CS1 (0x100b14cf) on entry. Stock keeps the same byte in on-chip SRAM at
+# 0x80000003 and writes the two together everywhere it writes either (0x40062142/8, 0x400621e2/8, 0x40087ea6/ac: SRAM
+# first, the next instruction CS1; the boot's 0x4001fa76 and the reset's 0x40025aaa set CS1 and copy it to SRAM). So the
+# base reads SRAM there: the same `mvzb`, the same flags, one CS1 read fewer per call. (Address, length, the stock
+# instruction's SHA-256, its replacement.) The ISR's other read of the byte (0x4000d212) is a rare branch and stays.
+PART_READ = (0x400068f0, 6, 'd0ec7e0980705bdda9e9859f3b6caa119d97dab71385585f3a78e9e893f81d5d', '71b980000003')
 # resident-runtime/cue_cfg.s: (address, guard bytes, guard SHA-256 = Output Matrix's manifest guard, the base's site).
 CUE_CFG_WIDENING = ((0x4008732a, 14, '968adf63466a054aefd6609f18536e3719bbcc144b6dc0a43de49794c3bb3718',
                      dict(op='jmp', target='modwerk_cue_cfg_clamp', length=6)),
@@ -1768,7 +1780,7 @@ def main():
             spec = importlib.util.spec_from_file_location('modwerk_usb_audio_profiles',
                 APP / 'sdk/machines/octatrack/module-adapters/usb-audio-profiles/profiles.py')
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
-    for name in ('ep0.c', 'usb_attach.h', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
+    for name in ('ep0.c', 'usb_attach.h', 'usb_stock_sends.h', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
             ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
              'midi_generators.s', 'sample_memory.c') if args.site_events else ()) + (
             ('part_menu.c', 'part_menu.s') if args.part_menu else ()):
@@ -2287,6 +2299,11 @@ modwerk_retained_end:
             raise ValueError('Stock bytes at %#x are not the CUE CFG clamp/check cue_cfg.s widens.' % addr)
         recipe['sites'].append(dict({k: v for k, v in site.items() if k != 'length'},
                                     addr=hex(addr), stock=stock_at(addr, site['length']).hex()))
+    # The frame interrupt reads the current Part from SRAM, not CS1 (PART_READ): every base.
+    addr, n, guard, new = PART_READ
+    if sha(stock_at(addr, n)) != guard:
+        raise ValueError('Stock bytes at %#x are not the current-Part read PART_READ names.' % addr)
+    recipe['sites'].append(dict(addr=hex(addr), stock=stock_at(addr, n).hex(), op='bytes', new=new))
     # Stock OS fixes (stock-fixes/): every base, whatever its flags, so every layout and twin patches the same sites.
     for name in STOCK_FIXES.SOURCES:
         shutil.copyfile(HERE / 'stock-fixes' / name, source / name)

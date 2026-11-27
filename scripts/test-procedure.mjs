@@ -41,8 +41,15 @@ import { parseArgs } from 'node:util'
 import { pathToFileURL } from 'node:url'
 import { emulatorArgs, sessionEnv, sessionSockets, startSession } from './octatrack-emulator/session.mjs'
 import { bankPrograms } from './octatrack-part-state.mjs'
+import { hasInstances } from './octatrack-price.mjs'
 
 export const ROOT = resolve(import.meta.dirname, '..')
+
+/* The session's answer while the unit is off USB (usb-bench.mjs). */
+const UNIT_AWAY = /the unit (?:is|went) away/
+/* Commands that only read the unit: the status, the inventory and the Part reading. */
+const reads = argv => argv.some(a => /octatrack-part-state\.mjs$/.test(a)) && argv.includes('read') ||
+  argv.some(a => /device\.mjs$/.test(a)) && (argv.includes('status') || argv.includes('inventory'))
 
 // The soak's program changes and MIDI channels: its own defaults (programs 0-3, bank A, on channel 1) unless the
 // project receives them elsewhere, as a project with PROG CH RECEIVE on CH AUTO does (docs/OCTATRACK_DRIVING.md).
@@ -172,6 +179,8 @@ function machinePlan(step, ctx) {
   return { skip: (GAP[step.id] ?? GAP.unit)(name) }
 }
 
+const updateOf = ctx => !!ctx.manifest?.tests?.qualification && ctx.manifest.tests.qualification.moduleVersion !== ctx.manifest.version
+
 /** The commands each step runs for this target, or why it is not run. Pure: everything it reads is in ctx. */
 export function plan(step, ctx) {
   const module = ctx.kind === 'module', pkg = ctx.pkg ?? builtPackage(ctx)
@@ -181,7 +190,8 @@ export function plan(step, ctx) {
     case 'software':
       if (!module) return { commands: [npmRun('sdk:check')] }
       if (!ctx.source) return { skip: 'no module source for ' + ctx.id + ' in this checkout' }
-      return { commands: [npmRun('module:doctor', ...(ctx.draft ? ['--draft'] : []), ctx.id)] }
+      // A listed module's update: its qualification record names the version before it until this run's evidence is written in.
+      return { commands: [npmRun('module:doctor', ...(ctx.draft ? ['--draft'] : updateOf(ctx) ? ['--procedure'] : []), ctx.id)] }
     case 'compat':
       if (!module) return { commands: [npmRun('modules:compat')] }
       if (!ctx.source) return { skip: 'no module source for ' + ctx.id + ' in this checkout' }
@@ -231,9 +241,10 @@ export function plan(step, ctx) {
       // A module also reads its instance curve and runs the admission test (alone on the empty and the medium pattern: admitted,
       // nothing dropped), and device:price fails the step when either does not carry a release (owner, 23 November 2026).
       // --price-base names the base for the record: then the price and the curve land in the module's folder, a draft's too.
+      // Only an effect or a machine has instances to curve; another module (USB Audio, a utility) is priced at rest alone.
       return { commands: [npmRun('device:price', '--share', ctx.share, '--out', join(ctx.out, 'price.json'), '--scene', ctx.scene ?? DEFAULT_SCENE,
         ...(module && ctx.priceBase && ctx.source ? ['--write', '--base', ctx.priceBase] : []),
-        ...(module ? ['--curve', CURVE_TRACKS, ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), pkg] : ctx.priceModules ?? []))] }
+        ...(module ? [...(ctx.instances !== false ? ['--curve', CURVE_TRACKS] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), pkg] : ctx.priceModules ?? []))] }
     case 'restore':
       return { commands: [node('scripts/device.mjs', 'do', 'inventory', '--socket', ctx.share), partRestore(ctx)], compare: 'unit-read', compareAt: 0, why: NOT_PUT_BACK }
     case 'by-hand': return { todo: BY_HAND[ctx.kind] }
@@ -260,6 +271,8 @@ export async function runSteps(ids, ctx, deps, results = []) {
     if (step.unit && ctx.target === 'emulator') result.emulator = true
     results.push(result)
     const stop = failed()
+    // Step 9 asks for an instance curve only when the package has instances: read here, as the unit steps run in a process of their own.
+    if (step.id === 'cost-unit' && ctx.kind === 'module' && ctx.instances === undefined) try { ctx.instances = deps.instances?.(ctx.id, ctx.pkg ?? builtPackage(ctx)) } catch { /* unread: it still asks */ }
     const p = plan(step, ctx)
     result.commands = [...(p.trial ? [p.trial] : []), ...(p.commands ?? [])].map(shown)
     if (p.emulator) result.emulator = true
@@ -299,7 +312,13 @@ export async function runSteps(ids, ctx, deps, results = []) {
       const outputs = [], codes = []
       let code = 0
       for (const argv of p.commands) {
-        const run = await deps.exec(argv, log, env)
+        let run = await deps.exec(argv, log, env)
+        // A USB function's install or removal (USB Audio) takes the unit off USB while the host enumerates it again: a
+        // reading that found it away is asked again for up to 40 s. Only readings: nothing they send presses a key.
+        for (const until = deps.now() + 40000; run.code !== 0 && UNIT_AWAY.test(run.output ?? '') && reads(argv) && deps.now() < until;) {
+          await deps.wait(2000)
+          run = await deps.exec(argv, log, env)
+        }
         outputs.push(run.output ?? ''); codes.push(run.code)
         if (run.code !== 0) { code = run.code; result.reason = (p.why && (run.output ?? '').match(p.why)?.[0].slice(0, 400)) || `exit ${run.code}: ${shown(argv)}`; break }
       }
@@ -397,7 +416,9 @@ export async function runProcedure(ctx, deps) {
     const file = join(ctx.out, 'unit-steps.json')
     const argv = ['npm', 'run', 'unit', '--', 'run', '--note', `test:procedure ${ctx.id ?? 'base'} ${ctx.build.revision.slice(0, 8)}`, '--expect', ctx.kind === 'base' ? '45m' : '15m', '--',
       'node', 'scripts/test-procedure.mjs', ...(ctx.kind === 'base' ? ['--base', ...(other(ctx) ? [ctx.machine] : [])] : [other(ctx) ? ctx.machine + ':' + ctx.id : ctx.id]), '--package', ctx.pkg, '--share', ctx.share, '--out', ctx.out, ...(ctx.passOn ?? []),
-      '--soak-seconds', String(ctx.soakSeconds), ...soakFlags(ctx), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []), '--unit-phase', file]
+      '--soak-seconds', String(ctx.soakSeconds), ...soakFlags(ctx), ...(ctx.scene ? ['--scene', ctx.scene] : []), ...(ctx.pickPattern ? ['--pick-pattern', ctx.pickPattern] : []), ...(ctx.measurePattern ? ['--measure-pattern', ctx.measurePattern] : []), ...(ctx.devSocket ? ['--dev-socket', ctx.devSocket] : []),
+      // step 9 runs in here: without these it priced the module without writing it (USB Audio 0.4.2, 27 November 2026)
+      ...(ctx.priceBase ? ['--price-base', ctx.priceBase] : []), ...(ctx.priceModules ? ['--price-modules', ctx.priceModules.join(',')] : []), '--unit-phase', file]
     const started = deps.now(), run = await deps.exec(argv, join(ctx.out, 'logs', 'unit-queue.log'))
     const inner = deps.exists(file) ? JSON.parse(deps.read(file)) : null
     if (inner) results.push(...inner)
@@ -579,9 +600,11 @@ function realDeps(root) {
   }
   return {
     now: () => Date.now(),
+    wait: ms => new Promise(resolve => setTimeout(resolve, ms)),
     exists: path => existsSync(path),
     read: path => readFileSync(path, 'utf8'),
     sha256: path => createHash('sha256').update(readFileSync(path)).digest('hex'),
+    instances: (id, path) => hasInstances({ root, id, data: readFileSync(path) }),
     exec: async (argv, log, env) => { const { state } = launch(argv, log, env); const code = await state.done; return { code, output: state.output } },
     session: async (spec, log) => {
       const { package: pkg, ...own } = spec

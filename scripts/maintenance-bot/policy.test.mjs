@@ -6,13 +6,33 @@ const issue = (extra = {}) => ({ number: 9, isPull: false, author: 'bob', state:
 const merge = (extra = {}) => ({ kind: 'merge', number: 5, head: 'a1', summary: 'Merge Tape Echo 0.4', reason: 'Green.', ...extra })
 
 describe('maintenance bot policy', () => {
-  it('merges a green pull request after the window, and asks before any merge that publishes modules', () => {
+  it('merges a green pull request after the window, and asks before someone else’s merge that publishes modules', () => {
     expect(classify(merge(), pull({ files: ['src/App.tsx'] }))).toMatchObject({ tier: 'window', windowHours: 12, payload: { method: 'squash', head: 'a1' } })
     for (const file of ['sdk/octatrack/modules/tapeecho/src/main.c', 'sdk/imports/mute-latch.json', 'src/catalog/modules.ts', 'src/community/module-changelogs/euclid.md']) {
       const decision = classify(merge(), pull({ files: [file] }))
       expect([file, decision.tier, decision.reason]).toEqual([file, 'ask', 'Green.\nAsking because merging it publishes modules on the site.'])
     }
     expect(classify(merge(), pull()).payload.method).toBe('merge')
+  })
+
+  it('merges the owner’s own pull request after an hour, releases included, and still asks for the core', () => {
+    const own = extra => pull({ author: 'repeat98', ...extra })
+    expect(classify(merge(), own({ files: ['src/App.tsx'] }))).toMatchObject({ tier: 'window', windowHours: 1 })
+    expect(classify(merge(), own())).toMatchObject({ tier: 'window', windowHours: 1, payload: { method: 'merge' } })
+    for (const file of ['.github/workflows/x.yml', 'scripts/maintenance-bot/policy.mjs', 'migrations/0099_x.sql', 'package-lock.json', 'server/auth.ts', 'sdk/machines/octatrack/base-binding.json', 'sdk/octabam/AGENTS.md']) {
+      expect([file, classify(merge(), own({ files: [file] })).tier]).toEqual([file, 'ask'])
+    }
+    // A base for any device never merges on a timer: by its branch, into its branch, or by its built files.
+    for (const extra of [{ headRef: 'base/octatrack-next', baseRef: 'main' }, { headRef: 'machine/digitone-ii-link', baseRef: 'base/digitone-ii-next' }, { files: ['public/base/octatrack.json'] }, { files: ['src/engine/assets/octatrack-base.elemod'] }, { headRef: 'docs/x', baseRef: 'base/syntakt-next', files: ['sdk/machines/syntakt/GOAL.md'] }]) {
+      for (const author of ['repeat98', 'alice']) {
+        const decision = classify(merge(), pull({ author, files: ['docs/x.md'], ...extra }))
+        expect([extra, author, decision.tier]).toEqual([extra, author, 'ask'])
+        expect(decision.reason).toContain('Asking because a base merges only after its review.')
+      }
+    }
+    // Documentation under sdk/ cannot change what runs.
+    expect(classify(merge(), own({ files: ['sdk/machines/digitone-ii/GOAL.md'] })).tier).toBe('window')
+    expect(classify(merge(), pull({ files: ['sdk/machines/analog-rytm-mkii/README.md'] }))).toMatchObject({ tier: 'window', windowHours: 12 })
   })
 
   it('asks the owner before merging anything sensitive or from a first-time contributor', () => {
@@ -32,13 +52,25 @@ describe('maintenance bot policy', () => {
     expect(classify(merge(), pull({ state: 'closed' })).reject).toBeTruthy()
   })
 
+  it('gives every action it accepts a summary the ledger takes', () => {
+    // A merge once lost its summary to a shadowed name, and the Worker refused the whole pass (26 November 2026).
+    const thread = { kind: 'thread', id: 't1', number: 0, author: 'alice', to: 'repeat98', replies: 0, state: 'open' }
+    const proposals = [[merge(), pull()], [merge(), pull({ headRef: 'base/octatrack-next' })], [{ kind: 'label', number: 9, add: ['bug'] }, issue()], [{ kind: 'comment', number: 9, body: 'Hi' }, issue()],
+      [{ kind: 'review', number: 5, body: 'Hi' }, pull()], [{ kind: 'close', number: 9, body: 'Done.' }, issue()], [{ kind: 'approve_run', number: 5 }, pull({ waitingRuns: 1 })],
+      [{ kind: 'board_reply', thread: 't1', body: 'Hi' }, thread], [{ kind: 'board_close', thread: 't1' }, thread], [{ kind: 'board_release', claim: 'c1' }, { kind: 'claim', id: 'c1', state: 'open' }]]
+    for (const [proposal, target] of proposals) {
+      const decision = classify({ summary: 'Do it', ...proposal }, target, new Set(['bug']))
+      expect([proposal.kind, typeof decision.summary, decision.summary.length > 0 && decision.summary.length <= 300]).toEqual([proposal.kind, 'string', true])
+    }
+  })
+
   it('refuses any kind it does not know', () => {
     for (const kind of ['push', 'release', 'deploy', 'delete_branch', 'approve', undefined]) expect(classify({ kind, number: 5, summary: 'x' }, pull()).reject).toBeTruthy()
   })
 
   it('posts a request for details at once, other replies after a window, and turning down a pull request only with the owner’s OK', () => {
     expect(classify({ kind: 'comment', number: 9, intent: 'ask_details', body: 'Which OS version?', summary: 'Ask' }, issue()).tier).toBe('notify')
-    expect(classify({ kind: 'comment', number: 9, body: 'Fixed in 0.4.', summary: 'Answer' }, issue())).toMatchObject({ tier: 'window', windowHours: 4 })
+    expect(classify({ kind: 'comment', number: 9, body: 'Fixed in 0.4.', summary: 'Answer' }, issue())).toMatchObject({ tier: 'window', windowHours: 1 })
     expect(classify({ kind: 'review', number: 5, event: 'REQUEST_CHANGES', body: 'Add a changelog entry.', summary: 'Review' }, pull())).toMatchObject({ tier: 'window', payload: { event: 'REQUEST_CHANGES' } })
     expect(classify({ kind: 'close', number: 9, body: 'Fixed and live.', summary: 'Close' }, issue())).toMatchObject({ tier: 'window', payload: { stateReason: 'completed' } })
     expect(classify({ kind: 'decline', number: 5, body: 'One effect per module.', summary: 'Decline' }, pull()).tier).toBe('ask')
@@ -70,7 +102,7 @@ describe('maintenance bot policy', () => {
   it('answers board questions after a window, and asks before ending someone else’s thread or claim', () => {
     const thread = (extra = {}) => ({ kind: 'thread', id: 't1', number: 0, author: 'alice', replies: 1, state: 'open', ...extra })
     const reply = classify({ kind: 'board_reply', thread: 't1', body: 'See docs/AGENT_BOARD.md#claims.', summary: 'Answer alice' }, thread())
-    expect(reply).toMatchObject({ tier: 'window', windowHours: 4, summary: 'Board: Answer alice', payload: { thread: 't1', pin: { replies: 1 } } })
+    expect(reply).toMatchObject({ tier: 'window', windowHours: 1, summary: 'Board: Answer alice', payload: { thread: 't1', pin: { replies: 1 } } })
     expect(classify({ kind: 'board_reply', thread: 't1', body: 'x'.repeat(501), summary: 'Long' }, thread()).reject).toContain('500')
     expect(classify({ kind: 'board_reply', thread: 't1', body: 'Hi', summary: 'Late' }, thread({ state: 'closed' })).reject).toBeTruthy()
     expect(classify({ kind: 'board_close', thread: 't1', summary: 'Close' }, thread()).tier).toBe('ask')
@@ -109,19 +141,28 @@ describe('maintenance bot policy', () => {
     expect(classify({ kind: 'board_reply', thread: 't9', body: 'Hi', summary: 'x' }, { ...thread, to: 'repeat98' })).toMatchObject({ tier: 'window', payload: { as: 'owner' } })
   })
 
-  it('turns a question only the owner can answer into a recommended reply that waits for Approve', () => {
+  it('posts the answer it recommends for the owner after a day unless stopped, and asks before any exception to a rule', () => {
     const decision = classify({ kind: 'comment', number: 9, intent: 'decision', body: 'Yes, go ahead with the port.', summary: 'OK the Analog BD port: yes' }, issue())
-    expect(decision).toMatchObject({ tier: 'ask', windowHours: 0, payload: { kind: 'comment', body: 'Yes, go ahead with the port.' } })
+    expect(decision).toMatchObject({ tier: 'window', windowHours: 24, payload: { kind: 'comment', body: 'Yes, go ahead with the port.' } })
     expect(decision.id).not.toBe(classify({ kind: 'comment', number: 9, body: 'Yes, go ahead with the port.', summary: 'Answer' }, issue()).id)
+    // The model marks an exception; the words catch one it did not mark.
+    expect(classify({ kind: 'comment', number: 9, intent: 'decision', exception: true, body: 'Yes, this once.', summary: 'OK the copied table: yes' }, issue())).toMatchObject({ tier: 'ask', windowHours: 0 })
     expect(classify({ kind: 'comment', number: 5, intent: 'decision', body: 'Scope exception granted.', summary: 'x' }, pull()).tier).toBe('ask')
+    expect(classify({ kind: 'comment', number: 5, intent: 'decision', body: 'Yes.', summary: 'Waive the hardware record: yes' }, pull()).tier).toBe('ask')
     const thread = { kind: 'thread', id: 't3', number: 0, author: 'twwwy', to: 'repeat98', replies: 0, state: 'open' }
-    expect(classify({ kind: 'board_reply', thread: 't3', intent: 'decision', body: 'Yes, Kits may share the menu.', summary: 'x' }, thread)).toMatchObject({ tier: 'ask', payload: { as: 'owner' } })
+    expect(classify({ kind: 'board_reply', thread: 't3', intent: 'decision', body: 'Yes, Kits may share the menu.', summary: 'x' }, thread)).toMatchObject({ tier: 'window', windowHours: 24, payload: { as: 'owner' } })
+    expect(classify({ kind: 'board_reply', thread: 't3', intent: 'decision', exception: true, body: 'Yes.', summary: 'x' }, thread)).toMatchObject({ tier: 'ask', payload: { as: 'owner' } })
     expect(classify({ kind: 'board_reply', thread: 't3', intent: 'decision', body: 'Yes.', summary: 'x' }, { ...thread, to: 'tars' }).tier).toBe('notify')
   })
 
-  it('starts a first-time contributor’s waiting checks only with the owner’s Approve', () => {
+  it('starts a first-time contributor’s waiting checks at once, and asks when the diff changes what the checks run from', () => {
     const approve = { kind: 'approve_run', number: 5, summary: 'Start checks' }
-    expect(classify(approve, pull({ waitingRuns: 2, firstTime: true }))).toMatchObject({ tier: 'ask', windowHours: 0, payload: { kind: 'approve_run', pin: { head: 'a1' } } })
+    expect(classify(approve, pull({ waitingRuns: 2, firstTime: true }))).toMatchObject({ tier: 'notify', windowHours: 0, payload: { kind: 'approve_run', pin: { head: 'a1' } } })
+    for (const file of ['.github/workflows/module-pr.yml', 'scripts/check.mjs', 'package.json', 'package-lock.json', 'vitest.config.ts']) {
+      const decision = classify(approve, pull({ waitingRuns: 2, firstTime: true, files: ['sdk/octatrack/modules/x/src/main.c', file] }))
+      expect([file, decision.tier]).toEqual([file, 'ask'])
+      expect(decision.reason).toContain('Asking because it changes what the checks run from')
+    }
     expect(classify(approve, pull({ waitingRuns: 0 })).reject).toContain('no run waits')
     expect(classify(approve, issue()).reject).toBeTruthy()
   })

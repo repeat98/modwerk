@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 2,
+  "id": "combo",
+  "key": "COMBO",
+  "name": "Combo",
+  "version": "0.1.0-experimental",
+  "category": "effects",
+  "author": {
+    "github": "sebasprosala-sys",
+    "credits": [
+      "sebasprosala-sys"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "AMP + CAB",
+    "family": "Saturation",
+    "summary": "An amp and speaker cabinet for any track: drive, a three-band tone stack and four cabinets.",
+    "overview": "Like a guitar amp it is mono: both sides are summed and run through the amp voice you pick on the SETUP page (VOIC): CLEAN, BOOST, ROCK, SOLID or BASS. Each voice has its own low cut and band-limit before the drive, its own drive range and curve, and its own tone stack. At twice the sample rate GAIN drives a soft curve that flattens at full scale, with the level following GAIN so it adds drive, not volume. BASS, MID and TREB set three bands, then one of four speaker cabinets or none, with PRES and a mic you can turn off axis and move back into the room, a DC blocker and LEV, and MIX blends it with the dry track. Use it to dirty up a drum bus, give a synth line an amp's grit, or put a sample through a small speaker.",
+    "highlights": [
+      "Five amp voices on the SETUP page: CLEAN (bright, scooped, breaks up late), BOOST (chiming crunch with even harmonics), ROCK (tight lows, mids forward, the most drive), SOLID (flat, clean, hard clip at the top) and BASS",
+      "GAIN from clean to fully driven at about the same volume, in every voice",
+      "Four cabinets (1X10, 1X12, 2X12, 4X12) or OFF, each its own low thump, upper-mid bump and roll-off",
+      "A SETUP page with TGHT (the low cut before the drive), PRES, the mic's AXIS and DIST (from near to far, into the room's early reflections, in stereo) and MIX (dry to amp, for parallel drive)"
+    ],
+    "usage": [
+      "Pick COMBO in a track's FX1 or FX2 list, choose a voice with VOIC on its SETUP page, start with GAIN around 40, then turn CAB to taste; PRES, MIC and MIX on the SETUP page finish the sound."
+    ]
+  },
+  "controls": [
+    {
+      "name": "GAIN",
+      "default": 40,
+      "count": 128,
+      "doc": "Drive into the amp: +0 dB at 0, +22 dB at 40, +38 dB at 127",
+      "labels": null
+    },
+    {
+      "name": "BASS",
+      "default": 64,
+      "count": 128,
+      "doc": "Lows below the voice's low split (250 to 400 Hz): cut to silence at -64, flat at 0, +6 dB at +63",
+      "labels": null
+    },
+    {
+      "name": "MID",
+      "default": 64,
+      "count": 128,
+      "doc": "Mids between the voice's two splits: the same range",
+      "labels": null
+    },
+    {
+      "name": "TREB",
+      "default": 64,
+      "count": 128,
+      "doc": "Highs above the voice's high split (1.6 to 3 kHz): the same range",
+      "labels": null
+    },
+    {
+      "name": "CAB",
+      "default": 2,
+      "count": 5,
+      "doc": "Speaker cabinet: OFF, one 10-inch, one 12-inch, two 12-inch or four 12-inch",
+      "labels": [
+        "OFF",
+        "1X10",
+        "1X12",
+        "2X12",
+        "4X12"
+      ]
+    },
+    {
+      "name": "LEV",
+      "default": 64,
+      "count": 128,
+      "doc": "Output level (LEV/64)^2: silence at 0, 0 dB at 64, +12 dB at 127",
+      "labels": null
+    },
+    {
+      "name": "VOIC",
+      "default": 1,
+      "count": 5,
+      "doc": "Amp voice: CLEAN, BOOST (chiming crunch), ROCK (tight high gain), SOLID (flat, hard clip) or BASS",
+      "labels": [
+        "CLEAN",
+        "BOOST",
+        "ROCK",
+        "SOLID",
+        "BASS"
+      ]
+    },
+    {
+      "name": "TGHT",
+      "default": 64,
+      "count": 128,
+      "doc": "Tightness: the low cut before the drive, looser below 0, the voice's own at 0, tighter above",
+      "labels": null
+    },
+    {
+      "name": "PRES",
+      "default": 0,
+      "count": 128,
+      "doc": "Presence: the cabinet's 4-5 kHz bump, up to about +6 dB; with CAB OFF a peak at 3.5 kHz",
+      "labels": null
+    },
+    {
+      "name": "AXIS",
+      "default": 0,
+      "count": 128,
+      "doc": "Mic axis: on the cone's axis at 0 (brightest), off axis and darker at 127; with CAB OFF a gentle roll-off from 4.5 kHz",
+      "labels": null
+    },
+    {
+      "name": "DIST",
+      "default": 0,
+      "count": 128,
+      "doc": "Mic distance: near at 0, far at 127, the room's early reflections in stereo",
+      "labels": null
+    },
+    {
+      "name": "MIX",
+      "default": 127,
+      "count": 128,
+      "doc": "Dry to amp: 0 the dry track in stereo, 127 all amp; between, parallel drive",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX1 / FX2",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Experimental draft: rendered bit for bit against its model in dsp_host and installed in the emulator; the build before page 2 passed device:test on a unit.",
+      "Mono amp: at DIST 0 and MIX 127 both sides are the same; DIST's reflections and MIX's dry track bring stereo back.",
+      "No free effect id is left for card builds (docs/OCTATRACK_MORE_EFFECT_IDS.md); over USB the base assigns the live id.",
+      "CAB and VOIC switch their filters at once, so turning them while audio plays can click.",
+      "At high GAIN with loud, bright input some aliasing remains, even at 2x, most in ROCK (TESTING.md, Sound quality).",
+      "DIST uses 1,024 words of the slot's own delay memory and reflects nothing for the first 23 ms after COMBO is picked."
+    ],
+    "effectId": 10
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "cpuPrice": {
+      "value": 0,
+      "unit": "percent-of-frame",
+      "measure": "frame-interrupt",
+      "tool": "npm run device:price -- --write",
+      "date": "2026-11-26",
+      "conditions": "the developer's saved Part, bank and pattern as left, transport started by the tool; base 5d2fe44d; 3 readings of 8 s a state. Frame interrupt 23.7 % before, 23.7 % installed and used nowhere, 23.7 % on T1 FX2; CPU meter 35.7 % before, 35.8 % at rest, 35.9 % in use.",
+      "source": "evidence/cpu-price.json"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "verify.py: bit for bit against reference.py in dsp_host (noise, tones, every CAB and VOIC, every page 2 knob, automation, trig splits, LFO fraction bits, dirty state, two instances), DIST's ring on FX1 and FX2 slots inside its own buffer (dsp_host's guard), exact silence and a silent tail in every voice, MIX 0 the dry signal bit for bit, 337.7 instructions a sample, the same sound bit for bit as every earlier build of page 2. Emulator: installs, draws both pages, trial without fault. fx:audit: no DC, digital silence after input; aliasing best in CLEAN, worst in ROCK at high GAIN. Unit (this build, 26 November 2026): device:test passed with seven at once, CPU price measured, page 2 checked by hand; listening not yet.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code and filter design by sebasprosala-sys under MIT. Filters from Robert Bristow-Johnson's Audio EQ Cookbook formulas, the oversampler from Valenzuela and Constantinides' published half-band design; no impulse response, curve or voicing is taken from any product. No Elektron firmware, routines or tables."
+  },
+  "media": [],
+  "access": {
+    "location": "A track's FX1 or FX2 effect list.",
+    "steps": [
+      "Install COMBO on a unit running the Modwerk USB base, then select an audio track.",
+      "Hold FUNC and press FX1 (or FX2), turn LEVEL to COMBO and press YES.",
+      "Press FX1 (or FX2) for COMBO's knobs: GAIN, BASS, MID, TREB, CAB and LEV."
+    ],
+    "screenshots": []
+  }
+}

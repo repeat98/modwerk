@@ -34,7 +34,12 @@ stock-free scans pass. It needs a base with resting sites (0.7.10 or later; an o
 on 24 November 2026 Laslo's MKII with the 0.8 development twin `2f0dcfa3` read the curve of `791e26c5` again on a pattern
 with room (project CPUCURVE2, A03: trigs on T1 T3 T6 T7, no sample track, 63.8 % with stock alone), with the
 `device:price` of #2110, which reads only what played: points 64.2, 81.0, 84.8, 85.0, 83.7, so `rest` 0, `first` 20.4,
-`each` 0.2 (a first run the same hour: 17.3 and 1.9), now `evidence/frame-cost.json`. Admitted alone on the empty
+`each` 0.2 (a first run the same hour: 17.3 and 1.9). On 26 November 2026, at the owner's request, the curve was read
+again on Dev17 C04 (owner's MKII, main's twin `46c30886`, package `791e26c5`): 80.4 → 110.3, 113.7, 111.7, 112.2 %, so
+`first` 32.8, `each` 0.5, now `evidence/frame-cost.json`. Four tracks skipped no render. A lighter pattern reads a heavy
+machine low. The same evening its whole-track mean was 52.0 % of a frame in the frame interrupt with T1 on FM Synth,
+against 35.5 % on STATIC with the same trigs: +16.5, while its descriptor price is 4.
+The A03 run, admitted alone on the empty
 pattern, nothing dropped. On the medium pattern (A01, 78.4 %) the pick was refused, judged by the table of the last set
 synced to the unit, which still booked 31.3; a single-package trial sends none, so that run says nothing about 20.4. On 23 November `791e26c5` itself ran the cases in the table
 below on twin `856cbbcf` ("MKII runs of `791e26c5`", below): the rest and a pick while it rests pass; the

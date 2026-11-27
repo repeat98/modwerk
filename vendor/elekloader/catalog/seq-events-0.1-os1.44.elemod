@@ -1,0 +1,1162 @@
+{
+ "elemod": 2,
+ "id": "seq-events",
+ "version": "0.1",
+ "title": "seq events",
+ "description": "The Digitone mk1's step fire as events, so several mods that change what the sequencer plays combine: generators (does an audio track's step fire; which notes it plays) and effects over what every fire plays, audio and MIDI tracks (the step it reads, the trig, its condition, notes, velocity and locks), a step clock per track, and the active pattern's facts when asked (docs/ADAPTING.md, \"Step-fire events\"). On its own it changes nothing the unit does.",
+ "category": "Framework",
+ "author": "Dracyr",
+ "license": "GPL-2.0-or-later",
+ "target": {
+  "device": "digitone-mk1",
+  "product": "Digitone mk1",
+  "os": "1.44",
+  "syx_sha256": "d4f200d04484333d82822db7744e6484d0def8f2db8ddf55ee2b780cc13c9659",
+  "section3_sha256": "fce648a97c6c5d93b961732e8f8db6b02e0820c6d344c7e2131fa05a4b3168e4",
+  "section3_len": 2736304
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 2468,
+   "parts": [
+    [
+     "hex",
+     "282f0064262f0070"
+    ],
+    [
+     "stock",
+     "0x400016a0",
+     8
+    ],
+    [
+     "hex",
+     "2f0b2f032f044eb9000000004fef000c2600"
+    ],
+    [
+     "stock",
+     "0x400016bc",
+     8
+    ],
+    [
+     "hex",
+     "4e75282f0064242f0070"
+    ],
+    [
+     "stock",
+     "0x400016a0",
+     8
+    ],
+    [
+     "hex",
+     "2f0a2f022f044eb9000000004fef000c2400"
+    ],
+    [
+     "stock",
+     "0x400016bc",
+     8
+    ],
+    [
+     "stock",
+     "0x40001bd4",
+     8
+    ],
+    [
+     "hex",
+     "03022f002f01"
+    ],
+    [
+     "stock",
+     "0x4008ea3a",
+     10
+    ],
+    [
+     "hex",
+     "000000004fef00104cd703024fef000c4e7530330a002f042f0372016100ffcc508f7203c2804e75d48334332a004feffff848d700032f042f03200272006100ffaa508f24004cd700034fef00084e7530320a002f042f0272016100ff8e508f7203c2804e75d08230320a002f012f042f0272006100ff74508f221f"
+    ],
+    [
+     "stock",
+     "0x40001bd4",
+     8
+    ],
+    [
+     "hex",
+     "03022f002f012f2f00184eb9000000004fef000c4cd703024fef000c4e752f5700104fef00102f012f0422036100ffcc588f221f4a804e752f5700104fef00102f012f0422026100ffb2588f221f4a80"
+    ],
+    [
+     "stock",
+     "0x40001bd4",
+     8
+    ],
+    [
+     "hex",
+     "03012f012f002f2f00184eb9000000004fef000c22004cd703014fef000c4e75732803c82f172f002f0420036100ffcc588f201f2f4100044e75712803c82f172f012f04220020026100ffb0588f2001221f2f4000044e7543f308002f0948735800"
+    ],
+    [
+     "stock",
+     "0x40161128",
+     8
+    ],
+    [
+     "hex",
+     "000000004fef0010225f4a806706224043e9fe4042804e7549f2080048725800"
+    ],
+    [
+     "stock",
+     "0x40025f9e",
+     8
+    ],
+    [
+     "hex",
+     "00000000"
+    ],
+    [
+     "stock",
+     "0x40020e5c",
+     8
+    ],
+    [
+     "hex",
+     "284049ecfe4042804e754feffff848d703002f2f003c2f032f044eb9000000004fef000c4cd703004fef000872014e754feffff848d703002f2f00402f02200458802f004eb9000000004fef000c22004cd703004fef0008200b"
+    ],
+    [
+     "stock",
+     "0x40001bd4",
+     8
+    ],
+    [
+     "hex",
+     "0302"
+    ],
+    [
+     "stock",
+     "0x400463bc",
+     8
+    ],
+    [
+     "hex",
+     "000000004fef000c4cd70302"
+    ],
+    [
+     "stock",
+     "0x400a293e",
+     8
+    ],
+    [
+     "hex",
+     "05dc4e752f02203c0001610c206f0008740173f00800203c0001611171b00800b4806628302f000ec1fc03d0d1c071e803c5b48166024281206f0010208122005381ec89670270ff241f4e75200160e84feffff0700748d7040cb0af0014640e202f001c"
+    ],
+    [
+     "stock",
+     "0x40014980",
+     10
+    ],
+    [
+     "stock",
+     "0x40010cca",
+     8
+    ],
+    [
+     "hex",
+     "45f9000000002052202f001c4a8867de2f027602"
+    ],
+    [
+     "stock",
+     "0x4001129a",
+     8
+    ],
+    [
+     "hex",
+     "2f4000184e90588a222f002852814fef000cb68164d42f6f000c001c60cc4e56ffe422394138f214200148d70c04246e000c0680c00000002d41fff00c8007ffffff630442aefff07407b4ae0008640c70ff"
+    ],
+    [
+     "stock",
+     "0x40011974",
+     10
+    ],
+    [
+     "hex",
+     "4a8a67f04aaefff067ea"
+    ],
+    [
+     "stock",
+     "0x400a574e",
+     8
+    ],
+    [
+     "hex",
+     "2f2efff04ebafefe4fef000c72ff2d40fff4b28067ce222e0008243c000003d0206efff04c021800d1c1142803cb122803c026482d48fff030421d42fffd420232411d41fffc122b03ce1d42ffff740b1d41fffeb4ae001064362480300934081541000a256efff80004154000084200154200091540000b42806000ff6841f608f4159008005280b0ae001066f060e8428060f44e56fff022394138f21420012f032f022d41fff0242e00080680c00000000c8007ffffff6304"
+    ],
+    [
+     "stock",
+     "0x401338b8",
+     8
+    ],
+    [
+     "hex",
+     "760742aefffcb682641042804281"
+    ],
+    [
+     "stock",
+     "0x4005dc7a",
+     12
+    ],
+    [
+     "hex",
+     "4aaefff067ea486efff42f022f2efff04ebafe16"
+    ],
+    [
+     "stock",
+     "0x400437f2",
+     8
+    ],
+    [
+     "hex",
+     "67d2223c000003d04c021800206efff0d1c12d48fff04281206efff054aefff03418080200006712741fc48126027401e7aa2601ea8385b63cf85281b2806dd8202efffc222efff8608e202f000481b900000000"
+    ],
+    [
+     "stock",
+     "0x400073aa",
+     8
+    ],
+    [
+     "hex",
+     "5c0c24394138f21420020680c00000000c8007ffffff630242822039000000004a80662e41f90000000043f900000000220076ffe789528042b1180023831804721020c17208b28066e6760123c3000000004a82675645ef001c9dce264a486f00182f0e"
+    ],
+    [
+     "stock",
+     "0x400f58da",
+     10
+    ],
+    [
+     "hex",
+     "248052804a806736588a528e7608b68e66de428041f90000000043f308007220"
+    ],
+    [
+     "stock",
+     "0x400977f8",
+     8
+    ],
+    [
+     "hex",
+     "66f02039000000007601b6806d08528023c0000000004cd75c0c"
+    ],
+    [
+     "stock",
+     "0x4001e982",
+     8
+    ],
+    [
+     "hex",
+     "fff4700148d7001c26390000000042b900000000b0b9000000006c2a4a836726b0b94138f208671e42827001e5a8c0834a80670a2f02"
+    ],
+    [
+     "stock",
+     "0x40025c10",
+     8
+    ],
+    [
+     "hex",
+     "52827008b08266e4"
+    ],
+    [
+     "stock",
+     "0x4000275e",
+     10
+    ],
+    [
+     "hex",
+     "4e56fff07007"
+    ],
+    [
+     "stock",
+     "0x4008299a",
+     8
+    ],
+    [
+     "hex",
+     "222e0010b083657e743fb4ae000c6576200374ffe78841f90000000043f00804b491671c242e000cb491650e43f9000000007401b4b13c0066067401b5b00800226e000c218908044ab900000000673620010680c00000000c8007ffffff6226486efffc2f032f014ebafc304fef000c240070ffb0826602744045f90000000020524a88660e4cee040cfff0202e000c4e5e4e752f022f2e000c2f034e90588a4fef000cb4806204202e000c2d40000c60ce4feffff0700348d74404242f00202c6f0014c0822f40000c7007b08e652e703fb0af0018652645f90000000020524a88662645f90000000020524a886638720370fcc2af000cc082240184802002"
+    ],
+    [
+     "stock",
+     "0x40004136",
+     10
+    ],
+    [
+     "hex",
+     "486f000c"
+    ],
+    [
+     "stock",
+     "0x400dd7be",
+     8
+    ],
+    [
+     "hex",
+     "2f0e4e90588a7003c1af001c4fef001060b6486f000c"
+    ],
+    [
+     "stock",
+     "0x400dd7be",
+     8
+    ],
+    [
+     "hex",
+     "2f0e4e90588a7003c1af001c4fef001060a42f024aaf001057c275024482"
+    ],
+    [
+     "stock",
+     "0x4014958c",
+     10
+    ],
+    [
+     "stock",
+     "0x400ef92a",
+     8
+    ],
+    [
+     "hex",
+     "72ffb2806710b082670c"
+    ],
+    [
+     "stock",
+     "0x4002e3e0",
+     8
+    ],
+    [
+     "stock",
+     "0x4028b9aa",
+     8
+    ],
+    [
+     "hex",
+     "241f"
+    ],
+    [
+     "stock",
+     "0x4010c4b6",
+     16
+    ],
+    [
+     "hex",
+     "fb56"
+    ],
+    [
+     "stock",
+     "0x4003c678",
+     8
+    ],
+    [
+     "hex",
+     "670a4a806704202f000c4e75706460fa4fefffe4700748d71c3c282f0020262f0024206f002cb084640e95ca200a"
+    ],
+    [
+     "stock",
+     "0x4003439e",
+     10
+    ],
+    [
+     "hex",
+     "723fb28365ec43ef002808290000000367e014303a0170014682c4804a0266104ab90000000066084ab90000000067c22004e7887b8224402003e788d5fc0000000047f00800428047eb01c04a02674e4a806650122803c01581"
+    ],
+    [
+     "stock",
+     "0x400fdfc2",
+     8
+    ],
+    [
+     "hex",
+     "66e849f90000000020544a88663849f90000000020544a88663e4a026600ff7442807532080073330800b2826600ff6452807208b28066ea6000ff561233080060b4420160b02f0a2f052f032f044e90588c4fef001060b02f0a2f032f044e90588c4fef000c60ac2f0a70072f02b0af000c651c4ab9000000006714"
+    ],
+    [
+     "stock",
+     "0x4000ee46",
+     8
+    ],
+    [
+     "hex",
+     "45f90000000020524a88660a202f"
+    ],
+    [
+     "stock",
+     "0x400118b8",
+     8
+    ],
+    [
+     "stock",
+     "0x4010b80a",
+     10
+    ],
+    [
+     "hex",
+     "4e90588a202f0020727f4fef000cb2806c08707f2f40001460cc4a806cf6428060f24fefffc0700348d744fc282f0044246f004cb08465344ab900000000672c200a0680c00000000c8007ffffff621c263c0000000042824def0020224320514a886612204e4281b2826d344cd744fc4fef00404e757007b0826de87a0858839a822f0548762c002f2f0050"
+    ],
+    [
+     "stock",
+     "0x401410a0",
+     8
+    ],
+    [
+     "hex",
+     "4a806fc4b0856ec0d48060bc3a10764e7dc5b68665402c6a0008764f38280002200eb68e6402704f43ea00144283b680661a764eb68e651e77c05280e78b358538143584381625400008600a7fd1be86660c33440002528158886000ff785283508960ca0000"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 172
+  }
+ },
+ "symbols": {
+  "apply": [
+   ".run",
+   88
+  ],
+  "cond": [
+   ".run",
+   236
+  ],
+  "prob": [
+   ".run",
+   324
+  ],
+  "dev_track_len": [
+   ".run",
+   620
+  ],
+  "cond_of": [
+   ".run",
+   696
+  ],
+  "rearm_due": [
+   ".bss",
+   128
+  ],
+  "inited": [
+   ".bss",
+   136
+  ],
+  "clock_len": [
+   ".bss",
+   140
+  ],
+  "ready_ticks": [
+   ".bss",
+   132
+  ],
+  "notes_buf": [
+   ".bss",
+   64
+  ],
+  "sq_site_mnotes": [
+   ".run",
+   460
+  ],
+  "sq_site_mvel": [
+   ".run",
+   536
+  ],
+  "sq_on_notes": [
+   ".run",
+   1916
+  ],
+  "sq_on_cond": [
+   ".run",
+   1816
+  ],
+  "sq_clock": [
+   ".bss",
+   0
+  ],
+  "sq_tick_end": [
+   ".run",
+   1394
+  ],
+  "sq_site_sread": [
+   ".run",
+   0
+  ],
+  "sq_rearm": [
+   ".run",
+   1194
+  ],
+  "sq_on_locks": [
+   ".run",
+   2252
+  ],
+  "sq_site_notes": [
+   ".run",
+   418
+  ],
+  "sq_site_sprob": [
+   ".run",
+   362
+  ],
+  "sq_on_step": [
+   ".run",
+   1476
+  ],
+  "sq_on_vel": [
+   ".run",
+   2158
+  ],
+  "sq_on_trig": [
+   ".run",
+   1668
+  ],
+  "sq_tick": [
+   ".run",
+   1206
+  ],
+  "sq_site_scond": [
+   ".run",
+   272
+  ],
+  "sq_site_mgate": [
+   ".run",
+   190
+  ],
+  "sq_site_word": [
+   ".run",
+   150
+  ],
+  "sq_site_mread": [
+   ".run",
+   44
+  ],
+  "sq_site_mcond": [
+   ".run",
+   298
+  ],
+  "sq_site_slocks": [
+   ".run",
+   580
+  ],
+  "sq_track_info": [
+   ".run",
+   792
+  ],
+  "sq_site_mprob": [
+   ".run",
+   388
+  ],
+  "sq_site_svel": [
+   ".run",
+   498
+  ],
+  "sq_site_mword": [
+   ".run",
+   212
+  ],
+  "sq_stored": [
+   ".run",
+   1020
+  ],
+  "sq_site_gate": [
+   ".run",
+   128
+  ],
+  "sq_on_prob": [
+   ".run",
+   1876
+  ]
+ },
+ "exports": [
+  "sq_clock",
+  "sq_on_cond",
+  "sq_on_locks",
+  "sq_on_notes",
+  "sq_on_prob",
+  "sq_on_step",
+  "sq_on_trig",
+  "sq_on_vel",
+  "sq_rearm",
+  "sq_site_gate",
+  "sq_site_mcond",
+  "sq_site_mgate",
+  "sq_site_mnotes",
+  "sq_site_mprob",
+  "sq_site_mread",
+  "sq_site_mvel",
+  "sq_site_mword",
+  "sq_site_notes",
+  "sq_site_scond",
+  "sq_site_slocks",
+  "sq_site_sprob",
+  "sq_site_sread",
+  "sq_site_svel",
+  "sq_site_word",
+  "sq_stored",
+  "sq_tick",
+  "sq_tick_end",
+  "sq_track_info"
+ ],
+ "imports": [
+  "ev_fire_cond",
+  "ev_fire_locks",
+  "ev_fire_notes",
+  "ev_fire_step",
+  "ev_fire_trig",
+  "ev_fire_vel",
+  "ev_gen_notes",
+  "ev_gen_trig"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   24,
+   "abs32",
+   "sec:.run",
+   1476
+  ],
+  [
+   ".run",
+   68,
+   "abs32",
+   "sec:.run",
+   1476
+  ],
+  [
+   ".run",
+   110,
+   "abs32",
+   "sec:.run",
+   1668
+  ],
+  [
+   ".run",
+   254,
+   "abs32",
+   "sec:.run",
+   1816
+  ],
+  [
+   ".run",
+   342,
+   "abs32",
+   "sec:.run",
+   1876
+  ],
+  [
+   ".run",
+   436,
+   "abs32",
+   "sec:.run",
+   1916
+  ],
+  [
+   ".run",
+   476,
+   "abs32",
+   "sec:.run",
+   1916
+  ],
+  [
+   ".run",
+   516,
+   "abs32",
+   "sec:.run",
+   2158
+  ],
+  [
+   ".run",
+   558,
+   "abs32",
+   "sec:.run",
+   2158
+  ],
+  [
+   ".run",
+   596,
+   "abs32",
+   "sec:.run",
+   2252
+  ],
+  [
+   ".run",
+   736,
+   "abs32",
+   "sym:ev_fire_cond",
+   0
+  ],
+  [
+   ".run",
+   1200,
+   "abs32",
+   "sec:.bss",
+   128
+  ],
+  [
+   ".run",
+   1240,
+   "abs32",
+   "sec:.bss",
+   136
+  ],
+  [
+   ".run",
+   1250,
+   "abs32",
+   "sec:.bss",
+   140
+  ],
+  [
+   ".run",
+   1256,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1290,
+   "abs32",
+   "sec:.bss",
+   136
+  ],
+  [
+   ".run",
+   1344,
+   "abs32",
+   "sec:.bss",
+   140
+  ],
+  [
+   ".run",
+   1366,
+   "abs32",
+   "sec:.bss",
+   132
+  ],
+  [
+   ".run",
+   1380,
+   "abs32",
+   "sec:.bss",
+   132
+  ],
+  [
+   ".run",
+   1406,
+   "abs32",
+   "sec:.bss",
+   128
+  ],
+  [
+   ".run",
+   1412,
+   "abs32",
+   "sec:.bss",
+   128
+  ],
+  [
+   ".run",
+   1418,
+   "abs32",
+   "sec:.bss",
+   132
+  ],
+  [
+   ".run",
+   1514,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1536,
+   "abs32",
+   "sec:.bss",
+   140
+  ],
+  [
+   ".run",
+   1564,
+   "abs32",
+   "sym:ev_fire_step",
+   0
+  ],
+  [
+   ".run",
+   1614,
+   "abs32",
+   "sym:ev_fire_step",
+   0
+  ],
+  [
+   ".run",
+   1708,
+   "abs32",
+   "sym:ev_gen_trig",
+   0
+  ],
+  [
+   ".run",
+   1720,
+   "abs32",
+   "sym:ev_fire_trig",
+   0
+  ],
+  [
+   ".run",
+   1990,
+   "abs32",
+   "sym:ev_fire_notes",
+   0
+  ],
+  [
+   ".run",
+   1998,
+   "abs32",
+   "sym:ev_gen_notes",
+   0
+  ],
+  [
+   ".run",
+   2018,
+   "abs32",
+   "sec:.bss",
+   64
+  ],
+  [
+   ".run",
+   2058,
+   "abs32",
+   "sym:ev_gen_notes",
+   0
+  ],
+  [
+   ".run",
+   2070,
+   "abs32",
+   "sym:ev_fire_notes",
+   0
+  ],
+  [
+   ".run",
+   2172,
+   "abs32",
+   "sym:ev_fire_vel",
+   0
+  ],
+  [
+   ".run",
+   2188,
+   "abs32",
+   "sym:ev_fire_vel",
+   0
+  ],
+  [
+   ".run",
+   2276,
+   "abs32",
+   "sym:ev_fire_locks",
+   0
+  ],
+  [
+   ".run",
+   2300,
+   "abs32",
+   "sym:ev_fire_locks",
+   0
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x40094532",
+   "len": 8,
+   "stock_sha256": "0729439b07be74e096c64edbc92ea7cbf6d1200930cdb59147692de7c661bfd3",
+   "new": "4eb9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_sread",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40094580",
+   "len": 6,
+   "stock_sha256": "647182e48de833db425b6ed91a67717d7110ac793f9b55fd856c520613f8374a",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400945d4",
+   "len": 6,
+   "stock_sha256": "2647899cf5f073c5636f485063b0f9411b8fe7581103d1f3598f38fcd7a78f8b",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_scond",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400945de",
+   "len": 6,
+   "stock_sha256": "1277051946782c0acc98fa389271bcd5e0716b43071bfa7984bdad9c2124c456",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_sprob",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400945f2",
+   "len": 6,
+   "stock_sha256": "e676c556c9c77f902769a6097f2aa64ccdbba1b11b0b0ebbd29eab46719987e6",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_word",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4009461e",
+   "len": 6,
+   "stock_sha256": "3f6870f2eb052e187eba964ddd0f9c72957b428fe02effe7f0b8d7cca4f3b184",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_notes",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400947ce",
+   "len": 6,
+   "stock_sha256": "8aa0af08fab55160f61599623fb285182c175288ff83b7bcc457b564b61b7e48",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_slocks",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4009480a",
+   "len": 6,
+   "stock_sha256": "5183fe402c621f8111e0ca0c34600798e0561e4413e571e73e7821d1415dac74",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_svel",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400948d4",
+   "len": 8,
+   "stock_sha256": "6b41f930464e9fdea5659941d0904d49f2edc37acfe8333aaa0bf6b53979eb56",
+   "new": "4eb9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mread",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40094926",
+   "len": 6,
+   "stock_sha256": "70fb40ac49650f8c56fee084998404d4c3fce060d6483d300d401efa8e896940",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mgate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4009497a",
+   "len": 6,
+   "stock_sha256": "2647899cf5f073c5636f485063b0f9411b8fe7581103d1f3598f38fcd7a78f8b",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mcond",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40094984",
+   "len": 6,
+   "stock_sha256": "b3c2ed645ca83c2bbb5ff0d85fe7e533ed3308f01aef2d99df7a30a8d6517315",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mprob",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4009499c",
+   "len": 6,
+   "stock_sha256": "c5bcc95d9647952184442f94aca30b99307836d70935593e4b82fdf64eff8dc4",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mword",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400949c4",
+   "len": 6,
+   "stock_sha256": "a28d748b074415bce689f68de47af2cbf52531a4d05ac9be1431059063cc7e82",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mnotes",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40094bc2",
+   "len": 6,
+   "stock_sha256": "46002c17419498814df4dc5a64e1e041fe9ed811c5b792033181e68cb696bcdf",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:sq_site_mvel",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {
+  "ev_fire_step": {
+   "entry": 4
+  },
+  "ev_gen_trig": {
+   "entry": 4
+  },
+  "ev_fire_trig": {
+   "entry": 4
+  },
+  "ev_fire_cond": {
+   "entry": 4
+  },
+  "ev_gen_notes": {
+   "entry": 4
+  },
+  "ev_fire_notes": {
+   "entry": 4
+  },
+  "ev_fire_vel": {
+   "entry": 4
+  },
+  "ev_fire_locks": {
+   "entry": 4
+  }
+ },
+ "contribute": [
+  {
+   "to": "ev_tick",
+   "order": 10,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:sq_tick",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_tick",
+   "order": 90,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:sq_tick_end",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {},
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "build": {
+  "sources": {
+   "seq.s": "572dde3496674d6592ea8aab687b657bfae538d90d9f2823c6a4787d2b582b2b",
+   "seq.c": "4f4b31b0958c307c5d05b5ad202656ed3185b97b2fc57663c421179a7e3ad475"
+  }
+ },
+ "signature": null
+}

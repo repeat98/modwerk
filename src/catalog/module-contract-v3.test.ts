@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import MACHINES from '../devices/machines.generated.json'
 import type { MachineProfile } from '../devices/machine-contract'
 import { LIBRARY_CATEGORIES, libraryClassification } from './library-classification'
-import { MODULE_V3_CATEGORIES, compareCoreVersions, parseElemodBuild, parseModwerkModule, requireModwerkPublication, type ModwerkModule } from './module-contract-v3'
+import { MODULE_V3_CATEGORIES, compareCoreVersions, parseElemodBuild, parseElemodDependency, parseModwerkModule, requireModwerkPublication, type ModwerkModule } from './module-contract-v3'
 
 const machines = MACHINES as MachineProfile[]
 const template = (machine = 'digitakt') => JSON.parse(readFileSync(resolve('sdk/templates/elemod/modwerk.module.json'), 'utf8')
@@ -80,11 +80,21 @@ describe('module contract v3', () => {
     expect(() => parse({ ...value, evidence: { ...value.evidence, verifiedBy: 'repeat98' } })).toThrow('only owner-verified')
   })
 
+  it('lets a framework name an older core than its machine\'s', () => {
+    const digitakt = machines.find(machine => machine.id === 'digitakt')!
+    const document = JSON.parse(readFileSync(resolve('sdk/digitakt/dependencies/dt-support/dependency.json'), 'utf8'))
+    expect(parseElemodDependency(document, digitakt).platform.core).toBe('2.1')
+    const platform = { ...document.document.platform }
+    delete platform.core
+    expect(parseElemodDependency({ ...document, document: { ...document.document, platform } }, digitakt).platform.core).toBe(digitakt.sdk!.core!.version)
+    expect(() => parseElemodDependency({ ...document, document: { ...document.document, platform: { ...platform, core: 'new' } } }, digitakt)).toThrow('core release')
+  })
+
   it('checks the module against its machine profile', () => {
     expect(() => parse({ ...template(), machine: 'syntakt' })).toThrow('no SDK yet')
     expect(() => parse({ ...template(), machine: 'octatrack' })).toThrow('octabam')
     expect(() => parse({ ...template(), compatibility: { ...template().compatibility, releases: ['1.30'] } })).toThrow('not a Digitakt OS release')
-    expect(() => parse({ ...template(), resources: { ...template().resources, memoryBytes: 200000 } })).toThrow('exceed the Digitakt budget')
+    expect(() => parse({ ...template(), resources: { ...template().resources, memoryBytes: 300000 } })).toThrow('exceed the Digitakt budget')
     expect(() => parse({ ...template(), platform: { ...template().platform, core: '9.0' } })).toThrow('newer than the machine’s core')
   })
 
@@ -110,6 +120,18 @@ describe('module contract v3', () => {
     expect(() => parseElemodBuild({ ...build, strings: { 'bad symbol': 'Proof' } }, document)).toThrow('C symbol')
     const derive = { kind: 'fast_audio', note: 'Synthetic', release: '1.54', releases: ['1.53'], block: ['0x40001000', '0x40001008'], sram: ['0x80003360', '0x80008000'], callSites: [] }
     expect(() => parseElemodBuild({ ...build, derive }, document)).toThrow('supported releases including the base')
+  })
+
+  it('takes a machine module\'s sound-chip player for the machine types it claims', () => {
+    const base = parse(template())
+    const document = { ...base, platform: { ...base.platform, claims: ['machine:7'] } } as typeof base
+    const build = { ...JSON.parse(readFileSync(resolve('sdk/templates/elemod/build.json'), 'utf8').replace('__RELEASE__', '1.54')), claims: ['machine:7'] }
+    const sharc = { source: 'src/player.sharc', players: [{ type: 7, entry: 'grain_player' }] }
+    expect(parseElemodBuild({ ...build, sharc }, document).sharc).toEqual(sharc)
+    expect(parseElemodBuild(build, document).sharc).toBeUndefined()
+    expect(() => parseElemodBuild({ ...build, sharc: { ...sharc, players: [{ type: 8, entry: 'grain_player' }] } }, document)).toThrow('machine:8')
+    expect(() => parseElemodBuild({ ...build, sharc: { ...sharc, players: [{ type: 3, entry: 'grain_player' }] } }, document)).toThrow('7 to 10')
+    expect(() => parseElemodBuild({ ...build, sharc: { ...sharc, source: 'src/player.s' } }, document)).toThrow('.sharc source')
   })
 })
 

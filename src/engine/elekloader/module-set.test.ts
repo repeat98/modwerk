@@ -140,7 +140,7 @@ describe('preparing a module set', () => {
     await expect(undeclared.prepare({ name: 'Set', moduleIds: ['repitch'] }, empty, load, events)).rejects.toThrow('inconsistent')
     const core = data.slice(), view = new DataView(core.buffer)
     view.setUint32(76, view.getUint32(76 + 4 * 4) & 0xffffff) // a core handler instead of the subscription
-    view.setUint32(76 + 4 * 4, 0xffffffff)
+    for (let i = 4; i < view.getUint32(20); i++) view.setUint32(76 + 4 * i, 0xffffffff) // and no subscription left at all
     const moved = createRuntimeCatalogue({ packages: [{ ...entry, bytes: core.length, sha256: sha(core) }] })
     await expect(moved.prepare({ name: 'Set', moduleIds: ['repitch'] }, empty, async () => core, events)).rejects.toThrow('inconsistent')
   })

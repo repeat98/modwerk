@@ -14,6 +14,8 @@ type Props = {
   build: DownloadedBuild
   onConfirm: (ids: string[]) => Promise<void>
   onReport: (id: string) => void
+  /** Report the whole downloaded set, for when the member can't tell which module is at fault. */
+  onReportSet?: () => void
   onLater: () => void
   onClose: () => void
   inline?: boolean
@@ -22,7 +24,7 @@ type Props = {
 }
 
 /** The downloaded build stays intact while the member explores and tests each module. */
-export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onLater, onClose, inline = false, pendingIds, issueReportedIds = [] }: Props) {
+export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onReportSet, onLater, onClose, inline = false, pendingIds, issueReportedIds = [] }: Props) {
   const dialog = useRef<HTMLDialogElement>(null), guidePane = useRef<HTMLElement>(null), body = useRef<HTMLDivElement>(null), choices = useRef<HTMLUListElement>(null), heading = useId(), description = useId(), submitting = useRef(false)
   const [selectedId, setSelectedId] = useState(build.modules[0]?.id ?? '')
   const [reported, setReported] = useState<string[]>([]), [savingId, setSavingId] = useState(''), [error, setError] = useState('')
@@ -56,7 +58,7 @@ export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onLater, on
     <header className="firmware-feedback-header">
       <div><h2 id={heading}>{build.machine === 'Octatrack' ? 'Your new modules' : 'Inside your firmware'}</h2><p id={description} className="firmware-feedback-intro">{build.machine === 'Octatrack' ? 'Once they’re on your Octatrack, open a fresh project and try them.' : 'Flash it, then open a fresh project and try your modules.'}</p><p className="firmware-feedback-build">{build.machine} · OS {build.os} · {build.modules.length} {build.modules.length === 1 ? 'module' : 'modules'}</p></div>
       <p className="firmware-feedback-header-help">Only confirm modules you’ve tested.</p>
-      <button type="button" className="icon-button firmware-feedback-close" aria-label="Close firmware overview" disabled={busy} autoFocus={!inline} onClick={onClose}><Icon name="close" size={21}/></button>
+      <button type="button" className="icon-button firmware-feedback-close" aria-label="Close firmware overview" disabled={busy} autoFocus={!inline} onClick={onClose}><Icon name="close" size={18}/></button>
     </header>
     <div ref={body} className="firmware-feedback-body">
       <nav className="firmware-feedback-library" aria-label="Downloaded modules">
@@ -78,6 +80,7 @@ export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onLater, on
               <button type="button" className="button button-quiet module-issue-action" disabled={busy} aria-haspopup="dialog" aria-label={'Report an issue with ' + selected.name} onClick={() => onReport(selected.id)}><Icon name="message" size={17}/>Report an issue</button>
             </div>
             <p className="firmware-feedback-help">Only confirm after testing on your {build.machine}. No forum post.</p>
+            {onReportSet && build.modules.length > 1 && <button type="button" className="text-button firmware-feedback-report-set" disabled={busy} aria-haspopup="dialog" onClick={onReportSet}>Not sure which module? Report the whole set</button>}
             {error && <p className="file-error" role="alert">{error}</p>}
           </div>}
           </ModuleGuide>

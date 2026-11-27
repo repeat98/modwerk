@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, checkAndCommit, gateEdits, mergeMain, moduleScopeProblems, pythonProblem, readiness, targetBranch } from './pr-ready.mjs'
+import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, checkAndCommit, gateEdits, mergeMain, moduleScopeProblems, pythonProblem, readiness, targetBranch, PACKAGE_ONLY } from './pr-ready.mjs'
 
 describe('pr:ready verdict', () => {
   it('merges a clean main itself and leaves a conflicting one untouched, naming its files', () => {
@@ -186,6 +186,14 @@ describe('pr:ready verdict', () => {
     const verdict = readiness({ baseEdits: threshold.slice(1) })
     expect(verdict.ok).toBe(false)
     expect(verdict.problems[0]).toContain('directly to the machine’s base/<machine>-next branch')
+  })
+  it('leaves a module the adapter source only its own package compiles', () => {
+    const usb = ['sdk/octatrack/modules/usb-audio-out-tracks-main-cue/TESTING.md', 'sdk/machines/octatrack/module-adapters/usb_audio_settings.c']
+    expect(baseEdits(usb)).toEqual([])
+    expect(baseEdits([...usb, 'sdk/machines/octatrack/module-adapters/sample_editor_service.c'])).toEqual(['sdk/machines/octatrack/module-adapters/sample_editor_service.c'])
+    // The list stays true: no base build names a package-only source.
+    for (const builder of ['sdk/machines/octatrack/elekloader/build_core.py', 'sdk/machines/octatrack/elekloader/usb_base.py', 'sdk/machines/octatrack/module-adapters/base_usb_functions.py', 'scripts/octatrack-base.mjs'])
+      for (const file of PACKAGE_ONLY) expect(readFileSync(join(import.meta.dirname, '..', builder), 'utf8')).not.toContain(file.split('/').at(-1))
   })
   it('refuses both in CI for a contributor\'s module pull request opened from the start day, never the owner\'s', () => {
     const files = ['sdk/drafts/threshold-slices/README.md', 'sdk/machines/octatrack/events.json', 'scripts/modules.mjs']

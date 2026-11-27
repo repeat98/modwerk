@@ -44,4 +44,19 @@ describe('module:dev', () => {
       expect(result.stdout.trim().split('\n').at(-1), id + ': ' + result.stderr).toBe('packing identical recipe identical')
     }
   }, 120_000)
+
+  // A listed effect whose manifest grew a control keeps its old committed recipe until the release rebuilds the assets: module:dev
+  // must see that and build with the manifest's page (Midiverb 0.2.0: PROG 59 -> 102 values stopped at 58 on a unit).
+  it('tells a stale committed page recipe from a current one', () => {
+    const code = [
+      'import importlib.util',
+      "spec = importlib.util.spec_from_file_location('dev', 'scripts/module-dev-package.py')",
+      'dev = importlib.util.module_from_spec(spec); spec.loader.exec_module(dev)',
+      "page = dict(donor=1, integers=[dict(offset=0x9a, width=4, value=59)], strings=[dict(offset=22, width=6, value='PROG')], formatters=[])",
+      'grown = dict(page, integers=[dict(offset=0x9a, width=4, value=102)])',
+      'print(dev.recipe_matches(page, page), dev.recipe_matches(grown, page))',
+    ].join('\n')
+    const result = spawnSync(python, ['-B', '-c', code], { cwd: root, encoding: 'utf8' })
+    expect(result.stdout.trim(), result.stderr).toBe('True False')
+  })
 })

@@ -1,0 +1,109 @@
+{
+ "schemaVersion": 1,
+ "module": "digitakt/dt-fm",
+ "version": "1.2.1",
+ "date": "2026-11-27",
+ "upstream": {
+  "repository": "https://github.com/mtalikka/DT-FM",
+  "revision": "9ac1802b82b455c0567136032ef0df646a7fc074",
+  "path": ".",
+  "license": "MIT"
+ },
+ "changes": [
+  "DT-FM 1.2.1 (tag v1.2.1, 9ac1802), imported unchanged: glue.s, digitakt.c, sophie.c and their headers and tables. A four-operator FM SRC machine in slot 9, drawn by Machine Pages (a cm_ui_v31 page) and rendered through its ev_render_voices event; ev_tick runs its operator bookkeeping.",
+  "build.json is the author's mod.json: core_machines at order 90, ev_tick at order 10, ev_render_voices at order 20, requires machine-pages. Its four sites (project save and load, kit save and load) became address, length and SHA-256 guards; the 1.54 release adds -DOS154 and defsym OS154.",
+  "The library builds the author's released dt-fm-1.2.1-os1.53.elemod and -os1.54.elemod (sdk/imports/elekloader-dt-fm-2026-11-27.json), the files the author tested; Modwerk publishes no compiled package of its own. src/digitakt-mk1/core3.h is Machine Pages' copy of the header the author built against."
+ ],
+ "files": [
+  {
+   "from": "src/glue.s",
+   "to": "src/glue.s",
+   "sha256": "fecd114c6ff55a97d6615b5e258434a89401b784177ca451edc069736c1217ec"
+  },
+  {
+   "from": "src/digitakt.c",
+   "to": "src/digitakt.c",
+   "sha256": "6f5ecfe529e9ec5a6c7574058db329301567221baf0b1c45d35405b25fc35641"
+  },
+  {
+   "from": "src/sophie.c",
+   "to": "src/sophie.c",
+   "sha256": "34a873c91002c694f8f077f6413155a150d0b3acdf4f61e56d74dc269e92e2f3"
+  },
+  {
+   "from": "src/sophie.h",
+   "to": "src/sophie.h",
+   "sha256": "774ca9e1de9bf221c1e26d370f5ec82a60e67e9467f1a0018665f8bd93051c6f"
+  },
+  {
+   "from": "src/sophie_sin_table.inc",
+   "to": "src/sophie_sin_table.inc",
+   "sha256": "76eaf1116bdca14a78ee073252903679776305e7e94a8456a56ca171716fd60a"
+  },
+  {
+   "from": "src/os153.h",
+   "to": "src/os153.h",
+   "sha256": "e37f5d14c1a94015751323ba38ddb2ea00ffd3cb5f8fcf184c82ca1dc5be96a2"
+  },
+  {
+   "from": "src/os153.inc",
+   "to": "src/os153.inc",
+   "sha256": "4de1424c4b54470f19af3854e45ffacedccb8efa337be1bbd8ba84b0d3fe3318"
+  },
+  {
+   "from": "src/os154.h",
+   "to": "src/os154.h",
+   "sha256": "c75fd0b185881d33723dec52c3ffa0cd9fea0dab7b16de1e22bd52521c0bcc66"
+  },
+  {
+   "from": "src/os154.inc",
+   "to": "src/os154.inc",
+   "sha256": "cf471fc5bd4238d05a2f0c12c7be0c5b147267709d98c195927dced9ea8cc2c7"
+  },
+  {
+   "from": "machine-pages: src/digitakt-mk1/core3.h",
+   "to": "src/digitakt-mk1/core3.h",
+   "sha256": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26"
+  },
+  {
+   "from": "README.md",
+   "to": "upstream/README.md",
+   "sha256": "f6a732e9121dde07f47cc90890167ae17ec6e0fe1e134af643d9aede79426087"
+  },
+  {
+   "from": "DSP.md",
+   "to": "upstream/DSP.md",
+   "sha256": "617102a4908815f8ddf61887c3853902e1b3aec6a95c7de27419adf526acbe77"
+  },
+  {
+   "from": "THIRD_PARTY.md",
+   "to": "upstream/THIRD_PARTY.md",
+   "sha256": "e380b50f60c276d000bc13d19c11bbb900f6e3bd0f2f06f2853e72161b9b1f81"
+  },
+  {
+   "from": "LICENSE",
+   "to": "LICENSE",
+   "sha256": "004c777839689485781ee025101e43e0bb377535405fe7bbea5f7df05943d8c0"
+  }
+ ],
+ "excluded": [
+  "src/mod.json",
+  "Makefile",
+  "Dockerfile",
+  ".dockerignore",
+  ".gitattributes",
+  ".github",
+  "diagnostics",
+  "release",
+  "scripts",
+  "tests"
+ ],
+ "transformations": [
+  "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json."
+ ],
+ "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata. glue.s re-runs the two or three instructions each hooked entry replaced, as authored code.",
+ "evidence": "sdk/digitakt/modules/dt-fm/TESTING.md",
+ "requires": [
+  "machine-pages"
+ ]
+}

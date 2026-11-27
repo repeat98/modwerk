@@ -1,0 +1,239 @@
+{
+  "schemaVersion": 3,
+  "id": "dt-fm",
+  "name": "DT-FM",
+  "version": "1.2.1",
+  "machine": "digitakt",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "mtalikka",
+    "credits": [
+      "mtalikka — DT-FM design, FM engine and hardware testing",
+      "Matt Estela (@mestela) — the Sophie for Schwung code DT-FM grew from",
+      "Sjoerd (Soejrd) — DigiSophie, which DT-FM forks"
+    ]
+  },
+  "maintainers": [
+    "mtalikka"
+  ],
+  "source": {
+    "repository": "https://github.com/mtalikka/DT-FM",
+    "revision": "9ac1802b82b455c0567136032ef0df646a7fc074",
+    "path": "."
+  },
+  "presentation": {
+    "label": "DT-FM",
+    "family": "Synthesis",
+    "summary": "A four-operator FM synth machine: eight algorithms, each operator’s ratio, level and envelope, and feedback on operator 4.",
+    "overview": "DT-FM is a four-operator FM synth SRC machine for the original Digitakt on OS 1.53 and 1.54, by mtalikka. ALGO picks how the four operators feed each other, and its knob draws the routing. OP chooses the operator that RATIO, LEVEL, ATTK and DECAY edit; CHAR sets operator 4’s feedback and the overall brightness. The voice then goes through the Digitakt’s own AMP, filter, mixer and sends, and every SRC control takes parameter locks. All four operators are saved with the pattern’s kit. Start with one or two tracks: the author measured about 95 % CPU with four DT-FM tracks, 85 % with digihealth’s FAST AUDIO on.",
+    "highlights": [
+      "Eight algorithms, from one stack of four operators to four carriers side by side; ALGO’s knob draws the routing.",
+      "Each operator has its own RATIO (0.25 to 16), LEVEL and attack/decay envelope; DECAY INF holds.",
+      "CHAR sets operator 4’s feedback and the overall brightness.",
+      "Every SRC control can be parameter-locked; the Digitakt’s AMP, filter, mixer and sends shape the result."
+    ],
+    "usage": [
+      "On one audio track choose DT-FM with FUNC + SRC. No sample is needed.",
+      "Turn ALGO to 1, so the four operators form one stack, and set OP to 4. Raise its LEVEL a little and listen to the tone brighten.",
+      "Play a few trigs. Turn OP to 2 and set its RATIO to 2, then shorten its DECAY for a plucked attack.",
+      "Parameter-lock ALGO on one trig to hear another routing, then remove the lock. On AMP set HOLD to NOTE and a finite DEC, so notes end."
+    ]
+  },
+  "access": {
+    "location": "SRC machine list",
+    "steps": [
+      "Use a build containing DT-FM for the original Digitakt on OS 1.53 or 1.54; add digihealth to use FAST AUDIO.",
+      "Select an audio track, press FUNC + SRC and choose DT-FM from the machine list.",
+      "Shape the sound on the SRC page: ALGO for the routing, OP for the operator that RATIO, LEVEL, ATTK and DECAY edit."
+    ],
+    "screenshots": [
+      "media/chooser.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "TUNE",
+      "default": null,
+      "doc": "SRC knob A: pitch, combined with the trig’s note.",
+      "labels": null
+    },
+    {
+      "name": "ALGO",
+      "default": null,
+      "doc": "SRC knob B: operator routing 1–8. The knob draws it: modulation flows down, and the operators on the bottom bar are the ones you hear.",
+      "labels": null
+    },
+    {
+      "name": "RATIO",
+      "default": null,
+      "doc": "SRC knob C: the selected operator’s frequency ratio, 0.25 to 16.",
+      "labels": null
+    },
+    {
+      "name": "OP",
+      "default": null,
+      "doc": "SRC knob D: which operator (1–4) RATIO, LEVEL, ATTK and DECAY edit. A trig’s locks on those four change the operator OP selects on that trig.",
+      "labels": null
+    },
+    {
+      "name": "LEVEL",
+      "default": null,
+      "doc": "SRC knob E: the selected operator’s level: its volume as a carrier, its modulation depth as a modulator.",
+      "labels": null
+    },
+    {
+      "name": "ATTK",
+      "default": null,
+      "doc": "SRC knob F: the selected operator’s envelope attack.",
+      "labels": null
+    },
+    {
+      "name": "DECAY",
+      "default": null,
+      "doc": "SRC knob G: the selected operator’s envelope decay; INF holds.",
+      "labels": null
+    },
+    {
+      "name": "CHAR",
+      "default": null,
+      "doc": "SRC knob H: operator 4’s feedback and the overall brightness.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.53",
+      "1.54"
+    ],
+    "requires": [
+      "machine-pages"
+    ],
+    "conflicts": [
+      "cc-names",
+      "digisophie",
+      "digineighbor",
+      "digislicer"
+    ],
+    "limitations": [
+      "Its author warns that several DT-FM tracks can freeze the Digitakt without FAST AUDIO: add digihealth and turn FAST AUDIO on. Four tracks used about 95 % CPU without it and about 85 % with it; eight tracks are not claimed.",
+      "Not with SOPHIE: DT-FM is a fork of it and uses the same names.",
+      "Needs core 3.0 or newer, so it does not build beside Digi EQ 1.0.2, which builds only on core 2.1.",
+      "Machine Pages conflicts with DigiChain, so DT-FM cannot be combined with Digi Mono or Digi Poly. NEIGHBOR 0.6 and DIGISLICER 2.1 draw their own SRC pages and stay incompatible.",
+      "The sound pool keeps only the operator OP shows; a pool sound’s other three operators start at their defaults.",
+      "Tracks saved as DT-FM by 1.1.0 or earlier load as another machine: select DT-FM on them again."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "3.0",
+    "build": "build.json",
+    "events": [
+      "ev_tick",
+      "ev_render_voices"
+    ],
+    "claims": [
+      "machine:9",
+      "projdata:FM2O"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 11939,
+    "fastBytes": 0,
+    "load": {
+      "display": "Four DT-FM tracks use about 95 % CPU, about 85 % with FAST AUDIO (the author’s reading)",
+      "method": "hardware",
+      "conditions": "The author’s Digitakt mk1 on OS 1.53, an earlier DT-FM build with digihealth’s SYSTEM INFO, four tracks playing together. The author does not claim eight tracks. Not measured in Modwerk."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "1.2.1",
+    "sourceSha256": "336612bce704d2b52b39cf9a8fbb0b9dcaf3b95367c753a3e3e0c1d4ae360b3e",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Digitakt mk1",
+      "release": "1.54",
+      "testedOn": "2026-10-09",
+      "tester": "mtalikka",
+      "durationMinutes": null,
+      "summary": "The author tested DT-FM 1.2.1 on a Digitakt mk1 on OS 1.54 with elekloader’s core 3.0, Machine Pages 1.1 and digihealth, using the released dt-fm-1.2.1-os1.54.elemod this module pins. An earlier build on OS 1.53 played four DT-FM tracks together at about 95 % CPU, about 85 % with FAST AUDIO.",
+      "limitations": [
+        "The author gives no test date or duration: testedOn is the 1.2.1 release date.",
+        "The OS 1.53 file of 1.2.1 has no hardware report of its own.",
+        "Modwerk builds DT-FM with core 4.4 and Machine Pages 1.2 (Modwerk’s build), not the core 3.0 and Machine Pages 1.1 the author tested with; that combination has not run on a unit."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "The author’s released 1.2.1 files, pinned unchanged, linked locally beside every Digitakt mod in the library on OS 1.53 and 1.54 with core 4.4. Emulator captures show the machine list and SRC page; audio and timing in Modwerk’s build are not measured.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: build an FM tone",
+        "steps": [
+          "On one audio track choose DT-FM with FUNC + SRC. No sample is needed.",
+          "Turn ALGO to 1, so the four operators form one stack, and set OP to 4. Raise its LEVEL a little and listen to the tone brighten.",
+          "Play a few trigs. Turn OP to 2 and set its RATIO to 2, then shorten its DECAY for a plucked attack.",
+          "Parameter-lock ALGO on one trig to hear another routing, then remove the lock. On AMP set HOLD to NOTE and a finite DEC, so notes end."
+        ]
+      },
+      "screenshots": [
+        "media/chooser.png",
+        "media/src.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "The author’s source, imported unchanged from github.com/mtalikka/DT-FM at 9ac1802 (v1.2.1) under its MIT licence; its sophie.c carries Matt Estela’s MIT notice (upstream/THIRD_PARTY.md). Modwerk adds Machine Pages’ header digitakt-mk1/core3.h (irpina, GPL-2.0-or-later), which the source includes to describe its page. The library builds the author’s released .elemod files."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "DT-FM thumbnail",
+      "alt": "Four operator blocks stacked into a carrier, beside a modulated waveform.",
+      "credit": "Modwerk",
+      "license": "GPL-3.0-or-later",
+      "source": "Original Modwerk illustration"
+    },
+    {
+      "path": "media/chooser.png",
+      "kind": "screenshot",
+      "caption": "DT-FM in the machine chooser",
+      "alt": "DT-FM in the machine chooser on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; mtalikka module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "1.2.1",
+        "imageSha256": "4e5b8eb19c674aba73384e575b675ea28b14903176b9eafefe872d01e1da9fc3",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    },
+    {
+      "path": "media/src.png",
+      "kind": "screenshot",
+      "caption": "DT-FM’s SRC page",
+      "alt": "DT-FM’s SRC page with TUNE, ALGO, RATIO, OP, LEVEL, ATTK, DECAY and CHAR on the Digitakt monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; mtalikka module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "1.2.1",
+        "imageSha256": "4e5b8eb19c674aba73384e575b675ea28b14903176b9eafefe872d01e1da9fc3",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    }
+  ]
+}

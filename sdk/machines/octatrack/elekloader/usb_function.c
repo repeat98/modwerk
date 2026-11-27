@@ -49,7 +49,7 @@ int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open 
 #define UF_PORTSC1 0xfc0b0184u
 #define UF_OTGSC 0xfc0b01a4u
 #define UF_SESSION_VALID 0x800u    /* OTGSC.BSV */
-#define UF_PORT_ACTIVE 0x181u      /* PORTSC1.PR, SUSP or CCS, MCF54455RM section 10.3.4.14 */
+#define UF_PORT_BUSY 0x180u        /* PORTSC1.PR or SUSP, MCF54455RM section 10.3.4.14: a reset under way, or suspended */
 #define UF_SETUPSTAT 0xfc0b01acu
 #define UF_PRIME 0xfc0b01b0u
 #define UF_FLUSH 0xfc0b01b4u
@@ -93,6 +93,12 @@ struct modwerk_usb_input_profiles {
 #define UF_PATIENCE 600u
 #define UF_FRAME_TIMEOUT ((44100u + 15u) / 16u) /* one second in 16-sample blocks */
 #define UF_DOWN 30u
+/* Ten seconds off the bus after a detach that cut a transfer (forced), or when the host never reset the unit after it
+ * came back. On the owner's MKII (27 November 2026, behind a USB 2.0 hub) a forced detach made macOS reset the port
+ * 0.3 s later, while the unit was off; it came back half a second after leaving, in the middle of the host's reset
+ * retries ("reset did not enable port" every 0.37 s), and its controller then took no reset at all (address and
+ * enable kept from before) until a power cycle. Off for longer than those retries, the hub sees a clean disconnect. */
+#define UF_DOWN_LONG 600u
 #define UF_ATTACH_CHECK 180u       /* ticks after first asserting run/stop */
 #define UF_LEASE 1200u
 #define UF_FLUSH_SPINS 2000u
@@ -110,9 +116,10 @@ static volatile uint8_t dirty;
 static uint32_t serials, live_serial;   /* live: the function the slots describe */
 static volatile uint8_t state, reconnects;
 static uint8_t forced, live_profile, panel_reconnect, retried;
+static uint16_t live_in_packet; /* the active high-speed profile's EP3 IN wMaxPacketSize, 0 without one */
 static volatile uint8_t reset_seen; /* BACK: the host has reset the bus since the unit came back */
 static volatile uint16_t timer, frames_to_attach;
-static uint8_t off_ticks;
+static uint16_t off_ticks;
 static uint16_t waited;
 
 /* Every handler of a hook the base raises, in the row's order (lower first, then module id); their answers OR'd.
@@ -289,6 +296,14 @@ static void uf_input_priority(int enabled)
 }
 #endif
 
+/* EP3 IN's wMaxPacketSize in a profile's descriptors, 0 without it: what status.c books a stream's width by. */
+static unsigned uf_in_packet(const uint8_t *d, unsigned length)
+{
+    for (unsigned i = 0; i + 6u < length && d[i]; i += d[i])
+        if (d[i + 1] == 5u && d[i + 2] == 0x83u) return (d[i + 4] | (unsigned)d[i + 5] << 8) & 0x7ffu;
+    return 0;
+}
+
 /* The USB interrupt held off and the unit off the bus. Through the uncached alias: the controller reads memory. */
 static void uf_compose(void)
 {
@@ -317,6 +332,7 @@ static void uf_compose(void)
         if (k == 0u) modwerk_cfg_len_fs = total;
         if (k == 1u) {
             modwerk_cfg_len_hs = total;
+            live_in_packet = (uint16_t)uf_in_packet(from, length);
 #ifdef MODWERK_USB_INPUT
             uf_input_priority(f && f->abi == MODWERK_USB_SPEED_PROFILES_ABI &&
                               f->bytes == UF_INPUT_RECORD && interfaces == 3u);
@@ -328,10 +344,10 @@ static void uf_compose(void)
 
 /* Called with the USB interrupt held off by the frame interrupt or by the tick's full mask.
  * The configuration slots have already been written. Allow the host to reset as soon as RS is set. */
-static void uf_wait_to_attach(void)
+static void uf_wait_to_attach(unsigned down)
 {
-    off_ticks = UF_DOWN;
-    frames_to_attach = UF_FRAME_TIMEOUT;
+    off_ticks = (uint16_t)down;
+    frames_to_attach = (uint16_t)(UF_FRAME_TIMEOUT * (down / 60u + 1u));
     state = UF_OFF; /* publish last to the frame interrupt */
 }
 
@@ -362,7 +378,8 @@ int modwerk_usb_function_tick(int quiet)
         if (row_serial == live_serial && uf_requested() == live_profile) state = UF_SETTLED; /* it came and went before the host saw it */
         else if (!modwerk_machine_stopped() && row_serial == live_serial) { /* defer a panel format change */ }
         else if ((quiet && uf_idle()) || waited >= UF_PATIENCE) {
-            if (!(quiet && uf_idle())) ++forced;
+            int idle = quiet && uf_idle();
+            if (!idle) ++forced;
             (void)uf_raise(MODWERK_EV_USB_BUS_END);
             UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) & ~1u;
             panel_reconnect = row_serial == live_serial;
@@ -370,7 +387,7 @@ int modwerk_usb_function_tick(int quiet)
             uf_compose();
             timer = UF_LEASE;
             retried = 0;
-            uf_wait_to_attach();
+            uf_wait_to_attach(idle ? UF_DOWN : UF_DOWN_LONG);
         } else ++waited;
         modwerk_machine_unlock(lock);
         break;
@@ -387,15 +404,17 @@ int modwerk_usb_function_tick(int quiet)
     default:
         if (timer && --timer) {
             if (timer != UF_LEASE - UF_ATTACH_CHECK || retried) break;
-            /* RS requests attachment. CCS reports the result. Leave an attached, suspended
-             * or resetting port, a real unplug, and an active disk session to their owners. */
+            /* RS requests attachment; a host that sees it resets the bus within a second. No reset by now: off the bus for
+             * long enough that the hub sees a disconnect, then once more. CCS does not tell: the unit reads attached and
+             * even enabled while the host fails to reset it. Leave a resetting or suspended port, a real unplug and an
+             * active disk session to their owners. */
             lock = modwerk_machine_lock();
             if (state == UF_BACK && !reset_seen && quiet && !modwerk_machine_usb_disk() &&
-                (UF_REG(UF_OTGSC) & UF_SESSION_VALID) && !(UF_REG(UF_PORTSC1) & UF_PORT_ACTIVE) &&
+                (UF_REG(UF_OTGSC) & UF_SESSION_VALID) && !(UF_REG(UF_PORTSC1) & UF_PORT_BUSY) &&
                 (UF_REG(UF_USBCMD) & 1u)) {
                 retried = 1;
                 UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) & ~1u;
-                uf_wait_to_attach();
+                uf_wait_to_attach(UF_DOWN_LONG);
             }
             modwerk_machine_unlock(lock);
             break;
@@ -410,6 +429,14 @@ int modwerk_usb_function_tick(int quiet)
  * otherwise count as a pulled cable and undo an open trial. */
 void modwerk_usb_function_host(void) { if (state == UF_BACK && reset_seen) state = UF_SETTLED; }
 int modwerk_usb_reconnecting(void) { return state == UF_OFF || state == UF_BACK; }
+unsigned modwerk_usb_function_peek(uint16_t *at, uint8_t *off, uint8_t *flags, uint8_t *count)
+{
+    if (at) *at = timer;
+    if (off) *off = off_ticks;
+    if (flags) *flags = (uint8_t)((reset_seen ? 1u : 0u) | (retried ? 2u : 0u) | (panel_reconnect ? 4u : 0u));
+    if (count) *count = reconnects;
+    return state;
+}
 void modwerk_usb_function_isr(void) { (void)uf_raise(MODWERK_EV_USB_ISR); }
 void modwerk_usb_function_bus_end(void)
 {
@@ -448,6 +475,16 @@ void modwerk_usb_function_frame(void)
     if (state == UF_OFF && !--frames_to_attach) uf_attach();
     (void)uf_raise(MODWERK_EV_USB_FRAME);
 }
+
+/* What the host streams on the function's endpoint now, for status.c's CPU booking (#2251): bit 0 to the host (EP3 IN),
+ * bit 1 from it (EP3 OUT). A function enables its endpoint while the host has its stream open (USB Audio: alternate
+ * setting 1, a DAW or macOS using the unit) and disables it when the host closes it. */
+unsigned modwerk_usb_function_streams(void)
+{
+    uint32_t ctrl = row_record && live_serial ? UF_REG(UF_CTRL3) : 0u;
+    return (ctrl & 0x00800000u ? 1u : 0u) | (ctrl & 0x80u ? 2u : 0u);
+}
+unsigned modwerk_usb_function_stream_bytes(void) { return row_record && live_serial ? live_in_packet : 0u; }
 
 unsigned modwerk_usb_function_status(uint8_t *out)
 {

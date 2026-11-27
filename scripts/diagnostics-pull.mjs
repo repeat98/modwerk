@@ -8,11 +8,11 @@
 //   npm run diagnostics:pull             # write every retained record to ~/.cache/modwerk-local/diagnostics/latest.json
 import { createHash, randomBytes } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { DSP_REPORT_NAMES, describeStallFrames, freezeSamples } from '../src/community/octatrack-diagnostics-contract.ts'
+import { DSP_REPORT_NAMES, describeStallFrames, describeUsbGone, freezeSamples } from '../src/community/octatrack-diagnostics-contract.ts'
 import { USB_AUDIO_MODULE } from '../src/config/usb-audio.ts'
 import { crashNames, namesFor, withName } from '../src/dev/address-names.ts'
 // The pipeline may not import the maintenance bot's policy.mjs (npm run licenses:check), so it names the owner itself.
@@ -61,7 +61,7 @@ const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'con
   { 0x100: 'the last start crashed or froze loading it' }) // modset.c's boot guard, past the loader's codes
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
-const STATELESS = ['crash', 'stall', 'set', 'base', 'freeze_pc'] // records that carry no cpu, keys or screen
+const STATELESS = ['crash', 'stall', 'set', 'base', 'freeze_pc', 'usb_gone'] // records that carry no cpu, keys or screen
 /** A refused restore's set record from base 0.7.10 on (diag.c): the loader's check that refused it (dsp1, read as dsp1to4;
  * loader.h runtime_check) and the module pool then, in 16-byte units (cpu the bytes used, dsp0 the largest free run, read as
  * dsp5to8). Older bases leave all three 0. A module-memory refusal by the claims check is a DSP claim meeting a delay buffer. */
@@ -82,7 +82,7 @@ const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m$
   (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a === SET_ID_CAPACITY ? 'at least ' : ''}${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
     (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24}${refusedPool(r)})` : '') : '') +
   (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'freeze_pc' ? ' where the processor was: ' +
-    freezeSamples(r).map(s => `0x${s.pc.toString(16)} level ${s.level} in ${s.task}`).join('; ') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'cpu' ? cpuLine(r) : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'brake' ? (r.a >>> 23 & 1 ? ` module machines silenced on a pattern predicted past the frame ceiling (${r.a & 0x7fffff} since boot)` : ` module machines silenced (${r.a & 0xffffff} since boot), the frame fell behind`) : r.kind === 'late' ? ` late frame entries held, each a skipped DSP frame (${r.a & 0xffffff} since boot)` + (r.a >>> 24 ? `, ${r.a >>> 24} later than the wait can hold` : '') : r.kind === 'usb' ? ` the host never enumerated it: offered again (OTGSC 0x${(r.a >>> 16).toString(16)}, PORTSC1 0x${(r.a & 0xffff).toString(16)})` : '') +
+    freezeSamples(r).map(s => `0x${s.pc.toString(16)} level ${s.level} in ${s.task}`).join('; ') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'cpu' ? cpuLine(r) : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'brake' ? (r.a >>> 23 & 1 ? ` module machines silenced on a pattern predicted past the frame ceiling (${r.a & 0x7fffff} since boot)` : ` module machines silenced (${r.a & 0xffffff} since boot), the frame fell behind`) : r.kind === 'late' ? ` late frame entries held, each a skipped DSP frame (${r.a & 0xffffff} since boot)` + (r.a >>> 24 ? `, ${r.a >>> 24} later than the wait can hold` : '') : r.kind === 'usb' ? ` the host never enumerated it: offered again (OTGSC 0x${(r.a >>> 16).toString(16)}, PORTSC1 0x${(r.a & 0xffff).toString(16)})` : r.kind === 'usb_gone' ? ': ' + describeUsbGone(r) : '') +
   (STATELESS.includes(r.kind) ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
     `, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}, fx ${r.fx.map(f => f.toString(16)).join(' ')}, machines ${r.machines.join(' ')}`)
 
@@ -208,6 +208,52 @@ export function stabilityLines(found, events, versions = new Map(), owner = OWNE
   })
 }
 
+/** Each module machine's skipped renders in the field beside what admission books for it (frame-costs.json), most first
+ * (owner, 26 November 2026: nothing put the two side by side). A start's count (the guard's skips since the start, hushed renders included) goes to every
+ * machine on a track it shed; `several`: starts with two or more of its tracks in one Part. The owner's unit is left out. */
+export function shedLines(found, costs = {}, sigs = new Map(), owner = OWNER) {
+  const rows = new Map()
+  for (const [name, member] of found) {
+    if (name === owner) continue
+    for (const records of Map.groupBy([...member.incidents?.values() ?? []], r => r.epoch + '/' + r.boot).values()) {
+      const sheds = records.filter(r => r.kind === 'shed')
+      if (!sheds.length) continue
+      const skipped = Math.max(...sheds.map(r => r.a & 0xffffff)), shed = sheds.reduce((mask, r) => mask | r.a >>> 24, 0), most = new Map()
+      for (const r of records) {
+        const count = new Map()
+        for (let t = 0; t < 8; t++) {
+          const m = r.machines ?? [], sig = m[3 * t] <= 1 && m[3 * t + 1] ? String.fromCharCode(m[3 * t + 1], m[3 * t + 2]) : ''
+          if (sig && shed >> t & 1) count.set(sig, (count.get(sig) ?? 0) + 1)
+        }
+        for (const [sig, n] of count) most.set(sig, Math.max(n, most.get(sig) ?? 0))
+      }
+      for (const [sig, n] of most) {
+        const row = rows.get(sig) ?? rows.set(sig, { units: new Set(), starts: 0, skipped: 0, several: 0 }).get(sig)
+        row.units.add(name)
+        row.starts++
+        row.skipped += skipped
+        if (n > 1) row.several++
+      }
+    }
+  }
+  return [...rows].sort((a, b) => b[1].skipped - a[1].skipped).map(([sig, r]) => {
+    const id = sigs.get(sig), cost = costs[id]
+    return `  ${id ?? 'unknown'} (${sig}): ${r.units.size} unit${r.units.size > 1 ? 's' : ''}, ${r.starts} start${r.starts > 1 ? 's' : ''}, ${r.skipped.toLocaleString('en-US')} renders skipped` +
+      (r.several ? `, ${r.several} of those starts with two or more of its tracks` : '') + (cost ? `; booked first ${cost.first}, each ${cost.each}` : '; not booked')
+  })
+}
+/** Each machine's Part signature (two letters) to its module id: the module's own descriptor in its C source, or its port. */
+export function machineSignatures(root) {
+  const sigs = new Map(), modules = join(root, 'sdk/octatrack/modules')
+  for (const id of readdirSync(modules)) for (const file of readdirSync(join(modules, id)).filter(f => f.endsWith('.c'))) {
+    const m = /\.sig\s*=\s*\{\s*'(.)'\s*,\s*'(.)'/.exec(readFileSync(join(modules, id, file), 'utf8'))
+    if (m) sigs.set(m[1] + m[2], id)
+  }
+  for (const [id, port] of Object.entries(JSON.parse(readFileSync(join(root, 'sdk/machines/octatrack/module-adapters/machine-ports.json'), 'utf8')).ports))
+    if (port?.machine?.sig) sigs.set(port.machine.sig, id)
+  return sigs
+}
+
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
 const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (PROJ or FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big',
   'left out after a failed start', 'held after a failed start']
@@ -300,7 +346,7 @@ function crashLine({ count, vector, pc, code, memory }) {
   return line + ` code ${hex(code)} uncached ${hex(memory)}`
 }
 
-export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map(), names = namesFor, versions = new Map() } = {}) {
+export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map(), names = namesFor, versions = new Map(), costs = {}, sigs = new Map() } = {}) {
   const found = members(events)
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
@@ -339,6 +385,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
     ...checks.length ? ['', 'Card-build checks that refused a selection (on every module change; not failures): ' + checks.map(([name, rows]) => `@${name} ${rows.length}`).join(', ')] : [],
     '', `Stability per base (without @${OWNER}'s development unit; OS upgrades and reflashes left out; hours from the units' load logs):`,
     ...stabilityLines(found, events, versions),
+    ...(found => found.length ? ['', `Skipped renders by machine (the last 30 days, older bases included, without @${OWNER}'s unit; a start with several machines counts for each), beside what admission books for it now (frame-costs.json):`, ...found] : [])(shedLines(found, costs, sigs)),
     '', 'Daily USB sync counts (everyone, sharing or not):',
     ...[...days].map(([day, rows]) => '  ' + day + '  ' + rows.map(row => row.event.replace('usb_sync_', '') + ' ' + row.count).join(', ')),
   ].join('\n')
@@ -388,7 +435,8 @@ async function main() {
     reports = reportsByMember(JSON.parse(execFileSync('gh', ['issue', 'list', '--label', 'issue-report', '--state', 'all', '--limit', '300',
       '--search', 'created:>=' + from.slice(0, 10), '--json', 'number,title,state,body'], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })))
   } catch (error) { note = '\n\nGitHub reports not matched: ' + (error.stderr?.toString().trim() || error.message) }
-  console.log(summary(data, { base, layouts, reports, versions }) + note + '\n\nEvery record: ' + file)
+  const costs = JSON.parse(fromMain('sdk/machines/octatrack/frame-costs.json')).costs, sigs = machineSignatures(fileURLToPath(ROOT))
+  console.log(summary(data, { base, layouts, reports, versions, costs, sigs }) + note + '\n\nEvery record: ' + file)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

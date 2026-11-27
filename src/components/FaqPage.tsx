@@ -67,7 +67,7 @@ export function FaqPage({ previewGuide = false, open, machine: device }: { previ
   }, [previewGuide, machine, searching, count])
 
   if (previewGuide) return <div className="faq-page faq-page-guide"><BackLink href="#all">Module library</BackLink>
-    <div className="page-heading"><div><p className="page-kicker">MODWERK / HELP</p><h1>Add an audio preview</h1><p>Share a short recording so others can hear what a module does.</p></div></div>
+    <div className="page-heading"><div><h1>Add an audio preview</h1><p>Share a short recording so others can hear what a module does.</p></div></div>
     <div className="faq-tools"><a className="button button-primary" href="#all">Browse modules <Icon name="arrow" size={15}/></a><a className="button button-quiet" href="#faq">All FAQs</a></div>
     <Questions sections={sections} all />
   </div>
@@ -75,7 +75,7 @@ export function FaqPage({ previewGuide = false, open, machine: device }: { previ
   const jump = (id: string) => { setCurrent(id); document.getElementById('faq-section-' + id)?.scrollIntoView?.({ block: 'start', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }) }
   return <div className="faq-page" ref={page}><BackLink href="#library">Module library</BackLink>
     <div className="page-heading faq-heading">
-      <div><p className="page-kicker">MODWERK / HELP</p><h1>Help & FAQ</h1><p>Installing mods, recovery and troubleshooting for your machine.</p></div>
+      <div><h1>Help & FAQ</h1><p>Installing mods, recovery and troubleshooting for your machine.</p></div>
       <div className="faq-machines" role="group" aria-label="Machine">{FAQ_MACHINES.map(item =>
         <button type="button" key={item.id} aria-pressed={item.id === machine} onClick={() => { setMachine(item.id); setCurrent(undefined) }}>{item.label}</button>)}
       </div>
@@ -97,16 +97,9 @@ export function FaqPage({ previewGuide = false, open, machine: device }: { previ
       <div className="faq-sections"><Questions sections={sections} open={entry} all={searching && count <= 3} /></div>
     </div>}
     {!count && <div className="no-results"><Icon name="search" size={28} /><h2>No answers found</h2><p>Try “card”, “MIDI” or “backup”.</p><button className="button button-quiet" onClick={() => setQuery('')}>Clear search</button></div>}
-    <section className="faq-stuck" aria-labelledby="faq-stuck-title">
-      <div><h2 id="faq-stuck-title">Still stuck?</h2><p>Ask in the forum or on Discord. Other owners and the module developers read both.</p></div>
-      <div className="faq-stuck-actions">
-        <a className="button button-quiet" href="#forum"><Icon name="message" size={16} />Ask in the forum</a>
-        <a className="button button-quiet" href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer"><Icon name="external" size={16} />Join Discord</a>
-        {machine === 'octatrack' && <a className="button button-quiet" href="#octatrack"><Icon name="warn" size={16} />Report a problem</a>}
-      </div>
-    </section>
-    <p className="faq-footer">Follow Elektron’s official instructions for your exact machine: {machine === 'octatrack'
+    <div className="faq-footer"><p className="faq-stuck">Still stuck? Ask other owners and the module developers in the <a href="#forum">forum</a> or on <a href={DEVELOPMENT_DISCORD_URL} target="_blank" rel="noreferrer">Discord<span className="sr-only"> (opens in a new tab)</span></a>{machine === 'octatrack' && <>, or <a href="#octatrack">report a problem</a></>}.</p>
+      <p>Follow Elektron’s official instructions for your exact machine: {machine === 'octatrack'
       ? <OfficialLink href={RELEASE_NOTES}>Octatrack OS 1.40C instructions</OfficialLink>
-      : <><OfficialLink href={TRANSFER_GUIDE}>the Transfer update guide</OfficialLink> and your model’s manual</>}.</p>
+      : <><OfficialLink href={TRANSFER_GUIDE}>the Transfer update guide</OfficialLink> and your model’s manual</>}.</p></div>
   </div>
 }

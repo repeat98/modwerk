@@ -1,0 +1,113 @@
+{
+ "schemaVersion": 1,
+ "machine": "digitone",
+ "moduleId": "digihoard",
+ "moduleVersion": "0.2.0",
+ "capturedAt": "2026-11-27",
+ "firmware": "1.44",
+ "imageSha256": "250e181a875ee284ddb0b45faa803989ca73ec8169946d24ce71cca77155335e",
+ "stockSha256": "d4f200d04484333d82822db7744e6484d0def8f2db8ddf55ee2b780cc13c9659",
+ "source": {
+  "repository": "https://github.com/irpina/digihoard",
+  "revision": "029a64e354caf1a0da524302b0ec108d5d28710a",
+  "path": "."
+ },
+ "kit": {
+  "version": "0.7.0",
+  "lockSha256": "748ec9ad5e2f08067cf09fcbabea62b5ef96df7e6fb86c93b3c5e39d62d3b270"
+ },
+ "catalog": {
+  "revision": "bf04487b8475aa5de33d7a3f8fb7066978c4418df0ee0958daedc24ceb09034b",
+  "sha256": "b6524c49a93e260412a7e8054b85d91b204912034a5d59784a8af886f6609d71",
+  "cores": 18,
+  "mods": 117
+ },
+ "build": {
+  "modules": [
+   {
+    "id": "core",
+    "version": "5.4",
+    "sha256": "4fa199a6ac2a5e5f53b4a70e11981d7ac41e9b838c863c4ae6168e8daa6eac79"
+   },
+   {
+    "id": "digihoard",
+    "version": "0.2",
+    "sha256": "2683e840e5afa1dd27f815a866929ebc9c1e7aefa3e123f57c5c77d235057a96"
+   },
+   {
+    "id": "fxkit",
+    "version": "0.1",
+    "sha256": "321c2135140a1f5c5a4152e7b73d3818de2f1bf6da3714d04c39dc8bdadf0dd4"
+   }
+  ],
+  "outputVersion": "D001",
+  "verified": true
+ },
+ "emulator": {
+  "repository": "https://github.com/irpina/digiemu",
+  "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+  "unicorn": {
+   "version": "2.1.4",
+   "sourceRevision": "8028ec436f2d9376525352dd38ed9ed6b9f6be10",
+   "patches": {
+    "unicorn-2.1.4-m68k-digikit-accel.patch": "7048704a068cb074b93b751df4b1a73fd8972c1c0cc27e30774c4c2771ec2b5c",
+    "unicorn-2.1.4-m68k-digikit-speed.patch": "9560613223502656e82adc1ecc36d5d8486995bed13ea8ddad168f8c4558a799",
+    "unicorn-2.1.4-m68k-emac-mac-load.patch": "ac128dd6836997de55e0d2ad70d7a2978639168090f552c5634da50fddc70bfe",
+    "unicorn-2.1.4-m68k-emac-modes.patch": "5fc44429ea913c5256c34a6e9c93ab90f727f120b4f12922a8f35a952fd1dace",
+    "unicorn-2.1.4-m68k-fast-mem.patch": "7f79332f318352cbd8055386dbf5149efc801d0663ae2450e33f9f39fed53374",
+    "unicorn-2.1.4-m68k-hook-ccr-sync.patch": "56de71acf2adbd5ca2f448095478e65e49fd79d378aeb5b5e4217d2c90f52f4e"
+   },
+   "librarySha256": "b7ba43300ede6c4bb19c3355418095e2ec24aedc4b328b7d6f2128f8c04a0501"
+  },
+  "python": "3.12.13",
+  "platform": "macOS arm64",
+  "hle": false,
+  "audioRecording": false,
+  "cycleTiming": false,
+  "framebuffer": "firmware front LCD buffer at panel_diff flush",
+  "scale": 6,
+  "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling."
+ },
+ "setup": {
+  "project": "Disposable first-boot A01, stock initial track state; no owner projects or samples.",
+  "fixture": "No sample fixture required for the documented UI pages.",
+  "sandbox": "No network; user files denied; private temporary output only."
+ },
+ "inputs": [
+  [
+   1500.044,
+   "press 42"
+  ],
+  [
+   2700.079,
+   "release 42"
+  ],
+  [
+   3400.099,
+   "press 13"
+  ],
+  [
+   3500.102,
+   "release 13"
+  ]
+ ],
+ "captures": [
+  {
+   "path": "media/menu.png",
+   "sha256": "89bce2b27f73eb1deb2405c21485fc97547d11593e4cee560291df64bf744800",
+   "plan": "wait 1500\npress T1 1200\nrelease T1\nwait 600\nsnap menu\ntap YES\nwait 2000\nsnap page\n",
+   "atMs": 3183.4267094017096,
+   "requestedAtMs": 3400.099358974359
+  },
+  {
+   "path": "media/page.png",
+   "sha256": "b4f1932100168047fcd5c531649116937edde36fdeb2496f27770c5c3c26d480",
+   "plan": "wait 1500\npress T1 1200\nrelease T1\nwait 600\nsnap menu\ntap YES\nwait 2000\nsnap page\n",
+   "atMs": 5566.828846153846,
+   "requestedAtMs": 5800.169230769231
+  }
+ ],
+ "limitations": [
+  "UI-only documentation; no hardware, audio, CPU or timing qualification."
+ ]
+}
