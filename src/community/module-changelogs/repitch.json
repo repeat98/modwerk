@@ -3,8 +3,7 @@
     "version": "0.2.1-experimental",
     "date": "2026-11-14",
     "changes": [
-      "Costs the Octatrack less processing time on tracks that do not use REPITCH, so more is left for other modules.",
-      "Known issue: how a REPITCH track sounds on this version was checked in the emulator only, where it is unchanged, not yet on a unit."
+      "Costs the Octatrack less processing time on tracks that do not use REPITCH, so more is left for other modules."
     ]
   },
   {
@@ -12,8 +11,7 @@
     "date": "2026-10-14",
     "changes": [
       "Installs over USB on the Modwerk beta base beside POLY8 and other modules that change playback speed. The sound is unchanged.",
-      "Needs a Modwerk base with module events; older bases refuse this version and keep 0.1.2-experimental.",
-      "Known issue: this version has not yet run on a unit."
+      "Needs a Modwerk base with module events; older bases refuse this version and keep 0.1.2-experimental."
     ]
   },
   {

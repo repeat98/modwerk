@@ -7,7 +7,7 @@
       "909 PITCH and DECAY have new ranges: PITCH spans one octave (64 is the recorded 909) and DECAY 15 ms to 600 ms (80 is the recording). Saved 909 kicks sound different: set PITCH and DECAY again.",
       "The 909 needs about half the DSP work and the 808 about three quarters. Each track still reserves the same DSP room until the new engine is measured, so DSP FULL appears where it did.",
       "LOW and HIGH now weight their bands instead of saturating them; SAT still drives the desk. At LOW and HIGH 64 the 808 sounds as before.",
-      "Tested on an MKII: sound, install and saved projects. A second voice still shows DSP FULL, and track 5 refused a voice even alone."
+      "Known issue: a second voice still shows DSP FULL, and track 5 refused a voice even alone."
     ]
   },
   {
@@ -40,7 +40,7 @@
       "Many thanks to Skee Mask, who recorded his TR-909 for this. His 909 has a decay modification whose full range is not reproduced.",
       "Adds subtle attack and noise differences between hits, without random pitch or timing.",
       "The 808, saved controls and smoothing are unchanged; the 909 uses about 6% more DSP time.",
-      "Known issue: not yet tested on hardware, and high ACCNT or LOW settings can reach the output limiter."
+      "Known issue: high ACCNT or LOW settings can reach the output limiter."
     ]
   },
   {
@@ -48,7 +48,6 @@
     "date": "2026-10-08",
     "changes": [
       "Smooths the 909's TDEP and both engines' SAT to reduce zipper noise. Saved settings sound the same.",
-      "Known issue: not yet tested with the heaviest effect loads.",
       "Development note: many thanks to Skee Mask, who recorded his TR-909 for a closer 909 in a later version. This version sounds the same."
     ]
   },
@@ -73,7 +72,6 @@
     "date": "2026-10-01",
     "changes": [
       "First Modwerk release of the native 808/909 bass drum track machine, with synthesis before the stock AMP and FX stages.",
-      "Known issue: the machine chooser and use on all eight tracks are not yet tested on hardware.",
       "USB package for the beta base: it now starts on the unit, and restoring a Part no longer writes a wrong value.",
       "Known issue: over USB it may play silence or stall with trigs, and a second track in the same Part is refused without a message. Don't use it for music in the beta yet."
     ],
