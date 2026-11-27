@@ -3,6 +3,38 @@
 Draft Modwerk port of octabam `modules/scope` at
 `3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9`.
 
+## Release procedure, 27 November 2026
+
+The procedure in `/private/tmp/scope-procedure-scope-020-20261127-2` tested
+SCOPE 0.2.0-experimental package SHA-256
+`f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273`
+on an MKII running an OS 1.40C Modwerk base identified as `311bb670`.
+Its unit steps 6–10 passed: inventory and Part read, scripted trial,
+120-second soak, CPU price, and restoration. The procedure did not run an
+emulator rehearsal. Its by-hand audio and screen checks, edge-case table,
+and submitter stage remain open.
+
+The first procedure's price command labelled the scene as transport stopped
+and reported +0.1 percentage point of frame interrupt time at rest. A later
+procedure in `/private/tmp/scope-procedure-b02-20261127` used B02 and reported
++0.2 points. Its price command also labelled the scene as transport stopped,
+although its base label said "B02 playing project". The logs do not resolve
+whether playback was active during either measurement. Do not treat either
+price as a measured playing-audio cost until the transport state is established.
+
+`npm run module:qualify -- scope --procedure
+/private/tmp/scope-procedure-scope-020-20261127-2 --base 'Octatrack base
+311bb670, MKII, OS 1.40C'` previews the qualification record but says it
+cannot release yet: there is no worst-case ColdFire cycle record, and the
+package header alone does not account for stack, scratch, or reused memory.
+The hardware summary, limitations, and tutorial also require review before
+the record is written.
+
+The later B02 procedure also passed unit steps 6–10, but its checkout was
+dirty. `module:qualify` regenerated the draft's CPU price from its evidence;
+it refused to write a complete qualification record without cycles and exact
+memory. A clean source-bound release procedure remains necessary.
+
 ## 0.2.0-experimental
 
 **Hardware status: reported by hand on one MKII over USB, 26 November 2026,

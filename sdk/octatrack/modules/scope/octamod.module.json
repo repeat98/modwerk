@@ -57,7 +57,11 @@
       "name": "VIEW",
       "default": 0,
       "count": 3,
-      "labels": ["OSC", "XY", "ALL"],
+      "labels": [
+        "OSC",
+        "XY",
+        "ALL"
+      ],
       "doc": "OSC is a mono polyline of the selected track. XY is left against right. ALL is eight mini strips in track-pad order."
     }
   ],
@@ -66,25 +70,27 @@
     "effectId": null,
     "location": "Audio tracks",
     "conflicts": [],
-    "uiClaims": ["key:DOWN+TEMPO"],
+    "uiClaims": [
+      "key:DOWN+TEMPO"
+    ],
     "limitations": [
       "0.2.0 uses core hooks (module_key, module_tick) and ev_usb_frame instead of patching TEMPO, the frame tail and the UI loop, so Tuner can share a set. ev_usb_frame must run every audio block on the base you test; confirm on a development twin before claiming hardware proof.",
       "0.1.0-experimental patched three stock sites and listed Tuner as a conflict; see git history and PR #2182.",
       "Hold DOWN before TEMPO. Pressing TEMPO alone opens the stock tempo window.",
       "XY uses a hotter vertical scale than OSC. Clip ! appears only when the recent peak reaches 0 dBFS.",
       "DRAM unit: on a card build without another DRAM module, choosing SCOPE creates the platform DRAM reserve from Flex sample RAM (same class of cost as Tuner).",
-      "No device:qualify run, CPU price or monochrome UI captures yet."
+      "No device:qualify run or monochrome UI captures yet. At-rest CPU price was measured on an MKII; the transport state during the B02 measurement is unresolved."
     ]
   },
   "resources": {
-    "recorded": "Not measured on Modwerk; octabam sizes are in TESTING.md",
+    "recorded": "2026-11-27",
     "storage": {
-      "label": "ColdFire code and ring",
-      "display": "Not measured on Modwerk",
+      "label": "ColdFire code",
+      "display": "37704 bytes",
       "value": null,
-      "unit": "unknown",
-      "method": "unmeasured",
-      "conditions": "One DRAM linked unit (unit.s). 0.2.0: three hook words, zero stock sites; 37,704 bytes in a dev build.",
+      "unit": "see display",
+      "method": "static",
+      "conditions": "The tested USB package f8a1ffeb contains 37,704 bytes of ColdFire code and data and no BSS, according to its package header. This figure excludes stack and any base-owned memory reused at runtime.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -122,16 +128,16 @@
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
-      "date": "2026-11-26",
-      "conditions": "author's project, pattern A02, playing; base twin 4c7eb79b, MKII; 3 readings of 8 s a state. Frame interrupt 68.4 % before, 68.6 % installed and used nowhere; CPU meter 92.2 % before, 93.3 % at rest.",
+      "date": "2026-11-27",
+      "conditions": "the bank, pattern and Part the unit was on, transport stopped (test:procedure); base Octatrack base 311bb670, MKII, OS 1.40C, B02 project; 3 readings of 8 s a state. Frame interrupt 62.6 % before, 62.8 % installed and used nowhere; CPU meter 87.1 % before, 87.4 % at rest.",
       "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.2.0 package f8a1ffeb… (26 Nov 2026): device:test (+ soak) on twin-dev-1014; device:test on twin-evusb-frame 6fe02628; DOWN+TEMPO by hand on twin-evusb-frame (live scope). Tuner+Scope selftest 3/3 on 4c7eb79b. CPU price on 4c7eb79b (cpu-price-0.2.0.json). Release base 0.8.1 and removal-while-open still from 0.1.0 until re-run on hooks base.",
+    "summary": "SCOPE 0.2.0 package f8a1ffeb ran on an MKII with Modwerk base 311bb670 on 27 November 2026. The B02 test procedure passed unit steps 6–10: inventory and Part read, scripted trial, 120-second soak, at-rest CPU price, and restoration. The transport state during pricing, audio continuity, UI captures, worst-case cycles, and complete memory accounting remain unverified.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "6e8f9fb4ecadff9cddbf529743000c0cb8a076c2",
+    "evidenceRevision": "befbf7433a255981385a047a53341e4f75bd1e3c",
     "gates": [
       "modules/scope/verify.py"
     ]

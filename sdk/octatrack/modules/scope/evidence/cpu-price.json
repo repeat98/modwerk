@@ -1,0 +1,68 @@
+{
+  "module": "scope",
+  "version": "0.2.0-experimental",
+  "base": "Octatrack base 311bb670, MKII, OS 1.40C, B02 project",
+  "scene": "the bank, pattern and Part the unit was on, transport stopped (test:procedure)",
+  "inputs": {
+    "transport": "playing"
+  },
+  "seconds": 8,
+  "readings": 3,
+  "measuredAt": "2026-11-27T16:45:10.319Z",
+  "result": {
+    "id": "scope",
+    "version": "file",
+    "packageSha256": "f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273",
+    "before": {
+      "frame": 62.6,
+      "frameMax": 105.6,
+      "frames": 67056,
+      "skipped": 0,
+      "cpu": 87.1,
+      "dsp1to4": 40.3,
+      "dsp5to8": 48.4,
+      "dsp1to4Peak": 41.5,
+      "dsp5to8Peak": 50.4,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.2,
+        "dsp1to4": 0,
+        "dsp5to8": 0.8,
+        "frameMax": 2.6,
+        "dsp1to4Peak": 0.2,
+        "dsp5to8Peak": 0.7
+      }
+    },
+    "atRest": {
+      "frame": 62.8,
+      "frameMax": 106.9,
+      "frames": 67042,
+      "skipped": 0,
+      "cpu": 87.4,
+      "dsp1to4": 40.3,
+      "dsp5to8": 48.5,
+      "dsp1to4Peak": 41.8,
+      "dsp5to8Peak": 50.4,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.5,
+        "dsp1to4": 0,
+        "dsp5to8": 1,
+        "frameMax": 2.4,
+        "dsp1to4Peak": 0.4,
+        "dsp5to8Peak": 0.7
+      }
+    },
+    "atRestAdds": {
+      "frame": 0.2,
+      "cpu": 0.3,
+      "dsp1to4": 0,
+      "dsp5to8": 0.1,
+      "dsp1to4Peak": 0.3,
+      "dsp5to8Peak": 0
+    },
+    "rolledBack": true
+  }
+}
