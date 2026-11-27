@@ -1,0 +1,79 @@
+{
+  "scope": "QEMU instruction semantics only; no timing/hardware qualification",
+  "baseline": "iteration3 ccbb current kernel",
+  "candidate": "iteration4 cache Hann for steps >= 0x280000",
+  "cases": [
+    {
+      "format": 0,
+      "reverse": false,
+      "spans": 2904,
+      "randomSpans": 2048,
+      "endpointSpans": 856,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 1,
+      "reverse": false,
+      "spans": 2904,
+      "randomSpans": 2048,
+      "endpointSpans": 856,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 2,
+      "reverse": false,
+      "spans": 2904,
+      "randomSpans": 2048,
+      "endpointSpans": 856,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 3,
+      "reverse": false,
+      "spans": 2904,
+      "randomSpans": 2048,
+      "endpointSpans": 856,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 0,
+      "reverse": true,
+      "spans": 2904,
+      "randomSpans": 2048,
+      "endpointSpans": 856,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 1,
+      "reverse": true,
+      "spans": 2904,
+      "randomSpans": 2048,
+      "endpointSpans": 856,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 2,
+      "reverse": true,
+      "spans": 2904,
+      "randomSpans": 2048,
+      "endpointSpans": 856,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 3,
+      "reverse": true,
+      "spans": 2904,
+      "randomSpans": 2048,
+      "endpointSpans": 856,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    }
+  ]
+}

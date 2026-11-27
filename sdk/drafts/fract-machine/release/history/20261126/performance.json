@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "module": "fract-machine",
+  "version": "0.1.4-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": null,
+    "method": "CPU cycles and static worst-case bound NOT MEASURED. Named development probes measured inclusive timer intervals (native FLEX plus timer/call overhead), not CPU cycles. See release/hardware-20261126.md; normal development build failed modulated USB-audio stress."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "Two complete matched four-format20-second-arm matrices on named development probes observed36.1\u201338.1 active-minus-quiet mean frame points; corrected probe peak98.4%. Scoped maxima follow named external guard resets and3-second flush. Exact released-base package not physically tested; scalar longest/idle fields remain null because they do not encode the multiple package/format/arm scopes. See hardware report."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": 797,
+    "droppedExplanation": "Observed total734 skipped T1 renders in20-channel trial plus63 new in separate4-channel MAIN+CUE retry (734->797). Not MIDI messages. Both failed; not a120-second stress pass.",
+    "method": "Audio stress with64 native locks, three LFOs and moving controls; dev normal54d4 on base46c3.20- and4-channel USB audio both failed. No new crash/DSP stall observed. MIDI-specific fields remain null. See hardware-20261126.md for identities and limits."
+  },
+  "scope": {
+    "packageSha256": "54d42f5affc4a6c45cdeb5d15814c632a57c630eaeac9121f945b5732f4d6aba",
+    "baseIdentity": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+    "ownerMethod": "https://github.com/repeat98/modwerk/pull/1274#issuecomment-6705531953",
+    "waiver": "NOT_GRANTED",
+    "hardware": "PARTIAL_FAILED_STAGE1: normal54d4 stress; probe18d3 corrected matrix. Exact released-base normalbec6 physically untested; separate probe identities in hardware report."
+  }
+}

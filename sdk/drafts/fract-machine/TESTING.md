@@ -1,6 +1,35 @@
 # FRACT testing
 
-## Current preparation — 25 November 2026
+## Current 0.1.7 preparation — 27 November 2026
+
+One FRACT owner may now use any T1–T8; two live readers and the Part ABI are unchanged. The actual admission function passes all eight owners, 64 exclusion pairs, invalid tracks and Part immutability checks. Ten module tests, 52 SDK cases (four historical skips), nine runtime cases and seven probe cases pass. macOS and isolated Linux release packages are byte-identical. See [the exact-build record](release/qualification-20261127-iteration18.md).
+
+**New-build hardware stage 1 has not run.** Diagnostic base46 failed USB re-enumeration twice before the module was installed. Both attempts and the recovery readback are recorded locally. Prior 0.1.6 measurements below remain historical; they do not qualify 0.1.7. Listening, exact-version Keep/reboot and first-release approval remain pending.
+
+## Historical0.1.6 two-reader adoption —27 November2026
+
+Native inputs are committed at `0de973642fbd33e28f46de8f310419f74458dd5e`. [Exact-build preparation](release/qualification-20261127-iteration17.md) names release8c96 and development9b86. The normal development package passed20four-format windows (maxmean addition33.5points vsprice40),122.233s active MAIN+CUE4chUSB stress with22control windows/guard0→0,12settledPart transitions, and allowedT1–T4/second-owner refusal checks.
+
+**Full stage1 remains incomplete.** The fixed procedure failed its mandatoryT5pick and onePart4transition. The unchanged policy permits one owner onT1–T4; the missedPart4cause is not established. MIDIsoak, full companion matrix, released-base audio, listening and persistence remain pending. TwoCPU>=90%/1s notes and digital-recording uncertainties are retained in [the hardware report](release/hardware-20261127-iteration17.md). NoKeep/NORwrite/waiver/releaseapproval.
+
+The source has two live readers and unchanged128-byte/three-slot storage. The varying-envelope fixture retained108columns. F16M/BENCH has the same constant peak in all108bins, so its full envelope is a rectangle; initial sparse sampling gives the temporary toothed preview. This does not alter samplePCM. Original8Parts and28CFfiles were verified on restoration; independent final readback confirmed base0.8.2,normal,emptyinventory/missing and unchanged confirmedNORslots. All ownedlinks are closed and the queue is free.
+
+## Historical0.1.5 —27 November2026
+
+The iteration11 three-reader twin failed active4chUSB (+4trial skips); the later small-span three-reader variant failed with+9. See [historical hardware record](release/hardware-20261127.md). Those results remain scoped to their old packages.
+
+## Historical 0.1.4 hardware result — 26–27 November 2026
+
+**Stage 1 failed.** Unlisted0.1.4 corrects the declared CPU price to40; its
+separately named development build completed the four-format measurement matrix
+but skipped renders under parameter locks, LFOs and USB audio on both 20- and
+4-channel layouts. See the [named-build report](release/hardware-20261126.md).
+The unit, original project and card files were restored; owned links are closed.
+Performance must be fixed and stage 1 repeated before user listening/Keep/reboot.
+The released-base package itself remains physically untested. No first-release
+approval, module Keep or physical reboot is claimed for this build.
+
+## Historical preparation — 25 November 2026
 
 Unlisted `0.1.3-experimental` is prepared from released main/base 0.8.1.
 Normal package SHA-256 `c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29`,

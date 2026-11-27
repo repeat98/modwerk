@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "id": "fract-machine",
+  "bytes": 67284,
+  "imageBytes": 65964,
+  "bssBytes": 636,
+  "relocations": 240,
+  "eventWords": 38,
+  "sha256": "8c9603a42e6a4ab369d8bfe94fe1f5275a9b4a2c48b285323deb829d486294f0",
+  "authoredImageSha256": "802ce2d8a7400581decbb4d2afe78ebc87f67c96c192eb7abe9529a4f8f2a0e8",
+  "reviewedImageSha256": "f280ebde593719b2d8ccc59a6043713ab16acc2ca940f727a258b288e0dc3c9d",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "basePackageSha256": "236fa80e212e6b02909d9f7fba3ee75b425827efa81d4c9b5770fada7f7661ff",
+  "baseRunOrigin": 1084839424,
+  "baseImports": [
+    {
+      "offset": 31610,
+      "name": "mw_stock_pool_open",
+      "addend": 0
+    }
+  ],
+  "stockCopies": 3,
+  "stockFills": 0,
+  "stockVerification": "PASS",
+  "hardware": "NOT_RUN",
+  "version": "0.1.6-experimental",
+  "qualification": "DEV_TARGETED_CASES_PASSED_FULL_STAGE1_INCOMPLETE_RELEASE_BASE_UNTESTED",
+  "hardwareReport": "qualification-20261127-iteration17.md"
+}

@@ -1,0 +1,471 @@
+{
+  "schema": 1,
+  "status": "OWN_MEMORY_AND_CALLBACK_STACK_ACCOUNTED",
+  "packageSha256": "f291ba64755853538d965a90eb467291b91a790672cbd1b6b50f6dfd98590e73",
+  "authoredImageSha256": "1fb132d26fb7d4cb9269116a7c4f2f49e901866bdafad8f3f9a6e4f7deeafff2",
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "loaderInputs": {
+    "sdk/runtime/loader/loader.h": "f105ada3121166179bd8ac199883e5185916329ea427eb0e8c64338eeaa50b01",
+    "sdk/runtime/loader/loader.c": "c0128cf05d77809835a288b97e0c02df32aa2b3e48a47735e060870651aa47fc"
+  },
+  "loaderAggregateAlignment": "2 bytes (base default; explicit -mno-align-int probe)",
+  "imageBytes": 65932,
+  "bssBytes": 636,
+  "packageBytes": 67252,
+  "relocations": 240,
+  "memory": {
+    "runtimeHeaderBytes": 754,
+    "headerAlignmentBytes": 14,
+    "imageBssAlignmentBytes": 8,
+    "residentPoolExtentBytes": 67344,
+    "sameCandidateReplacementPeakPoolBytes": 134688,
+    "dspCodeWordsAdded": 0,
+    "dspStateWordsAdded": 0,
+    "sampleArenaBytesAllocated": 0,
+    "baseOwnerLedgerEntryBytes": 88,
+    "baseOwnerLedgerNote": "Consumes one entry in the base preallocated ledger; no additional module-pool allocation.",
+    "runtimeSiteBytes": 74,
+    "declaredPatchedSites": 0,
+    "method": "Target sizeof and loader.c aligned head+code+tail; this candidate has no sites or DSP tail."
+  },
+  "stack": {
+    "method": "GCC -fstack-usage plus reviewed acyclic own-call graph; 48/56-byte assembly frames, zero-local short-Hann helper; 4-byte call return PCs",
+    "perEntry": {
+      "fract_ui_control_text": {
+        "bytesIncludingEntryReturnPC": 44,
+        "chain": [
+          "fract_ui_control_text",
+          "ui_unsigned"
+        ]
+      },
+      "fract_ui_draw": {
+        "bytesIncludingEntryReturnPC": 188,
+        "chain": [
+          "fract_ui_draw",
+          "fract_ui_overview_draw",
+          "ui_text",
+          "ui_column_bits"
+        ]
+      },
+      "fract_ui_machine_icon": {
+        "bytesIncludingEntryReturnPC": 56,
+        "chain": [
+          "fract_ui_machine_icon"
+        ]
+      },
+      "fract_ui_overview_draw": {
+        "bytesIncludingEntryReturnPC": 156,
+        "chain": [
+          "fract_ui_overview_draw",
+          "ui_text",
+          "ui_column_bits"
+        ]
+      },
+      "fract_ui_pool_heading": {
+        "bytesIncludingEntryReturnPC": 56,
+        "chain": [
+          "fract_ui_pool_heading",
+          "memcpy"
+        ]
+      },
+      "fract_ui_pool_title_context": {
+        "bytesIncludingEntryReturnPC": 24,
+        "chain": [
+          "fract_ui_pool_title_context",
+          "og_pool_context",
+          "og_pool_signed"
+        ]
+      },
+      "fract_ui_tick": {
+        "bytesIncludingEntryReturnPC": 164,
+        "chain": [
+          "fract_ui_tick",
+          "ui_peak",
+          "og_locate"
+        ]
+      },
+      "fract_ui_visible": {
+        "bytesIncludingEntryReturnPC": 8,
+        "chain": [
+          "fract_ui_visible"
+        ]
+      },
+      "memcpy": {
+        "bytesIncludingEntryReturnPC": 8,
+        "chain": [
+          "memcpy"
+        ]
+      },
+      "memset": {
+        "bytesIncludingEntryReturnPC": 4,
+        "chain": [
+          "memset"
+        ]
+      },
+      "module_draw": {
+        "bytesIncludingEntryReturnPC": 188,
+        "chain": [
+          "module_draw",
+          "fract_ui_draw",
+          "fract_ui_overview_draw",
+          "ui_text",
+          "ui_column_bits"
+        ]
+      },
+      "module_tick": {
+        "bytesIncludingEntryReturnPC": 164,
+        "chain": [
+          "module_tick",
+          "fract_ui_tick",
+          "ui_peak",
+          "og_locate"
+        ]
+      },
+      "modwerk_page_put32.constprop.0": {
+        "bytesIncludingEntryReturnPC": 12,
+        "chain": [
+          "modwerk_page_put32.constprop.0"
+        ]
+      },
+      "og_describe": {
+        "bytesIncludingEntryReturnPC": 16,
+        "chain": [
+          "og_describe"
+        ]
+      },
+      "og_engine": {
+        "bytesIncludingEntryReturnPC": 428,
+        "chain": [
+          "og_engine",
+          "og_join_span"
+        ]
+      },
+      "og_grain_layout_upgrade": {
+        "bytesIncludingEntryReturnPC": 32,
+        "chain": [
+          "og_grain_layout_upgrade"
+        ]
+      },
+      "og_join_span": {
+        "bytesIncludingEntryReturnPC": 60,
+        "chain": [
+          "og_join_span"
+        ]
+      },
+      "og_join_span_reverse": {
+        "bytesIncludingEntryReturnPC": 60,
+        "chain": [
+          "og_join_span_reverse"
+        ]
+      },
+      "og_locate": {
+        "bytesIncludingEntryReturnPC": 36,
+        "chain": [
+          "og_locate"
+        ]
+      },
+      "og_machine_admit": {
+        "bytesIncludingEntryReturnPC": 12,
+        "chain": [
+          "og_machine_admit",
+          "og_machine_base_ready"
+        ]
+      },
+      "og_machine_base_ready": {
+        "bytesIncludingEntryReturnPC": 4,
+        "chain": [
+          "og_machine_base_ready"
+        ]
+      },
+      "og_machine_leave": {
+        "bytesIncludingEntryReturnPC": 12,
+        "chain": [
+          "og_machine_leave",
+          "og_machine_base_ready"
+        ]
+      },
+      "og_machine_owns": {
+        "bytesIncludingEntryReturnPC": 8,
+        "chain": [
+          "og_machine_owns"
+        ]
+      },
+      "og_machine_page": {
+        "bytesIncludingEntryReturnPC": 84,
+        "chain": [
+          "og_machine_page",
+          "page_text"
+        ]
+      },
+      "og_machine_render": {
+        "bytesIncludingEntryReturnPC": 632,
+        "chain": [
+          "og_machine_render",
+          "og_engine",
+          "og_join_span"
+        ]
+      },
+      "og_machine_start": {
+        "bytesIncludingEntryReturnPC": 80,
+        "chain": [
+          "og_machine_start",
+          "og_machine_base_ready"
+        ]
+      },
+      "og_machine_ui_tick": {
+        "bytesIncludingEntryReturnPC": 72,
+        "chain": [
+          "og_machine_ui_tick",
+          "og_grain_layout_upgrade"
+        ]
+      },
+      "og_mix_span": {
+        "bytesIncludingEntryReturnPC": 56,
+        "chain": [
+          "og_mix_span",
+          "og_short_setup"
+        ]
+      },
+      "og_mix_span_reverse": {
+        "bytesIncludingEntryReturnPC": 56,
+        "chain": [
+          "og_mix_span_reverse",
+          "og_short_setup"
+        ]
+      },
+      "og_pool_assign": {
+        "bytesIncludingEntryReturnPC": 92,
+        "chain": [
+          "og_pool_assign",
+          "og_grain_layout_upgrade"
+        ]
+      },
+      "og_pool_chooser": {
+        "bytesIncludingEntryReturnPC": 24,
+        "chain": [
+          "og_pool_chooser",
+          "og_pool_context",
+          "og_pool_signed"
+        ]
+      },
+      "og_pool_context": {
+        "bytesIncludingEntryReturnPC": 20,
+        "chain": [
+          "og_pool_context",
+          "og_pool_signed"
+        ]
+      },
+      "og_pool_controls_changed": {
+        "bytesIncludingEntryReturnPC": 4,
+        "chain": [
+          "og_pool_controls_changed"
+        ]
+      },
+      "og_pool_left": {
+        "bytesIncludingEntryReturnPC": 4,
+        "chain": [
+          "og_pool_left"
+        ]
+      },
+      "og_pool_open": {
+        "bytesIncludingEntryReturnPC": 36,
+        "chain": [
+          "og_pool_open",
+          "og_pool_signed"
+        ]
+      },
+      "og_pool_signed": {
+        "bytesIncludingEntryReturnPC": 8,
+        "chain": [
+          "og_pool_signed"
+        ]
+      },
+      "og_reset": {
+        "bytesIncludingEntryReturnPC": 4,
+        "chain": [
+          "og_reset"
+        ]
+      },
+      "og_short_setup": {
+        "bytesIncludingEntryReturnPC": 4,
+        "chain": [
+          "og_short_setup"
+        ]
+      },
+      "og_size": {
+        "bytesIncludingEntryReturnPC": 4,
+        "chain": [
+          "og_size"
+        ]
+      },
+      "og_stop": {
+        "bytesIncludingEntryReturnPC": 4,
+        "chain": [
+          "og_stop"
+        ]
+      },
+      "page_text": {
+        "bytesIncludingEntryReturnPC": 20,
+        "chain": [
+          "page_text"
+        ]
+      },
+      "page_word": {
+        "bytesIncludingEntryReturnPC": 12,
+        "chain": [
+          "page_word"
+        ]
+      },
+      "pan_birth": {
+        "bytesIncludingEntryReturnPC": 28,
+        "chain": [
+          "pan_birth"
+        ]
+      },
+      "range_text": {
+        "bytesIncludingEntryReturnPC": 4,
+        "chain": [
+          "range_text"
+        ]
+      },
+      "ui_column_bits": {
+        "bytesIncludingEntryReturnPC": 20,
+        "chain": [
+          "ui_column_bits"
+        ]
+      },
+      "ui_peak": {
+        "bytesIncludingEntryReturnPC": 64,
+        "chain": [
+          "ui_peak",
+          "og_locate"
+        ]
+      },
+      "ui_text": {
+        "bytesIncludingEntryReturnPC": 76,
+        "chain": [
+          "ui_text",
+          "ui_column_bits"
+        ]
+      },
+      "ui_unsigned": {
+        "bytesIncludingEntryReturnPC": 16,
+        "chain": [
+          "ui_unsigned"
+        ]
+      }
+    },
+    "maxOwnCallbackBytes": 632,
+    "externalBoundaries": [
+      {
+        "caller": "og_machine_render",
+        "at": "0x681e",
+        "target": "native FLEX render"
+      },
+      {
+        "caller": "og_machine_render",
+        "at": "0x68d0",
+        "target": "native FLEX render"
+      },
+      {
+        "caller": "og_machine_render",
+        "at": "0x6a2a",
+        "target": "native FLEX render"
+      },
+      {
+        "caller": "og_machine_start",
+        "at": "0x6ffc",
+        "target": "native FLEX START"
+      },
+      {
+        "caller": "og_machine_start",
+        "at": "0x7102",
+        "target": "native FLEX START"
+      },
+      {
+        "caller": "og_pool_left",
+        "at": "0x72d4",
+        "target": "native browser leave"
+      },
+      {
+        "caller": "og_pool_open",
+        "at": "0x7aa8",
+        "target": "base stock-pool open"
+      },
+      {
+        "caller": "og_pool_open",
+        "at": "0x7abc",
+        "target": "native browser redraw"
+      },
+      {
+        "caller": "og_machine_ui_tick",
+        "at": "0x7de0",
+        "target": "native parameter publication"
+      }
+    ],
+    "scope": "Own frames of one callback activation, including outgoing arguments and entry return PC. Excludes stock/base frames, interrupt prologues, task stacks and interrupted callbacks. Not a whole-system stack reserve."
+  },
+  "worstCaseColdFireCycles": null,
+  "cycleStatus": "NOT_MEASURED; compiler frames and instruction counts are not hardware timing",
+  "nativeInputs": {
+    "scripts/source-runtime-package.py": "6d944271ad48b6751ca0f52136901d93dbed376b69c30e2c6ad9dbc56ece51e1",
+    "module/base_binding.c": "217dc052fbdffd80733c852550596fa6f1207d7921647a25f89077a23f5bbf7e",
+    "module/base_binding.h": "ba584ceb7b5616a819db330303fc89228f75254aa9cd2158a77fd550a4a05e61",
+    "module/chunk.h": "d39d92d23b559028102f57b200148f3997578fd9882d8937b7f27e438b1efe4a",
+    "module/control_layout.h": "4085f97129fbaf36fe808fba8081bdfbe5b5d175dd47f857d08bc2e98d2e708f",
+    "module/cpu_profile.h": "4fc9ced2fa683f30d3f3c59516a769b41b5dab85ff2f3dacb9126d9aa113ee20",
+    "module/engine/grain.c": "92889c4925d28f7a20b0fac2ddaf6dc42751fea10fee829d379dbab4b33ec96e",
+    "module/engine/kernel.h": "ffd5a9cd274145db26cc988afacce5e007d35c79a36ce8a44914e281ae861d17",
+    "module/engine/kernel.s": "c4d11829cdc62ae92b08fc5383aed854cb2c17ad1126b0152e6ac1353cab6021",
+    "module/engine/page_coordinates.h": "59720b052ab4e43b00ef48a9a292baea3f862bda9c818470e64b929b5a1f5b54",
+    "module/engine/pitch.c": "be00d669d7d8f15a12016a3cc6eb34abb30c8eede8e2c201ab6cce90476bee0b",
+    "module/engine/source.c": "df2abb3a8b6201cff01ee8b380d61c2535390d7f1c04204ebe3b22157bc0a0d6",
+    "module/fract_ui.h": "c70699b713c4ae0a1f3720e4b34bce546de40ac43feaebfb141c93e43659bb3a",
+    "module/machine.c": "e25f4fac61ff122b4e031897d4b2974a9a7cb3ed2a009a6b42f4d6c46dff455b",
+    "module/machine.h": "5d77969beb3aa41b359facfa9d4e267d3d986f2d306c9264a65b1d2cc98cb854",
+    "module/native_source.h": "071d9aee84067d5c165606e555d007c737a8c7aef99811ed3fce926e1ee9f8ab",
+    "module/registration.c": "4c9c91def244eaaaff0db7999a05a68dc15ff602131cd752ed35d3fc45fa7301",
+    "module/render.c": "68ee8e71398c672ef84e075051a1c08f0e141e234a902f244c7d5d66923fa69d",
+    "module/render.h": "2c81a00122910d8ec71d44917246e5b69fd6ca68e53772700f3c6672d3ffa773",
+    "module/runtime-build.json": "dcad8b276952718b61fb59cca207c8634098e94c15c9f965a4ffb30b9fabd10e",
+    "module/runtime.json": "10e2234c9a3fcceda4407f51a546bf29b206d298cd7ea0c50e846b0cc046a204",
+    "module/sample_pool.h": "157769f26f7ff4f8b0fb5f1cf42701a95e31616312c9ab234e958080e864b5e9",
+    "module/selection.h": "d7d46f2187f63d3aa7c69d9017d63d7917a94cb99e3ff0e2bcf15f883d8a9b41",
+    "module/start.c": "e1e7e805090a2022f1bea33fe4f98f4b4698d91edb3388df7e2701e2547990c3",
+    "module/support/control.c": "f4035fa092840db61b7cbb7141e1af8cefebd91875748e9c4b05ad9c6fae62e4",
+    "module/support/grain.h": "accd83129e5d243abcfe6ddb27d3bee9440b3d1c25e2c98aff4e56c87c2f22d3",
+    "module/support/pan.h": "e1d966ea6d71083fa3001997147999e45088001d6c9f7f32225c2dfd5d69047b",
+    "module/support/pan_gains.h": "c6c798f10a88d1908039112cafb3cd6cde8644afc01e43c154b49e9c7d3eb421",
+    "module/support/shapes.h": "fec26545e613ea7fa60a0d27f1aa906e864ea439ff5d82b7c1dbf3b00496e77a",
+    "module/support/sizes.h": "b3368e27e4cf2e37d586adf624aec1e78778bd7d9001abf383f3a7dbadecfbd5",
+    "module/support/source.h": "75bbfd34bc9da1bf315650516eb3118c6472d6a845a56f471d3b39cd70d54771",
+    "module/support/window.h": "e14b013792e21cb7b326c7593d64151cbe61984d231799399c5b2b2addae4005",
+    "sdk/machines/octatrack/base-binding.json": "0e852ad36932712e7a7ebc37ba608929febce3185f9ccea62c049e3dceac1fa4",
+    "sdk/machines/octatrack/events.json": "b0b54662c72f1d75c6a21f7151fcfd6685ec671430077b57c7b4e4b61115e2de",
+    "sdk/machines/octatrack/events.py": "3f8e9f4fdb4396f4dd82afe53db047ab9ea4f3a9104d15acaf3b43e2a05ffd06",
+    "sdk/machines/octatrack/include/modwerk_events.h": "42415791ac6cbc294c2353f36a7914278453b10e8998ac406b0980bc9ae2d0cd",
+    "sdk/machines/octatrack/include/modwerk_page.h": "19f02c99b474ea05c3e3741d4e323bc3139a2748b46aa1427af6ad2b0e2e448c",
+    "sdk/machines/octatrack/include/modwerk_sample_editor.h": "0ccd65903de82bc59a9a6ec641407d6f36f0097a32d2f3f99a2f6e8588e5fba7",
+    "sdk/machines/octatrack/include/modwerk_scale.h": "4243bc33c393dafbe1b470a251e9e4354d146e504f28b7a79d5b0866ba83c1ff",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/dsp_ledger.h": "26a8b091440471fbb457573792aaa20e614bc3ffaf6b0e3e02f7da4c1d688f62",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.h": "5c6a9b732a17900f08731e0a5a74def99a244c7f1643263628686ba6f0dd29c1",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hook_driver.h": "91554cb0ff7f6d00b3e04eb0fd8f950dd74ad5674d01a1b95a9cf8c774562143",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hook_resources.h": "adf14294cb1d0813662da1b669ce27db75c3ce7f2e8329100a05cebf2b865018",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hooks.h": "04f062478016eb69b14c0f0c150e87bb4107d66cdea5afdf047068a4f9511e5e",
+    "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
+    "sdk/runtime/loader/build.py": "1cab81067040bec39f391601d5f4b90e658da34dbc7351f97c4aa92a5d999dd4",
+    "sdk/runtime/loader/context.h": "7c811eb9f3bccef7b03a129f2ebe00ba477422f07315e682f6211d761aacf44b",
+    "sdk/runtime/loader/journal.h": "53638e61ccf6f4281858feba2efd737ba21520236a25226d85e1e89413b8feeb",
+    "sdk/runtime/loader/loader.h": "f105ada3121166179bd8ac199883e5185916329ea427eb0e8c64338eeaa50b01",
+    "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
+    "sdk/runtime/loader/set_package.h": "d7cccb252d82a02b59b9b0f54115811838f790f499ce9d0e0c49ac61a53ddcda",
+    "sdk/runtime/loader/tests/events/runtime_events.h": "02f29ef85b4fe43533b9f7af51ec1ec2beafc9f6611345cb7dfbb8ea7908ea7b",
+    "sdk/runtime/loader/tests/set_test.h": "c11122b0d45f39adcc570144fbbfaee260b0595a28cc8a0c0a934b041f4108fd",
+    "sdk/runtime/logging/freestanding.c": "698d66b43a956e789c8b3057375a195db12e9a88968d2fbb3c7ce09a8021b575",
+    "sdk/runtime/m68k_codegen.py": "2ba57326583cbb0f9ada1d7c2b09fe4577a1ce35693b78dffaa4af7617dedfab",
+    "sdk/runtime/upload/upload.h": "4717f5f55c48e7d3f1d045aee72b5cf5e1194f707eb4a9da2bef0ca48b22ef6b",
+    "sdk/runtime/upload/vendor.h": "e6cd2ffd6137f668c6939a2c4a3990848cf05e92e3f84d04c862bc23e229b363",
+    "sdk/runtime/upload/wire.h": "781b3dc8cd4e59ffdd4e2c60b1b1f99356050be58c3c529b945d82e60e768829",
+    "src/engine/assets/octatrack-base.elemod": "236fa80e212e6b02909d9f7fba3ee75b425827efa81d4c9b5770fada7f7661ff"
+  }
+}

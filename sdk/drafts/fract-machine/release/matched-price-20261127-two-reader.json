@@ -1,0 +1,47 @@
+{
+  "status": "FOUR_FORMAT_MEAN_PRICE_CHECK_OBSERVED_PASS",
+  "packageSha256": "9b86e74087dc4a7495a86850b0dcc3f45881335285d8519e1b4e3f03366e0a60",
+  "baseIdentity": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+  "rows": [
+    {
+      "format": "16m",
+      "mode": 2,
+      "flexMean": 31.6,
+      "flexQuietMean": 25.1,
+      "fractQuietMean": 31.0,
+      "defaultAdded": 28.3,
+      "extremeAdded": 32.1
+    },
+    {
+      "format": "16s",
+      "mode": 3,
+      "flexMean": 31.8,
+      "flexQuietMean": 27.1,
+      "fractQuietMean": 31.0,
+      "defaultAdded": 29.0,
+      "extremeAdded": 32.9
+    },
+    {
+      "format": "24m",
+      "mode": 0,
+      "flexMean": 31.7,
+      "flexQuietMean": 27.1,
+      "fractQuietMean": 31.0,
+      "defaultAdded": 28.7,
+      "extremeAdded": 32.2
+    },
+    {
+      "format": "24s",
+      "mode": 1,
+      "flexMean": 31.7,
+      "flexQuietMean": 27.1,
+      "fractQuietMean": 31.0,
+      "defaultAdded": 29.1,
+      "extremeAdded": 33.5
+    }
+  ],
+  "declaredPrice": 40,
+  "largestObservedActiveMinusQuietMean": 33.5,
+  "conditions": "Normal package; FR27TW2 banksA\u2013D,Part1native FLEXloop2/TSTRoff,Part3FRACTdefaults/Part4extreme;120BPM64T1trigs;44.1k88200frames;3swarm+6smeasured perwindow;4chUSBcompanion installed,CoreAudio recorder idle. Source mode and voice slot verified eachwindow.",
+  "limits": "Observed mean charge only; no static worst-case/peak guarantee, listening or whole-system headroom claim."
+}

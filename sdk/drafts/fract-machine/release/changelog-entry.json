@@ -1,0 +1,10 @@
+[
+  {
+    "version": "0.1.7-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "Allows the single FRACT owner on any audio track T1\u2013T8, including both DSP cores.",
+      "Keeps the two-grain engine and saved Part format; exact-build qualification is in progress."
+    ]
+  }
+]

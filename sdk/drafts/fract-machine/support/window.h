@@ -49,6 +49,25 @@ uint16_t og_hann_gain[65] = {
 };
 #endif
 #endif
+/* Exact pairs for the native shortest-Hann loop: one pool read supplies
+ * both the unchanged left value and its next-entry delta. */
+#ifdef OG_NATIVE_STAGE_ONE
+#ifndef OG_WINDOW_STORAGE
+extern const uint32_t og_hann_packed[64];
+#else
+const uint32_t og_hann_packed[64] = {
+    0x0000000du,0x000d0028u,0x00350041u,0x0076005cu,0x00d20075u,0x0147008fu,0x01d600a8u,0x027e00c1u,
+    0x033f00dau,0x041900f1u,0x050a0108u,0x0612011fu,0x07310134u,0x0865014au,0x09af015eu,0x0b0d0172u,
+    0x0c7f0184u,0x0e030196u,0x0f9901a7u,0x114001b6u,0x12f601c5u,0x14bb01d3u,0x168e01dfu,0x186d01eau,
+    0x1a5701f4u,0x1c4b01fdu,0x1e480205u,0x204d020bu,0x22580210u,0x24680214u,0x267c0217u,0x28930217u,
+    0x2aaa0218u,0x2cc20217u,0x2ed90214u,0x30ed0210u,0x32fd020bu,0x35080205u,0x370d01fdu,0x390a01f4u,
+    0x3afe01eau,0x3ce801dfu,0x3ec701d3u,0x409a01c5u,0x425f01b6u,0x441501a7u,0x45bc0196u,0x47520184u,
+    0x48d60172u,0x4a48015eu,0x4ba6014au,0x4cf00134u,0x4e24011fu,0x4f430108u,0x504b00f1u,0x513c00dau,
+    0x521600c1u,0x52d700a8u,0x537f008fu,0x540e0075u,0x5483005cu,0x54df0041u,0x55200028u,0x5548000du,
+};
+#endif
+#endif
+
 /* SHPE (scripts/shapes.py, shapes.h): 32 rows beside Hann, each an attack
  * half read ascending below its switch and a release half read by distance
  * from the grain's end, interpolated like og_hann_gain. A grain latches its

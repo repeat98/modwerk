@@ -1,28 +1,10 @@
-# FRACT resources — current preparation, 25 November 2026
+# FRACT resources —27 November2026
 
-Unlisted `0.1.3-experimental`, package `c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29`,
-base `eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0`.
-The [current audit](resource-audit-20261125.json) accounts for **31,824 resident
-bytes**, 63,648 for two retained copies, and **712 bytes of own callback stack**.
-The loader header is now 754 bytes, rounded to 768; image 30,416 plus BSS 636
-rounds to 31,056. No DSP code/state or separate sample-arena allocation is added.
-These counts establish neither free headroom nor hardware timing.
+Unlisted0.1.7 package `f8063d691afc26ab4fe69a3fa709d2b12c68d93b203f0a84536d1755d33755c4`, base `24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5`. [Exact-image audit](resource-audit-20261127-iteration18.json): **67,376 resident pool bytes**,134,752 for two copies and **616 own callback stack bytes**. Header754 rounds to768; image65,964 plus BSS636 rounds to66,608. No DSP or sample-arena allocation.
 
-`qualification/resources.py` pins this image/package and the current loader hashes.
-The 33 indirect sites were reviewed: unchanged functions keep their instruction
-offsets and operands; `og_machine_page` now calls `page_text`, `page_word` and
-the SDK's `modwerk_page_put32.constprop.0`. Its five indirect stores resolve to
-the one eight-byte compiler frame. The known GCC .su clone label is mapped
-explicitly, under the exact image pin. The base pool helper follows the current
-linked export. Target sizeof probes confirm 754/88/74 bytes for module/owner/site,
-63 hook slots and four-byte pointers, matching the loader's allocation formula.
-Stock/base frames, interrupt/task nesting and interrupted callbacks are excluded.
+The reviewed graph contains33 indirect sites, matched against the independently disassembled two-reader prototype. Regular/joined assembly frames use48/56bytes; the one-frame leaf uses4, and the short-Hann helper has no local frame. Unknown targets, recursion, changed images or loader layouts refuse reuse. Base/stock/interrupt frames are excluded; this is no whole-system stack reserve or timing bound.
 
-Reproduce on this source with GCC 16.2.0:
-
-```sh
-python3.12 -B sdk/drafts/fract-machine/qualification/resources.py --output /private/new-resource-audit.json
-```
+The 33 indirect sites match the prior two-reader image. Only the admission limit instruction byte changed; resource accounting was rerun. Current-build hardware timing remains unmeasured. Prior0.1.6 development9b86 active USB observations remain historical.
 
 ## Historical candidate resources — 10 November 2026
 
@@ -72,20 +54,16 @@ including own outgoing arguments/JSR return PCs and 48/56-byte assembly leaves.
 Stock/base frames, interrupt prologues, task stacks and interrupted activations
 are excluded. This is not a whole-system stack reserve.
 
-## Timing and owner decision
+## Historical 0.1.4 timing and owner decision
 
-Worst own render per block, its runtime budget, matched native-FLEX longest-frame
-and idle measurements, and the audio-path stress run remain unmeasured.
-`../evidence/performance.json` records null fields and methods, as the owner
-[requested](https://github.com/repeat98/modwerk/pull/1274#issuecomment-6705531953).
-The generic MIDI-flood audit is not a measurement of FRACT's audio path. Its
-unfilled audit must not be represented as passed. The owner will decide any
-first-release waiver; no waiver has been granted. The earlier unexplained
-PROJECT RELOAD stall remains in TESTING.md and is not dismissed by this audit.
+The [hardware report](hardware-20261126.md) binds matched FLEX/diagnostic timing
+to separate development packages. Both four-format matrices had no skips, but
+normal 0.1.4 failed modulated USB-audio stress on20- and 4-channel layouts. Price40
+covers observed mean deltas; it is not a peak or static worst-case guarantee.
+Timer intervals include native FLEX and probe overhead and are not CPU cycles.
+Frame maxima are scoped to the named external guard reset after a 3-second flush.
 
-The [offline measurement kit](../qualification/README.md) now prepares a private
-wrapper and matched project cases. Original executable sections remain identical
-and the normal package reproduces exactly. The probe's six decoded emulator
-windows validate its data path only: their clock model does not qualify hardware
-microseconds. Its base frame peak is since boot, not a reset window maximum;
-this read-only method's limitation remains explicit for owner review.
+The exact released-base package remains physically untested. Performance repair,
+stage 1 rerun, remaining companion/audio/lifecycle cases and author listening,
+Keep/reboot are required. No owner waiver or release approval has been granted.
+The historical PROJECT RELOAD incident remains separately recorded in TESTING.md.

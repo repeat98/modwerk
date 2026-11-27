@@ -1,0 +1,28 @@
+{
+  "status": "OWN_MEMORY_AND_CALLBACK_STACK_ACCOUNTED; HARDWARE_QUALIFICATION_PARTIAL",
+  "packageSha256": "bec65df07ae21e76c707247fd97f9851cc424c6d8f6e27ca414d18d9727c9454",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "codeAndInitializedDataBytes": 30416,
+  "zeroInitializedStateBytes": 636,
+  "imagePlusBssBytes": 31052,
+  "runtimeHeaderBytes": 754,
+  "alignmentBytes": 18,
+  "residentPoolExtentBytes": 31824,
+  "sameCandidateReplacementPeakPoolBytes": 63648,
+  "oldCandidateReplacementPeakPoolBytes": 63648,
+  "packageBytes": 31948,
+  "relocations": 227,
+  "stockCopies": 9,
+  "stack": {
+    "maxOwnCallbackBytes": 712,
+    "method": "GCC -fstack-usage plus reviewed acyclic own-call graph; 48/56-byte assembly leaves; 4-byte JSR return PCs",
+    "scope": "Own frames of one callback activation, including outgoing arguments and entry return PC. Excludes stock/base frames, interrupt prologues, task stacks and interrupted callbacks. Not a whole-system stack reserve.",
+    "report": "resource-audit-20261126.json"
+  },
+  "worstCaseColdFireCycles": null,
+  "dspCodeWordsAdded": 0,
+  "dspStateWordsAdded": 0,
+  "hardware": "Stage1 FAILED on separately named development build: modulated USB-audio stress skipped renders on20- and4-channel layouts. Exact released-base package physically untested. See hardware-20261126.md.",
+  "details": "resources.md",
+  "previousCandidateVersion": "0.1.3-experimental"
+}

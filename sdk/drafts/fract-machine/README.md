@@ -1,10 +1,16 @@
 # FRACT source draft
 
-Version 0.1.3-experimental · author @ex1010
+Version 0.1.7-experimental · author @ex1010
+
+Two live readers are implemented with the earlier128-byte/three-slot storage ABI.
+Native inputs are committed at0de973642. Development9b86 passed the four-format
+matrix and a122.233s active4chUSB run without new guarded skips. Full stage1 is
+incomplete: the fixed procedure failedT5restriction/onePart4transition. This
+remains an unpublished candidate; see [current evidence](release/hardware-20261127-iteration17.md).
 
 ## Overview
 
-FRACT is a three-grain sample track machine. POS moves through the sample from
+FRACT is a two-grain sample track machine. POS moves through the sample from
 left to right; SIZE expands the grain span around that center and wraps at the
 sample edges. It uses native FLEX for pitch and voice playback. This replaces
 the earlier FX2/SPACE proposal in the consolidated draft submission #926.
@@ -33,13 +39,16 @@ and bounded pitch editor. Defaults below are the saved values.
 | SETUP A | PAN | 0 | Random grain stereo width; 0 keeps both channels balanced. |
 | SETUP C | SRNG | FULL | Spread range: FULL source, or LOCAL capped at 88,200 source frames. |
 
-Three grains overlap at fixed maximum density. Finite AMP envelopes silence the
+The overview shows the whole sample's amplitude envelope. A steady-level tone
+can appear as a solid band; changes in amplitude remain visible.
+
+Two grains overlap at fixed maximum density. Finite AMP envelopes silence the
 voice; INF sustains. Disabled SETUP slots are not user controls. There is no
 active SPACE processor or FX2 effect.
 
 ## Usage
 
-On a compatible private paired build, select one track T1–T4, open SRC SETUP and
+On a compatible private paired build, select one track T1–T8, open SRC SETUP and
 choose FRACT. Open its sample browser and select a loaded FLEX-pool sample.
 Return to MAIN for POS/SIZE and the remaining controls. Only one FRACT owner is
 admitted at a time. These controls are present in the tested private candidate;
@@ -54,7 +63,7 @@ this source draft cannot be installed from the public configurator.
 ## Compatibility and limitations
 
 Target OS is Octatrack 1.40C. The registry has eight audio-track slots; the
-current FRACT admission policy allows one owner on T1–T4 only. This is an
+current FRACT admission policy allows one owner on T1–T8. This is an
 intentional private prototype limit, not eight simultaneous instances.
 
 START dispatch from #1029 is merged. The inherited native-FLEX reader fix is
@@ -64,8 +73,9 @@ the author completed the short physical check on base `9b3ba417` with a private
 paired FRACT build; USB confirmed that exact base and module set after power-on.
 See TESTING.md for identities, reported observations and limits. No active catalogue entry or public package exists. The earlier 0.1.1 candidate has the 6 November functional hardware report in
 TESTING.md. The historical 0.1.2 candidate has a named-build functional hardware report.
-Current 0.1.3 is relinked for released base0.8.1 and has updated shared page
-controls; current-build hardware, timing/stress and qualification remain pending.
+Current 0.1.6 targets released base0.8.2 and declares a 40% CPU budget after
+physical four-format measurements found the implicit 12% charge insufficient.
+The current two-reader matrix observed at most33.5added mean points; see [the named hardware record](release/hardware-20261127-iteration17.md). Full qualification and first-release approval remain pending.
 
 Historical 0.1.1 results remain in TESTING.md. The historical 0.1.2 candidate's Part and
 project reload, lifecycle and cold boot are scoped in

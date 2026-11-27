@@ -1,0 +1,29 @@
+{
+  "status": "OWN_MEMORY_AND_CALLBACK_STACK_ACCOUNTED; DEV_FORMAT_AND_USB_CASES_PASSED_FULL_STAGE1_INCOMPLETE",
+  "packageSha256": "8c9603a42e6a4ab369d8bfe94fe1f5275a9b4a2c48b285323deb829d486294f0",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "codeAndInitializedDataBytes": 65964,
+  "zeroInitializedStateBytes": 636,
+  "imagePlusBssBytes": 66600,
+  "runtimeHeaderBytes": 754,
+  "alignmentBytes": 22,
+  "residentPoolExtentBytes": 67376,
+  "sameCandidateReplacementPeakPoolBytes": 134752,
+  "oldCandidateReplacementPeakPoolBytes": 134720,
+  "packageBytes": 67284,
+  "relocations": 240,
+  "stockCopies": 3,
+  "stack": {
+    "maxOwnCallbackBytes": 616,
+    "method": "GCC -fstack-usage plus reviewed acyclic own-call graph; 48/56-byte regular/joined assembly frames, 4-byte single-frame leaf, zero-local short-Hann helper; 4-byte call return PCs",
+    "scope": "Own frames of one callback activation, including outgoing arguments and entry return PC. Excludes stock/base frames, interrupt prologues, task stacks and interrupted callbacks. Not a whole-system stack reserve.",
+    "report": "resource-audit-20261127-iteration17.json"
+  },
+  "worstCaseColdFireCycles": null,
+  "dspCodeWordsAdded": 0,
+  "dspStateWordsAdded": 0,
+  "hardware": "Exact development9b86:20format windows,122.233s active4chUSB,12settled Part transitions and T2\u2013T4 placement passed; full fixed procedure failed T5 restriction/one Part4 timeout. Released-base8c96 physically untested.",
+  "details": "resources.md",
+  "previousCandidateVersion": "0.1.5-experimental",
+  "previousCandidatePackageSha256": "f291ba64755853538d965a90eb467291b91a790672cbd1b6b50f6dfd98590e73"
+}

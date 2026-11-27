@@ -13,8 +13,10 @@ static int og_machine_owns(unsigned track) {
     if (track >= 8 || bank < 0x40000000u || bank >= 0x47f00000u) return 0;
     uintptr_t part = bank + 0x8ed80u + (U8(0x100b14cfu) & 3u) * 6322u;
     uintptr_t sig = part + 60u + 30u * track;
-    return U8(part + 0x22u + track) == 1 && U8(sig) == 'F' &&
-        U8(sig + 1) == 'R' && U8(sig + 2) == 1;
+    /* The signature lives inside the 30-byte record. One read avoids three
+     * separate Part reads on every ownership check. */
+    return U8(part + 0x22u + track) == 1 &&
+        (U32(sig) & 0xffffff00u) == 0x46520100u;
 }
 #define OG_MACHINE_OWNS(t) og_machine_owns(t)
 #endif

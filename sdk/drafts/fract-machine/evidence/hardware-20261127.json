@@ -1,0 +1,107 @@
+{
+  "schema": 1,
+  "hardware": true,
+  "date": "2026-11-27",
+  "module": "fract-machine",
+  "version": "0.1.5-experimental",
+  "base": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+  "package": "a3200c887f24112f5f4a94d60626458a8b516baf7baf4b5e5abdfe4b41516066",
+  "releasedBasePackage": "ee63420569f637d78d3eabba6b209366d76db4a1587e460996cfd1a8b7ff8865",
+  "releasedBasePackageHardware": "NOT_RUN",
+  "sourceFixture": {
+    "project": "FRCT27HW",
+    "pattern": "A06",
+    "part": 2,
+    "tempoBpm": 120,
+    "sampleMode": "16-bit mono",
+    "sampleFrames": 88200,
+    "all64TrigAndLockRowsVerified": true,
+    "lfoSpeedDepth": [
+      20,
+      36,
+      52,
+      32,
+      32,
+      32
+    ],
+    "lfoDestinationWave": [
+      0,
+      1,
+      3,
+      1,
+      1,
+      1
+    ]
+  },
+  "standalone": {
+    "state": "OBSERVED_NO_FAULTS_NOT_RELEASE_QUALIFICATION",
+    "seconds": 120.32516541692894,
+    "movingControlOperationsCompleted": 22,
+    "initialSkips": 32,
+    "lastRecordedSkips": 32,
+    "newSkips": 0,
+    "observedFrameMaxPercent": 92.5,
+    "rawReceiptSha256": "9a0e3a644c174dd99eb270ac026109c6c2d34cfb42183c56422909e74eb6db1e"
+  },
+  "activeFourChannelUsbAudio": {
+    "state": "STOPPED_NOT_A_PASS",
+    "seconds": null,
+    "movingControlOperationsCompleted": 0,
+    "initialSkips": 35,
+    "lastRecordedSkips": 36,
+    "newSkips": 1,
+    "observedFrameMaxPercent": 105.2,
+    "rawReceiptSha256": "070651db41a3c7e21d3c2ca51eb7c92fde79c0dc1fe16ac216e7275a21034b7e",
+    "prePlaybackSkips": 32,
+    "playbackWarmupNewSkips": 3,
+    "newSkipsSincePrePlayback": 4,
+    "newSkipsDuringFirstControlCheck": 1
+  },
+  "usbTrialTotalNewSkips": 7,
+  "newCrash": 0,
+  "newDspStall": 0,
+  "retainedHistoricalStallSerial": 7,
+  "qualification": "FAILED_STAGE1_NOT_RELEASE_READY",
+  "restoration": {
+    "base": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+    "phase": "normal",
+    "inventory": [],
+    "missing": [],
+    "setIdentity": "87f28e38d5fe18c3f6133158ddb0369f9b62f2a46b0ada8c8fc19de1ca9885e8",
+    "slots": {
+      "layout": "two",
+      "running": 1,
+      "fellBack": false,
+      "confirmed": true,
+      "slots": [
+        {
+          "generation": 8,
+          "whole": true,
+          "confirmed": true,
+          "tries": 1
+        },
+        {
+          "generation": 10,
+          "whole": true,
+          "confirmed": true,
+          "tries": 1
+        }
+      ]
+    },
+    "originalPartCopiesExact": 8,
+    "originalCfFilesExact": 28,
+    "originalCfFilesOverwritten": 0,
+    "removedOwnProject": "FRCT27HW",
+    "moduleKeep": false,
+    "physicalPowerCycle": false,
+    "ownedLinksClosed": true
+  },
+  "limits": [
+    "Physical timer observations are not CPU cycles.",
+    "No current-build full matched price/four-format matrix.",
+    "Standalone counters are not analog audio capture or listening.",
+    "Failed USB capture is not MAIN/CUE dropout qualification; CUE routing unverified.",
+    "No module Keep or physical reboot in this repair.",
+    "Diagnostic and earlier optimization packages retain separate identities."
+  ]
+}

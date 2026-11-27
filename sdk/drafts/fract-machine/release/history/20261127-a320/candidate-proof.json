@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "id": "fract-machine",
+  "bytes": 53852,
+  "imageBytes": 52428,
+  "bssBytes": 636,
+  "relocations": 244,
+  "eventWords": 38,
+  "sha256": "ee63420569f637d78d3eabba6b209366d76db4a1587e460996cfd1a8b7ff8865",
+  "authoredImageSha256": "2efdd40bb99dba2a27cb96c35a66bb4cc50c49f7c2ad6594ad1c3d2d42149c99",
+  "reviewedImageSha256": "96ffb083f9e517170ab6af9f2e0592b801df18e89a3793d87396ae1a4fb4bc50",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "basePackageSha256": "236fa80e212e6b02909d9f7fba3ee75b425827efa81d4c9b5770fada7f7661ff",
+  "baseRunOrigin": 1084839424,
+  "baseImports": [
+    {
+      "offset": 17534,
+      "name": "mw_stock_pool_open",
+      "addend": 0
+    }
+  ],
+  "stockCopies": 5,
+  "stockFills": 0,
+  "stockVerification": "PASS",
+  "hardware": "NOT_RUN",
+  "version": "0.1.5-experimental",
+  "qualification": "BLOCKED_USB_AUDIO_STRESS_AND_CURRENT_BUILD_STAGE1",
+  "hardwareReport": "qualification-20261127.md"
+}
