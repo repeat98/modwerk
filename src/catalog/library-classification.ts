@@ -80,7 +80,6 @@ const modules: Readonly<Partial<Record<string, Classification>>> = {
   'analog-rytm-mkii/ctrl-all': ['performance', 'Performance controls'],
   'analog-rytm-mkii/ctrl-in-perf': ['performance', 'Macros'],
   'analog-rytm-mkii/control-in-actions': ['performance', 'Performance controls'],
-  'analog-rytm-mkii/qperf': ['performance', 'Macros'],
   'analog-rytm-mkii/scene-mutes': ['performance', 'Mutes & solos'],
   'analog-rytm-mkii/silent-pad-trig': ['performance', 'Mutes & solos'],
   'analog-rytm-mkii/temp-save': ['system', 'Save & recall'],

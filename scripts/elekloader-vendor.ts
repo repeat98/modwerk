@@ -22,26 +22,34 @@ export const UPSTREAM_CATALOG = 'vendor/elekloader/upstream-catalog.json', SITE_
 export const isCatalogRecord = (path: string) => /^sdk\/imports\/elekloader-[a-z0-9][a-z0-9.-]*\.json$/.test(path)
 type Lock = { schema: number; kind: string; kit: { version: string; protocol: number; files: Record<string, string>; replaced?: Record<string, string> }; catalog: { revision: string; sha256: string } }
 
-/** Kit files Modwerk replaces with its own implementation: each holds a re-export of the module named here, and the
- * lock keeps the upstream file's sha256 under kit.replaced, so an update can say when upstream changed one. */
+/** Kit files Modwerk replaces: each holds a re-export of the module named here, and the lock keeps the upstream
+ * file's sha256 under kit.replaced, so an update can say when upstream changed one. The module is Modwerk's own
+ * implementation, or for KIT_AMENDED the kit's own file with Modwerk's marked lines. */
 export const KIT_REPLACEMENTS: Readonly<Record<string, string>> = {
   'src/codec/aplib.ts': 'src/engine/elektron/codec/pack.ts',
   'src/codec/elz.ts': 'src/engine/elektron/codec/depack.ts',
   'src/codec/transport.ts': 'src/engine/elektron/codec/transport.ts',
+  'src/devices.ts': 'src/engine/elektron/kit-devices.ts',
   'src/isa/coldfire.ts': 'src/engine/elektron/codec/coldfire-kit.ts',
 }
+/** Replaced kit files whose module is the kit's own file, kept in Modwerk's tree with the lines Modwerk adds or changes
+ * marked MODWERK (kit-devices.test.ts holds the rest to the upstream file): not Modwerk's implementation. */
+export const KIT_AMENDED: readonly string[] = ['src/devices.ts']
 /** What a replaced kit file holds: the re-export, relative to vendor/elekloader/kit/<path> unless `from` is given. */
 export const replacementText = (path: string, from = '../'.repeat(path.split('/').length + 2) + KIT_REPLACEMENTS[path]) =>
   '// SPDX-License-Identifier: GPL-3.0-or-later\n'
-  + '// Modwerk replaces this kit file with its own implementation (vendor/elekloader/README.md, "Replaced kit files").\n'
+  + (KIT_AMENDED.includes(path)
+    ? '// Modwerk ships this kit file from its own tree, with its changes marked (vendor/elekloader/README.md, "Replaced kit files").\n'
+    : '// Modwerk replaces this kit file with its own implementation (vendor/elekloader/README.md, "Replaced kit files").\n')
   + `export * from '${from}'\n`
 /** The kit's NOTICE as Modwerk ships it: whole, after a note naming the replaced files. Its "Code from other projects"
  * section stays, since the replacements keep those files' formats and were checked against outputs recorded from them. */
 export function kitNotice(notice: string) {
-  const replaced = Object.keys(KIT_REPLACEMENTS).join(', ')
+  const replaced = Object.keys(KIT_REPLACEMENTS).filter(path => !KIT_AMENDED.includes(path)).join(', ')
   return `Modwerk ships this kit with ${replaced} replaced by Modwerk's own implementation (vendor/elekloader/README.md). `
     + 'They keep the formats of the code credited under "Code from other projects" below and were checked against outputs '
-    + 'recorded from it, so that credit stays.\n\n' + notice
+    + `recorded from it, so that credit stays. ${KIT_AMENDED.map(path => path + ' (' + KIT_REPLACEMENTS[path] + ')').join(', ')} `
+    + `${KIT_AMENDED.length === 1 ? 'is the kit\'s own file' : 'are the kit\'s own files'}, with the lines Modwerk adds or changes marked MODWERK.\n\n` + notice
 }
 type Pin = { file: string; sha256: string; id: string; version: string; device: string; os: string; requires?: string[]; source?: { repo?: string; path?: string } }
 export type CatalogFile = { schema?: number; kind?: string; about?: string; revision: string; cores: Pin[]; mods: Pin[] }

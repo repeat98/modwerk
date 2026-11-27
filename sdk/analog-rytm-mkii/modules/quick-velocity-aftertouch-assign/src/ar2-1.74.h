@@ -12,6 +12,13 @@
 #define FIXED_VEL_GET_AT 0x400b7724         // sequencer state -> FIX on
 #define FIXED_VEL_SET_AT 0x400b7702         // sequencer state, on
 #define IS_KEY_HELD_AT 0x40081c28
+// Tracks. Stock selects one only through 0x400d4ba0(track, keep_fx): TRK + pad passes 0;
+// the pad handler (OS 1.74, 0x400c7e84..0x400c7ebc) selects a pad's track when AUTO TRK
+// SWITCH is on, 0x400b606c(globals) answering it in d0's low byte, and passes keep_fx =
+// (the selected track is the FX track 12). The globals are project + 236 (0x400ae49e).
+#define PROJECT_GLOBALS_AT 0x400ae49e
+#define AUTO_TRK_SWITCH_AT 0x400b606c
+#define SELECT_TRACK_AT 0x400d4ba0
 #define STRING_FROM_CSTR_AT 0x401bcff0
 #define STRING_DTOR_AT 0x401bb540
 // Stock's text drawing (as the Modwerk base's send pages use it): printf-style
@@ -65,6 +72,42 @@
 #define LOCKER_RELATIVE_AT 0x40199202     // PerformanceParamLocker: relative values
 #define LOCKER_LOCKABLE_AT 0x400acca8     // PerformanceParamLocker: lockable(id)
 
+// Scenes. A kit's Scenes object is kit + 4964 (0x400a680a); the active scene is
+// 0x400a6fdc(kit), 0..11, -1 for none (the kit's byte + 2430). Its lock table holds 48
+// five-byte entries shared by the 12 scenes: s16 value, u8 track, u8 parameter index, s8 scene.
+// Each scene has a SceneParamLocker {vtable 0x401df974, scenes, scene} (ctor 0x400b84e8);
+// its slots read only + 4 (scenes) and + 8 (scene), so they work on any object of that
+// shape. Values are absolute (relative returns 0). set returns -1 when all 48 are in use
+// or the track is above 12, and then writes nothing.
+#define KIT_SCENES_AT 0x400a680a
+#define ACTIVE_SCENE_AT 0x400a6fdc
+#define SCENES 12
+#define SCENE_HAS_ANY_AT 0x400b8694      // (locker): this scene has a lock (a bool in d0's low byte)
+#define SCENE_CLEAR_AT 0x400b87dc        // (locker, track, index)
+#define SCENE_SET_AT 0x400b8964          // (locker, track, index, value): value, or -1 when full
+#define SCENE_GET_AT 0x400b89d6          // (locker, track, index): the value, -1 for none
+#define SCENE_HAS_AT 0x4019caa4          // (locker, track, index): get >= 0, through the vtable's get
+#define SCENE_RELATIVE_AT 0x4019cac8     // 0: absolute values
+#define SCENE_LOCKABLE_AT 0x400b843c     // (locker, id): refuses the TRIG page's categories
+// Scene edit's FUNC + REC, STOP and PLAY (0x400d0f6e, 0x400d102a, 0x400d10fa) call these on the
+// kit's Scenes and a scene, each answering in d0's low byte: copy to the clipboard; undo (kind 2
+// a paste, 1 a clear: true when that scene's last paste or clear was undone, as a second press
+// does on stock); paste and clear (last argument 1, as scene edit passes).
+#define SCENE_COPY_AT 0x400b8e60         // (scenes, scene): `COPY SCENE n`
+#define SCENE_UNDO_AT 0x400b8d68         // (scenes, scene, kind): `UNDO PASTE` / `UNDO CLEAR`
+#define SCENE_PASTE_AT 0x400b8f16        // (scenes, scene, 1): `PASTE SCENE`
+#define SCENE_CLEAR_ALL_AT 0x400b8c80    // (scenes, scene, 1): `CLEAR SCENE`
+// The kit's Scenes object's slot + 40 answers its lock table: 48 entries of 5 bytes (s16 value,
+// u8 track, u8 parameter index, s8 scene); an empty entry has track 0xff (0x400b8986, 0x400b875c).
+#define SCENES_TABLE 40
+#define SCENE_LOCKS 48
+
+// Ends a held key for the rest of its hold, as stock does when its hold opens a
+// screen (0x40071ed0, 15 stock callers): its release is dropped (0x418d1320), its
+// repeat stops, and "last key down" is cleared, so every key held now loses its
+// clean-release flag. 0x40081c28 still reports it held until it is let go.
+#define CONSUME_KEY_AT 0x40071ed0
+
 // The LFO: a sound's (or the FX track's) parameters 64..71 in its parameter
 // set. DST holds the destination's parameter index << 8 (the index the mod
 // slots store; 0 none); DEP 0..32767, 16384 for 0 (shown -128.00..+127.99).
@@ -106,6 +149,18 @@
 #define HOLDER_VTABLE 0x401e20d4
 #define HOLDER_LFO_VIEW 248
 #define HOLDER_FX_LFO_VIEW 296           // the FX track's LFO page view: (32 + 5) * 8
+// A parameter page view's page keys, as its page key + REC, STOP, PLAY run them (the view's
+// methods 0x4003a270, 0x4003a314, 0x4003a42c, at + 176, + 180, + 184 of its table): each
+// reads the page's number through the view's method + 104 and the page store at view + 104,
+// calls one of these and raises the message. Paste and clear try the undo first.
+#define PAGE_NUMBER 104                 // method: the page's number
+#define PAGE_STORE 104                  // field: the store the page keys act on
+#define PAGE_COPY_AT 0x400b1480         // (store, page): 1 when copied
+#define PAGE_UNDO_AT 0x400b1588         // (store, page, kind): 1 when it undid that kind
+#define PAGE_UNDO_CLEAR 1               // as PLAY passes it (0x4003a442)
+#define PAGE_UNDO_PASTE 2               // as STOP passes it (0x4003a32a)
+#define PAGE_PASTE_AT 0x400b364c        // (store, page, 1): 1 when pasted
+#define PAGE_CLEAR_AT 0x400b37ea        // (store, page, 1): 1 when cleared
 #define KNOB_DEP 7
 
 // The LFO page key. Its press shows the LFO page (the page holder's key
@@ -122,7 +177,10 @@
 #define PAGES_TOP_VTABLE 0x4023502c
 #define PERF_VTABLE 0x401e26c4           // PerformanceView
 #define PERF_EDIT_VTABLE 0x401e2a54      // PerformanceEditView: what the PERF key opens
-#define SCENE_VTABLE 0x401e305c          // SceneSelectView
+#define SCENE_VTABLE 0x401e305c          // SceneSelectView: its key handler (0x400d1798) takes
+                                         // every pad, engaging or disengaging a scene
 #define SCENE_EDIT_VTABLE 0x401e2ee8     // SceneEditView: what the SCNE key opens
+#define SCENE_EDIT_PADS 188             // SceneEditView and PerformanceEditView + 188: the pads held (a mask; 0x400d1378, 0x400cf676)
+#define SCENE_EDIT_SCENE 192            // SceneEditView and PerformanceEditView + 192: the one they edit, 0..11
 #define MUTE_VTABLE 0x401e2bbc
 #define CHROMATIC_VTABLE 0x401e1394

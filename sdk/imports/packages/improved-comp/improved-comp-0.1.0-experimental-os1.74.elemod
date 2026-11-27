@@ -1,0 +1,103 @@
+{
+ "elemod": 2,
+ "id": "improved-comp",
+ "version": "0.1.0-experimental",
+ "title": "Improved Compressor",
+ "description": "THR and MUP on the COMP page read in dB: where the compressor starts at the ratio selected, and how much makeup.",
+ "category": "system",
+ "author": "npp1993",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 648,
+   "parts": [
+    [
+     "hex",
+     "4fefffe47201206f002048d7400c2428000420020680ffffffa4b28065000144262800082f4300100c8300007f00620001322079419f28f84a8867000126226800204a896758206900184a8867502009068000000014327c00215389b088673e4a89673a2c6800084a8e672a22160c81401e2ee8670000ec0c81401e2a54670000e20c81401e305c670000d80c81401e26c4670000ce206800044a8866bc226f0020705c2069000c43e800012f49000cb082660000ba202f001072610680ffffa0004c01080034398000fbda4a806d000150e08a7603e08043f900000000c4830680fffff1f075b12800c5fc000ad0824a806d00010806800000003276644c4308004a806700010610bc002b220f06810000001693c92041760a52884c4308024c43080052890682000000301142ffff4a8067067406b48966de2c6f000c41f118001ce0b28866fad3ef000c420032bc64421340000270014cd7400c4fef001c4e754cd7400c42804fef001c4e75202f0010263c00000285223c0000640010bc002b4c030800760a4def00160680000032004c41080024004c4328024c4328014c432802204141e8003036081c834a82670000b00682000000301f420017226f000c720241f6180012e0b1ce66fa760a4c43080242002c6f000cddc11cbc002e43ee00020682000000301d42000132bc64421340000270016000ff5e0680ffffffce72644c4108004a8066402f48000c220f06810000001693c920416000fefae08a76030680000000ff43f900000000e080c4830680fffff1f075b12800c5fc000ad0824a806c00feae60b010bc002d220f068100000016448093c920416000feb87201226f000c41f618006000ff5a0000005c0000005d000000000000000000000000b4965000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "comp_text": [
+   ".run",
+   0
+  ],
+  "rat_late": [
+   ".run",
+   644
+  ],
+  "improved_comp_params": [
+   ".run",
+   624
+  ]
+ },
+ "exports": [
+  "improved_comp_params"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   218,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   556,
+   "abs32",
+   "sec:.run",
+   644
+  ],
+  [
+   ".run",
+   640,
+   "abs32",
+   "sec:.run",
+   0
+  ]
+ ],
+ "sites": [],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "core_params",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:improved_comp_params",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:value text of COMP THR and MUP (dB)"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

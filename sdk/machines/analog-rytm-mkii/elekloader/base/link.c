@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The Rytm's development link over USB MIDI, in development bases only (base.json's dev,
-// npm run machine:base -- analog-rytm-mkii --dev); release bases never carry it.
-// A host on the computer's USB port asks for the unit's identity, its screen and
-// read-only memory, and, while the unit is armed on its own panel, presses keys and
-// turns encoders as the panel does. Built so an agent can flash or RAM-boot a test image (stock's
-// OS upgrade, then a remote YES) and run a test without a hand on the unit.
+// The Rytm's link over USB MIDI. Every base (base.json's common) answers IDENT (with the set identity:
+// the CRC32 and length of the .run block, taken at boot), DIAG, LOAD and LOG (the diagnostics log,
+// diag.c), and runs a module on trial (UP_PART, UP_RUN, MODS: the runtime loader, modules.c) with
+// nobody at the unit, as the Octatrack does: any host with SysEx access to its USB MIDI port can send
+// one and Keep it, and a power cycle undoes it. Nothing more on a release base. Development bases (base.json's dev, MODWERK_DEV, npm run
+// machine:base -- analog-rytm-mkii --dev) add the screen and read-only memory and, while the unit is
+// armed on its own panel, keys, encoder turns and pads as the panel posts them, the remote YES of
+// stock's OS upgrade and a RAM boot. Built so an agent can flash or RAM-boot a test image (stock's OS
+// upgrade, then a remote YES) and run a test without a hand on the unit; a release base answers those
+// requests `bad request`, so no host can press a key or confirm an upgrade on a musician's unit.
 //
 // Wire format (SysEx, manufacturer 0x7D, private use):
 //   host -> unit  F0 7D 'M' 'W' 'L' 01 seq cmd payload.. F7
@@ -19,9 +23,9 @@
 //   router's first instructions: F0 7D 'MWL' from USB (iface 2, or 4 on the auto
 //   channel) is copied into a ring here and goes no further; anything else goes on
 //   to stock unchanged. DIN (iface 8 / 0x10) is never served.
-// - Work: ev_tick (UI task, about 20 Hz) takes the ring, acts and replies through
-//   stock's sysex_send on USB (never from the audio
-//   interrupt; waits a tick while stock is mid-SysEx on USB).
+// - Work: ev_tick (UI task, about 20 Hz) takes the ring, acts and replies on USB with
+//   stock's USB MIDI writer, the whole reply under stock's USB lock and never while
+//   another sender's SysEx is open (never from the audio interrupt; LINK.md).
 // - Keys and encoders: posted on the UI task's queue (0x4011fb56, queue_put
 //   0x400013b2) as the panel's messages are, so the UI loop (0x400a46f0) plays them
 //   through the core's ev_key/ev_enc sites and stock: modules see them too. The
@@ -29,6 +33,13 @@
 //   until long after the loop took it. A key held from here also reads as held to
 //   stock's is_key_held (0x40081c28, which base.json points at mw_link_held), which only sees the panel's
 //   bitmap otherwise: FUNC + turn and every other held-key test behave as on the panel.
+// - Pads: the panel posts a pad's press, its pressure and its release as their own
+//   messages, not keys (the UI loop's switch at 0x400a4708: 3 down, 2 pressure, 4 up;
+//   m[1] the pad 0..11, the byte at +8 the velocity (1..127; the loop clamps it to 127) or
+//   the pressure (0..255, which 0x400a476e scales by 128; MIDI sends half of it)). PAD posts the same, so every view's pad and pressure methods run as
+//   for a hand on the pad (the RETRIG menu, the pad pages, CHROMATIC, PERF). They reach
+//   neither ev_key nor ev_enc, so the link does not track them as keys; a pad the link
+//   holds gets a pressure of 0 and its release when the link lets go of everything.
 // - Arm: GLOBAL > REMOTE CONTROL. Keys and encoders from the host need it; identity,
 //   screen and memory reads do not. It is ON at every boot, power-on included (the
 //   10 Nov 2026: a development image is meant to be driven): the row turns it
@@ -61,17 +72,26 @@
 #include <stdint.h>
 #define COLD __attribute__((cold, noinline))     // sized, not timed: what runs once at boot or per host command.
                                                  // GCC sizes what only cold code calls too: mark that `hot` if timed
+#ifdef MODWERK_DEV
 #include "analog-rytm-mk2/store.h"
+#endif
+#include "diag.h"
 
 #define LINK_VERSION 1
 
 // Stock, OS 1.74.
-#define SYSEX_SEND ((int (*)(const uint8_t *, int, const uint8_t *, int))SYSEX_SEND_AT)
-#define USB_SYSEX_STATE (*(volatile uint32_t *)USB_SYSEX_STATE_AT)
+// Its USB MIDI writer, the lock around it and the writer's SysEx state (LINK.md, "Stock's send from two tasks").
+#define USB_LOCK ((void (*)(void))USB_LOCK_AT)         // takes stock's USB MIDI lock, waiting for it
+#define USB_UNLOCK ((void (*)(void))USB_UNLOCK_AT)
+#define USB_WRITE ((void (*)(int, const uint8_t *))USB_WRITE_AT)   // write(len, bytes): MIDI bytes to USB packets
+#define MIDI_ON (*(volatile uint32_t *)MIDI_ON_AT)     // stock's send sends nothing while it is 0
+#define USB_SYSEX_STATE (*(volatile uint32_t *)USB_SYSEX_STATE_AT) // 0xF0 while a SysEx is written but not yet ended
+#define SYSEX_OPEN (USB_SYSEX_STATE == 0xF0)
+#define OPEN_TICKS 30                   // about a second and a half: longer, and the open SysEx counts as one left unended
+#define PART 144                        // bytes in one write, as stock's send splits a message
 #define UI_QUEUE ((void *(*)(void))UI_QUEUE_AT)
 #define QUEUE_POST ((void (*)(void *, const void *))QUEUE_POST_AT)
 #define VIEW_INVALIDATE ((void (*)(void *))VIEW_INVALIDATE_AT)
-#define FILLRECT ((void (*)(void *, int, int, int, int, int))FILLRECT_AT)
 #define SEQ_PLAYING (*(volatile int *)SEQ_PLAYING_AT)
 // The frame on the screen, 1024 bytes. Stock keeps two frame pointers side by side: it sends the one it drew
 // (0x40287b68) to the display, then swaps them, so the sent frame is the second (0x40287b6c). The first is the
@@ -90,6 +110,10 @@
 #define AUTO_USB 4
 #define MSG_KEY 0
 #define MSG_ENC 1
+#define MSG_PRESSURE 2                  // the panel's pad messages (0x400a4708's switch)
+#define MSG_PAD_DOWN 3
+#define MSG_PAD_UP 4
+#define PADS 12
 #define KEY_YES 0x44
 #define KEY_DOWN 1                      // ev_key flags bit 0: down
 #define ENC_LAST 8                      // A..H, then LEVEL
@@ -102,8 +126,15 @@
 #define CMD_RELEASE_ALL 0x12
 #define CMD_CONFIRM 0x13                // YES pressed and let go, for stock's UPGRADE OS NOW?: sets the carry
 #define CMD_RAMBOOT 0x14                // as CONFIRM, but the staged image is booted from RAM, not flashed
+#define CMD_PAD 0x15                    // pad, what (0 up, 1 down, 2 pressure), velocity 1..127 or pressure 0..255
 #define CMD_SCREEN 0x20
 #define CMD_MEM 0x21
+#define CMD_DIAG 0x22                   // the log's address and size (the Model:Cycles' and Digitone II's number)
+#define CMD_LOAD 0x23                   // the audio load (load.c)
+#define CMD_LOG 0x24                    // bytes of the diagnostics log, and nothing else
+#define CMD_UP_PART 0x31                // the runtime loader (modules.c): a part of an upload frame
+#define CMD_UP_RUN 0x32                 // run the frame, the upload controller's response back
+#define CMD_MODS 0x33                   // the module pool and the live modules
 #define ST_OK 0
 #define ST_NOT_ARMED 1
 #define ST_BAD 2
@@ -112,8 +143,10 @@
 #define ST_HUMAN 5
 
 #define RING 8                          // commands waiting for the UI task
-#define CMD_BYTES 48                    // a command's bytes, F0..F7 (the longest, RAMBOOT, is 29)
-#define SLOTS 40                        // posted messages, reused in turn (more than PENDING)
+#define CMD_BYTES 128                   // a command's bytes, F0..F7 (an UP_PART at most 124, RAMBOOT 29)
+#define SLOTS 64                        // posted messages, reused in turn: more than PENDING keys and turns, one
+                                        //   release_all's pad messages (2 x PADS) and a tick's pad posts (at most
+                                        //   PER_TICK + 1: a release in the tick adds 2 for a pad pressed in it)
 #define PENDING 32                      // posted events not yet seen at ev_key/ev_enc
 #define PER_TICK 6                      // commands acted on in one tick
 #define HUMAN_TICKS 60                  // about 3 s
@@ -174,7 +207,9 @@
                                         // 7: no longer given (was: SRAM does not hold the 1.74 bootstrap's depacker)
 #define BOOT_FAILED 8                   // the unpacked image was wrong: reset, and this is the flashed OS
 
+#ifdef MODWERK_DEV
 STORE_FIELD(mw_link_carry);             // project, 1 bit: armed across the YES's reset
+#endif
 
 // ---- the ring the router fills ------------------------------------------------
 static uint8_t ring[RING][CMD_BYTES];
@@ -204,14 +239,19 @@ int mw_link_rx(const uint8_t *msg, int len, int iface)
     return 1;
 }
 
+static uint32_t ticks, boot_rsr;        // UI ticks; the reset status as the boot gate found it
+static uint32_t run_crc, run_bytes;     // the set identity: the .run block (the base and every module) at boot
+static uint32_t boot_status, boot_depack_crc, boot_image;   // the RAM boot's, for IDENT: 0 in a release base
+
+#ifdef MODWERK_DEV
 // ---- arm, the person at the unit, the posted events ---------------------------
 static int armed, booted, carry_ticks, human_ticks = -1, ui_dirty, release_due;
-static uint32_t human_count, posted_count, refused_count, boot_rsr, ticks;
+static uint32_t human_count, posted_count, refused_count;
 static uint8_t held_bits[32];           // keys this link holds down, a bit each
+static uint16_t pads_held;              // pads this link holds down, a bit each
 int mw_link_ramboot_due;                // link.s reads it where stock's job would flash:
                                         //   0 flash, 1 RAM boot, 2 cancelled (reset, no write)
 static uint32_t ramboot[4];             // from the host: unpacked length and CRC, container length and CRC
-static uint32_t boot_status, boot_depack_crc, boot_image;
 #define HELD(k) (held_bits[(k) >> 3] >> ((k) & 7) & 1)
 #define HOLD(k, on) (held_bits[(k) >> 3] = (uint8_t)((held_bits[(k) >> 3] & ~(1 << ((k) & 7))) | (!!(on) << ((k) & 7))))
 
@@ -263,12 +303,32 @@ static int post(int kind, int id, int value)
     return 1;
 }
 
+// A pad message, as the panel posts it. Not in pend: no ev_key or ev_enc ever sees it.
+static void post_pad(int kind, int pad, int value)
+{
+    int32_t *m = slots[slot_next++ % SLOTS];
+    m[0] = kind << 24;
+    m[1] = pad;
+    m[2] = (int32_t)((uint32_t)(uint8_t)value << 24);
+    m[3] = 0;
+    QUEUE_POST(UI_QUEUE(), m);
+    posted_count++;
+}
+
 // Lets go of every key the link holds. A release the queue cannot take now stays held
-// and due: the next tick tries again. -> 1 when any key was held.
+// and due: the next tick tries again. Every pad it holds gets a pressure of 0 (stock
+// keeps a performance's amount until one comes) and its release. -> 1 when any key or
+// pad was held.
 static int release_all(void)
 {
-    int k, any = 0;
+    int k, any = pads_held != 0;
     release_due = 0;
+    for (k = 0; k < PADS; k++)
+        if (pads_held >> k & 1) {
+            post_pad(MSG_PRESSURE, k, 0);
+            post_pad(MSG_PAD_UP, k, 0);
+        }
+    pads_held = 0;
     for (k = 0; k < 256; k++)
         if (HELD(k)) {
             any = 1;
@@ -299,6 +359,7 @@ static void disarm(void)
     }
     for (k = 0; k < 32; k++)
         held_bits[k] = 0;
+    pads_held = 0;
     release_due = 0;
     ramboot_cancel();
 }
@@ -324,8 +385,8 @@ static int ours(int kind, int id, int value)
     return 1;
 }
 
-// A person pressed or turned something. -> 1 when the link held keys: that first press
-// is taken, so it never combines with a key the link still held (FUNC + X).
+// A person pressed or turned something. -> 1 when the link held keys or pads: that first
+// press is taken, so it never combines with a key the link still held (FUNC + X).
 static int human(void)
 {
     human_count++;
@@ -379,15 +440,30 @@ void mw_link_project(int how, unsigned dropped)
         return;
     }
     booted = 1;
-    boot_rsr = RSR;
     armed = 1;                          // on at every boot; the row turns it off
     human_ticks = -1;
     ui_dirty = 1;
     set_carry(0);
 }
 
+#endif
+
 // ---- replies ---------------------------------------------------------------
-static uint8_t reply[HEADER + 1 + 5 + (SCREEN_PART / 7 + 1) * 8 + 1];
+#define UP_RESPONSE 144                 // the upload controller's response (wire.h MU_WIRE_RESPONSE)
+#define MODS_MOST 3                     // inventory entries in one MODS reply
+#ifdef MODWERK_DEV
+static uint8_t reply[HEADER + 1 + 5 + (SCREEN_PART / 7 + 1) * 8 + 1];   // the largest: SCREEN's
+#else
+#define REPLY_LOG (HEADER + 1 + 10 + (MEM_MAX / 7 + 1) * 8 + 1)
+#define REPLY_UP_RUN (HEADER + 1 + (UP_RESPONSE / 7 + 1) * 8 + 1)
+static uint8_t reply[REPLY_LOG > REPLY_UP_RUN ? REPLY_LOG : REPLY_UP_RUN];   // the larger of LOG's and UP_RUN's
+#endif
+static uint8_t up_out[UP_RESPONSE];
+extern void mw_modules_identity(uint32_t crc);
+extern unsigned mw_modules_part(uint32_t offset, const uint8_t *packed, unsigned n);
+extern unsigned mw_modules_run(uint32_t length, uint8_t *out);
+extern unsigned mw_modules_list(uint32_t first, unsigned most, uint8_t *out);
+extern void mw_modules_tick(void);
 
 static uint8_t *put32(uint8_t *p, uint32_t v)
 {
@@ -433,22 +509,59 @@ static uint8_t *begin(int seq, int cmd, int status)
     return p;
 }
 
+// Stock's send releases its lock after every 144-byte part, so another task's part could land between two of a
+// reply's (and the reverse), which breaks both SysEx. The link writes the whole reply under the lock, and never
+// while another sender's SysEx is open, as the Model:Cycles' link does. A reply that meets an open SysEx is held, not
+// dropped (its request has run: an UP_RUN may have kept or undone a set), and goes out at a later tick; the link acts
+// on no request while one is held (mw_link_tick). An open SysEx that lasts more than OPEN_TICKS no longer holds it.
+static int reply_held;                  // the bytes of a reply in reply[] not yet written
+static uint32_t open_ticks;             // ticks the current open SysEx has lasted
+
+static int sysex_holds(void)
+{
+    return SYSEX_OPEN && open_ticks <= OPEN_TICKS;
+}
+
+static void write_held(void)
+{
+    int k;
+    if (!MIDI_ON) {                     // stock's send would drop it too
+        reply_held = 0;
+        return;
+    }
+    USB_LOCK();
+    if (sysex_holds()) {                // opened since the tick looked: a later tick
+        USB_UNLOCK();
+        return;
+    }
+    for (k = 0; k < reply_held; k += PART)
+        USB_WRITE(reply_held - k < PART ? reply_held - k : PART, reply + k);
+    USB_UNLOCK();
+    reply_held = 0;
+}
+
 static void send(uint8_t *end)
 {
     *end++ = 0xF7;
-    SYSEX_SEND(reply, end - reply, 0, USB);
+    reply_held = (int)(end - reply);
+    write_held();
 }
 
+#ifdef MODWERK_DEV
 static int readable(uint32_t a, uint32_t n)
 {
     if (n == 0 || n > MEM_MAX || a + n < a)
         return 0;
     return (a >= 0x40000000 && a + n <= DDR_END) || (a >= 0x80000000 && a + n <= 0x80010000);
 }
+#endif
+
+extern uint32_t mw_load_avg, mw_load_wmax, mw_load_peak, mw_load_windows, mw_load_blocks;
+uint32_t mw_load_tenths(uint32_t l);
 
 static void COLD act(const uint8_t *m, int len)
 {
-    int seq = m[6], cmd = m[7], n = len - HEADER - 1, status = ST_OK;
+    int seq = m[6], cmd = m[7], n = len - HEADER - 1;
     const uint8_t *a = m + HEADER;
     uint8_t *p;
     int i;
@@ -460,11 +573,16 @@ static void COLD act(const uint8_t *m, int len)
     case CMD_IDENT:
         p = begin(seq, cmd, ST_OK);
         p = put32(p, LINK_VERSION);
+#ifdef MODWERK_DEV
         p = put32(p, (uint32_t)armed);
         p = put32(p, human_ticks >= 0 && human_ticks < HUMAN_TICKS);
         p = put32(p, human_count);
         p = put32(p, posted_count);
         p = put32(p, refused_count);
+#else
+        for (i = 0; i < 5; i++)         // the same fields: a release base has no keys and no arm
+            p = put32(p, 0);
+#endif
         p = put32(p, ring_drops);
         p = put32(p, rx_count);
         p = put32(p, ticks);
@@ -477,9 +595,68 @@ static void COLD act(const uint8_t *m, int len)
         p = put32(p, boot_status);
         p = put32(p, boot_depack_crc);
         p = put32(p, boot_image);
+#ifdef MODWERK_DEV
         p = put32(p, (uint32_t)DIAG);
+#else
+        p = put32(p, 0);                // no RAM boot, so no place for its diagnostics
+#endif
+        p = put32(p, run_crc);          // the set identity (link-image.mjs prints the same two as `run`)
+        p = put32(p, run_bytes);
         send(p);
         return;
+    case CMD_DIAG:                      // where the log is and its size: a host reads it with LOG
+        p = begin(seq, cmd, ST_OK);
+        p = put32(p, (uint32_t)&mw_diag_log);
+        p = put32(p, sizeof mw_diag_log);
+        send(p);
+        return;
+    case CMD_LOAD:                      // the last window's share, its dearest block, the dearest since boot
+        p = begin(seq, cmd, ST_OK);
+        p = put32(p, mw_load_avg);
+        p = put32(p, mw_load_tenths(mw_load_wmax));
+        p = put32(p, mw_load_tenths(mw_load_peak));
+        p = put32(p, mw_load_windows);
+        p = put32(p, mw_load_blocks);
+        send(p);
+        return;
+    case CMD_LOG: {                     // offset into the log and a count, as MEM's reply: offset, count, bytes
+        uint32_t at, count;
+        if (n < 10) {
+            send(begin(seq, cmd, ST_BAD));
+            return;
+        }
+        at = get32(a);
+        count = get32(a + 5);
+        if (count == 0 || count > MEM_MAX || at > sizeof mw_diag_log || count > sizeof mw_diag_log - at) {
+            send(begin(seq, cmd, ST_RANGE));
+            return;
+        }
+        p = put32(put32(begin(seq, cmd, ST_OK), at), count);
+        send(pack(p, (const volatile uint8_t *)&mw_diag_log + at, (int)count));
+        return;
+    }
+    case CMD_UP_PART:                   // offset, then up to 96 bytes packed
+        if (n < 7 || !mw_modules_part(get32(a), a + 5, (unsigned)(n - 5))) {
+            send(begin(seq, cmd, n < 7 ? ST_BAD : ST_RANGE));
+            return;
+        }
+        send(begin(seq, cmd, ST_OK));
+        return;
+    case CMD_UP_RUN: {                  // the frame's length; the controller's 144-byte response, packed
+        unsigned got = n < 5 ? 0 : mw_modules_run(get32(a), up_out);
+        if (got != UP_RESPONSE) {
+            send(begin(seq, cmd, n < 5 ? ST_BAD : ST_RANGE));
+            return;
+        }
+        send(pack(begin(seq, cmd, ST_OK), up_out, UP_RESPONSE));
+        return;
+    }
+    case CMD_MODS: {                    // from the n-th live module: free, largest run, refusal, count, entries
+        unsigned got = mw_modules_list(n >= 5 ? get32(a) : 0, MODS_MOST, up_out);
+        send(pack(begin(seq, cmd, ST_OK), up_out, (int)got));
+        return;
+    }
+#ifdef MODWERK_DEV
     case CMD_DISARM:
         disarm();
         send(begin(seq, cmd, ST_OK));
@@ -516,6 +693,8 @@ static void COLD act(const uint8_t *m, int len)
     case CMD_RELEASE_ALL:
     case CMD_CONFIRM:
     case CMD_RAMBOOT:
+    case CMD_PAD: {
+        int status = ST_OK;
         if (!armed || !booted)          // before the boot's settle its set_carry(0) would drop a request
             status = ST_NOT_ARMED;
         else if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
@@ -538,6 +717,20 @@ static void COLD act(const uint8_t *m, int len)
                     MARK[1] = DIAG_STAGE | 1;
                 }
             }
+        } else if (cmd == CMD_PAD) {
+            uint32_t pad = PADS, what = 0, v = 0;
+            if (n >= 15) {
+                pad = get32(a);
+                what = get32(a + 5);
+                v = get32(a + 10);
+            }
+            if (pad >= PADS || what > 2 || (what == 1 ? v < 1 || v > 127 : what == 2 ? v > 255 : v != 0))
+                status = ST_BAD;                // as the panel: a down has a velocity, an up 0 (0x400822be)
+            else {
+                post_pad(what == 0 ? MSG_PAD_UP : what == 1 ? MSG_PAD_DOWN : MSG_PRESSURE, (int)pad, (int)v);
+                if (what < 2)
+                    pads_held = (uint16_t)((pads_held & ~(1u << pad)) | (what << pad));
+            }
         } else if (n < 10)
             status = ST_BAD;
         else {
@@ -556,6 +749,8 @@ static void COLD act(const uint8_t *m, int len)
             refused_count++;
         send(begin(seq, cmd, status));
         return;
+    }
+#endif
     default:
         send(begin(seq, cmd, ST_BAD));
     }
@@ -565,6 +760,7 @@ void mw_link_tick(char *ctrl)
 {
     int done;
     ticks++;
+#ifdef MODWERK_DEV
     if (!booted && ticks > 200)
         mw_link_project(1, 0);          // no project load seen at boot: settle the carry anyway
     if (human_ticks >= 0 && human_ticks < HUMAN_TICKS)
@@ -588,19 +784,28 @@ void mw_link_tick(char *ctrl)
         pend_tail = pend_seen = pend_head;
         pend_age = 0;
     }
-    for (done = 0; done < PER_TICK && ring_tail != ring_head; done++) {
+#endif
+    open_ticks = SYSEX_OPEN ? open_ticks + 1 : 0;
+    if (reply_held && !sysex_holds())
+        write_held();
+    // Another sender's SysEx open, or a reply held: the next request waits for a later tick.
+    for (done = 0; done < PER_TICK && ring_tail != ring_head && !sysex_holds() && !reply_held; done++) {
         uint32_t t = ring_tail;
-        if (USB_SYSEX_STATE == 0xF0)
-            break;                      // stock is mid-SysEx on USB: next tick
         act(ring[t % RING], ring_len[t % RING]);
         ring_tail = t + 1;
     }
+    mw_modules_tick();                  // a host that went quiet mid-trial counts as unplugged (modules.c); idle: one test
+#ifdef MODWERK_DEV
     if (ui_dirty) {
         ui_dirty = 0;
         ctrl[0x20] = 1;
     }
+#else
+    (void)ctrl;
+#endif
 }
 
+#ifdef MODWERK_DEV
 // ---- RAM boot ---------------------------------------------------------------
 extern void core_finish_drain(void);    // core-ar2/finish.s: masks interrupts, lets the panel and UART queues empty
 extern void mw_cache_push(void);        // link.s: every dirty line of the data cache out to DDR
@@ -646,6 +851,7 @@ void COLD mw_link_ramboot_go(const uint32_t *st)
     }
     mw_link_reset();
 }
+#endif
 
 static uint32_t __attribute__((noinline)) crc32(const uint8_t *p, uint32_t n)  // zlib's
 {
@@ -659,6 +865,7 @@ static uint32_t __attribute__((noinline)) crc32(const uint8_t *p, uint32_t n)  /
     return ~c;
 }
 
+#ifdef MODWERK_DEV
 static uint32_t be32(const uint8_t *p)
 {
     return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3];
@@ -759,11 +966,9 @@ static uint32_t __attribute__((noinline, hot)) depack(const uint8_t *sec, uint32
     return s.bad || s.p != s.end ? 0 : n;
 }
 
-// From link.s at boot (OS 1.74 0x400008c6): after the core's boot hook (this code is
-// in place, its .bss zeroed), before stock fills SRAM and clears its own .bss. The
-// data cache is off here. Returns to boot the image that is running; does not return
-// when it unpacks and enters the staged one.
-void COLD mw_boot_gate(void)
+// The RAM boot's part of the boot gate (mw_boot_gate). Returns to boot the image that is
+// running; does not return when it unpacks and enters the staged one.
+static void COLD ramboot_gate(void)
 {
     volatile uint32_t *mb = MAILBOX;
     const uint8_t *c = (const uint8_t *)(STAGED + 2), *e;
@@ -823,19 +1028,30 @@ void COLD mw_boot_gate(void)
     }
     mw_link_reset();
 }
+#endif
 
-// The armed mark, on every frame: a black notch at the right end of the header bar,
-// columns 126-127, rows 2-6 from the top, beside stock's transport icon (x 121-125),
-// which it leaves alone. Screens without the white header show it as nothing. On the unit it merges
-// with the stop square and no one sees it: the GLOBAL row is what tells a person. Kept because the
-// rig's whole-screen references were recorded with it.
-void mw_link_draw(void *bmp, void *ctrl)
+extern uint8_t __run_start[], __run_words[];
+#define DTCN0 (*(volatile uint32_t *)0xfc07000c)   // the core's timer (core-ar2/load.s), for the log's nonce
+
+// From link.s at boot (OS 1.74 0x400008c6), in every base: after the core's boot hook
+// (this code is in place, its .bss zeroed), before stock fills SRAM and clears its own
+// .bss. The data cache is off here. First the set identity, before any handler has
+// written to .run: the block the core just copied, the base and every module linked
+// into the image, which `link-image.mjs` prints as `run` for the image it writes. Then a
+// new diagnostics log, then a development base's RAM boot.
+void COLD mw_boot_gate(void)
 {
-    (void)ctrl;
-    if (armed)
-        FILLRECT(bmp, 126, 57, 127, 61, 0);
+    boot_rsr = RSR;
+    run_bytes = (uint32_t)__run_words * 4;
+    run_crc = crc32(__run_start, run_bytes);
+    mw_modules_identity(run_crc);       // the base identity an upload's BEGIN names (modules.c)
+    mw_diag_start(DTCN0 ^ run_crc, run_crc);
+#ifdef MODWERK_DEV
+    ramboot_gate();
+#endif
 }
 
+#ifdef MODWERK_DEV
 // ---- GLOBAL > REMOTE CONTROL ---------------------------------------------------
 extern void mw_link_row_label(void);
 extern void core_additem(void *menu, const void *row);
@@ -875,3 +1091,4 @@ void COLD mw_link_settings(void *menu)
 {
     core_additem(menu, row);
 }
+#endif

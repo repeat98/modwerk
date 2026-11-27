@@ -13,7 +13,7 @@ import { ModuleAuthors } from '../components/ModuleAuthors'
 import { ModuleAudioDetailPreview } from '../components/ModuleAudioPreview'
 import { useSetWords } from '../community/beta-ui'
 
-const kib = (bytes: number) => (bytes / 1024).toFixed(bytes < 10240 ? 1 : 0) + ' KiB'
+const kib = (bytes: number) => bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + ' MiB' : (bytes / 1024).toFixed(bytes < 10240 ? 1 : 0) + ' KiB'
 const documentUrl = (mod: DigiMod, path: string) => issueRepository() + '/blob/main/sdk/' + mod.device + '/modules/' + mod.id + '/' + path
 
 function DigiResourceIndicators({ mod }: { mod: DigiMod }) {

@@ -390,6 +390,142 @@ class MachineBases(unittest.TestCase):
         with self.assertRaises(ValueError):
             machine_base.variants({"variants": {"bad": {"add": False, "leave": ["bus_*"]}}})
 
+    def test_the_rytm_base_stages_its_own_version_over_the_imported_recipe_in_every_variant(self):
+        # The builder picks a base's mod area by its version (the kit's coreDdr), so base.json names it and the
+        # imported mod.json stays exact. reference.keeps cannot hold the version then.
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        imported = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/mod.json").read_text())
+        self.assertEqual(imported["version"], "0.7")
+        self.assertEqual(config["version"], "0.7.1")
+        self.assertNotIn("version", config["reference"]["keeps"])
+        for name, add, leave in machine_base.variants(config):
+            with tempfile.TemporaryDirectory() as work:
+                core = machine_base.stage("analog-rytm-mkii", config, pathlib.Path(work), add=add, leave=leave)
+                self.assertEqual(json.loads((core / "mod.json").read_text())["version"], "0.7.1", name)
+        # a base that names no version keeps its recipe's, and one with nothing to merge stays the imported file
+        plain = {key: value for key, value in config.items() if key not in ("version", "common", "add", "dev")}
+        with tempfile.TemporaryDirectory() as work:
+            core = machine_base.stage("analog-rytm-mkii", plain, pathlib.Path(work), add=False)
+            self.assertEqual((core / "mod.json").read_text(), (APP / "sdk/machines/analog-rytm-mkii/elekloader/core-ar2/mod.json").read_text())
+        with tempfile.TemporaryDirectory() as work:
+            core = machine_base.stage("analog-rytm-mkii", dict(plain, version="9.9"), pathlib.Path(work), add=False)
+            self.assertEqual(json.loads((core / "mod.json").read_text())["version"], "9.9")
+
+    def test_every_rytm_base_carries_the_read_only_link_and_only_a_development_base_the_rest(self):
+        """The router, the boot gate (the set identity), LOAD and the log are in every variant, release or not, as on
+        the Octatrack and the Model:Cycles; keys, turns, the remote YES and the RAM boot need MODWERK_DEV."""
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        dev_only = {"mw_link_held", "mw_link_program"}
+        for name, add, leave in machine_base.variants(config):
+            for dev in (False, True):
+                parts = machine_base.parts(config, add=add, dev=dev, leave=leave)
+                targets = {site.get("target") for site in parts["sites"]}
+                fns = {sub["fn"] for sub in parts["subscribe"]}
+                self.assertLessEqual({"mw_link_router", "mw_boot_site"}, targets, name)
+                self.assertLessEqual({"mw_link_tick", "mw_diag_tick", "mw_diag_key"}, fns, name)
+                # An idle unit pays nothing in the audio interrupt for the link, its load or its log: none of them
+                # subscribes to the render events (load.c reads the CPU mark's sums on the UI side).
+                audio = {sub["fn"] for sub in parts["subscribe"] if sub["event"] in ("ev_render_in", "ev_render_out")}
+                self.assertFalse({fn for fn in audio if fn.startswith(("mw_link", "mw_diag", "mw_load"))}, name)
+                for source in ("../base/link.c", "../base/link.s", "../base/load.c", "../base/diag.c"):
+                    self.assertIn(source, parts["sources"], name)
+                self.assertIn("-fno-late-combine-instructions", parts["cflags"], name)
+                self.assertEqual(dev, "-DMODWERK_DEV" in parts["cflags"], name)
+                self.assertEqual(dev, dev_only <= targets, name)
+                self.assertEqual(dev, not targets.isdisjoint(dev_only), name)
+                self.assertEqual(dev, "../base/link-dev.s" in parts["sources"], name)
+                self.assertEqual(dev, {"mw_link_key", "mw_link_enc", "mw_link_settings"} <= fns, name)
+                self.assertEqual(dev, "mw_link_carry" in [field["sym"] for field in parts.get("storage", [])], name)
+
+    def test_every_rytm_base_carries_the_runtime_loader_and_nothing_of_it_in_the_audio_interrupt(self):
+        """The Octatrack's runtime loader and upload controller (sdk/runtime, shared as on the Model:Cycles), the Rytm's
+        glue (runtime.c, from OS 1.74's code) and the Model:Cycles' link transport (modules.c) in every variant, its
+        hooks on the UI task only."""
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        for name, add, leave in machine_base.variants(config):
+            parts = machine_base.parts(config, add=add, leave=leave)
+            for source in ("../base/runtime.c", "../base/modules.c", "../base/loader.c", "../base/upload.c", "../base/wire.c", "../base/sha256.c"):
+                self.assertIn(source, parts["sources"], name)
+            self.assertIn("sdk/runtime/loader/loader.c", parts["shared"]["base"], name)
+            subs = {(sub["event"], sub["fn"]) for sub in parts["subscribe"]}
+            self.assertLessEqual({("ev_tick", "mw_runtime_tick"), ("ev_draw", "mw_runtime_draw"), ("ev_key", "mw_runtime_key"), ("ev_enc", "mw_runtime_enc")}, subs, name)
+            self.assertFalse([fn for event, fn in subs if fn.startswith(("mw_runtime", "mw_modules")) and event.startswith("ev_render")], name)
+        # The transport is the Model:Cycles' file but for its header note and the lapse, counted in the Rytm's slower
+        # UI ticks: ten seconds either way.
+        body = lambda path: re.sub(r"#define LAPSE_TICKS \d+u.*", "", (APP / path).read_text().split("#include <stdint.h>", 1)[1])
+        self.assertEqual(body("sdk/machines/analog-rytm-mkii/elekloader/base/modules.c"), body("sdk/machines/model-cycles/elekloader/base/modules.c"))
+        self.assertIn("#define LAPSE_TICKS 200u", (APP / "sdk/machines/analog-rytm-mkii/elekloader/base/modules.c").read_text())
+
+    def test_a_rytm_runtime_module_never_patches_over_the_base(self):
+        """machine:base writes the base's own sites beside runtime.c (held-sites.h), from the core's and base.json's:
+        in every variant they are exactly the pinned package's sites, and the glue's patchable refuses any module site
+        that touches one, while stock bytes away from them stay patchable (owner's review of #1934)."""
+        import shutil, subprocess
+        config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
+        record = json.loads((APP / "sdk/imports/elekloader-modwerk-base-analog-rytm-mkii-2026-11-06.json").read_text())
+        binding = json.loads((APP / "sdk/machines/analog-rytm-mkii/base-binding.json").read_text())["variants"]
+        packages = {name: APP / "sdk/imports/packages/modwerk-base-analog-rytm-mkii" / ("modwerk-base-analog-rytm-mkii-%s.elemod" % identity[:8])
+                    for name, identity in binding.items()}
+        self.assertTrue(all(p.name in json.dumps(record) for p in packages.values()))
+        cc = shutil.which("cc")
+        for name, add, leave in machine_base.variants(config):
+            with tempfile.TemporaryDirectory() as work:
+                core = machine_base.stage("analog-rytm-mkii", config, pathlib.Path(work), add=add, leave=leave)
+                header = (core / "../base/held-sites.h").resolve()
+                ranges = [(int(a, 16), int(b, 16)) for a, b in re.findall(r"\{0x([0-9a-f]+)u, 0x([0-9a-f]+)u\}", header.read_text())]
+                sites = json.loads(packages[name].read_text())["sites"]
+                self.assertEqual(machine_base.held_ranges(sites), ranges, name)
+                if not cc:
+                    continue
+                main = pathlib.Path(work) / "main.c"
+                probes = [(int(site["addr"], 16), site["len"]) for site in sites]
+                probes = [(a, n, 0) for a, n in probes] + [(a + n - 1, 4, 0) for a, n in probes] + [(a - 2, 4, 0) for a, n in probes]
+                free = [(a + 0x10, 6) for a, b in zip([r[1] for r in ranges], [r[0] for r in ranges[1:]]) if b - a >= 0x20 for a in [a]]
+                probes += [(a, n, 1) for a, n in free[:20]] + [(0x400003fc, 6, 0), (0x402cdffc, 8, 0)]
+                rows = "".join("    {0x%08xu, %du, %d},\n" % p for p in probes)
+                main.write_text("#include <stdint.h>\n#include <stdio.h>\nint modwerk_machine_patchable(uint32_t, uint32_t);\n"
+                                "static const struct { uint32_t at, n; int ok; } p[] = {\n" + rows + "};\nint main(void) {\n"
+                                "    int bad = 0;\n    for (unsigned i = 0; i < sizeof p / sizeof p[0]; ++i)\n"
+                                "        if (!modwerk_machine_patchable(p[i].at, p[i].n) != !p[i].ok) { printf(\"%x %u\\n\", (unsigned)p[i].at, (unsigned)p[i].n); bad = 1; }\n"
+                                "    return bad;\n}\n")
+                base, rt = header.parent, APP / "sdk/runtime"
+                built = subprocess.run([cc, "-std=c11", "-DMODWERK_HOST", "-DRUNTIME_MODULES=16u", "-DRUNTIME_POOL_BYTES=65536u",
+                                        "-I", base, "-I", rt / "loader", "-I", rt / "upload", main, base / "runtime.c", base / "modules.c",
+                                        rt / "loader/loader.c", rt / "upload/upload.c", rt / "upload/wire.c", rt / "upload/sha256.c",
+                                        "-o", pathlib.Path(work) / "t"], capture_output=True, text=True)
+                self.assertEqual(built.returncode, 0, built.stderr)
+                ran = subprocess.run([pathlib.Path(work) / "t"], capture_output=True, text=True)
+                self.assertEqual(ran.returncode, 0, name + ": wrongly judged " + ran.stdout)
+                self.assertGreater(len(free), 5, name)
+
+    def test_the_rytm_diagnostics_log_is_the_octatrack_layout(self):
+        """The site reads the Rytm's log with the Octatrack's parser, so its numbers and structs are the Octatrack's
+        word for word (base/diag.h), and every kind it names is the Octatrack's."""
+        def layout(path):
+            text = path.read_text()
+            parts = [re.search(r"#define %s .*" % name, text).group(0) for name in ("DIAG_MAGIC", "DIAG_VERSION", "DIAG_LOADS", "DIAG_INCIDENTS")]
+            parts += [re.search(r"struct %s \{.*?\n\};" % name, text, re.S).group(0) for name in ("diag_load", "diag_incident", "diag_log")]
+            return [re.sub(r"\s*/\*.*?\*/", "", part) for part in parts]
+        def kinds(path):
+            return dict(re.findall(r"(DIAG_[A-Z]+) = (\d+)", re.search(r"enum diag_kind \{[^}]*\};", path.read_text()).group(0)))
+        rytm = APP / "sdk/machines/analog-rytm-mkii/elekloader/base/diag.h"
+        octatrack = APP / "sdk/machines/octatrack/elekloader/diag.h"
+        self.assertEqual(layout(rytm), layout(octatrack))
+        self.assertLessEqual(kinds(rytm).items(), kinds(octatrack).items())
+
+    def test_the_rytm_diagnostics_log_and_load_on_the_host(self):
+        import shutil, subprocess
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        here = APP / "sdk/machines/analog-rytm-mkii/elekloader/base"
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([cc, "-std=c99", "-Wall", "-Wextra", "-Werror", "-pedantic", "-DMODWERK_HOST", "-I", here,
+                            "-I", APP / "sdk/machines/analog-rytm-mkii/include", here / "diag.c", here / "load.c",
+                            here / "test_diag.c", "-o", temp + "/t"], check=True, capture_output=True)
+            result = subprocess.run([temp + "/t"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_the_rytm_voices_variant_stages_add_without_the_send_bus_or_its_lock_words(self):
         config = json.loads((APP / "sdk/machines/analog-rytm-mkii/elekloader/base.json").read_text())
         variants = {name: (add, leave) for name, add, leave in machine_base.variants(config)}

@@ -37,8 +37,9 @@
 #define DTIM0 (*(volatile uint32_t *)0xFC07000C)                        // core-ar2 starts it, 88000 a block
 #define RECORD(id) ((char *)PARAM_RECORDS_AT + 52 * (id))               // owner +0, index +4, centred +20, long +40, short +48
 #define RAM_RECORD(id) ((volatile int32_t *)(PARAM_INFO_AT + 84 * (id)))   // +4/+8 count factors, +16 encoder profile, +20 four callbacks
-#define REF_PLAIN 113                                                   // BD CLASSIC's SWD: a plain dial
-#define REF_CENTRED 108                                                 // BD CLASSIC's TUN: a centred dial
+#define REF_PLAIN 113                                                   // BD CLASSIC's SWD: a plain dial, a step a detent
+#define REF_CENTRED 71                                                  // LFO DEP: a centred dial over the whole range
+#define DIAL_WORDS 9                                                    // +36..+48: the dial's storage, kind and draw
 #define RECORD_FIRST 334                                                // the hidden slots 34..43's records
 #define RECORD_LAST 407
 
@@ -385,25 +386,32 @@ static int knob_text(struct core_text *t)
 }
 
 // A digital voice's slot keeps the hidden records' stock widgets: give each knob
-// but LEV a plain or a centred dial, as core_machine_knob.centred asks, by taking
-// the reference dial's count factors, encoder profile and callbacks (their storage
-// holds the same flags for every dial). Once, after the OS built the records.
+// but LEV a plain dial's count factors, encoder profile and callbacks (their storage
+// holds the same flags for every dial), so every knob steps one value a detent. A
+// centred knob (core_machine_knob.centred) then takes a centred dial that spans the
+// whole 0..127 (LFO DEP's), not stock TUN's, which is drawn for 32..96 only: on a
+// 0..127 knob it sat at its stops for the outer 32 values each side, and TUN's fine
+// steps (about a sixteenth of a value a slow detent in rytm-emu) moved a knob the
+// voice reads in whole values. Once, after the OS built the records.
 static void dials(void)
 {
     const struct mw_voice *const *e;
+    volatile int32_t *plain = RAM_RECORD(REF_PLAIN), *centred = RAM_RECORD(REF_CENTRED);
     int id, k;
     for (e = mw_voices; *e; e++)
         for (id = RECORD_FIRST; id <= RECORD_LAST; id++) {
             char *r = RECORD(id);
-            volatile int32_t *to, *from;
+            volatile int32_t *to;
             if (*(int32_t *)r != (*e)->slot || *(int32_t *)(r + 4) == 9)
                 continue;
             to = RAM_RECORD(id);
-            from = RAM_RECORD(*(int32_t *)(r + 20) ? REF_CENTRED : REF_PLAIN);
-            to[1] = from[1];
-            to[2] = from[2];
+            to[1] = plain[1];
+            to[2] = plain[2];
             for (k = 4; k < 21; k++)
-                to[k] = from[k];
+                to[k] = plain[k];
+            if (*(int32_t *)(r + 20))
+                for (k = DIAL_WORDS; k < DIAL_WORDS + 4; k++)
+                    to[k] = centred[k];
         }
 }
 

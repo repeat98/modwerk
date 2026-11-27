@@ -55,6 +55,7 @@ describe('the Elektron OS upgrade over USB MIDI', () => {
     const cases: [(i: number) => number | null, RegExp][] = [
       [i => (i === 0 ? 2 : 0), /refused the upgrade/],
       [i => (i === 2 ? 3 : 0), /refused block 2/],
+      [i => (i === 1 ? 2 : 0), /refused block 1 of 3 \(status 2\).*Leave every menu/],   // the Rytm, started from its OS UPGRADE menu
       [i => (i === 1 ? 1 : 0), /said done at block 1/],
       [() => 0, /never said the upload was complete/],
       [i => (i === 2 ? null : 0), /did not answer message 3/],

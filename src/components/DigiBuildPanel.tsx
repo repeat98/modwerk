@@ -21,7 +21,7 @@ import type { useDigiFirmware } from '../hooks/useDigiFirmware'
 import { Icon } from './Icon'
 import { BuildProgressIndicator } from './BuildProgressIndicator'
 import { useSetWords } from '../community/beta-ui'
-import { usbUpgradePort } from '../engine/elektron/usb-upgrade'
+import { usbSendPort } from '../engine/elektron/usb-upgrade'
 import { ElektronSendDialog } from './ElektronSendDialog'
 
 function save(data: BlobPart, name: string, type = 'application/octet-stream') {
@@ -41,8 +41,9 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
   const { state, check, build, cancel } = useDigiBuild(device.id, ready && !missing.length ? firmware.file : undefined, release, moduleIds, storage)
   const [version, setVersion] = useState(''), [accepted, setAccepted] = useState(''), [downloaded, setDownloaded] = useState(''), [recoveryKnown, setRecoveryKnown] = useState('')
   const {followDownloads,followNotice}=useDownloadFollows()
-  // Machines whose stock OS upgrade over USB the page can send (usb-upgrade.ts), behind the same approval as downloads.
-  const usbPort = usbUpgradePort(device.id), [sending, setSending] = useState(false)
+  // Machines whose stock OS upgrade over USB the page can send (usb-upgrade.ts), behind the same approval as downloads,
+  // and beta first, as every piece of a machine's stack (docs/MACHINE_RECIPE.md): the Rytm's downloads are open to all.
+  const usbPort = usbSendPort(device.id, hasBetaUi(useCommunity().session)), [sending, setSending] = useState(false)
   const deviceInfo = 'device' in state ? state.device : undefined, key = 'key' in state ? state.key : ''
   const shown = version || deviceInfo?.default_version || '2.0a', length = deviceInfo?.version_len ?? 4
   const result = state.phase === 'built' && state.result.version === shown ? state.result : undefined

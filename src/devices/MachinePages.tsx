@@ -23,7 +23,7 @@ import { LibraryResultsBar } from '../components/LibraryResultsBar'
 import { compareModules, downloadCoverage, downloadPeriod, periodCoverage, type ModuleStatistics } from '../community/module-statistics'
 import { DownloadPeriodContext } from '../community/download-period'
 import { DeviceImage, PhotoCredit } from './DeviceImage'
-import { ALL_MACHINES, DEVICES, DEVICES_BY_ID, MC_UNIT_ROUTE, STATUS_LABELS, deviceHref, deviceSteps, deviceTitle, readyForMods, stepsDone, type DeviceProfile } from './registry'
+import { ALL_MACHINES, DEVICES, DEVICES_BY_ID, MC_UNIT_ROUTE, RYTM_UNIT_ROUTE, STATUS_LABELS, deviceHref, deviceSteps, deviceTitle, readyForMods, stepsDone, type DeviceProfile } from './registry'
 import { MACHINE_STACK } from './machine-contract'
 import { coreBuildPreviewOpen } from '../engine/elekloader/protocol'
 import { useCommunity } from '../community/context'
@@ -81,7 +81,7 @@ const FAMILY_PAGE: Record<DeviceProfile['family'], { invite: string; unlock: str
   },
 }
 
-function kib(bytes: number) { return (bytes / 1024).toFixed(bytes < 10240 ? 1 : 0) + ' KiB' }
+function kib(bytes: number) { return bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + ' MiB' : (bytes / 1024).toFixed(bytes < 10240 ? 1 : 0) + ' KiB' }
 
 function DigiModCard({ mod, selected, statistics, compared, canCompare, onToggle, onCompare, onBrowse }: { mod: DigiMod; selected: boolean; statistics?: ModuleStatistics; compared: boolean; canCompare: boolean; onToggle: () => void; onCompare: () => void; onBrowse?: () => void }) {
   const href = deviceHref(mod.device, 'module/' + mod.id)
@@ -291,11 +291,14 @@ function Hero({ device, children, embedded = false }: { device: DeviceProfile; c
 }
 
 // Where a machine stands on the way to the Octatrack's stack (docs/MACHINE_RECIPE.md): the road after the first mod.
+// The machines whose unit page reads them over a Modwerk base's link (ModelCyclesUnit.tsx): linked from the ladder, beta.
+const UNIT_ROUTES: Partial<Record<string, string>> = { 'model-cycles': MC_UNIT_ROUTE, 'analog-rytm-mkii': RYTM_UNIT_ROUTE }
 function StackLadder({ device }: { device: DeviceProfile }) {
+  const betaUi = hasBetaUi(useCommunity().session), unitRoute = betaUi ? UNIT_ROUTES[device.id] : undefined // as EmptyMachine's
   const zoom = device.id === 'zoom-ms-70cdr'
   const guide = zoom ? 'ZOOM_MULTISTOMP.md#ms-70cdr-stack-progress' : 'MACHINE_RECIPE.md'
   return <section className="configuration-section" aria-labelledby="stack-title">
-    <div className="section-title"><h2 id="stack-title">Road to the Octatrack’s stack</h2><span className="subtle">{MACHINE_STACK.filter(piece => device.stack[piece.id] === 'done').length} of {MACHINE_STACK.length} done · <a href={issueRepository() + '/blob/main/docs/' + guide} target="_blank" rel="noreferrer">{zoom ? 'the roadmap' : 'the recipe'}</a></span></div>
+    <div className="section-title"><h2 id="stack-title">Road to the Octatrack’s stack</h2><span className="subtle">{unitRoute && <><a href={'#' + unitRoute}>Your {device.name}</a> · </>}{MACHINE_STACK.filter(piece => device.stack[piece.id] === 'done').length} of {MACHINE_STACK.length} done · <a href={issueRepository() + '/blob/main/docs/' + guide} target="_blank" rel="noreferrer">{zoom ? 'the roadmap' : 'the recipe'}</a></span></div>
     <ol className="device-ladder">{MACHINE_STACK.map((piece, index) => { const state = device.stack[piece.id]; return <li key={piece.id} className={'is-' + state}><span className="device-ladder-marker">{state === 'done' ? <Icon name="check" size={14} /> : index + 1}</span><span><strong>{piece.title}</strong><small>{piece.description}</small></span><span className={'device-step-state is-' + state}>{STEP_LABELS[state]}</span></li> })}</ol>
   </section>
 }
@@ -309,7 +312,7 @@ export function EmptyMachine({ device, machinePicker, embedded = false }: { devi
   return (
     <div className="device-page">
       {machinePicker && <div className="discovery-tools">{machinePicker}</div>}
-      <Hero device={device} embedded={embedded}><div className="device-hero-actions">{preview && <a className="button button-primary" href={deviceHref(device.id, 'configuration')}><Icon name="sliders" size={16} />{mobile ? 'Open configuration' : 'Open local build preview'}</a>}{betaUi && device.id === 'model-cycles' && <a className="button button-quiet" href={'#' + MC_UNIT_ROUTE}><Icon name="grid" size={16} />Your {device.name}</a>}<a className={'button ' + (preview ? 'button-quiet' : 'button-primary')} href={developHref(device.id)}><Icon name="plus" size={16} />{ready ? 'Build the first mod' : 'Help unlock'}</a><a className="button button-quiet" href={repository + '/blob/main/docs/ADD_A_MACHINE.md'} target="_blank" rel="noreferrer"><Icon name="plus" size={16} />Open a device PR</a><a className="button button-quiet" href="#forum"><Icon name="message" size={16} />Discuss in the forum</a></div></Hero>
+      <Hero device={device} embedded={embedded}><div className="device-hero-actions">{preview && <a className="button button-primary" href={deviceHref(device.id, 'configuration')}><Icon name="sliders" size={16} />{mobile ? 'Open configuration' : 'Open local build preview'}</a>}{betaUi && UNIT_ROUTES[device.id] && <a className="button button-quiet" href={'#' + UNIT_ROUTES[device.id]}><Icon name="grid" size={16} />Your {device.name}</a>}<a className={'button ' + (preview ? 'button-quiet' : 'button-primary')} href={developHref(device.id)}><Icon name="plus" size={16} />{ready ? 'Build the first mod' : 'Help unlock'}</a><a className="button button-quiet" href={repository + '/blob/main/docs/ADD_A_MACHINE.md'} target="_blank" rel="noreferrer"><Icon name="plus" size={16} />Open a device PR</a><a className="button button-quiet" href="#forum"><Icon name="message" size={16} />Discuss in the forum</a></div></Hero>
       <section className="device-invite"><h2>Be the first to mod the {device.name}</h2><p>{page.invite} {ready ? DEVELOP_PITCH : page.unlock}</p></section>
       <section className="configuration-section" aria-labelledby="ladder-title">
         <div className="section-title"><h2 id="ladder-title">Road to the first mod</h2><span className="subtle">{stepsDone(device)} of {steps.length} done</span></div>

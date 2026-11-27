@@ -1,5 +1,47 @@
 [
   {
+    "version": "0.7.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "QPER links any number of performances again. Hold PERF: a knob, PLAY, STOP and YES act on all linked ones at once.",
+      "Hold FIX or CHRO and press PLAY to set all the sound's velocity or aftertouch links to 0; PLAY again undoes.",
+      "Hold LFO and press PLAY, RECORD or STOP on any page to clear, copy or paste the LFO page.",
+      "Recorded scene changes go to the nearest step when LIVE RECORDING is quantized; performance moves stay as played.",
+      "RECORD + YES no longer stalls on a take with many scene locks, and waits for the loop start when it must lengthen a track while playing."
+    ]
+  },
+  {
+    "version": "0.6.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "Hold PERF and turn a knob to lock QPER's linked performance; YES, PLAY, RECORD and STOP apply, clear, copy and paste it.",
+      "QPER keeps only its link (QPER + a pad); its other gestures are stock's again.",
+      "Hold CHRO and turn a knob to link aftertouch; SAMPLER is stock's again.",
+      "SCENE + YES writes the scene into the kit; YES again undoes. With SCENE or PERF held, PLAY no longer starts the sequencer.",
+      "LIVE RECORDING keeps scene changes too: RECORD + YES writes them as locks, RECORD + NO clears them."
+    ]
+  },
+  {
+    "version": "0.5.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "Now called Improved Modulation, and QPER Live Rec is part of it: QPER locks, copy, paste, clear, YES and the quick perf rec work as before.",
+      "Press QPER + YES again in the same hold to undo the apply; SCENE + REC, STOP or PLAY reacts sooner, at once in scene edit.",
+      "QPER Live Rec leaves the library: install this module in its place, never both."
+    ]
+  },
+  {
+    "version": "0.4.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "Now called Improved Mod Assign. Hold SCENE and turn a knob to lock it in the scene, also in scene edit.",
+      "SCENE + knob press removes a lock; SCENE + REC, STOP or PLAY copies, pastes or clears the scene.",
+      "SCENE held and let go with no knob opens scene edit as before, now on the release.",
+      "With no scene engaged the locks go to the scene engaged last; tap pads while holding SCENE to lock other tracks.",
+      "Holding LFO on the LFO page shows its values in PERF, SCNE, MUTE and CHRO too, as on stock."
+    ]
+  },
+  {
     "version": "0.3.1-experimental",
     "date": "2026-11-16",
     "changes": [

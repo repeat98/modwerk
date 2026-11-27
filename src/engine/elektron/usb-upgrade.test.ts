@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { encode8in7 } from './codec/transport'
 import { HEADER, unpack7 } from './os-upgrade'
 import type { MidiAccessLike, MidiIn, MidiOut } from './os-upgrade-midi'
-import { sendOverUsb, usbUpgradePort } from './usb-upgrade'
+import { sendOverUsb, usbSendPort, usbUpgradePort } from './usb-upgrade'
+import { namesModel } from './os-upgrade-midi'
 
 /** MIDI ports of a unit that answers the upgrade like the stock OS: `last` says done on the final block. */
 function unitPorts(name: string, refuseStart = false) {
@@ -22,6 +23,8 @@ function unitPorts(name: string, refuseStart = false) {
 describe('sending a build to the unit over USB', () => {
   it('lists only machines whose upgrade over USB ran on a unit', () => {
     expect(usbUpgradePort('model-cycles')).toBe('Model:Cycles')
+    expect(usbUpgradePort('analog-rytm-mkii')).toBe('Analog Rytm MKII')
+    expect(usbUpgradePort('analog-rytm-mki')).toBeUndefined()
     expect(usbUpgradePort('digitakt')).toBeUndefined()
     expect(usbUpgradePort('toString')).toBeUndefined()
   })
@@ -33,6 +36,26 @@ describe('sending a build to the unit over USB', () => {
     expect(unit.sentCount()).toBe(4)          // the start and three 2 KiB blocks
     expect(progress).toEqual([1, 2, 3, 4])
     expect(unit.input.onmidimessage).toBeNull() // the input is given back
+  })
+  it('offers the send to beta testers only', () => {
+    expect(usbSendPort('analog-rytm-mkii', true)).toBe('Analog Rytm MKII')
+    expect(usbSendPort('analog-rytm-mkii', false)).toBeUndefined()
+    expect(usbSendPort('digitakt', true)).toBeUndefined()
+  })
+  it('names the Rytm MKII in the port names systems give it, and never an MKI or an Analog Four', () => {
+    for (const name of ['Elektron Analog Rytm MKII', 'Elektron Analog Rytm MKII 1', 'Elektron Analog Rytm MKII MIDI 1', 'MIDIIN2 (Elektron Analog Rytm MKII)', '2- Elektron Analog Rytm MKII'])
+      expect(namesModel(name, 'Analog Rytm MKII'), name).toBe(true)
+    for (const name of ['Elektron Analog Rytm', 'Elektron Analog Rytm MKI', 'Elektron Analog Four MKII'])
+      expect(namesModel(name, 'Analog Rytm MKII'), name).toBe(false)
+  })
+  it('finds the Rytm MKII by its port and never an MKI', async () => {
+    const syx = Uint8Array.from({ length: 3000 }, (_, i) => i & 0x7f), unit = unitPorts('Elektron Analog Rytm MKII')
+    unit.setTotal(syx.length)
+    await sendOverUsb(async () => unit.access, 'Analog Rytm MKII', syx)
+    expect(unit.sentCount()).toBe(3)
+    const mki = unitPorts('Elektron Analog Rytm')
+    await expect(sendOverUsb(async () => mki.access, 'Analog Rytm MKII', syx)).rejects.toThrow(/No Analog Rytm MKII found/)
+    expect(mki.sentCount()).toBe(0)
   })
   it('stops with the unit on its OS when it refuses, and when no Model:Cycles is connected', async () => {
     const refusing = unitPorts('Elektron Model:Cycles', true)

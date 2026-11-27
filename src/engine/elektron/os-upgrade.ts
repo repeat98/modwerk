@@ -88,7 +88,8 @@ export async function sendUpgrade(line: UpgradeLine, syx: Uint8Array, onProgress
     if (!reply) throw new UpgradeError(`The unit did not answer message ${i + 1} of ${total}; it stays on its OS.`)
     const status = reply[statusAt]
     if (i === 0 && status !== 0) throw new UpgradeError(`The unit refused the upgrade (status ${status}). Leave every menu and try again.`)
-    if (i > 0 && status > 1) throw new UpgradeError(`The unit refused block ${i} of ${total - 1} (status ${status}); it stays on its OS.`)
+    if (i > 0 && status > 1) throw new UpgradeError(`The unit refused block ${i} of ${total - 1} (status ${status}); it stays on its OS.`
+      + (status === 2 ? ' Leave every menu on the unit, OS UPGRADE included, and try again.' : ''))
     onProgress?.({ sent: i + 1, total })
     if (i > 0 && status === 1) {
       if (i !== total - 1) throw new UpgradeError(`The unit said done at block ${i} of ${total - 1}; it stays on its OS.`)

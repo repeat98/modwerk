@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/improved-comp",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-25",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7. On the COMPRESSOR page THR reads in dBFS where the compressor starts, following RAT (8, 15 and 18 dB later at 1:8, 1:4 and 1:2 than at MAX), and MUP reads the makeup gain in dB."
+  ],
+  "runtimeSourceSha256": "678e9299d642b420577a47f474a70f9456b10b5ef47b00f97fc9720ee4ef4e41",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/improved-comp/improved-comp-0.1.0-experimental-os1.74.elemod",
+      "sha256": "89fe8a3b97290c9b4881f431c749b268d1c31dbfa12cce72c0b4521ce0955f94"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/improved-comp/TESTING.md",
+  "requires": []
+}

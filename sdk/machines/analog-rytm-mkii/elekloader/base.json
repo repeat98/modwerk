@@ -1,7 +1,8 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections) and the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and in send-bus (add) the FX track's lock words, the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to, and digital voices (mw_voices) with the hook ev_sound_applied. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in three variants: send-bus (the default, with add), voices (add without what its leave names: the FX track's lock words, the send bus, its pages, its clock and the FX list, so a set with a digital voice machine and no send effect keeps the voices and pays nothing for a bus it does not use; only the send bus writes those words, so on voices a pattern's send-FX locks are not kept: one saved with them on send-bus plays without them, and stock's next save of all its locks frees their lanes, while word 0 keeps marking those controls locked, so back on send-bus they play the kit's stored words instead, as after a trip through plain) and plain (core-ar2 0.7's source with common alone, for a build with neither, which then pays none of add's cost). npm run machine:base -- analog-rytm-mkii --dev also builds each variant with dev on top: the development link over USB MIDI (base/link.c), for test images only, never a release.",
+  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections), the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), the lean engine (base/perf-*: the audio interrupt's work that cannot change the block is left out, the CPU/OVR mark and the screen rate under a backed-up UI; elekloader/README.md) and pad pressure (base/pad-pressure.s: a held pad's pressure reaches the sound's aftertouch and MIDI during a retrig roll, and CHROMATIC pads send it on the played note), and in send-bus (add) the FX track's lock words, the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to, and digital voices (mw_voices) with the hook ev_sound_applied. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in three variants: send-bus (the default, with add), voices (add without what its leave names: the FX track's lock words, the send bus, its pages, its clock and the FX list, so a set with a digital voice machine and no send effect keeps the voices and pays nothing for a bus it does not use; only the send bus writes those words, so on voices a pattern's send-FX locks are not kept: one saved with them on send-bus plays without them, and stock's next save of all its locks frees their lanes, while word 0 keeps marking those controls locked, so back on send-bus they play the kit's stored words instead, as after a trip through plain) and plain (core-ar2 0.7's source with common alone, for a build with neither, which then pays none of add's cost). npm run machine:base -- analog-rytm-mkii --dev also builds each variant with dev on top: the development link over USB MIDI (base/link.c), for test images only, never a release. Its version is 0.7.1 (version below, in place of the imported recipe's 0.7): from that version on the builder links a set in the 3.7 MiB mod area 0x47B50000-0x47F00000 (the kit's coreDdr, src/engine/elektron/kit-devices.ts), where the send bus's work area ends (sendbus.c's MODS_END); a 0.7 base keeps 0x47BE0000-0x47C00000.",
   "core": "core-ar2",
+  "version": "0.7.1",
   "include": "sdk/machines/analog-rytm-mkii/include",
   "os": "1.74",
   "toolchain": {
@@ -36,7 +37,24 @@
     "sources": [
       "../base/sections.c",
       "../base/amp.s",
-      "../base/fxguard.s"
+      "../base/fxguard.s",
+      "../base/perf-sample-voices.s",
+      "../base/perf-effects.s",
+      "../base/perf-modulation.s",
+      "../base/perf-engine.s",
+      "../base/perf-cpu-mark.c",
+      "../base/perf-screen-rate.c",
+      "../base/pad-pressure.s",
+      "../base/link.c",
+      "../base/link.s",
+      "../base/load.c",
+      "../base/diag.c",
+      "../base/runtime.c",
+      "../base/modules.c",
+      "../base/loader.c",
+      "../base/upload.c",
+      "../base/wire.c",
+      "../base/sha256.c"
     ],
     "sites": [
       {
@@ -80,14 +98,343 @@
         "stockSha256": "d0402ab9708e0813aef1ef6bd5201ad121798936916b20540d23573fab2978e3",
         "op": "jsr",
         "target": "mw_fx_map_load"
+      },
+      {
+        "addr": "0x4011cc08",
+        "len": 8,
+        "stockSha256": "238df3d27fa58843b90bcf4f5c0f7d387724fe806037f2962ac5659febd4f7f2",
+        "op": "jsr",
+        "target": "le_dsk_interp"
+      },
+      {
+        "addr": "0x4011cd46",
+        "len": 6,
+        "stockSha256": "65fafa24356ca41b30135033f21e3e99bafdc6aa48560d28bbf3e2cf4da9080b",
+        "op": "jsr",
+        "target": "le_dsk_decim"
+      },
+      {
+        "addr": "0x4011cbba",
+        "len": 6,
+        "stockSha256": "f201122663120f11e43aab2d32b1856b22ea0e508dc2dd106419bc791f2b93b6",
+        "op": "jsr",
+        "target": "le_dsf_a"
+      },
+      {
+        "addr": "0x4011cd30",
+        "len": 6,
+        "stockSha256": "4e3df543d881fba2d1b8a115f11e31bb4f75966586debb8a4bcebf0b145262d6",
+        "op": "jsr",
+        "target": "le_dsf_b"
+      },
+      {
+        "addr": "0x4011cec6",
+        "len": 6,
+        "stockSha256": "e524cbd68388a252309770b7b7793466ad0d3a8028745d8034fccbb1b9574860",
+        "op": "jsr",
+        "target": "le_dsg"
+      },
+      {
+        "addr": "0x4010e75e",
+        "len": 6,
+        "stockSha256": "7ff04c31528c26e4b4e8f71dfdb3ba491bc4ac66923ab6e462276c45f0dd13f7",
+        "op": "jsr",
+        "target": "le_fxr_mix"
+      },
+      {
+        "addr": "0x4010db14",
+        "len": 6,
+        "stockSha256": "d9e3f5734cb482311146e8dae7bb8ea58a51a0b0d8c6f06c5d8de12bddc25090",
+        "op": "jsr",
+        "target": "le_fxr_delay"
+      },
+      {
+        "addr": "0x4010d544",
+        "len": 6,
+        "stockSha256": "0b893db60c8756ba72c03a6d9a4b59664b6b1f28492606f4387c3ef1633061ff",
+        "op": "jsr",
+        "target": "le_fxr_rev1"
+      },
+      {
+        "addr": "0x4010d842",
+        "len": 6,
+        "stockSha256": "c0c7a97cfb72e858460cadaf63b77b20accbbebb6bbaf57fda2fd8549f960358",
+        "op": "jsr",
+        "target": "le_fxr_rev2"
+      },
+      {
+        "addr": "0x40120e56",
+        "len": 6,
+        "stockSha256": "c3516bf848c8d3aa6a430725ddef7d3c7a2bfce6f936e0a02d080863646a7387",
+        "op": "jsr",
+        "target": "le_ms_slide"
+      },
+      {
+        "addr": "0x4011de2a",
+        "len": 6,
+        "stockSha256": "c08255d313d1c37235530e5e20eaf2c657b1eb37fceabf1aacac6b9b7430ede4",
+        "op": "jmp",
+        "target": "le_ms_list"
+      },
+      {
+        "addr": "0x40120fc0",
+        "len": 6,
+        "stockSha256": "0ad0ad115af48d23536363e3730edda6418e324f84343815cc37021883d2ffce",
+        "op": "jsr",
+        "target": "le_ms_matrix"
+      },
+      {
+        "addr": "0x401214da",
+        "len": 6,
+        "stockSha256": "7d4c208ad4c4308b6fbf2fd9cae0fdf5657f81668d786d6c4a45f9d3adcd14eb",
+        "op": "jmp",
+        "target": "le_ms_clr"
+      },
+      {
+        "addr": "0x40005f2c",
+        "len": 6,
+        "stockSha256": "150a9093800a6a18b4dbc4bea16085158a7d540dc031d35aeb556a674a9de12a",
+        "op": "jmp",
+        "target": "le_ns_gate"
+      },
+      {
+        "addr": "0x4011fc6c",
+        "len": 6,
+        "stockSha256": "af758ea834cd1c0080d66ab69934e55b595c00e4a9a9fcefae9fa60bfeef4713",
+        "op": "jsr",
+        "target": "le_ns_dirty"
+      },
+      {
+        "addr": "0x40121398",
+        "len": 6,
+        "stockSha256": "85b9e1195fd802cdd87f294d9faad7107f46795bc5ecf614bd37a3b6e4cde8d5",
+        "op": "jsr",
+        "target": "le_cw_memo"
+      },
+      {
+        "addr": "0x4010ea98",
+        "len": 8,
+        "stockSha256": "3e7c95b32f444fd280cb96b2a6ea90525fe223d6e6b9352086d2cf41941ae854",
+        "op": "jmp",
+        "target": "le_vd_gate"
+      },
+      {
+        "addr": "0x40120d1c",
+        "len": 8,
+        "stockSha256": "370fbd328cbf757cf5bb0069621175eba8d68f3ec2aba8877e555795bece31ac",
+        "op": "jmp",
+        "target": "le_sm_run"
+      },
+      {
+        "addr": "0x400a4a32",
+        "len": 6,
+        "stockSha256": "cecd19b005e5e41f0f1047318808a77400f63c9caa49b22c372e4b99f688ed50",
+        "op": "jsr",
+        "target": "le_frame_gate"
+      },
+      {
+        "addr": "0x400c628e",
+        "len": 6,
+        "stockSha256": "eb8c3b4455860d7a405903deb4a71d861baed698a9ab2fbb8c1166d596dffcd1",
+        "op": "jsr",
+        "target": "mw_pad_pressure_out"
+      },
+      {
+        "addr": "0x400e2924",
+        "len": 2,
+        "stockSha256": "a8e774a529ecac8cd402f40263e3be8f3998c6a4fd734961cf0ad590e2926d6a",
+        "op": "bytes",
+        "new": "7000",
+        "kind": "code"
+      },
+      {
+        "addr": "0x400c755a",
+        "len": 4,
+        "stockSha256": "0e4a2031c12bcd049eb2737a1b852fc71ee88d3cfcdef80cbdf3829739dae732",
+        "op": "bytes",
+        "new": "4e714e71",
+        "kind": "code"
+      },
+      {
+        "addr": "0x400c6228",
+        "len": 2,
+        "stockSha256": "5c1c81956ea56ef91a593bbb23f800b4f506699661623acf9944ad0d0da4ac21",
+        "op": "bytes",
+        "new": "4e71",
+        "kind": "code"
+      },
+      {
+        "addr": "0x40083dd8",
+        "len": 8,
+        "stockSha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
+        "op": "jmp",
+        "target": "mw_link_router"
+      },
+      {
+        "addr": "0x400008c6",
+        "len": 8,
+        "stockSha256": "dbd7ee3ac848bc629a889c3a534a8b23d8bb88fb05c5dd9f8f825696a3c6b633",
+        "op": "jsr",
+        "target": "mw_boot_site"
       }
     ],
     "cflags": [
-      "-DMACHINE_SECTION_AT=0x40257d70"
+      "-fno-late-combine-instructions",
+      "-DMACHINE_SECTION_AT=0x40257d70",
+      "-DLE_TEXT_DRAW_AT=0x4007154c",
+      "-DLE_TEXT_FONT_AT=0x40071be8",
+      "-DLE_TEXT_CTX_AT=0x417e389c",
+      "-DLE_FRAME_STEP_AT=0x400a2ce6",
+      "-DLE_UI_QUEUE_AT=0x41943f54",
+      "-DSEQ_PLAYING_AT=0x405c8cf8",
+      "-DUSB_LOCK_AT=0x40002914",
+      "-DUSB_UNLOCK_AT=0x40002924",
+      "-DUSB_WRITE_AT=0x400029e0",
+      "-DMIDI_ON_AT=0x419f28a8",
+      "-DUSB_SYSEX_STATE_AT=0x413db244",
+      "-DRUNTIME_MODULES=16u",
+      "-DRUNTIME_POOL_BYTES=65536u"
+    ],
+    "defsym": {
+      "LE_VERIFY": "0",
+      "LE_STORE_PHASE": "0x4011ccb6",
+      "LE_GAIN_STAGE": "0x4011ce5e",
+      "LE_INTERP_OUT": "0x8000e320",
+      "LE_DECIM_OUT": "0x8000e1d0",
+      "LE_VOICE_OUT": "0x800067f8",
+      "LE_FETCH": "1",
+      "LE_TRIM": "1",
+      "LE_TAIL": "0x4011cf5e",
+      "LE_COUNT": "0",
+      "LE_GAINS": "0x419c9f98",
+      "LE_SEND0": "0x80007a44",
+      "LE_MIX_DONE": "0x4010e7ac",
+      "LE_MIX_STOCK": "0x4010e764",
+      "LE_DLY_FLT": "0x8000e11c",
+      "LE_DLY_GATE": "0x8000dff0",
+      "LE_DLY_PTR": "0x8000ddb0",
+      "LE_DLY_PAR": "0x8000e008",
+      "LE_DLY_OUT": "0x80007c44",
+      "LE_DLY_TMP": "0x8000e01c",
+      "LE_DLY_TAIL": "0x4010dd6e",
+      "LE_REV_FLT": "0x8000cd08",
+      "LE_REV_ST": "0x8000ccbc",
+      "LE_REV_IN": "0x80007b44",
+      "LE_REV_FB": "0x8000cb10",
+      "LE_REV_LINES": "0x8000d1e0",
+      "LE_REV_TMP": "0x8000ca10",
+      "LE_REV_TMP2": "0x8000cc3c",
+      "LE_REV_LFO": "0x4010d7ee",
+      "LE_REV_END": "0x4010da1a",
+      "LE_REV_L0": "0x8000d1f0",
+      "LE_REV_L5": "0x8000d560",
+      "LE_DMA_CSR": "0xfc0453de",
+      "LE_QUIET": "1",
+      "LE_PAR": "0x8000f774",
+      "LE_COEF": "0x8000e438",
+      "LE_SLIDE_END": "0x40120e9e",
+      "LE_FCE8": "0x8000fce8",
+      "LE_LIST_BODY": "0x4011de30",
+      "LE_MX_OFF": "0x8000ed74",
+      "LE_MX_ENT": "0x8000ebbc",
+      "LE_MX_SRC": "0x8000ec7c",
+      "LE_FRAMES": "0x40287ffc",
+      "LE_FLAGS": "0x8000646c",
+      "LE_CLR_END": "0x401214f8",
+      "LE_U0": "0x42ac6f30",
+      "LE_MEMSET": "0x40097c40",
+      "LE_NS_RESUME": "0x40005f4c",
+      "LE_CW_STOCK": "0x4010e20c",
+      "LE_TGT": "0x8000e57c",
+      "LE_STATE": "0x8000ee84",
+      "LE_SM_END": "0x40120d50",
+      "LE_SM_LOOP": "0x40120d24",
+      "LE_SM_AFTER": "0x40120d54",
+      "LE_FEF4": "0x8000fef4",
+      "LE_VD_TAB": "0x401bed40",
+      "LE_G_PAIRS": "0x80007000",
+      "LE_VD_A0": "0x80007040",
+      "LE_VD_A2": "0x800067f8",
+      "LE_VD_A3": "0x80006bf8",
+      "LE_VD_BODY": "0x4010eaa0",
+      "LE_NSC": "1",
+      "LE_VDC": "1",
+      "LE_CMW": "1",
+      "LE_SMO": "1",
+      "mw_link_router_resume": "0x40083de0",
+      "mw_boot_data": "0x400007e4",
+      "mw_boot_bss": "0x4000083a"
+    },
+    "subscribe": [
+      {
+        "event": "ev_render_out",
+        "fn": "le_cpu_warning_out",
+        "order": 50
+      },
+      {
+        "event": "ev_tick",
+        "fn": "le_cpu_warning_tick",
+        "order": 90
+      },
+      {
+        "event": "ev_draw",
+        "fn": "le_cpu_warning_draw",
+        "order": 95
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_link_tick",
+        "order": 240
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_diag_tick",
+        "order": 239
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_diag_key",
+        "order": 0
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_runtime_tick",
+        "order": 241
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_runtime_draw",
+        "order": 250
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_runtime_key",
+        "order": 2
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_runtime_enc",
+        "order": 2
+      }
     ],
     "collections": {
       "mw_machine_sections": 4,
       "ev_amp_record": 4
+    },
+    "shared": {
+      "base": [
+        "sdk/runtime/loader/loader.c",
+        "sdk/runtime/loader/loader.h",
+        "sdk/runtime/loader/modwerk_module.h",
+        "sdk/runtime/loader/context.h",
+        "sdk/runtime/loader/journal.h",
+        "sdk/runtime/loader/set_package.h",
+        "sdk/runtime/upload/upload.c",
+        "sdk/runtime/upload/upload.h",
+        "sdk/runtime/upload/wire.c",
+        "sdk/runtime/upload/wire.h",
+        "sdk/runtime/upload/sha256.c"
+      ]
     }
   },
   "reference": {
@@ -95,7 +442,6 @@
     "sha256": "f1e9cb2c39eb52af15e7cf8ad25596e46f550e4f748bc9dd60d63a44da2dd9c1",
     "keeps": [
       "id",
-      "version",
       "build",
       "sites",
       "exports",
@@ -400,19 +746,11 @@
     ]
   },
   "dev": {
-    "about": "The development link (base/link.c, link.s): identity, screen and memory reads over USB MIDI SysEx, and while GLOBAL > REMOTE CTRL is on (at every boot) panel keys, encoder turns, the remote YES of stock's OS upgrade and a RAM boot of another image. Any USB host can drive it with no hand on the unit: development bases only.",
+    "about": "What the development link adds to every base's (base/link.c with MODWERK_DEV, link-dev.s): the screen and memory reads, and while GLOBAL > REMOTE CTRL is on (at every boot) panel keys, encoder turns and pads, the remote YES of stock's OS upgrade and a RAM boot of another image. Any USB host can drive it with no hand on the unit: development bases only.",
     "sources": [
-      "../base/link.c",
-      "../base/link.s"
+      "../base/link-dev.s"
     ],
     "sites": [
-      {
-        "addr": "0x40083dd8",
-        "len": 8,
-        "stockSha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
-        "op": "jmp",
-        "target": "mw_link_router"
-      },
       {
         "addr": "0x40081c28",
         "len": 6,
@@ -426,32 +764,18 @@
         "stockSha256": "9f8a100ff33cc7cd854b0b01e86de843b19d6b517737e658d8a00b6a43e242d0",
         "op": "jsr",
         "target": "mw_link_program"
-      },
-      {
-        "addr": "0x400008c6",
-        "len": 8,
-        "stockSha256": "dbd7ee3ac848bc629a889c3a534a8b23d8bb88fb05c5dd9f8f825696a3c6b633",
-        "op": "jsr",
-        "target": "mw_boot_site"
       }
     ],
     "cflags": [
-      "-fno-late-combine-instructions",
-      "-DFILLRECT_AT=0x40070726",
-      "-DSEQ_PLAYING_AT=0x405c8cf8",
-      "-DSYSEX_SEND_AT=0x40085a18",
-      "-DUSB_SYSEX_STATE_AT=0x413db244",
+      "-DMODWERK_DEV",
       "-DUI_QUEUE_AT=0x4011fb56",
       "-DQUEUE_POST_AT=0x400013b2",
       "-DVIEW_INVALIDATE_AT=0x40078580",
       "-DFB_FRONT_AT=0x40287b6c"
     ],
     "defsym": {
-      "mw_link_router_resume": "0x40083de0",
       "mw_link_string": "0x401bcff0",
-      "mw_link_flash": "0x4009f404",
-      "mw_boot_data": "0x400007e4",
-      "mw_boot_bss": "0x4000083a"
+      "mw_link_flash": "0x4009f404"
     },
     "subscribe": [
       {
@@ -463,16 +787,6 @@
         "event": "ev_enc",
         "fn": "mw_link_enc",
         "order": 1
-      },
-      {
-        "event": "ev_tick",
-        "fn": "mw_link_tick",
-        "order": 240
-      },
-      {
-        "event": "ev_draw",
-        "fn": "mw_link_draw",
-        "order": 250
       },
       {
         "event": "ev_project",

@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { DEVICE } from '../engine/elekloader/digi-build'
 import { DEVICES, KIT_PROTOCOL, catalogChanges, describeChange, followUps, libraryCatalog, mergeCatalogOverlay, readKitZip, type KitJson } from '../../scripts/elekloader-update.ts'
-import { kitNotice, replacementText } from '../../scripts/elekloader-vendor.ts'
+import { KIT_REPLACEMENTS, kitNotice, replacementText } from '../../scripts/elekloader-vendor.ts'
 import { PROTOCOL } from '../../vendor/elekloader/kit/src/kit/protocol.ts'
 
 const sha = (data: Uint8Array) => createHash('sha256').update(data).digest('hex')
@@ -180,7 +180,7 @@ function fixture() {
     mkdirSync(dirname(join(root, path)), { recursive: true })
     cpSync(join(ROOT, path), join(root, path), { recursive: true })
   }
-  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron/codec', 'src/engine/elektron/odd-jumps.ts']) copy(path)
+  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron/codec', 'src/engine/elektron/odd-jumps.ts', ...Object.values(KIT_REPLACEMENTS)]) copy(path)
   // The module records that add Modwerk-built pins to the upstream catalog.
   for (const name of readdirSync(join(ROOT, 'sdk/imports')).filter(name => /^elekloader-.*\.json$/.test(name))) copy('sdk/imports/' + name)
   const manifest = JSON.parse(readFileSync(join(root, 'sdk/octabam/licenses/manifest.json'), 'utf8')) as { moduleComponents: Record<string, string[]> }

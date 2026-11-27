@@ -1,0 +1,1 @@
+Members who share diagnostics now also share their Analog Rytm MKII's own log (its load, overloads and freezes) while Your Analog Rytm is open, with the checksum and size of the firmware set it runs. The diagnostics text and privacy page say so; sharing stays as it was for everyone who already shares.

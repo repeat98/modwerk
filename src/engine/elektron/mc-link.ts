@@ -87,12 +87,14 @@ export function parseMcIdent(payload: Uint8Array): McIdentity {
 
 /** load's payload; tenths of a percent on the wire. */
 export function parseMcLoad(payload: Uint8Array): McLoad {
-  if (payload.length < 25) throw new Error('The Model:Cycles link sent a short load reading.')
+  if (payload.length < 25) throw new Error('The link sent a short load reading.')
   const [avg, wmax, peak, windows, blocks] = [0, 1, 2, 3, 4].map(i => get32(payload, 5 * i))
   return { windowPercent: windows ? avg / 10 : null, windowPeakPercent: windows ? wmax / 10 : null, peakPercent: peak / 10, windows, blocks }
 }
 
-export type McCall = (cmd: number, body?: number[]) => Promise<Uint8Array | null>
+/** A request over one line; `setOf`, when the machine's identity is not the Model:Cycles' layout, reads the set
+ * identity from its `ident` payload (the Analog Rytm MKII's, rytm-link.ts). */
+export type McCall = ((cmd: number, body?: number[]) => Promise<Uint8Array | null>) & { setOf?: (ident: Uint8Array) => { crc: number; bytes: number } | null }
 /** Requests to the connected Model:Cycles over one line: each gives its reply's payload, or null without a reply; the
  * whole is null without a unit. */
 export async function withMc<T>(access: MidiAccessLike, timeoutMs: number, work: (call: McCall) => Promise<T | null>): Promise<T | null> {
@@ -132,28 +134,46 @@ export async function readMcLoad(access: MidiAccessLike, timeoutMs = 2000): Prom
  * 'unsupported' from a base without the log or without `log` (it refuses either as a bad request). */
 export async function readMcLog(access: MidiAccessLike, timeoutMs = 2000): Promise<{ bytes: Uint8Array; log: DeviceLog | undefined } | 'unsupported' | null> {
   try {
-    return await withMc(access, timeoutMs, async call => {
-      const place = await call(DIAG)
-      if (!place) return null
-      const size = get32(place, 5)
-      if (size < 8 || size > DEVICE_LOG_IMAGE_BYTES) throw new Error(`The Model:Cycles link named a ${size}-byte log.`)
-      const bytes = new Uint8Array(size)
-      for (let at = 0; at < size; at += LOG_MAX) {
-        const n = Math.min(LOG_MAX, size - at), p = await call(LOG, [...put32(at), ...put32(n)])
-        if (!p) return null
-        if (p.length < 10 || get32(p, 0) !== at || get32(p, 5) !== n) throw new Error('The Model:Cycles link sent another block than asked for.')
-        const data = unpack7(p.subarray(10))
-        if (data.length !== n) throw new Error('The Model:Cycles link sent a short block.')
-        bytes.set(data, at)
-      }
-      const image = new Uint8Array(DEVICE_LOG_IMAGE_BYTES)
-      image.set(bytes)                  // no crash or stall record: zeros, as an older Octatrack base answers
-      return { bytes, log: parseDeviceLog(image) }
-    })
+    return await withMc(access, timeoutMs, call => readLinkLog(call, 'The Model:Cycles link'))
   } catch (error) {
     if (error instanceof McRefused && error.status === BAD_REQUEST) return 'unsupported'
     throw error
   }
+}
+
+/** The diagnostics log over any machine's link that answers `diag` and `log` (the Model:Cycles', the Analog Rytm MKII's):
+ * its bytes and the log the Octatrack's parser reads from them, or null when a reply did not come. A record the unit
+ * writes between two reads could pair halves of two records, so the read is taken again (up to three times) until the
+ * log's seq, at byte 16, is the same at its end as at its start. `name` words the errors. */
+export async function readLinkLog(call: McCall, name: string): Promise<{ bytes: Uint8Array; log: DeviceLog | undefined } | null> {
+  const place = await call(DIAG)
+  if (!place) return null
+  const size = get32(place, 5)
+  if (size < 20 || size > DEVICE_LOG_IMAGE_BYTES) throw new Error(`${name} named a ${size}-byte log.`)
+  const block = async (at: number, n: number) => {
+    const p = await call(LOG, [...put32(at), ...put32(n)])
+    if (!p) return null
+    if (p.length < 10 || get32(p, 0) !== at || get32(p, 5) !== n) throw new Error(`${name} sent another block than asked for.`)
+    const data = unpack7(p.subarray(10))
+    if (data.length !== n) throw new Error(`${name} sent a short block.`)
+    return data
+  }
+  for (let tries = 0; tries < 3; tries++) {
+    const bytes = new Uint8Array(size)
+    for (let at = 0; at < size; at += LOG_MAX) {
+      const data = await block(at, Math.min(LOG_MAX, size - at))
+      if (!data) return null
+      bytes.set(data, at)
+    }
+    const seq = await block(16, 4)
+    if (!seq) return null
+    if (seq.every((b, i) => b === bytes[16 + i])) {
+      const image = new Uint8Array(DEVICE_LOG_IMAGE_BYTES)
+      image.set(bytes)                  // no crash or stall record: zeros, as an older Octatrack base answers
+      return { bytes, log: parseDeviceLog(image) }
+    }
+  }
+  throw new Error(`${name}'s log kept changing while it was read.`)
 }
 
 /** The base identity a base's upload controller binds a BEGIN to (base/modules.c): the SHA-256 of its set
@@ -195,7 +215,7 @@ export async function mcModules(call: McCall): Promise<McModules | null> {
     if (!p) return null
     const bytes = unpack7(p), view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
     if (bytes.length < 20 || String.fromCharCode(...bytes.subarray(16, 19)) !== 'MWI' || bytes.length < 20 + 24 * bytes[19])
-      throw new Error('The Model:Cycles sent a malformed module list.')
+      throw new Error('The unit sent a malformed module list.')
     const why = view.getUint32(8)
     Object.assign(out, { free: view.getUint32(0), largest: view.getUint32(4), refusal: REFUSALS[why] ?? 'refusal ' + why, active: view.getUint32(12) })
     for (let i = 0; i < bytes[19]; i++) {
@@ -226,7 +246,7 @@ export async function readMcStatus(access: MidiAccessLike, timeoutMs = 2000): Pr
 export async function mcUploadSession(call: McCall, timeoutMs = 20000): Promise<UploadSession | null> {
   const payload = await call(IDENT)
   if (!payload) return null
-  const set = parseMcIdent(payload).set
+  const set = call.setOf ? call.setOf(payload) : parseMcIdent(payload).set
   if (!set) throw new Error('This base reports no set identity: build a newer one.')
   return UploadSession.connect(mcUploadTransport(call), mcUploadBase(set.crc), { timeoutMs })
 }

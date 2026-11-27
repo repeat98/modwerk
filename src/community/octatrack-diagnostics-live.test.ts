@@ -106,3 +106,35 @@ describe('live load and the unit’s own log, with consent', () => {
     expect(sent().filter(data => data.event === 'device_log').map(data => data.log)).toEqual([{ loads: [load(3)], incidents: [] }])
   })
 })
+
+describe('another machine’s own log, read on its page', () => {
+  const rytmLog = (loads: DeviceLoad[], incidents: DeviceIncident[] = []) => ({ version: 2, nonce: 7, boot: 1, seq: 9, stallSeen: 0, loads, incidents })
+  const set = { crc: 0xf92cbc54, bytes: 237004 }
+  it('sends it under its machine and set, apart from the Octatrack’s log, and only what is new', async () => {
+    // No Octatrack connected: the collector runs on every page, so a Rytm's page hands it the log.
+    cleanups.push(store.collectOctatrackDiagnostics('member', null, () => undefined)); await vi.advanceTimersByTimeAsync(0)
+    expect(store.deviceLogWanted()).toBe(true)
+    await store.reportDeviceLog('analog-rytm-mkii', rytmLog([load(1), load(3)], [incident(2)]), set)
+    await vi.advanceTimersByTimeAsync(0)
+    const logs = sent().filter(data => data.event === 'device_log')
+    expect(logs.map(data => [data.machine, data.set, data.phase, 'base' in data, 'client' in data, data.log.loads.length, data.log.incidents.length]))
+      .toEqual([['analog-rytm-mkii', set, 'ready', false, false, 2, 0], ['analog-rytm-mkii', set, 'ready', false, false, 0, 1]])
+    expect(JSON.stringify(sent())).not.toContain('"nonce"')
+    await store.reportDeviceLog('analog-rytm-mkii', rytmLog([load(1), load(3), load(4)], [incident(2)]), set)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(sent().filter(data => data.event === 'device_log').at(-1).log).toEqual({ loads: [load(4)], incidents: [] })
+    // The Octatrack's log with the same nonce keeps its own marks: everything it holds is new to it.
+    const link = unit(); cleanups.push(store.collectOctatrackDiagnostics('member', link as unknown as OctatrackLink, () => undefined)); await vi.advanceTimersByTimeAsync(0); await rounds(1)
+    expect(sent().filter(data => data.event === 'device_log' && !data.machine).map(data => data.log.loads.length + data.log.incidents.length)).toEqual([2, 1])
+  })
+  it('asks for and sends nothing without consent, nor while no collector runs', async () => {
+    expect(store.deviceLogWanted()).toBe(false)
+    await store.reportDeviceLog('analog-rytm-mkii', rytmLog([load(1)]), set)
+    mocked.request.mockImplementation(async () => ({ ...consent(), enabled: false }))
+    cleanups.push(store.collectOctatrackDiagnostics('member', null, () => undefined)); await vi.advanceTimersByTimeAsync(0)
+    expect(store.deviceLogWanted()).toBe(false)
+    await store.reportDeviceLog('analog-rytm-mkii', rytmLog([load(1)]), set)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(mocked.fetch).not.toHaveBeenCalled()
+  })
+})

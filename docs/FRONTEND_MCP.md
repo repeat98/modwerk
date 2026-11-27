@@ -330,6 +330,30 @@ saved: there are no saved sets. Close Elektron Transfer first. Tests run
 against a fake unit (`scripts/mc-device.test.mjs`); the trial test runs the
 base's own transport, controller and loader compiled for the computer.
 
+### An Analog Rytm MKII over its link
+
+The same `--elektron-midi` tools read an Analog Rytm MKII when no Model:Cycles
+answers: every Modwerk base on the Rytm carries the link's read-only part
+([LINK.md](../sdk/machines/analog-rytm-mkii/LINK.md), 25 November 2026).
+`device_status` gives its identity (`label` the flashed image's, as stock shows
+it; `release` true for a release base, which refuses keys, screen, memory and
+the RAM boot; a development base's arm and RAM boot) and `build`, the `.syx` in
+`--elektron-images` whose set identity matches: the `.run` block sits before
+the storage lockfile the linker appends, and `scripts/link-image.mjs` prints the
+same numbers as `run`. `device_load` and `device_log` read as for the
+Model:Cycles; the Rytm's `cpu` is the audio block's share of its period, its
+`playing` the looks the sequencer played. `device_review`, `device_trial`,
+`device_keep` and `device_undo` load a runtime package on it as on the
+Model:Cycles: the same link commands and runtime loader
+([LINK.md](../sdk/machines/analog-rytm-mkii/LINK.md#loading-modules)); a base from
+before the loader refuses the review (`hello was not confirmed`). On a unit (25 November 2026, the release base
+SR09 from RAM): review, trial, Undo and Keep of `hello.mwrm`, the trial held by the pings
+([record](verification/2026-11-25-rytm-runtime-loader.md)). Tests run against a fake unit (`scripts/rytm-device.test.mjs`). On a unit (Nathaniel Pavel's MKII, 25
+November 2026): on SR01 (a development base with the link change, RAM-booted) `device_status` gave the set identity
+and named SR01's `.syx` in `--elektron-images`, `device_load` 58.5 %, `device_log` START and BASE, and
+`device_review` said the Rytm has no loader; on an image from before the change, the identity with no set and load
+and log unsupported.
+
 ## A member's unit through a remote session
 
 An administrator can read a member's Octatrack through their browser, with

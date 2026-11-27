@@ -3,7 +3,7 @@ import { needMember, sameDigest, throttle } from './auth'
 import { boundedBody, digest, HttpError, response } from './security'
 import { MODULES } from '../src/catalog/modules'
 import { isStagingCommand, STAGING_SET_BYTES, STAGING_FRAME_BYTES } from '../src/community/octatrack-diagnostics-contract'
-import { DIAGNOSTICS_GUEST, DEVICE_INCIDENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, DIAGNOSTIC_CONSENT_DAYS, DIAGNOSTIC_BUILD_ERRORS, DIAGNOSTIC_BUILD_KINDS, DIAGNOSTIC_BUILD_PHASES, DIAGNOSTIC_ERROR_KINDS, DIAGNOSTIC_ERRORS, DIAGNOSTIC_EVENTS, DIAGNOSTIC_PHASES, DIAGNOSTIC_RESULTS, DIAGNOSTIC_RETENTION_DAYS, DIAGNOSTIC_SITE_AREAS, DIAGNOSTIC_SYNC_STEPS, DIAGNOSTIC_UNRESPONSIVE, DIAGNOSTIC_USB_ERRORS, DIAGNOSTIC_USB_PHASES, DIAGNOSTIC_BROWSERS, DIAGNOSTIC_SYSTEMS, PRE_LINK_FAILURES, TRIAL_RECONNECT_FAILURES, OCTATRACK_DIAGNOSTICS_VERSION, OCTATRACK_DIAGNOSTICS_ACCEPTED, type DiagnosticConsent, type OctatrackDiagnostic } from '../src/community/octatrack-diagnostics-contract'
+import { DIAGNOSTICS_GUEST, DIAGNOSTIC_LOG_MACHINES, DEVICE_INCIDENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, DIAGNOSTIC_CONSENT_DAYS, DIAGNOSTIC_BUILD_ERRORS, DIAGNOSTIC_BUILD_KINDS, DIAGNOSTIC_BUILD_PHASES, DIAGNOSTIC_ERROR_KINDS, DIAGNOSTIC_ERRORS, DIAGNOSTIC_EVENTS, DIAGNOSTIC_PHASES, DIAGNOSTIC_RESULTS, DIAGNOSTIC_RETENTION_DAYS, DIAGNOSTIC_SITE_AREAS, DIAGNOSTIC_SYNC_STEPS, DIAGNOSTIC_UNRESPONSIVE, DIAGNOSTIC_USB_ERRORS, DIAGNOSTIC_USB_PHASES, DIAGNOSTIC_BROWSERS, DIAGNOSTIC_SYSTEMS, PRE_LINK_FAILURES, TRIAL_RECONNECT_FAILURES, OCTATRACK_DIAGNOSTICS_VERSION, OCTATRACK_DIAGNOSTICS_ACCEPTED, type DiagnosticConsent, type OctatrackDiagnostic } from '../src/community/octatrack-diagnostics-contract'
 
 const since = (now: Date, days: number) => new Date(now.getTime() - days * 86400000).toISOString()
 const hash = (v: unknown) => typeof v === 'string' && /^[a-f0-9]{64}$/.test(v)
@@ -74,7 +74,10 @@ const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
 }
 export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
   const readingKeys = ['state','failed','modules','dsp','intact','ran','cpu','tracks1to4','tracks5to8','frameGap','saved','savedCount','live','culprit','refusal']
-  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','busy','reading','restore','modules','packages','buildKind','live','reason','log','area','kind','step','usb','upload','client','failure','reconnect'])
+  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','busy','reading','restore','modules','packages','buildKind','live','reason','log','area','kind','step','usb','upload','client','failure','reconnect','machine','set'])
+    // Another machine's log names it, carries its set identity instead of the Octatrack's hashes, and nothing else.
+    && (!('machine' in value) || value.event === 'device_log' && value.phase === 'ready' && DIAGNOSTIC_LOG_MACHINES.some(machine => machine === value.machine) && ['base','active','error','result','refusal','busy'].every(key => !(key in value)))
+    && (!('set' in value) || 'machine' in value && object(value.set) && exactly(value.set, 'bytes,crc') && uint(value.set.crc) && uint(value.set.bytes))
     && (!('restore' in value) || value.event === 'health' && 'reading' in value && restoreList(value.restore))
     && (!('client' in value) || value.event !== 'device_log' && client(value.client)) && (!('failure' in value) || value.event === 'link_failed')
     && (value.error === 'disconnected'

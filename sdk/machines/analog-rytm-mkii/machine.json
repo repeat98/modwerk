@@ -20,7 +20,7 @@
         ]
       }
     ],
-    "flash": "Elektron Transfer over USB: set MIDI IN and OUT to the device, drop the .syx on and press YES on the device. It restarts by itself.",
+    "flash": "Send over USB from the machine page, or Elektron Transfer: set MIDI IN and OUT to the device, drop the .syx on. Press YES on the device to install; it restarts by itself.",
     "recovery": "Recovery mode is MIDI DIN ONLY — it does NOT work over USB: the startup menu never enumerates USB, so once a non-stock OS is on the unit a MIDI-DIN sender is REQUIRED (a USB-MIDI interface, or a hand-wired FT232RL serial adapter at 31250 baud: +5V/220 ohm to DIN 4, TXD/220 ohm to DIN 5, GND to DIN 2, raw .syx). Hold FUNC at power-on, TRIG 4 (OS UPGRADE), send the owner's stock .syx."
   },
   "steps": {
@@ -31,7 +31,13 @@
     "mods": "done"
   },
   "stack": {
-    "base": "started"
+    "base": "started",
+    "link": "done",
+    "flash": "done",
+    "loader": "done",
+    "status": "done",
+    "diagnostics": "done",
+    "tools": "done"
   },
   "research": [
     {
@@ -89,26 +95,26 @@
       {
         "name": "Shared mod memory",
         "unit": "bytes",
-        "value": 131072,
-        "note": "DDR 0x47BE0000–0x47C00000, shared by the core and every mod; a boot-time fill was read back intact on a unit (DDR-area canary, elekloader core-ar2 evidence)."
+        "value": 3866624,
+        "note": "DDR 0x47B50000–0x47F00000 (3.7 MiB) for the core and every mod of a set on base 0.7.1 or later; a 0.7 base keeps 128 KiB at 0x47BE0000. On one unit, fills around the old area read back intact and RAM-booted sets placed from 0x47B50000 ran (17 November 2026). Not tested: a flashed set, a second unit."
       },
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 12160,
-        "note": "Modwerk's base, plain variant (1c14b6b0), for a set with no send effect or digital voice machine: 10,792 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
+        "value": 169062,
+        "note": "The base's plain variant (0b5b4ce1), for a set with no send effect or digital voice machine: 51,794 bytes .run plus 117,268 .bss (the runtime loader about 32,700 and 108,800 of them, its pool and staging 96 KB), and a 94-byte .boot copier."
       },
       {
         "name": "Core image with the send bus",
         "unit": "bytes",
-        "value": 37178,
-        "note": "The base's send-bus variant (3ece243b), for a set with a send effect: 33,006 bytes .run plus 4,172 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+        "value": 194204,
+        "note": "The base's send-bus variant (c0c0eff6), for a set with a send effect: 74,128 bytes .run plus 120,076 bytes .bss, the runtime loader included. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
       },
       {
         "name": "Core image with the digital voices",
         "unit": "bytes",
-        "value": 17708,
-        "note": "The base's voices variant (dd771eae), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 14,876 bytes .run plus 2,832 bytes .bss."
+        "value": 174686,
+        "note": "The base's voices variant (d670789c), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 55,954 bytes .run plus 118,732 bytes .bss."
       }
     ]
   },

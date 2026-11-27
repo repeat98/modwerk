@@ -7,7 +7,8 @@ import { sha256Hex } from './hash.ts'
 import { PCREL, decodeColdFire, readerAt, wholeInstructions } from './coldfire-isa.ts'
 import type { ElemodMachine } from './ele3.ts'
 import * as store from '../../../vendor/elekloader/kit/src/store.ts'
-import { ModError as KitModError } from '../../../vendor/elekloader/kit/src/elemod.ts'
+import { ModError as KitModError, cmpVersions } from '../../../vendor/elekloader/kit/src/elemod.ts'
+import { ANALOG_RYTM_MK2 } from '../../../vendor/elekloader/kit/src/devices.ts'
 
 export class ModError extends Error {}
 
@@ -17,9 +18,13 @@ export type LinkDevice = {
   areas: Record<string, [number, number]>; ddr: [number, number]; sramCode: [number, number]; fastTable: string; protected: [number, number, string][]
   /** Stock routines no mod may reference (an absolute symbol or relocation) or copy, such as boot-flash writers. */
   noLink?: [number, number, string][]
+  /** [core version, area]: from that core on, the area in place of ddr, whatever the set's size (the kit's coreDdr,
+   * link.ts's ddrFor). The site builds through the kit, so take a device's table from the kit's own profile. */
+  coreDdr?: readonly (readonly [string, readonly [number, number]])[]
   /** Larger areas for a set that does not fit ddr, smallest first: the set takes the first it fits, so a set that fits
    * ddr links exactly as before. unless: a linker symbol; a mod that imports or references it cannot use that area (it
-   * assumes ddr's end). Only this linker reads it: the site builds through elekloader's kit, which has ddr alone. */
+   * assumes ddr's end). Only this linker reads it, and only for a core older than every coreDdr entry: the kit has no
+   * such choice, so the site cannot build these sets. */
   ddrMore?: { area: [number, number]; unless?: string }[]
 }
 
@@ -72,8 +77,11 @@ export const LINK_DEVICES: LinkDevice[] = [
     ddr: [0x47be0000, 0x47c00000], sramCode: [0, 0], fastTable: '', protected: [],
     // OS 1.74's last use of the RAM under ddr ends at 0x47b47480 (a DMA list) and its boot stack runs down from
     // 0x48000000; fills of 0x47b48000-0x47be0000 and 0x47c00000-0x47ff0000 read back intact on a unit
-    // (sdk/machines/analog-rytm-mkii/README.md, "Shared mod memory"). The send-bus base ends its effects' work area at
-    // ddr's end (sendbus.c's MODS_END), so a set on it stays below that.
+    // (sdk/machines/analog-rytm-mkii/README.md, "Shared mod memory"). Base 0.7.1 on links every set in the kit's
+    // larger area (kit-devices.ts), where its send bus ends its effects' work area (sendbus.c's MODS_END).
+    coreDdr: ANALOG_RYTM_MK2.coreDdr,
+    // A 0.7 base (a development image from before 0.7.1): its send bus ends the work area at ddr's end, so a set on
+    // it stays below that.
     ddrMore: [{ area: [0x47b50000, 0x47c00000] }, { area: [0x47b50000, 0x47f00000], unless: '__bss_end' }],
   },
   {
@@ -424,16 +432,23 @@ export async function linkMods(mods: ParsedMod[], image: Uint8Array, lock: store
     for (const mod of order) if (sizeOf(mod.sections['.bss'])) { at = align(at, Math.max(4, mod.sections['.bss']!.align)); base.set(key(mod, '.bss'), at); at += sizeOf(mod.sections['.bss']) }
     return [runEnd, fastAt, align(at, 4)]
   }
-  let [ddrBase, ddrEnd] = device.ddr, [runEnd, fastAt, bssEnd] = place(ddrBase), barred = ''
-  // A set too big for ddr takes the first larger area it fits and may use; every other set stays where it was.
-  for (const { area, unless } of device.ddrMore ?? []) {
+  // The core's version picks the area, as the kit's ddrFor does: the last coreDdr entry it is new enough for, else ddr.
+  const cored = (device.coreDdr ?? []).reduce<readonly [number, number] | undefined>((area, [version, at]) => cmpVersions(core.version, version) >= 0 ? at : area, undefined)
+  let [ddrBase, ddrEnd] = cored ?? device.ddr, [runEnd, fastAt, bssEnd] = place(ddrBase), barred = ''
+  // On a core older than every coreDdr entry, a set too big for ddr takes the first larger area it fits and may use;
+  // every other set stays where it was.
+  for (const { area, unless } of cored ? [] : device.ddrMore ?? []) {
     if (bssEnd <= ddrEnd) break
     const names = (mod: ParsedMod) => [...mod.relocs, ...mod.sites.flatMap(site => site.relocs), ...mod.contribute.flatMap(entry => entry.relocs)].some(reloc => reloc.target === 'sym:' + unless)
     const user = unless && order.find(mod => mod.imports.includes(unless) || names(mod))
     if (user) { barred = '; ' + label(user) + ' cannot use the ' + (area[1] - area[0]) + ' bytes at ' + hex32(area[0]) + '-' + hex32(area[1]); continue }
     ;[ddrBase, ddrEnd] = area; [runEnd, fastAt, bssEnd] = place(ddrBase)
   }
-  if (bssEnd > ddrEnd) throw new ModError('the mods need RAM to ' + hex32(bssEnd) + ', past ' + hex32(ddrEnd) + ' (' + (bssEnd - ddrEnd) + ' bytes over)' + barred)
+  if (bssEnd > ddrEnd) {
+    const newer = (device.coreDdr ?? []).find(([, area]) => area[1] - area[0] >= bssEnd - ddrBase)
+    throw new ModError('the mods need RAM to ' + hex32(bssEnd) + ', past ' + hex32(ddrEnd) + ' (' + (bssEnd - ddrEnd) + ' bytes over)' + barred
+      + (newer ? '; core ' + newer[0] + ' or newer gives them ' + (newer[1][1] - newer[1][0]) + ' bytes' : ''))
+  }
   if (fastAt > fastEnd) throw new ModError('.fast code needs SRAM to ' + hex32(fastAt) + ', past ' + hex32(fastEnd))
   const runLoad = align(end + bootLength, 16)
 

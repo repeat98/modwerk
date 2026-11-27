@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/quick-velocity-aftertouch-assign",
+  "version": "0.4.0-experimental",
+  "date": "2026-11-25",
+  "changes": [
+    "Now called Improved Mod Assign. Hold SCENE and turn a knob to lock it in the scene, also in scene edit.",
+    "SCENE + knob press removes a lock; SCENE + REC, STOP or PLAY copies, pastes or clears the scene.",
+    "SCENE held and let go with no knob opens scene edit as before, now on the release.",
+    "With no scene engaged the locks go to the scene engaged last; tap pads while holding SCENE to lock other tracks.",
+    "Holding LFO on the LFO page shows its values in PERF, SCNE, MUTE and CHRO too, as on stock."
+  ],
+  "runtimeSourceSha256": "436b4b861f38a19fd2833fd213d7a12d08267fa910ceed30c00107c171ecd35f",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.4.0-experimental-os1.74.elemod",
+      "sha256": "a65a4b87667ddf563a72494efd00d11b5e228ae69a8735a3b6ad4393ea0f48bc"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/quick-velocity-aftertouch-assign/TESTING.md",
+  "requires": []
+}
