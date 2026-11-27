@@ -1,3 +1,5 @@
+Version `0.1.0-experimental`, Octatrack MKII RAM-boot dev twin of base `0.8.2` (`46c30886a7e8f3f6`).
+
 ### Agent test on the unit, 2026-11-27
 
 Command: `npm run device:test -- --share /tmp/modwerk-share.sock --testing-entry sdk/drafts/cx-osc/TESTING.md sdk/drafts/cx-osc/cx-osc.mwrm`
