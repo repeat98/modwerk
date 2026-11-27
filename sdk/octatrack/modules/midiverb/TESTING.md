@@ -63,7 +63,7 @@ On the owner's MKII through the unit queue: development twin `ed5474c6` of base 
 | 9 | `device:price --curve T1,T3,T6,T7 --measure-pattern 4` | at rest frame +0, CPU +0; in use on T1 FX2 frame +2.3, CPU +2, DSP T1-4 +9.8, T5-8 +0. Curve on C04 first 2, each 2. Admitted alone on the empty pattern (longest frame 37.8 %) and the medium one (88.7 %), nothing dropped, no stalls |
 | 10 | inventory, Part state | unchanged, empty; C04 Part 2, working = saved |
 | 11 | by hand | 32 of 32 PROG and BANK cases on this package (below). Not done: the other screens (0.1.0's captures, unchanged), MAIN and CUE recorded over USB |
-| 12 | the owner's own stage | he played this exact package in a RAM trial and called the PROG knob great (reported). Not done: a full listen item by item, MIDI, a large set, project save and reload, a Keep and a power cycle |
+| 12 | the owner's own stage | he played this exact package in a RAM trial, called the PROG knob great, and said "d554753c is tested" (27 November 2026, reported). Not done by the agent: MIDI, a large set, project save and reload, a Keep and a power cycle |
 
 Edge cases, by hand in a 300-s trial of `d554753c` (each value set with the knobs and read back from the frame record):
 
