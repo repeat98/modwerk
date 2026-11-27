@@ -919,6 +919,12 @@ h1 { font-size: var(--text-xl); }
 .media-gallery img.ot-ui-capture { width: min(100%, 320px); height: 160px; margin-inline: auto; filter: grayscale(1) brightness(1.15); image-rendering: pixelated; }
 .media-gallery figcaption { margin-top: 11px; font-size: 13px; line-height: 1.6; color: #ccccd9; }
 .media-gallery figcaption span { display: block; color: #9e9eb2; font-size: 12px; margin-top: 3px; }
+/* A screen capture: the picture in a dark well like the instrument's display, its caption on the frame below. */
+.media-gallery figure:has(> a > img) { display: flex; flex-direction: column; padding: 0; overflow: hidden; border-color: var(--line); background: color-mix(in srgb, var(--text) 4%, transparent); }
+.media-gallery figure > a:has(> img) { display: grid; place-items: center; padding: 18px 16px; background: var(--field); border-bottom: 1px solid var(--line); }
+.media-gallery figure > a:has(> img):hover { background: color-mix(in srgb, var(--field) 80%, var(--surface-hover)); }
+.media-gallery figure > a > img.ot-ui-capture { height: auto; aspect-ratio: 2 / 1; border-radius: 2px; }
+.media-gallery figure:has(> a > img) figcaption { margin: 0; padding: 12px 14px 13px; color: var(--text-secondary); line-height: 1.55; }
 .media-credits { margin-top: 8px; }
 .media-credits > summary { width: fit-content; }
 .media-credits p { margin: 8px 0; line-height: 1.6; }
