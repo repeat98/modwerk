@@ -6,61 +6,61 @@
     {
       "sourcePath": "modules/cxosc/poly.s",
       "sourceCommit": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
-      "destPath": "sdk/drafts/cx-osc/upstream/cxosc/poly.s",
+      "destPath": "sdk/octatrack/modules/cx-osc/upstream/cxosc/poly.s",
       "sha256": "fadbc12763d4251285a02576ef3dfff7cf1c806d3c4cc9757fef3d2ee3222b63"
     },
     {
       "sourcePath": "modules/cxosc/page.s",
       "sourceCommit": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
-      "destPath": "sdk/drafts/cx-osc/upstream/cxosc/page.s",
+      "destPath": "sdk/octatrack/modules/cx-osc/upstream/cxosc/page.s",
       "sha256": "f84e1e141d1fe9155e1b270795462618ded88660feab2b0a0e52120ea8c11332"
     },
     {
       "sourcePath": "modules/cxosc/machine.s",
       "sourceCommit": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
-      "destPath": "sdk/drafts/cx-osc/upstream/cxosc/machine.s",
+      "destPath": "sdk/octatrack/modules/cx-osc/upstream/cxosc/machine.s",
       "sha256": "50a633c4464e2d68ae9017793ddc01d4e99d7580dfb7025cab97bf0e46ea3948"
     },
     {
       "sourcePath": "modules/cxosc/machine_limits.inc",
       "sourceCommit": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
-      "destPath": "sdk/drafts/cx-osc/upstream/cxosc/machine_limits.inc",
+      "destPath": "sdk/octatrack/modules/cx-osc/upstream/cxosc/machine_limits.inc",
       "sha256": "2ccb3c2651d0e0d194fab02b713ff67927319a3eca6152a86babd7eed7e28f5f"
     },
     {
       "sourcePath": "modules/cxosc/engine_abi.inc",
       "sourceCommit": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
-      "destPath": "sdk/drafts/cx-osc/upstream/cxosc/engine_abi.inc",
+      "destPath": "sdk/octatrack/modules/cx-osc/upstream/cxosc/engine_abi.inc",
       "sha256": "44ccdfbff702350830ccc6512d257f89b84f2c65847bbf1ef90f6bb3101baa4f"
     },
     {
       "sourcePath": "modules/cxosc/lfo_morph.inc.s",
       "sourceCommit": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
-      "destPath": "sdk/drafts/cx-osc/upstream/cxosc/lfo_morph.inc.s",
+      "destPath": "sdk/octatrack/modules/cx-osc/upstream/cxosc/lfo_morph.inc.s",
       "sha256": "88d1514bc86e931d719a9786d66f7f5ea235fb7a4cf5c483c3b31cf245d1603a"
     },
     {
       "sourcePath": "modules/cxosc/NOTICE",
       "sourceCommit": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
-      "destPath": "sdk/drafts/cx-osc/upstream/cxosc/NOTICE",
+      "destPath": "sdk/octatrack/modules/cx-osc/upstream/cxosc/NOTICE",
       "sha256": "3cb450ce989aed0210884cb97e9fd2f20675daec4ac548f6da2819dc8d2bec77"
     },
     {
       "sourcePath": "modules/cxosc/LICENSE-TIM",
       "sourceCommit": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
-      "destPath": "sdk/drafts/cx-osc/upstream/cxosc/LICENSE-TIM",
+      "destPath": "sdk/octatrack/modules/cx-osc/upstream/cxosc/LICENSE-TIM",
       "sha256": "a8fe424c82a030f34f2e3f88df1f2585f97ae61710e1b799f2e6e818120396a0"
     },
     {
       "sourcePath": "modules/cxosc/README.md",
       "sourceCommit": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
-      "destPath": "sdk/drafts/cx-osc/upstream/cxosc/README.md",
+      "destPath": "sdk/octatrack/modules/cx-osc/upstream/cxosc/README.md",
       "sha256": "d99af75dd3dbed759d9d198e78324043157de120d35aa0124a6e8c50e42e5d2e"
     },
     {
       "sourcePath": "modules/cxosc/MORPH.md",
       "sourceCommit": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
-      "destPath": "sdk/drafts/cx-osc/upstream/cxosc/MORPH.md",
+      "destPath": "sdk/octatrack/modules/cx-osc/upstream/cxosc/MORPH.md",
       "sha256": "81aee70811847eb3da81411325489518c958b23e66d8b5c8f88c7ba3a4bd41c7"
     }
   ]

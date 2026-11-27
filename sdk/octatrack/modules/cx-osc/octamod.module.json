@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 2,
+  "id": "cx-osc",
+  "key": "CX OSC",
+  "name": "Cx Osc",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "source": {
+    "repository": "https://github.com/sambanks/octabam",
+    "revision": "256bcf4ba8bea49a2f5a36adab369abf818c99e5",
+    "path": "modules/cxosc"
+  },
+  "author": {
+    "github": "ilia-murzinov",
+    "credits": [
+      "ilia-murzinov: CX panel, morph, Modwerk port and machine registration",
+      "Tim Hastie (@timhastie): two-operator FM SYNTH engine lineage (octatrick-modules), MIT",
+      "Sam Banks (@sambanks): octabam cxosc module and host verify_cxosc, MIT"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Complex oscillator",
+    "family": "Synth machines",
+    "summary": "Buchla-style FM complex oscillator: wavefolder, CAR/MOD morph, SYMM skew and modulator feedback on a mono FLEX track.",
+    "overview": "CX OSC is a sixth machine-list row on FLEX tracks (Part signature CX,1). PLAYBACK sets pitch, ratio, index, fine tuning, fold amount and the folder input mix. SRC SETUP adds carrier and modulator morphs, index decay, fold symmetry, feedback and PWM skew. One CX OSC track per Part. Stock LFO page; no VOIC/CHRD. Declared conflict with FM Synth: do not install both.",
+    "highlights": [
+      "Sixth machine-list row: CX OSC on FLEX, signature CX,1, mono render.",
+      "Sine wavefolder on PLAYBACK FOLD and MIX; CAR/MOD sine→saw→square morph on SRC SETUP.",
+      "DEC index envelope with HOLD at 127; SYMM bipolar fold skew; FDBK on SRC SETUP E.",
+      "FUNC snaps on PTCH and RATO; LFO PMTR lists CAR, MOD, SYMM, FDBK and PWM (30–34)."
+    ],
+    "usage": [
+      "Remove FM Synth from the module set if it is installed. Sync or trial CX OSC alone.",
+      "On a FLEX audio track: FUNC+SRC, or SELECT MACHINE TYPE, pick CX OSC (YES). Part signature reads CX.",
+      "PLAYBACK: PTCH, RATO, INDX, FINE, FOLD, MIX. SRC SETUP (FUNC+PLAYBACK): CAR, MOD, DEC, SYMM, FDBK, PWM.",
+      "Trig the track, tweak knobs, save the Part. Only one CX OSC track per Part is allowed."
+    ]
+  },
+  "access": {
+    "location": "FLEX audio track → FUNC+SRC or machine list → CX OSC.",
+    "steps": [
+      "Remove FM Synth from the module set if it is installed.",
+      "FUNC+SRC on a FLEX track (or the machine list) → CX OSC → YES.",
+      "PLAYBACK and SRC SETUP pages as on octabam CX OSC; LFO page is stock."
+    ],
+    "screenshots": [
+      "media/ot-location.png",
+      "media/ot-src-setup.png",
+      "media/ot-playback.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "PTCH",
+      "default": 64,
+      "count": 128,
+      "doc": "PLAYBACK A: semitones, raw 64 = 0; FUNC snaps octave steps.",
+      "labels": null
+    },
+    {
+      "name": "RATO",
+      "default": 12,
+      "count": 128,
+      "doc": "PLAYBACK B: mod∶carrier ratio; FUNC snaps the classic table.",
+      "labels": null
+    },
+    {
+      "name": "INDX",
+      "default": 0,
+      "count": 128,
+      "doc": "PLAYBACK C: FM index depth.",
+      "labels": null
+    },
+    {
+      "name": "FINE",
+      "default": 64,
+      "count": 128,
+      "doc": "PLAYBACK D: cents, raw 64 = 0.",
+      "labels": null
+    },
+    {
+      "name": "FOLD",
+      "default": 0,
+      "count": 128,
+      "doc": "PLAYBACK E: wavefolder amount after the MIX point.",
+      "labels": null
+    },
+    {
+      "name": "MIX",
+      "default": 0,
+      "count": 128,
+      "doc": "PLAYBACK F: folder input crossfade carrier vs mod morph.",
+      "labels": null
+    },
+    {
+      "name": "FDBK",
+      "default": 0,
+      "count": 128,
+      "doc": "SRC SETUP E: modulator feedback (requires SETUP_ALL machine flag on Modwerk).",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Track machine",
+    "conflicts": [
+      "synth"
+    ],
+    "uiClaims": [],
+    "limitations": [
+      "Cannot combine with FM Synth (synth): same Tim Hastie engine hook surface until base take hooks 63-84 ship and both packages migrate; owner group-owned relation required in compatibility.json at listing.",
+      "MIDI chromatic soak, power-cycle Keep after listing, and a listening sign-off remain open."
+    ]
+  },
+  "resources": {
+    "cpuPrice": {
+      "value": 6,
+      "unit": "percent-of-frame",
+      "measure": "machine-render",
+      "tool": "npm run device -- do 'PLAY w2500 guard w6000 guard STOP'",
+      "date": "2026-11-27",
+      "conditions": "MKII, dev twin 46c30886 of base 0.8.2, bank A Part 1, device:test audition on T1 and T5 with package f52815ad: mean frame interrupt +5.0 and +5.6 points above quiet when TRACK+PLAY retriggered the machine track (descriptor charged 12 until this build set 6).",
+      "source": "TESTING.md"
+    },
+    "recorded": "Frame curve, machine-render price, and device:test on MKII dev twin 27 Nov 2026",
+    "storage": {
+      "label": "Package",
+      "display": "~30 KiB code and data (module:dev --build-only)",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "Package size noted in TESTING.md; not a hardware storage claim.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire render",
+      "display": "6 % of a frame (mean, one playing track)",
+      "value": 6,
+      "unit": "percent-of-frame",
+      "method": "hardware",
+      "conditions": "device:test audition on dev twin; peak guarded render 19.4 % on T1, 16.4 % on T5 in the same run.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One CX OSC track per Part, mono FLEX voice; FM engine hooks shared with FM Synth.",
+      "cpu": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "Per-sample two-operator FM, morph tables and wavefolder work on ColdFire like FM Synth.",
+        "source": "upstream/cxosc/poly.s"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No new DSP effect slot; audio passes through stock FLEX source and AMP.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "Runtime detours for page and engine hooks plus a ~30 KiB USB package; exact SDRAM bounds not audited.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "MKII dev twin 46c30886 (base 0.8.2): device:price curve, device:test and device:cx-stress passed; hardware PNG captures; host gates test_cx_osc_port.py and test_cx_osc_load.py. Listing needs owner build approval, compatibility.json relation merged with catalog, and base hooks before synth+cx can install together without detour clashes.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "7595e9d1b9ff9d6d50af3d89398ebca9b754949e",
+    "gates": [
+      "test_cx_osc_port.py: import pins, runtime contribute, SETUP_ALL flags, compat relation, package build",
+      "test_cx_osc_load.py: morph stress preset bytes",
+      "USB trial: accept without boot crash, CX OSC selectable, SRC SETUP FDBK encoder E",
+      "device:cx-stress: morph_zero and morph_heavy presets on T1-T3"
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "ed8b42fbbb56455615559e496764414bb6e5a3a951fed8bc94a8c2552fe0cc53",
+      "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 2200,
+          "maxConfiguration": 2200,
+          "maxInstances": 1,
+          "budget": 9577,
+          "unit": "cycles/event",
+          "method": "static",
+          "conditions": {
+            "parameterExtremes": "PLAYBACK and SRC SETUP knobs at extremes; FUNC snaps on PTCH and RATO; LFO PMTR 30-34 on CX OSC. Bounds derived from guarded render peaks on the dev twin (19.4 % of a frame on T1) and the machine-render price (6 % descriptor), not a full static count of sy_render.",
+            "parameterModulation": "LFO PMTR destinations include CAR/MOD/SYMM/FDBK/PWM; morph tables and wavefolder run per sample in sy_render. device:cx-stress sweeps hot PLAYBACK and SETUP bytes.",
+            "modeSwitching": "FUNC+SRC assignment, double-tap PLAYBACK, Part switches during device:test; pattern mutated by device:cx-stress --arm-trigs.",
+            "maxLoad": "One CX OSC track per Part (admission refused beyond three simultaneous morph stress instances on T1-T3). Stress presets morph_zero and morph_heavy with pattern trigs.",
+            "inputConditions": "FLEX source through stock AMP; mono machine voice; no DSP effect added."
+          },
+          "report": "evidence/frame-cost.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "USB package code and data (ColdFire units poly, machine, page, cxreg)",
+            "space": "sdram",
+            "words": 29968,
+            "wordBits": 8,
+            "bytes": 29968,
+            "scope": "shared"
+          },
+          {
+            "name": "Runtime hook sites still detoured (22 shared with FM Synth until base hooks migrate)",
+            "space": "cpu-flash",
+            "words": 180,
+            "wordBits": 8,
+            "bytes": 180,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 30148,
+        "maxInstances": 1,
+        "totalBytes": 30148,
+        "conditions": "Package bytes from module:dev --build-only f52815ad. Hook footprint is upper-bound placeholder until packages subscribe to base take events 63-84.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-27",
+        "tester": "ilia-murzinov",
+        "sourceRevision": "7595e9d1b9ff9d6d50af3d89398ebca9b754949e",
+        "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+        "summary": "RAM-boot dev twin 46c30886 of base 0.8.2. device:test trial passed (CX on T1/T5, three simultaneous on T1-T3, T4-T8 refused). device:cx-stress morph presets with pattern trigs; SRC SETUP FDBK writable. Panel PNGs captured over USB.",
+        "limitations": [
+          "No MIDI wire flood stress; track-machine load via device:cx-stress instead.",
+          "No power-cycle Keep or listening sign-off on this exact listing package until after catalog merge.",
+          "Cannot install beside FM Synth until compatibility.json relation lands or base hooks migrate both packages."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: CX OSC on a FLEX track",
+          "steps": [
+            "Remove FM Synth from the module set. Sync or trial CX OSC alone.",
+            "FUNC+SRC on a FLEX track, pick CX OSC, press YES. Part signature reads CX.",
+            "PLAYBACK: PTCH RATO INDX FINE FOLD MIX. SRC SETUP: CAR MOD DEC SYMM FDBK PWM.",
+            "Trig the track and tune knobs. Only one CX OSC track per Part."
+          ]
+        },
+        "screenshots": [
+          "media/ot-location.png",
+          "media/ot-src-setup.png",
+          "media/ot-playback.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Modwerk packaging MIT. Tim Hastie engine MIT (LICENSE-TIM). Upstream octabam cxosc module MIT."
+  },
+  "media": [
+    {
+      "path": "media/ot-location.png",
+      "captureType": "hardware",
+      "caption": "FUNC+SRC machine list with CX OSC on track 1.",
+      "alt": "Machine chooser highlighting CX OSC",
+      "credit": "ilia-murzinov",
+      "license": "MIT",
+      "source": "original",
+      "otUi": {
+        "page": "Machine list",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+        "setup": "MKII dev twin 46c30886, base 0.8.2, USB panel capture 27 Nov 2026."
+      }
+    },
+    {
+      "path": "media/ot-src-setup.png",
+      "captureType": "hardware",
+      "caption": "SRC SETUP with CAR MOD DEC SYMM FDBK PWM on a CX OSC track.",
+      "alt": "SRC SETUP page",
+      "credit": "ilia-murzinov",
+      "license": "MIT",
+      "source": "original",
+      "otUi": {
+        "page": "SRC SETUP",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+        "setup": "MKII dev twin, encoder E reaches FDBK with SETUP_ALL."
+      }
+    },
+    {
+      "path": "media/ot-playback.png",
+      "captureType": "hardware",
+      "caption": "PLAYBACK knobs PTCH RATO INDX FINE FOLD MIX on CX OSC.",
+      "alt": "PLAYBACK page",
+      "credit": "ilia-murzinov",
+      "license": "MIT",
+      "source": "original",
+      "otUi": {
+        "page": "PLAYBACK",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+        "setup": "Double-tap track key for PLAYBACK; FLEX CX signature."
+      }
+    }
+  ]
+}

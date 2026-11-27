@@ -1,0 +1,141 @@
+{
+  "status": "rejected-review",
+  "rejection": "27 Nov 2026 emulator run: first-boot T1 stayed STATIC; frames were not CX OSC machine list / SETUP / PLAYBACK. See UI-CAPTURE.md.",
+  "firmware": "1.40C",
+  "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+  "emulatorSha256": "5d4323b7b29c20d9b1d6251df39a668923bf17788eacb1f60ac9b61c7f43d29c",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 50,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "FUNC",
+        "SRC"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "UP"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 800
+    },
+    {
+      "press": [
+        "FUNC",
+        "SRC"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "ot-location.png"
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 800
+    },
+    {
+      "capture": "ot-src-setup.png"
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "wait": 80
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-playback.png"
+    }
+  ],
+  "screenshots": {
+    "ot-location.png": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603",
+    "ot-src-setup.png": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603",
+    "ot-playback.png": "75550f034da77cc1912cafd0741e28b6ec3c841c1cbd4fc9780c6dd84c10147f"
+  }
+}

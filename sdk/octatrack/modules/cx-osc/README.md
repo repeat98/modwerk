@@ -1,6 +1,6 @@
 # CX OSC
 
-Version 0.1.0-experimental · by @ilia-murzinov · experimental draft (author MKII USB; not catalogue-listed).
+Version 0.1.0-experimental · by @ilia-murzinov · experimental (author MKII USB trials).
 
 ## Overview
 
@@ -17,6 +17,19 @@ knobs and morph path are in the octabam module.
 
 See upstream `upstream/cxosc/README.md` for the full PLAYBACK / SETUP map (PTCH,
 RATO, INDX, FINE, FOLD, MIX, CAR, MOD, DEC, SYMM, FDBK, PWM).
+
+## Usage
+
+Assign CX OSC on a FLEX track after removing FM Synth from the module set.
+
+## Quick tutorial: CX OSC on a FLEX track
+
+1. Remove FM Synth from the module set. Sync or trial CX OSC alone.
+2. FUNC+SRC on a FLEX track, pick CX OSC, press YES. Part signature reads CX.
+3. PLAYBACK: PTCH RATO INDX FINE FOLD MIX. SRC SETUP: CAR MOD DEC SYMM FDBK PWM.
+4. Trig the track and tune knobs. Only one CX OSC track per Part.
+
+Double-tap the track key for PLAYBACK; the stock LFO page lists CAR/MOD/SYMM/FDBK/PWM as PMTR destinations 30-34.
 
 ## Compatibility and limitations
 
@@ -48,4 +61,12 @@ frame-cost on unit, and migrating shared FM engine hooks to base take events.
 
 ## Screens and audio
 
-Not captured yet.
+MKII panel captures (base 0.8.2 dev twin, 27 Nov 2026):
+
+![Machine list with CX OSC](media/ot-location.png)
+
+![SRC SETUP knobs](media/ot-src-setup.png)
+
+![PLAYBACK knobs](media/ot-playback.png)
+
+Listening pass and MIDI chromatic soak remain open; see `TESTING.md`.

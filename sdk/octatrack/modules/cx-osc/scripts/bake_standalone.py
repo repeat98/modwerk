@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Expand remix.inc into sdk/drafts/cx-osc/standalone/*.s for USB package builds."""
+"""Expand remix.inc into sdk/octatrack/modules/cx-osc/standalone/*.s for USB package builds."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]

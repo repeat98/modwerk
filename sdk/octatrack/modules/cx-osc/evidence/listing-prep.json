@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "module": "cx-osc",
+  "version": "0.1.0-experimental",
+  "nativeSourceSha256": "0be1daa870d2b0c7a0de1ea8504ebf4f3f63be82769ddcd751c5f2aa322279d9",
+  "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+  "packageSha256": "f52815adb0d5cdb0f1926c519f8319ce4527f1adcc52313d502023fb306065ad",
+  "packageBytes": 29968,
+  "devTwinPrefix": "46c30886a7e8f3f6",
+  "devTwinDir": "/Users/iliamurzinov/Documents/modwerk-dev-twin-cxosc",
+  "base": "0.8.2",
+  "evidence": [
+    "evidence/frame-cost.json",
+    "evidence/performance.json",
+    "evidence/stress-hardware.json",
+    "evidence/stress-hardware-n456.json",
+    "evidence/hardware-report.json",
+    "evidence/local-image.json",
+    "LOAD-STRESS.md",
+    "TESTING.md"
+  ],
+  "openBeforeListing": [
+    "owner compat relation (owner-compat-relation.json)",
+    "sdk/approvals/cx-osc-build-approval.json",
+    "tests.qualification + perf:audit --stamp",
+    "media/*.png (hardware or FLEX+CX fixture; see UI-CAPTURE.md)",
+    "public/octatrack-modules/cx-osc/0.1.0-experimental.mwrm",
+    "sdk/catalog.json + move to sdk/octatrack/modules/"
+  ],
+  "roadmap": "NEXT-SHIP.md"
+}

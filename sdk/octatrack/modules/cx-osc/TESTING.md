@@ -2,7 +2,7 @@ Version `0.1.0-experimental`, Octatrack MKII RAM-boot dev twin of base `0.8.2` (
 
 ### Agent test on the unit, 2026-11-27
 
-Command: `npm run device:test -- --share /tmp/modwerk-share.sock --testing-entry sdk/drafts/cx-osc/TESTING.md sdk/drafts/cx-osc/cx-osc.mwrm`
+Command: `npm run device:test -- --share /tmp/modwerk-share.sock --testing-entry sdk/octatrack/modules/cx-osc/TESTING.md sdk/octatrack/modules/cx-osc/cx-osc.mwrm`
 
 - Package `cx-osc.mwrm`, Cx Osc, SHA-256 `f52815adb0d5cdb0f1926c519f8319ce4527f1adcc52313d502023fb306065ad`
 - Installed as a trial in RAM and rolled back at the end: nothing was kept

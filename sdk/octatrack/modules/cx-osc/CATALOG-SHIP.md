@@ -9,7 +9,7 @@ Draft PR [#2293](https://github.com/repeat98/modwerk/pull/2293) is CI-clean as a
 **Order with the owner**
 
 1. Land **catalog + module folder + packages** (your module PR) and **compat relation** (owner **Fix:** PR, or one owner merge of both) in the same window so `cx-osc` is never active without the relation row.
-2. Until then, keep the module in `sdk/drafts/cx-osc/` only.
+2. Until then, keep the module in `sdk/octatrack/modules/cx-osc/` only.
 
 Configurator `conflicts: ["synth"]` is not enough for the compat matrix.
 
@@ -34,7 +34,7 @@ Machines are not DSP effects. Follow [ADD_A_MODULE.md Octatrack step 4](https://
 
 1. **Qualification record** in `octamod.module.json` `tests.qualification` (cycles coldfire, memory regions, hardware report, tutorial, screenshot paths). Bind `sourceSha256` and twin `imageSha256` from `npm run module:qualify -- cx-osc --rehash`.
 2. **UI captures** under `media/` via `scripts/capture-module-ui.py` (PLAYBACK + SRC SETUP + LFO for PMTR 30–34). Register paths in `tests.documentation.screenshots` and `media[]`.
-3. **Move** `sdk/drafts/cx-osc/` → `sdk/octatrack/modules/cx-osc/` and move `CHANGELOG.json` → `src/community/module-changelogs/cx-osc.json`.
+3. **Move** `sdk/octatrack/modules/cx-osc/` → `sdk/octatrack/modules/cx-osc/` and move `CHANGELOG.json` → `src/community/module-changelogs/cx-osc.json`.
 4. **`sdk/catalog.json`**: add `{ "id": "cx-osc", "version": "0.1.0-experimental", "addedAt": "<UTC>" }` after the machine block (near `synth`).
 5. **`scripts/build-module-packages.py`**: add `cx-osc` to `REQUESTED`.
 6. **`src/engine/assets/octatrack-module-packages.json`**: row with path `octatrack-modules/cx-osc/0.1.0-experimental.mwrm` (no DSP cycles fields; ColdFire USB package like `synth`).

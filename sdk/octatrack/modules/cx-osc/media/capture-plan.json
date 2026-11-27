@@ -1,0 +1,17 @@
+{
+  "module": "cx-osc",
+  "version": "0.1.0-experimental",
+  "status": "captured",
+  "notes": "Emulator capture on dev twin MAIN (see evidence/local-image.json). Use capture-plan-actions.json with scripts/capture-module-ui.py and --boot-max 400000000 for Modwerk twins.",
+  "firmware": "1.40C",
+  "setup": "Headless ot_emu; MKII panel; FLEX track T1; stopped transport; 128×64 LCD at integer scale 6.",
+  "palette": { "on": [240, 240, 240], "off": [24, 24, 24] },
+  "keyMs": 50,
+  "bootMax": 400000000,
+  "outputs": [
+    { "file": "ot-location.png", "caption": "CX OSC is the sixth machine row in FUNC+SRC." },
+    { "file": "ot-src-setup.png", "caption": "SRC SETUP CAR, MOD, DEC, SYMM, FDBK and PWM (encoder E needs SETUP_ALL)." },
+    { "file": "ot-playback.png", "caption": "PLAYBACK PTCH, RATO, INDX, FINE, FOLD and MIX." }
+  ],
+  "planFile": "capture-plan-actions.json"
+}

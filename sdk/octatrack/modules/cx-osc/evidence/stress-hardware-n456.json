@@ -1,0 +1,476 @@
+{
+  "schema": "cx-osc-stress-run-v1",
+  "module": "cx-osc",
+  "date": "2026-11-27T10:12:53+00:00",
+  "frameUsNominal": 362.8,
+  "package": "f52815adb0d5cdb0f1926c519f8319ce4527f1adcc52313d502023fb306065ad",
+  "socket": "/tmp/modwerk-dev.sock",
+  "scenarios": [
+    {
+      "preset": "morph_zero_hot_playback",
+      "instances": 4,
+      "label": "MOD/MOR morph 0, PLAYBACK stressed",
+      "playback": [
+        64,
+        127,
+        127,
+        64,
+        127,
+        127
+      ],
+      "setup": [
+        0,
+        0,
+        127,
+        64,
+        0,
+        64
+      ],
+      "placed": [
+        {
+          "track": 1,
+          "deltas": [
+            {
+              "page": "playback",
+              "enc": "B",
+              "from_": 25,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "C",
+              "from_": 0,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "E",
+              "from_": 0,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "F",
+              "from_": 0,
+              "to": 127
+            }
+          ],
+          "readback": {
+            "playback": [
+              64,
+              127,
+              127,
+              64,
+              127,
+              127
+            ],
+            "setup": [
+              0,
+              0,
+              127,
+              64,
+              0,
+              64
+            ],
+            "sig": [
+              67,
+              88,
+              1
+            ],
+            "machine": 1
+          },
+          "mismatch": []
+        }
+      ],
+      "refused_next_track": null,
+      "stats": {
+        "cpu": 550,
+        "core1": 380,
+        "core1_peak": 394,
+        "core0": 463,
+        "core0_peak": 464,
+        "frame_interrupt_mean_percent": 46.6
+      },
+      "guarded_render_peak_percent": [
+        31.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "longest_frame_us": 378,
+      "past_frame_budget": false,
+      "failures": [
+        "T2: CX OSC refused on T2 (CPU FULL, DSP FULL or the machine's own admission; its screen: /var/folders/sg/1jwbnfbs6_34d8qg69b_28rc0000gn/T/modwerk-refused-machine-T2.png)"
+      ],
+      "ok": false,
+      "trig_steps": {
+        "1": [
+          1,
+          2
+        ],
+        "2": [
+          1,
+          2
+        ],
+        "3": [
+          1,
+          2
+        ],
+        "4": [
+          1,
+          2
+        ]
+      }
+    },
+    {
+      "preset": "morph_zero_hot_playback",
+      "instances": 5,
+      "label": "MOD/MOR morph 0, PLAYBACK stressed",
+      "playback": [
+        64,
+        127,
+        127,
+        64,
+        127,
+        127
+      ],
+      "setup": [
+        0,
+        0,
+        127,
+        64,
+        0,
+        64
+      ],
+      "placed": [
+        {
+          "track": 1,
+          "deltas": [
+            {
+              "page": "playback",
+              "enc": "B",
+              "from_": 25,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "C",
+              "from_": 0,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "E",
+              "from_": 0,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "F",
+              "from_": 0,
+              "to": 127
+            }
+          ],
+          "readback": {
+            "playback": [
+              64,
+              127,
+              127,
+              64,
+              127,
+              127
+            ],
+            "setup": [
+              0,
+              0,
+              127,
+              64,
+              0,
+              64
+            ],
+            "sig": [
+              67,
+              88,
+              1
+            ],
+            "machine": 1
+          },
+          "mismatch": []
+        },
+        {
+          "track": 2,
+          "deltas": [
+            {
+              "page": "playback",
+              "enc": "B",
+              "from_": 25,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "C",
+              "from_": 0,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "E",
+              "from_": 0,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "F",
+              "from_": 0,
+              "to": 127
+            }
+          ],
+          "readback": {
+            "playback": [
+              64,
+              127,
+              127,
+              64,
+              127,
+              127
+            ],
+            "setup": [
+              0,
+              0,
+              127,
+              64,
+              0,
+              64
+            ],
+            "sig": [
+              67,
+              88,
+              1
+            ],
+            "machine": 1
+          },
+          "mismatch": []
+        },
+        {
+          "track": 3,
+          "deltas": [
+            {
+              "page": "playback",
+              "enc": "B",
+              "from_": 25,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "C",
+              "from_": 0,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "E",
+              "from_": 0,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "F",
+              "from_": 0,
+              "to": 127
+            }
+          ],
+          "readback": {
+            "playback": [
+              64,
+              127,
+              127,
+              64,
+              127,
+              127
+            ],
+            "setup": [
+              0,
+              0,
+              127,
+              64,
+              0,
+              64
+            ],
+            "sig": [
+              67,
+              88,
+              1
+            ],
+            "machine": 1
+          },
+          "mismatch": []
+        }
+      ],
+      "refused_next_track": null,
+      "stats": {
+        "cpu": 564,
+        "core1": 385,
+        "core1_peak": 395,
+        "core0": 449,
+        "core0_peak": 457,
+        "frame_interrupt_mean_percent": 49.2
+      },
+      "guarded_render_peak_percent": [
+        27.6,
+        17.0,
+        17.2,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "longest_frame_us": 375,
+      "past_frame_budget": false,
+      "failures": [
+        "T4: CX OSC refused on T4 (CPU FULL, DSP FULL or the machine's own admission; its screen: /var/folders/sg/1jwbnfbs6_34d8qg69b_28rc0000gn/T/modwerk-refused-machine-T4.png)"
+      ],
+      "ok": false,
+      "trig_steps": {
+        "1": [
+          1,
+          2
+        ],
+        "2": [],
+        "3": [],
+        "4": [],
+        "5": []
+      }
+    },
+    {
+      "preset": "morph_zero_hot_playback",
+      "instances": 6,
+      "label": "MOD/MOR morph 0, PLAYBACK stressed",
+      "playback": [
+        64,
+        127,
+        127,
+        64,
+        127,
+        127
+      ],
+      "setup": [
+        0,
+        0,
+        127,
+        64,
+        0,
+        64
+      ],
+      "placed": [
+        {
+          "track": 1,
+          "deltas": [
+            {
+              "page": "playback",
+              "enc": "B",
+              "from_": 25,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "C",
+              "from_": 0,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "E",
+              "from_": 0,
+              "to": 127
+            },
+            {
+              "page": "playback",
+              "enc": "F",
+              "from_": 0,
+              "to": 127
+            }
+          ],
+          "readback": {
+            "playback": [
+              64,
+              127,
+              127,
+              64,
+              127,
+              127
+            ],
+            "setup": [
+              0,
+              0,
+              127,
+              64,
+              0,
+              64
+            ],
+            "sig": [
+              67,
+              88,
+              1
+            ],
+            "machine": 1
+          },
+          "mismatch": []
+        }
+      ],
+      "refused_next_track": null,
+      "stats": {
+        "cpu": 570,
+        "core1": 376,
+        "core1_peak": 394,
+        "core0": 450,
+        "core0_peak": 465,
+        "frame_interrupt_mean_percent": 50.0
+      },
+      "guarded_render_peak_percent": [
+        27.1,
+        16.9,
+        16.6,
+        0.0,
+        0.0,
+        0.0,
+        16.6,
+        0.0
+      ],
+      "longest_frame_us": 387,
+      "past_frame_budget": true,
+      "failures": [
+        "T2: CX OSC refused on T2 (CPU FULL, DSP FULL or the machine's own admission; its screen: /var/folders/sg/1jwbnfbs6_34d8qg69b_28rc0000gn/T/modwerk-refused-machine-T2.png)",
+        "T7 admitted past the 6-track cap"
+      ],
+      "ok": false,
+      "trig_steps": {
+        "1": [
+          1,
+          2
+        ],
+        "2": [
+          1,
+          2
+        ],
+        "3": [
+          1,
+          2
+        ],
+        "4": [
+          1,
+          2
+        ],
+        "5": [
+          1,
+          2
+        ],
+        "6": []
+      }
+    }
+  ]
+}

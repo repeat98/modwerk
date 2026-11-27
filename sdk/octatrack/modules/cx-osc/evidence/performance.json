@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "cx-osc",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 2200,
+    "measured": 1860,
+    "budget": 9577,
+    "method": "Static bound from guarded render peaks on dev twin (19.4 % frame on T1) and 6 % machine-render descriptor; not a cfmeter instruction count of sy_render."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "device:test and device:price on twin 46c30886; peak guarded render 19.4 % T1, 16.4 % T5; mean machine-render price 6 %."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": 120,
+    "seconds": 8,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "No MIDI DIN flood: CX OSC is a track machine. Audio load stress uses npm run device:cx-stress with pattern trigs and morph presets (see evidence/stress-hardware.json). FM Synth cannot be installed at once until compatibility.json group-owned row or base hooks land."
+  }
+}

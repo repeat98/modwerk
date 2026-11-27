@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "module": "cx-osc",
+  "captureType": "hardware",
+  "firmware": "1.40C",
+  "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+  "packageSha256": "f52815adb0d5cdb0f1926c519f8319ce4527f1adcc52313d502023fb306065ad",
+  "track": 1,
+  "part": 2,
+  "panelSteps": "T1 FUNC+SRC list png; place CX OSC; SRC SETUP png; double-tap T1 PLAYBACK png",
+  "screenshots": {
+    "ot-location.png": "055f2e85a59c04f190ead59a809db87bc167ae277fc16f62884ad8bf04c4b939",
+    "ot-src-setup.png": "055f2e85a59c04f190ead59a809db87bc167ae277fc16f62884ad8bf04c4b939",
+    "ot-playback.png": "b5883110456240778bf83f9d7a9270dd0a2990f13f0d2aa9d596fe6ccdbda2c1"
+  },
+  "capturedAt": "2026-11-27T12:10:30Z"
+}
