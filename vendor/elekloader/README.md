@@ -32,11 +32,14 @@ These kit files hold a one-line re-export of Modwerk's own implementation instea
 | `src/bytes.ts` | [`src/engine/elektron/bytes.ts`](../../src/engine/elektron/bytes.ts), hashes, hex and byte helpers |
 | `src/py.ts` | [`src/engine/elektron/py.ts`](../../src/engine/elektron/py.ts), Python-style repr, int and JSON writing |
 | `src/pyjson.ts` | [`src/engine/elektron/pyjson.ts`](../../src/engine/elektron/pyjson.ts), Python-style UTF-8 and JSON reading |
+| `src/dsp.ts` | [`src/engine/elektron/dsp-payloads.ts`](../../src/engine/elektron/dsp-payloads.ts), the Octatrack main OS's DSP payloads |
 | `src/elek.ts` | [`src/engine/elektron/octatrack-container.ts`](../../src/engine/elektron/octatrack-container.ts), the Octatrack's ELEK container, its .syx transport and the ELUP card file |
 | `src/elemod.ts` | [`src/engine/elektron/module-package.ts`](../../src/engine/elektron/module-package.ts), module package validation, whole-build bundles and set checks |
+| `src/formats.ts` | [`src/engine/elektron/firmware-formats.ts`](../../src/engine/elektron/firmware-formats.ts), one interface over both OS file families, zips included |
 | `src/devices.ts` | [`src/engine/elektron/devices.ts`](../../src/engine/elektron/devices.ts), the machines and stock releases the builder knows |
 | `src/store.ts` | [`src/engine/elektron/store.ts`](../../src/engine/elektron/store.ts), module storage lockfile and allocator (Rytm MKII, A4 MKII) |
 | `src/syx.ts` | [`src/engine/elektron/syx-container.ts`](../../src/engine/elektron/syx-container.ts), ELE3 .syx reading, writing (sealed included) and verifying |
+| `src/zip.ts` | [`src/engine/elektron/zip.ts`](../../src/engine/elektron/zip.ts), stock OS files out of Elektron's zips |
 | `src/codec/aplib.ts` | [`src/engine/elektron/codec/pack.ts`](../../src/engine/elektron/codec/pack.ts), the section packer |
 | `src/codec/elz.ts` | [`src/engine/elektron/codec/depack.ts`](../../src/engine/elektron/codec/depack.ts), the section depacker |
 | `src/codec/transport.ts` | [`src/engine/elektron/codec/transport.ts`](../../src/engine/elektron/codec/transport.ts), the SysEx transport |
