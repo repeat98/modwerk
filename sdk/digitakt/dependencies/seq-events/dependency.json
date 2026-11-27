@@ -23,7 +23,9 @@
       "requires": [
         "core"
       ],
-      "conflicts": []
+      "conflicts": [
+        "euclidean"
+      ]
     },
     "platform": {
       "build": "build.json",
