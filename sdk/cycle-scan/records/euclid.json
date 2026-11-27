@@ -1,27 +1,33 @@
 {
   "schema": 1,
   "module": "euclid",
-  "version": "0.1.5-experimental",
-  "sourceSha256": "ff35c2418497641bbf4647cc8ed50adc1e6a31d2269e0133ecb5e5701af4c964",
+  "version": "0.1.6-experimental",
+  "sourceSha256": "50b4ed7284b4c9e25cfe628e3106e06f1d31aba51fa743960ba25414569bfab1",
   "scanRevision": "cc7cffc1a675a763c5b8d6fbe1659f2b322cc540",
   "model": "DSP56300FM Table A-1 cycles and the A.2 and 3.5 stalls on one steady block of each --sweep setting; a model, not a measurement",
   "dearest": {
     "setting": "RATE=1/32/def",
     "settings": 15,
-    "instructions": 141.81,
-    "cycles": 232.44,
-    "stalls": 25.19,
+    "instructions": 139.81,
+    "cycles": 223.38,
+    "stalls": 20.19,
     "stallsByKind": {
-      "agu": 3.38,
+      "agu": 0.38,
       "arith": 19.75,
-      "arith-tcc": 0.06,
-      "transfer": 2
+      "arith-tcc": 0.06
     }
   },
   "defaults": {
     "setting": "RATE=1/16/def",
-    "instructions": 141.81,
-    "cycles": 232.44,
-    "stalls": 25.19
+    "instructions": 139.81,
+    "cycles": 223.38,
+    "stalls": 20.19
+  },
+  "stock": {
+    "comparator": "FILTER",
+    "setting": "defaults/max",
+    "instructions": 240.19,
+    "cycles": 279.81,
+    "stalls": 11.06
   }
 }

@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "59dbdd93838be7caf4ce5cfe19456cb15294ed71",
+  "sourceCommit": "20ea62a573c33ad55fc4a7ddf097dbe9f999916f",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "fc5ef0c3e2604b09d14f85e49ed7d78b9f53012c570515d68308b8f31b030a8d",
+  "sourceTreeSha256": "3cb23f54f999d14bb430952437ee199b69baa7d7491bf1403955d5babdf823e2",
   "compilerSha256": "3bb3824f4e3f6f837b0f9854ca4bb78f67e499197d9eb0bd14237cbd73be5ee8",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.9-experimental",
-    "euclid": "0.1.5-experimental",
+    "euclid": "0.1.6-experimental",
     "repitch": "0.2.1-experimental",
     "tapehead": "0.1.2-experimental",
     "airwindows-chorus": "0.1.3-experimental",
@@ -47,8 +47,8 @@
   },
   "files": {
     "dsp-packages.json": {
-      "bytes": 93512,
-      "sha256": "4eb8d65bfd303b63c490f33b719127fc9d1429c696027c876bbcb51a085eaab0"
+      "bytes": 93446,
+      "sha256": "212d4c74202fac6c64808999e88a4fc19689eb0394c47b5b3a708b3c89fe7796"
     },
     "resident-dsp.json": {
       "bytes": 6981,
@@ -56,7 +56,7 @@
     },
     "coldfire-packages.json": {
       "bytes": 364756,
-      "sha256": "f48d93cf43345798918d01f10bce800208d6e0aaab2a409627651c12e18fb19b"
+      "sha256": "0047088572d13043e7f8608d4eccaa831d42c4e58bdda4765668b4f5b91055cf"
     },
     "rom-packages.json": {
       "bytes": 28500,

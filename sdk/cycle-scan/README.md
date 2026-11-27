@@ -113,7 +113,7 @@ runs, once 2.9. Records scanned 23 November 2026:
 |---|---|---|---|---|---|---|---|---|
 | airwindows-chorus 0.1.3 | – | – | defaults/def | 602 | 649 | – | – | no in-use reading on the unit |
 | bbd 0.1.2 | 10.8 = 489 (T1 FX2) | – | STGS=1024/def | 469 | 528 | 1.04 | – | within 10 % |
-| euclid 0.1.5 | 5.5 = 249 (T1 FX2) | – | RATE=1/16/def | 232 | 232 | 1.07 | – | within 10 % |
+| euclid 0.1.6 | 5.4 = 245 (T1 FX2) | 6.2 = 281 | RATE=1/16/def | 223 | 223 | 1.10 | 1.26 | within 10 %; **peak above the dearest model** |
 | everb 0.1.2 | 13.3 = 603 (T1 FX2) | – | REV=OFF/def | 603 | 665 | 1.00 | – | within 10 % |
 | lofi2 0.1.1 | 10.3 = 467 (T1 FX2) | – | RING/def | 425 | 654 | 1.10 | – | within 10 % |
 | miniverb 0.2.3 | 14.1 = 639 (T1 FX2) | – | RATE=1.01/def | 641 | 699 | 1.00 | – | within 10 % |

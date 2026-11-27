@@ -457,7 +457,7 @@
       "id": "euclid",
       "key": "EUCLID",
       "name": "Euclid",
-      "version": "0.1.5-experimental",
+      "version": "0.1.6-experimental",
       "category": "effects",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -857,12 +857,12 @@
           }
         },
         "cpuPrice": {
-          "value": 7.2,
+          "value": 4.2,
           "unit": "percent-of-frame",
           "measure": "frame-interrupt",
           "tool": "npm run device:price -- --write",
-          "date": "2026-11-18",
-          "conditions": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2 before the module: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; the effect measured on T1 FX2 in place of NONE; base development twin d3d71297 of base 0.7.8 (main 02dfa20ca); 8 s per reading. Frame interrupt 41 % before, 43.5 % installed and used nowhere, 48.2 % on T1 FX2; CPU meter 59.5 % before, 61.8 % at rest, 64.9 % in use.",
+          "date": "2026-11-26",
+          "conditions": "Dev17 bank C, Part 1 as loaded after the RAM boot, stopped; picks on C02 (one trig, on T7), readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7; T2 and T4 play samples; rebuilt in the working copy on 26 Nov, not saved) at 126 BPM; owner's MKII, OS 1.40C; base 46c30886 (base 0.8.2 development twin of main 48f4a9b9c); 3 readings of 8 s a state. Frame interrupt 35.6 % before, 37.3 % installed and used nowhere, 39.8 % on T1 FX2; CPU meter 51.1 % before, 52.4 % at rest, 55.3 % in use.",
           "source": "evidence/cpu-price.json"
         }
       },

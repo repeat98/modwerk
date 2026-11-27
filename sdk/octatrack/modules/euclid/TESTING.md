@@ -1,6 +1,73 @@
 # Euclid testing
 
-Version: 0.1.5-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+Version: 0.1.6-experimental · author: [Jannik Aßfalg](https://github.com/repeat98)
+
+## 0.1.6-experimental: one release, at rest on base 0.8.1 (25 November 2026)
+
+0.1.6 is now one release: the resting detours below (#1868) together with octabam's three DSP speed-ups (#2057, `filter.asm`), on main `75a8c5c69`. Packages were rebuilt in the pinned image (`build-modules-isolated.sh`, `modules:import --development`), and Euclid's and Tape Echo's standalone recipes re-pinned to the new `dsp-packages.json` and `filter.asm`. `octatrack:module-packages -- --check`: every package identical (Play Modes held, #764). Published package `27263940…`.
+
+- **At rest, on a unit** (MKII, OS 1.40C, development twin `493c9cc5` of base 0.8.1, project Dev17, `npm run device:price`, three readings of 8 s per state, 25 November 2026). The plain runtime build of this source was used (`module:dev --build-only`, `91af771d`, all three detours flagged resting).
+
+  | | at rest: frame / CPU | in use: frame / CPU / DSP (peak) |
+  | --- | --- | --- |
+  | 0.1.5 (published) | +1.1 / +0.7 | +3.7 / -0.3 / +4.8 (+6.0) |
+  | 0.1.6 | +0.0 / -0.1 | +3.9 / +4.2 / +5.7 (+5.9) |
+
+- **In use:** the DSP reading isn't lower despite the speed-ups (one run of three readings, peaks equal within 0.1); the cycle scan's -9.1 cycles a sample is the static figure. Not re-measured by ear.
+- Not run on this release: Part/project reload and power cycles, an MKI. The instance curve and the test procedure's software steps follow below.
+- **Performance record, on a computer** (26 November 2026, `evidence/performance.json`): from `sdk/octabam`, `python3 tools/build/cycle_count.py` (the module's `measure`), `python3 tools/harness/benchmark_stock_dsp.py`, `python3 modules/euclid/perf.py bench OUT` and `python3 modules/euclid/perf.py stress OUT --seconds 2`, then `npm run perf:audit -- check … --stamp`. The DSP filter alone, on a private image (`0c23ac7d…`); not hardware.
+
+  | | |
+  | --- | --- |
+  | cycles | 4 x 182 = 728 of 3120 per sample per core (23 %), measured 187.75 per instance |
+  | stock benchmark | 187.75 vs FILTER 284.88 (0.66x); the dearest stock effect is 330.94 |
+  | stress | 4 per core, eight tracks, 3 LFOs and 20 locked slots, 2 s, no clobber, no hang |
+- **Module pool, on a unit** (26 November 2026): two rolled-back trials of `27263940…` on development twin `46c30886` of base 0.8.2 read 10,480 bytes each, the loader extent of base 0.8's module record (#2284).
+
+### Test procedure: euclid 0.1.6-experimental, 27 November 2026
+
+Build: revision `f57544fc2` (the owner's re-signed build approval of 27 November); the runner builds the plain runtime
+package `91af771d…`; the published package is `27263940…` (identical in CI's octatrack-source rebuild).
+`npm run test:procedure -- euclid --no-unit --no-emulator`, 9 s.
+
+| # | Step | Result |
+| --- | --- | --- |
+| 1 | Software checks (`npm run module:doctor -- euclid`) | passed |
+| 2 | Beside every other module (`npm run modules:compat -- euclid`) | passed |
+| 3 | Name the build (`npm run module:dev -- euclid --build-only`) | passed: `91af771d` |
+| 4 | DSP cost model (`node scripts/cycle-scan.mjs check`) | passed, after `cycle-scan.mjs record euclid` re-recorded the scan on this source (`perf.py` joined it; the DSP code and its 223.38 cycles a sample are unchanged); the unit's in-use reading (5.4 points = 245 cycles) is 1.10 of the model, its peak (281) above the dearest model |
+| 5-10 | Emulator rehearsal and the unit steps | not run in this run: left out with `--no-emulator` and `--no-unit` |
+| 11-12 | By hand, and the submitter's own stage | to do: the owner's |
+
+On the unit, 26 November 2026, outside the runner: `device:price --write --curve --memory` of the published `27263940…`
+on the owner's MKII (development twin `46c30886` of base 0.8.2, built from main `48f4a9b9c`; Dev17 C04, rebuilt in the
+working copy): at rest frame +1.7 points, in use on T1 FX2 frame +4.2 and DSP T1-4 +5.4 (peak +6.2); curve first 4.2,
+each 0.5 (points 82.1, 84.8, 86.8, 87.3, 87.8 on T1, T3, T6, T7); admitted alone on the empty (56.2 %) and the medium
+(85.1 %) pattern, nothing dropped, no stalls; rolled back.
+
+Not tested on a unit for this record: the runner's scripted pass and soak, a power cycle, a listen.
+
+## 0.1.6-experimental: rests while no slot uses it (prepared 20 November 2026, tested on 0.7.11 below)
+
+No code change. A `runtime.json` holding only `"rests"` marks its ColdFire detours `eu_frame_hook` (0x4000d562, every frame), `eu_start_hook` (0x4009c3d4) and `eu_resume_hook` (0x4009c4d4). On a base that judges
+effect modules (#1849, base 0.7.11, loader capability 2048) the base rests the module while no slot of the project,
+working or saved, names its effect id and no live slot runs it: those detours hold stock's bytes. Its DSP code is
+resident on demand as before.
+
+- **Why:** 2.5 points of the frame interrupt at rest in its `evidence/cpu-price.json` (`npm run device:price`, playing; MKII, development twin `d3d71297` of base 0.7.8, the Tresor Prep scene, 18 November 2026). The owner's goal (20 November 2026): an installed module nobody uses costs nothing.
+- **Note:** PLAY resets Euclid's phase through `eu_start_hook`: while it rests no slot names Euclid, so no phase is kept; it wakes before a pick lands.
+- **Not built yet:** the builder change that takes a rests-only `runtime.json` for an effect is in #1849; the package
+  row then needs `requiresCapabilities: 2048`, and the standalone recipe re-pins after #1862.
+- **Test procedure:** not run (no build; the unit was off USB, then held by another session, on 20 November 2026).
+
+| Case | Why this change makes it a risk | How run | Result |
+| --- | --- | --- | --- |
+| Installed, no slot names it | the detours must hold stock's bytes and cost nothing | `device:price` at rest, same scene as before | not run: not built, unit unavailable |
+| Picked while playing | the wake writes its sites masked before stock writes the pick | frame guard over the pick window, a stock effect pick as control | not run |
+| A Part, pattern or bank change bringing it in | must not need a wake | any slot of the project keeps it awake (base host test) | pass (host, #1849); unit not run |
+| A paste or a project load putting it on a live slot | it runs unpatched until the next tick | the live slot wakes it within a tick (base host test) | pass (host); unit not run |
+| Both slots and two instances | the effect id is one for every slot | picks on T1 and T5 | not run |
+| Undo of the trial that brought this version | resting sites restored while resting | whole-set trial and Undo | not run |
 
 ## 0.1.5-experimental — 18 November 2026 (#1690)
 
