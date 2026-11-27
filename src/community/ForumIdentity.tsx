@@ -21,9 +21,11 @@ export function ForumMachineBadge({ machine }: { machine: string | null }) {
 function avatarOrb(username: string) {
   let hash = 2166136261
   for (const character of username) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619)
-  hash >>>= 0
-  const first = hash % 5, second = (first + 1 + (hash >>> 3) % 4) % 5
-  return { '--orb-a': `var(--orb-${first})`, '--orb-b': `var(--orb-${second})`, '--orb-angle': (hash >>> 5) % 360 + 'deg', '--orb-x': 22 + (hash >>> 14) % 36 + '%', '--orb-y': 18 + (hash >>> 20) % 30 + '%' } as CSSProperties
+  // Mix the bits once more: plain FNV gives short, similar names the same low bits, and so the same colours.
+  hash = Math.imul(hash ^ hash >>> 16, 0x85ebca6b); hash = Math.imul(hash ^ hash >>> 13, 0xc2b2ae35); hash = (hash ^ hash >>> 16) >>> 0
+  // The hues sit in wheel order, so index + 3..5 is always a far-away second colour.
+  const first = hash % 8, second = (first + 3 + (hash >>> 3) % 3) % 8
+  return { '--orb-a': `var(--orb-${first})`, '--orb-b': `var(--orb-${second})`, '--orb-angle': (hash >>> 5) % 360 + 'deg', '--orb-x': 20 + (hash >>> 14) % 60 + '%', '--orb-y': 18 + (hash >>> 20) % 50 + '%' } as CSSProperties
 }
 
 // A member's picture when they set one, otherwise their orb.

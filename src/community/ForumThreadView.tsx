@@ -31,11 +31,11 @@ import { starterBody, type ReplyStarter } from './reply-starters'
 import { RenderBoundary } from '../components/RenderBoundary'
 function errorText(error:unknown){return error instanceof Error?error.message:'The request could not be completed.'}
 /** The cold controls of a post (report, moderate) behind three dots, so they stay one tap away without being the loudest thing on it. */
-function PostMenu({items}:{items:{label:string;onSelect:()=>void}[]}){
+export function PostMenu({items,label='More actions for this post'}:{items:{label:string;onSelect:()=>void}[];label?:string}){
   const menu=useRef<HTMLDetailsElement>(null),[open,setOpen]=useState(false)
   useEffect(()=>{if(!open)return;const away=(event:PointerEvent)=>{if(!menu.current?.contains(event.target as Node))setOpen(false)};document.addEventListener('pointerdown',away);return()=>document.removeEventListener('pointerdown',away)},[open])
   return <details ref={menu} className="forum-post-more" open={open} onToggle={event=>setOpen(event.currentTarget.open)} onKeyDown={event=>{if(event.key==='Escape'&&open){setOpen(false);menu.current?.querySelector('summary')?.focus()}}} onBlur={event=>{if(event.relatedTarget&&!event.currentTarget.contains(event.relatedTarget))setOpen(false)}}>
-    <summary aria-label="More actions for this post" title="More"><Icon name="more" size={18}/></summary>
+    <summary aria-label={label} title="More"><Icon name="more" size={18}/></summary>
     <div className="forum-post-more-menu">{items.map(item=><button key={item.label} type="button" onClick={()=>{if(menu.current)menu.current.open=false;setOpen(false);item.onSelect()}}>{item.label}</button>)}</div>
   </details>
 }

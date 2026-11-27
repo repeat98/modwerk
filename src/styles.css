@@ -1917,7 +1917,7 @@ h1 { font-size: var(--text-xl); }
   .login-prompt-dialog { padding: 20px; }
 }
 
-.profile-bio { white-space: pre-wrap; overflow-wrap: anywhere; }
+.profile-bio { max-width: 65ch; margin-top: 12px; color: var(--text-secondary); font-size: 14px; line-height: var(--reading-line-height); white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* Desktop notifications sit beside the sidebar brand; phones keep the toolbar bell. */
 .sidebar-brand { position: relative; margin-bottom: 24px; }
