@@ -258,6 +258,7 @@ export function DigiConfiguration({ device, configuration, configurations, onSel
               <small>{estimate.fits ? 'Estimated from each mod’s code and data sizes; the build’s own check decides.' : 'Over the shared area: this set will not link. Remove a mod.'}</small>
             </div>
             {estimate.clashes.map((clash, index) => <p key={clash.claim + index} className="file-error" role="alert">{clash.mods.join(' and ')} cannot be used together: {clash.claim}.</p>)}
+            {estimate.unmeasured.length > 0 && <p className="service-note">{estimate.unmeasured.length === 1 ? estimate.unmeasured[0] + ' has' : estimate.unmeasured.length + ' of these modules have'} no CPU cost measured on a unit{estimate.unmeasured.length > 1 ? ' (' + estimate.unmeasured.join(', ') + ')' : ''}. Large sets are untested; start with a few.</p>}
           </section>
           {!mobile && <section className="configuration-section" aria-labelledby="digi-firmware-title"><div className="section-title"><h2 id="digi-firmware-title">Base firmware</h2><span className="subtle">Read locally</span></div>
             <DigiFirmwarePanel name={device.name} releases={device.firmware?.releases ?? []} firmware={firmware} />

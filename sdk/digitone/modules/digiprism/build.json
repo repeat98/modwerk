@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/dsp.c",
+    "src/ui.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-Wno-error=incompatible-pointer-types"
+  ],
+  "weak": [
+    "core_audio_caps"
+  ],
+  "subscribe": [
+    {
+      "event": "ev_key",
+      "fn": "dprism_key",
+      "order": 6
+    },
+    {
+      "event": "ev_enc",
+      "fn": "dprism_enc",
+      "order": 6
+    },
+    {
+      "event": "ev_hold",
+      "fn": "dprism_hold",
+      "order": 6
+    },
+    {
+      "event": "ev_midi_cc",
+      "fn": "dprism_cc",
+      "order": 55
+    },
+    {
+      "event": "ev_render_in",
+      "fn": "dprism_rin",
+      "order": 50
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "dprism_rout",
+      "order": 50
+    },
+    {
+      "event": "ev_tick",
+      "fn": "dprism_tick",
+      "order": 61
+    },
+    {
+      "event": "ev_draw",
+      "fn": "dprism_draw",
+      "order": 91
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_menu",
+      "order": 31,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dprism_menu",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_audio",
+      "order": 60,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dprism_owner",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "fx_effects",
+      "order": 60,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dprism_effect",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_projdata",
+      "order": 70,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:dprism_projdata",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [
+    {
+      "name": "digiprism buffers",
+      "lo": "0x45b00000",
+      "hi": "0x46200000"
+    }
+  ],
+  "claims": [
+    "projdata:DCHR"
+  ],
+  "requires": [
+    "fxkit"
+  ],
+  "derive": null,
+  "releases": {
+    "1.43": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    },
+    "1.44": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}
