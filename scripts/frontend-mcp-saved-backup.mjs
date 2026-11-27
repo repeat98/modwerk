@@ -3,7 +3,7 @@ import { mkdtemp, lstat, readFile, open, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
 
-const capacity = 786432 + 4096
+const capacity = 1572864 + 4096 // modset.c SET_BYTES: the module pool (build_core.py RUNTIME_POOL_BYTES) and the header
 const zero = '0'.repeat(64)
 const hash = data => createHash('sha256').update(data).digest('hex')
 const writePrivate = async (path, data) => {

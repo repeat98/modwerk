@@ -133,10 +133,11 @@ export const KEY_BUS_BASES: readonly string[] = [...new Set([baseBinding.identit
 /** loader.h RUNTIME_DSP_CLAIMS: the X/Y spans one package may claim outside its own slot; RUNTIME_DSP_HOOK_ENTRIES, an
  * engine's entries; RUNTIME_DSP_INIT_WORDS, its claims' initial words. */
 const DSP_CLAIMS = 16, HOOK_ENTRIES = 8, INIT_WORDS = 4096
-/** The base's module pool (build_core.py RUNTIME_POOL_BYTES), and the loader's records in it on the ColdFire: loader.h's
- * runtime_module, runtime_site, runtime_dsp_claim and runtime_dsp_entry, as the unit's pool readings confirm
- * (docs/verification/2026-11-21-octatrack-module-pool-allocation.json). */
-export const OCTATRACK_POOL_BYTES = 768 * 1024
+/** The published base's module pool (build_core.py RUNTIME_POOL_BYTES; every base before it, since 12 October 2026, has
+ * 768 KiB), and the loader's records in it on the ColdFire: loader.h's runtime_module, runtime_site, runtime_dsp_claim and
+ * runtime_dsp_entry, as the unit's pool readings confirm (docs/verification/2026-11-21-octatrack-module-pool-allocation.json). */
+export const OCTATRACK_POOL_BYTES = 1536 * 1024
+const poolOf = (base?: string) => isPublishedBase(base) ? OCTATRACK_POOL_BYTES : 768 * 1024
 const MODULE_RECORD = 736, SITE_RECORD = 74, CLAIM_RECORD = 12, ENTRY_RECORD = 8
 function requirements(entry: RuntimePackage, group = false) {
   const abi = entry.abi ?? ('octabam' in entry && entry.octabam ? 7 : 6), sites = entry.sites ?? 0, copies = entry.copies ?? 0, fills = entry.fills ?? 0
@@ -177,7 +178,10 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
   // Hooks 0-3 are the core handlers; an ABI 8 package that subscribes to the base's site events (feature 128) adds one
   // word per event of sdk/machines/octatrack/events.json after them: its order in the top byte, its handler below.
   const subscriber = abi >= 8 && (want.features & RuntimeFeature.siteEvents) !== 0
-  if (flags & ~(abi >= 8 ? 7 : 3) || image > 131072 || image + bss > 294912 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
+  // build_core.py RUNTIME_IMAGE_BYTES and RUNTIME_MODULE_BYTES. shortcut: a base before the 1.5 MiB pool takes 128 and
+  // 288 KiB and refuses a larger package only once it is sent (RUNTIME_MALFORMED, the set rolled back); ask for the base
+  // update here once such a package is published without a need the base update already covers (program areas).
+  if (flags & ~(abi >= 8 ? 7 : 3) || image > 262144 || image + bss > 524288 || relocations > 2048 || hooks > (subscriber ? 4 + SITE_EVENTS : 4) ||
       view.getUint32(32) > 4096 || view.getUint16(36) > 256 || header + 4 * hooks + image + 4 * relocations > data.length) fail()
   if (variant) {
     const mask = variant.members.reduce((value, member) => value | MACHINE_BITS[member.id], 0), start = header + 4 * hooks
@@ -472,10 +476,10 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
         return { name: name(id), bytes: entry ? checkPackage(entry, await load(entry), id, undefined, audioEntry.get(entry)) : 0 }
       }))
       const priced = [...steps.flatMap(step => step.add ? [{ name: step.name, bytes: extents.get(step.add)! }] : []), ...staying]
-      const total = priced.reduce((sum, item) => sum + item.bytes, 0), kB = (bytes: number) => Math.ceil(bytes / 1000)
-      if (total > OCTATRACK_POOL_BYTES) {
+      const total = priced.reduce((sum, item) => sum + item.bytes, 0), kB = (bytes: number) => Math.ceil(bytes / 1000), pool = poolOf(base)
+      if (total > pool) {
         const largest = priced.sort((a, b) => b.bytes - a.bytes).slice(0, 3).map(item => `${item.name} (${kB(item.bytes)} kB)`)
-        throw new ModuleSetError(`This set needs ${kB(total)} kB of module memory, and the Octatrack has ${kB(OCTATRACK_POOL_BYTES)} kB. Take out ${kB(total - OCTATRACK_POOL_BYTES)} kB or more. The largest here are ${list(largest)}.`)
+        throw new ModuleSetError(`This set needs ${kB(total)} kB of module memory, and the Octatrack has ${kB(pool)} kB. Take out ${kB(total - pool)} kB or more. The largest here are ${list(largest)}.`)
       }
       // A sync is one transaction: the loader places every new package while the modules it takes out or replaces still
       // run, and frees them only once the whole set is in, so a refused set rolls back (loader.c set_prepare_context,
@@ -483,11 +487,11 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       const live = (step: Step) => step.group ? !!current.runtimeGroups?.some(item => item.id === step.id) : current.moduleIds.includes(step.id)
       const leaving = steps.flatMap(step => step.undo && live(step) ? [{ name: step.name, bytes: extents.get(step.undo)!, removed: !step.add }] : [])
       const peak = total + leaving.reduce((sum, item) => sum + item.bytes, 0)
-      if (peak > OCTATRACK_POOL_BYTES) {
+      if (peak > pool) {
         const removed = leaving.filter(item => item.removed).map(item => item.name)
         const adding = steps.filter(step => step.add && !(step.undo && live(step))).map(step => step.name)
-        throw new ModuleSetError(`The Octatrack keeps the modules a sync takes out until the new ones are in, so this sync needs ${kB(peak)} kB of module memory at once, and the Octatrack has ${kB(OCTATRACK_POOL_BYTES)} kB. ` +
-          (removed.length && adding.length ? `First sync with ${list(removed)} taken out and ${list(adding)} left out, then add ${list(adding)} and sync again.` : `Take out ${kB(peak - OCTATRACK_POOL_BYTES)} kB or more.`))
+        throw new ModuleSetError(`The Octatrack keeps the modules a sync takes out until the new ones are in, so this sync needs ${kB(peak)} kB of module memory at once, and the Octatrack has ${kB(pool)} kB. ` +
+          (removed.length && adding.length ? `First sync with ${list(removed)} taken out and ${list(adding)} left out, then add ${list(adding)} and sync again.` : `Take out ${kB(peak - pool)} kB or more.`))
       }
       // A removal, or a machine package replacing the one on the unit (it has the previous one as its undo), changes what a
       // track may be using; a new module cannot be in use yet.

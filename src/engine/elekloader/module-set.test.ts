@@ -7,7 +7,7 @@ import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with {
 import { publishedBinding as baseBinding } from './published-octatrack.fixture'
 import { removal } from '../../dev/octatrack-usb-lifecycle'
 import { RuntimeFeature } from './upload-usb'
-import { BASE_DSP_FEATURES, BaseUpdateRequired, PROGRAM_AREAS, ProgramAreasBaseRequired, createRuntimeCatalogue, poolExtent, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
+import { BASE_DSP_FEATURES, BaseUpdateRequired, PROGRAM_AREAS, ProgramAreasBaseRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
 const load = async (entry: { path: string }) => file(entry.path)
@@ -113,15 +113,9 @@ describe('preparing a module set', () => {
     expect(fetched).not.toHaveBeenCalled()
     const audio = (manifest as { usbAudio?: { configurable?: { name: string } } }).usbAudio?.configurable
     const extraNames = audio ? [audio.name] : []
-    // Every published package at once needs more than the base's module pool, so they compose in two sets that share
-    // it out: the largest first, each into the lighter set.
-    await expect(prepareModuleSet(target, empty, fetched, events, baseBinding.identity)).rejects.toThrow('module memory')
-    const cost = (id: string) => { const entry = manifest.packages.find(item => item.id === id); return entry ? poolExtent(entry, file(entry.path)) : 0 }
-    const compose = async (ids: readonly string[], capabilities: typeof events) => {
-      const halves: string[][] = [[], []], used = [0, 0]
-      for (const id of [...ids].sort((a, b) => cost(b) - cost(a))) { const half = used[0] <= used[1] ? 0 : 1; halves[half].push(id); used[half] += cost(id) }
-      return (await Promise.all(halves.map(moduleIds => prepareModuleSet({ name: 'Half', moduleIds }, empty, fetched, capabilities, baseBinding.identity)))).flatMap(result => result.changes)
-    }
+    // Every published package at once fits the base's 1.5 MiB module pool (the 768 KiB before took them in two sets).
+    const compose = async (ids: readonly string[], capabilities: typeof events) =>
+      (await prepareModuleSet({ name: 'All', moduleIds: [...ids] }, empty, fetched, capabilities, baseBinding.identity)).changes
     const changes = await compose(USB_MODULE_IDS, events)
     expect(changes.map(change => change.module).sort()).toEqual([...manifest.packages.map(entry => entry.name), ...extraNames].sort())
     expect(changes.every(change => change.undo?.length === 32)).toBe(true)
@@ -167,9 +161,9 @@ describe('preparing a module set', () => {
     await expect(subscriber({ [index('ot_machines')]: order(16) })).resolves.toBeDefined()
     await expect(subscriber({ [index('ot_machines')]: order(20) })).rejects.toThrow('inconsistent') // an 80-byte record past the image
     await expect(subscriber({ [4 + SITE_EVENTS]: order(8) })).rejects.toThrow('inconsistent') // past the base's events
-    // Image and bss together up to 288 KiB (loader.h RUNTIME_MODULE_BYTES), past the 128 KiB image limit.
-    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 294912 - 96)).resolves.toBeDefined()
-    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 294912 - 95)).rejects.toThrow('inconsistent')
+    // Image and bss together up to 512 KiB (build_core.py RUNTIME_MODULE_BYTES), past the 256 KiB image limit.
+    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 524288 - 96)).resolves.toBeDefined()
+    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 524288 - 95)).rejects.toThrow('inconsistent')
   })
   it('fetches the site’s copy and refuses one that did not arrive intact', async () => {
     const entry = manifest.packages[0], data = file(entry.path)
