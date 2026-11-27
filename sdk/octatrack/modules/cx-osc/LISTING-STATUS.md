@@ -17,6 +17,10 @@ Prepared on branch `module/cx-osc` for catalog PR **#2293**.
 1. **`sdk/machines/octatrack/compatibility.json`**: paste `owner-compat-relation.json` when this catalog lands (or land base hooks #2352 and migrate detours first).
 2. **`sdk/approvals/cx-osc-build-approval.json`**: first-release owner sign-off (see `evidence/waiver-request.md`).
 
+## Blocked until unit is connected
+
+`device:price` failed with **Bench: err the unit is away** (27 Nov 23:12). Reboot dev twin and `npm run device -- serve` before the curve command below.
+
 ## You run on the unit (blocking doctor)
 
 ```bash
