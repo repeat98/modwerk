@@ -2,13 +2,14 @@
 """The release package's DSP side in dsp_host: the shell (../shell.asm) runs a program's area, relocated as
 qv_runtime.c's code() relocates it, with the stream named by the slot's record; bit for bit against the models.
 
-  python3 -B verify_area.py <programs.json> <lfo_dir> <index> [--samples N] [--cycles DSP_HOST_WITH_STEPTRACE [--only]]
+  python3 -B verify_area.py <programs.json> <lfo_dir> <index> [--samples N] [--cycles DSP_HOST_WITH_STEPTRACE [--only]
+                            [--knobs B,C,D,E]]
 
 index: the program's place in manifest.PROGRAMS (what PROG stores). The test's proc is a stand-in for the base:
 - the slot's record at X:$7fb0 + 4 ((r7 >> 8) & 15) names the area (placed at AT, not where it was assembled) and the
   blocks' offsets in the frame's bank;
 - each frame's bank is X:$2000 or X:$4000, alternating, and its base is at X:$207, as stock's bank take keeps it; the
-  dispatcher's parameter page is outside the bank (PAGE, with MIX and PROG copied), as stock's r6 points at its
+  dispatcher's parameter page is outside the bank (PAGE, with knobs A-F copied), as stock's r6 points at its
   parameter copies (X:$25d-$3dc), so code that takes the bank from r6 fails here as it does on a unit (27 Nov 2026);
   the stand-in writes the frame's in-block at the bank + the in-offset before the frame's first call, and after its
   last call keeps the out-block from the bank + the out-offset;
@@ -20,7 +21,7 @@ at its mix. From there the model is qvs.SplitEngine (LAT 3) on the samples from 
 --cycles: the area's chip cycles a sample by interlock_scan's model on the traced call, the shell's instructions
 included and the stand-in's left out: the last call of runs ending 2 to 33 frames after the program starts (every
 place a tick can fall in a block; 64 for a program that never moves), each run bit-exact against the model too.
---only skips the other gates.
+--only skips the other gates; --knobs traces with knobs B-E there (64 each, the factory program, by default).
 
 Gates: the relocation equals an assembly at AT; labels, traps, operands as written; bit-exact audio and out-blocks with
 one instance (MIX 127, 64 and 0), trig splits at frames 1, 5, 7 and 13, a dirty Y, and two instances on separate
@@ -70,10 +71,12 @@ proc:
         move    b1,{H(9)}
         move    b1,x:>$000207
         move    #>${PAGE:06x},r1
-        move    x:(r6+5),x0
-        move    x0,x:(r1+5)
-        move    x:(r6+0),x0
-        move    x0,x:(r1+0)
+        do      #6,qwXK
+        move    x:(r6)+,x0
+        move    x0,x:(r1)+
+qwXK:
+        move    {H(8)},r6
+        move    #>${PAGE:06x},r1
         move    r1,{H(11)}
         tst     a
         bne     qwXA
@@ -146,16 +149,26 @@ def start_frame(size, cl):
     raise ValueError("the program never starts")
 
 
-def blocks_in(plan, frames, f0, outs, win):
-    """What the runtime sends for every frame of the run: zeros before f0 + LAT, then compose(k) (ColdFire, LAT 3)."""
-    cf = qvs.ColdFire(plan)
+CENTRE = (qvs.KNOB_CENTRE,) * 4
+centre = lambda f: CENTRE
+
+
+def page(prog, kn=CENTRE, mix=127):
+    """The dispatcher's page: PROG, knobs B-E, MIX."""
+    return [prog, *kn, mix] + [0] * 6
+
+
+def blocks_in(plan, frames, f0, outs, win, index=0, kk=centre):
+    """What the runtime sends for every frame of the run: zeros before f0 + LAT, then compose(k) (ColdFire, LAT 3)
+    with knobs B-E kk(frame)."""
+    cf = qvs.ColdFire(plan, index)
     rows = []
     for f in range(frames):
         k = f - f0
         if k < 0:
             rows.append([0] * win)
             continue
-        blk = cf.compose(k)
+        blk = cf.compose(k, kk(f))
         cf.receive(k, outs[k])
         blk = blk if k >= LAT else [0] * len(blk)
         rows.append(blk + [0] * (win - len(blk)))
@@ -167,16 +180,19 @@ def junk(rows, seed):
     return [[(v & 0xFFFF) | (rnd.randrange(1, 256) << 16) for v in b] for b in rows]
 
 
-def expected(plan, left, right, mix, f0, tag):
-    """(audio, out-blocks from f0 on, the in-blocks the runtime sends)."""
+def expected(plan, left, right, mix, f0, tag, kk=centre):
+    """(audio, out-blocks from f0 on, the in-blocks the runtime sends); knobs B-E kk(frame) on the page and in the
+    runtime's in-blocks (zeros for its first LAT frames, as blocks_in)."""
     xs = [(l + r) >> 1 for l, r in zip(left, right)]
     frames = len(left) // N
-    eng = qvs.SplitEngine(plan)
-    cf = qvs.ColdFire(plan)
+    index = tag & 0xFF
+    eng = qvs.SplitEngine(plan, index=index)
+    cf = qvs.ColdFire(plan, index)
     wet, outs = [], []
     for k in range(frames - f0):
-        blk = cf.compose(k)
-        o, ob = eng.frame(blk, xs[N * (f0 + k):N * (f0 + k + 1)])
+        blk = cf.compose(k, kk(f0 + k))
+        blk = blk if k >= LAT else [0] * len(blk)
+        o, ob = eng.frame(blk, xs[N * (f0 + k):N * (f0 + k + 1)], kk(f0 + k))
         cf.receive(k, ob)
         outs.append(ob)
         wet += o
@@ -322,10 +338,10 @@ def main(argv):
         import interlock_scan as IS
         IS.DIS = G.tool("dsp_disasm")
         f0 = start_frame(plan.size, calls(n))
-        audio, _, raw_outs = expected(plan, left, right, 127, f0, tag)
-        rows = junk(blocks_in(plan, frames, f0, raw_outs, win), 7)
-        knobs = [0] * 12
-        knobs[qvc.MIX_SLOT] = 127
+        kc = tuple(int(v) for v in argv[argv.index("--knobs") + 1].split(",")) if "--knobs" in argv else CENTRE
+        audio, _, raw_outs = expected(plan, left, right, 127, f0, tag, lambda f: kc)
+        rows = junk(blocks_in(plan, frames, f0, raw_outs, win, index, lambda f: kc), 7)
+        knobs = page(index, kc)
         old = os.environ.get("DSP_HOST")
         os.environ["DSP_HOST"] = host
         got = []
@@ -343,9 +359,9 @@ def main(argv):
             else:
                 os.environ["DSP_HOST"] = old
         # calls that fade: PROG leaves one frame after the program starts, so the next 16 calls ramp
-        wet = expected(plan, left, right, 127, f0, tag)[0]
+        wet = expected(plan, left, right, 127, f0, tag, lambda f: kc)[0]
         fade_want = faded(wet, left, right, 127, f0, lambda f: f >= f0 + 1)
-        kn = lambda prog: [prog, 0, 0, 0, 0, 127] + [0] * 6
+        kn = lambda prog: page(prog, kc)
         fading = []
         os.environ["DSP_HOST"] = host
         try:
@@ -375,9 +391,8 @@ def main(argv):
                                       *((f"noise, split at {s}", left, right, 100, s) for s in (1, 5, 7, 13))):
         f0 = start_frame(plan.size, calls(n, split))
         audio, outs, raw_outs = expected(plan, l_, r_, mix, f0, tag)
-        rows = junk(blocks_in(plan, frames, f0, raw_outs, win), 7)
-        knobs = [0] * 12
-        knobs[qvc.MIX_SLOT] = mix
+        rows = junk(blocks_in(plan, frames, f0, raw_outs, win, index), 7)
+        knobs = page(index, mix=mix)
         r, caps = run([G.Instance(l_, r_, knobs=knobs, split=split)], [rows], "c" + "".join(c for c in label if c.isalnum()))
         check(label, r, caps, 0, audio, outs, f0)
     # The fade: PROG leaves the program 40 frames after it starts and comes back 10 frames later, then leaves for good.
@@ -386,9 +401,9 @@ def main(argv):
     wet = expected(plan, left, right, 127, f0, tag)[0]
     pa, pb = (f0 + 40, f0 + 50), f0 + 80
     away = lambda f: pa[0] <= f < pa[1] or f >= pb
-    knobs = lambda prog, mix=127: [prog, 0, 0, 0, 0, mix] + [0] * 6
+    knobs = lambda prog, mix=127: page(prog, mix=mix)
     want = faded(wet, left, right, 127, f0, away)
-    rows = junk(blocks_in(plan, frames, f0, raw_outs, win), 8)
+    rows = junk(blocks_in(plan, frames, f0, raw_outs, win, index), 8)
     r, caps = run([G.Instance(left, right, rows={0: knobs(index), pa[0]: knobs(index + 1), pa[1]: knobs(index),
                                                 pb: knobs(index + 1)})], [rows], "fade")
     check("PROG leaves, returns and leaves: the wet fades over 256 samples each way", r, caps, 0, want, outs, f0)
@@ -398,19 +413,27 @@ def main(argv):
           max(tail, default=0) == 0, f"largest {max(tail, default=0)}")
     cut = abs(wet[0][s0])
     print(f"       a cut would drop the wet by {cut} in one sample here; the fade moves its gain 1/256 of full a sample")
+    # The knobs: off the centre from frame 30 of the program (TIME at 1 ms, LEN, SPD and DEP up), then to the other ends
+    # at 90, then back to the centre at 150: the page and the runtime's in-blocks move together.
+    f0 = start_frame(plan.size, calls(n))
+    turns = ((f0 + 150, CENTRE), (f0 + 90, (0, 127, 0, 127)), (f0 + 30, (100, 0, 120, 10)))
+    kk = lambda f: next((kn for at, kn in turns if f >= at), CENTRE)
+    audio, outs, raw_outs = expected(plan, left, right, 127, f0, tag, kk)
+    rows = junk(blocks_in(plan, frames, f0, raw_outs, win, index, kk), 8)
+    r, caps = run([G.Instance(left, right, rows={0: page(index), **{at: page(index, kn) for at, kn in turns}})],
+                  [rows], "knobs")
+    check("knobs B-E off the centre and back (the page and the in-blocks)", r, caps, 0, audio, outs, f0)
     f0 = start_frame(plan.size, calls(n))
     audio, outs, raw_outs = expected(plan, left, right, 127, f0, tag)
-    rows = junk(blocks_in(plan, frames, f0, raw_outs, win), 8)
-    knobs = [0] * 12
-    knobs[qvc.MIX_SLOT] = 127
+    rows = junk(blocks_in(plan, frames, f0, raw_outs, win, index), 8)
+    knobs = page(index)
     r, caps = run([G.Instance(left, right, knobs=knobs)], [rows], "dirty", extra=("-dirty", hex(0x5A5A5A)))
     check("a dirty Y before init", r, caps, 0, audio, outs, f0)
     l2, r2 = G.noise(n, 0.4, 21), G.noise(n, 0.4, 22)
     f1 = start_frame(plan.size, calls(n, 7))
     audio2, outs2, raw2 = expected(plan, l2, r2, 90, f1, tag)
-    rows2 = junk(blocks_in(plan, frames, f1, raw2, win), 9)
-    k2 = [0] * 12
-    k2[qvc.MIX_SLOT] = 90
+    rows2 = junk(blocks_in(plan, frames, f1, raw2, win, index), 9)
+    k2 = page(index, mix=90)
     r, caps = run([G.Instance(left, right, knobs=knobs), G.Instance(l2, r2, knobs=k2, split=7)], [rows, rows2], "two")
     check("two instances: the first", r, caps, 0, audio, outs, f0)
     check("two instances: the second (split at 7, MIX 90)", r, caps, 1, audio2, outs2, f1)

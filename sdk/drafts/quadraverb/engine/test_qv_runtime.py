@@ -8,6 +8,7 @@ m68k-elf-gcc build, warnings as errors. Needs the ROM-derived inputs outside Git
 """
 import ctypes
 import itertools
+import json
 import pathlib
 import random
 import shutil
@@ -19,6 +20,7 @@ import unittest
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import qvcf  # noqa: E402
+import qvk  # noqa: E402
 import qvs  # noqa: E402
 
 INPUTS = pathlib.Path.home() / ".cache/modwerk-local/quadraverb/engine"
@@ -27,6 +29,7 @@ N = 16
 U16P, U32P = ctypes.POINTER(ctypes.c_uint16), ctypes.POINTER(ctypes.c_uint32)
 COUNTERS = ("qv_resyncs", "qv_no_room", "qv_missing", "qv_gaps", "qv_bad_tags")
 _copies = itertools.count()
+CENTRE = (qvk.CENTRE,) * 4
 
 
 def areas(n):
@@ -54,7 +57,17 @@ class Runtime:
         lib.qv_code.restype = ctypes.c_uint32
         lib.qv_name.argtypes, lib.qv_name.restype = [ctypes.c_uint], ctypes.c_char_p
         lib.qv_page.restype = ctypes.c_uint32
+        lib.qv_label.argtypes, lib.qv_label.restype = [ctypes.c_uint, ctypes.c_uint, ctypes.c_void_p], ctypes.c_char_p
         self.effect = Effect.in_dll(lib, "qv_effect")
+        self.mem = (ctypes.c_uint8 * 0x800).in_dll(lib, "qv_host_mem")
+        for slot in range(8, 16):
+            self.knobs(slot, CENTRE)
+
+    def knobs(self, slot, kn):
+        """FX2 knobs B-E of slot's frame record, both banks."""
+        for bank in (0, 1):
+            at = 0x110 + bank * 512 + (slot - 8) * 64 + 25
+            self.mem[at:at + 4] = list(kn)
 
     def count(self, name):
         return ctypes.c_uint32.in_dll(self.lib, name).value
@@ -76,21 +89,21 @@ class Dsp:
     and be zero past it. A waiting frame 3 or more after this program began must get only zeros. joining: the runtime
     had no room; check zeros until join(K) names the out-block it first filed, then a ref that starts there."""
 
-    def __init__(self, test, idx, plan, wait, seed, skip=0, joining=False):
-        self.t, self.idx, self.plan, self.skip, self.joining = test, idx, plan, skip, joining
-        self.eng, self.ref = qvs.SplitEngine(plan), qvs.ColdFire(plan)
+    def __init__(self, test, idx, plan, wait, seed, skip=0, joining=False, kk=lambda c: CENTRE):
+        self.t, self.idx, self.plan, self.skip, self.joining, self.kk = test, idx, plan, skip, joining, kk
+        self.eng, self.ref = qvs.SplitEngine(plan, index=idx), qvs.ColdFire(plan, idx)
         self.k, self.age, self.rnd, self.checked, self.sent = -wait, 0, random.Random(seed), 0, {}
         if joining:
             self.skip = 1 << 30
 
     def join(self, K):
-        self.ref = qvs.ColdFire(self.plan)
+        self.ref = qvs.ColdFire(self.plan, self.idx)
         self.ref.newest = N * K - 1
         for k in sorted(k for k in self.sent if k >= K):  # what the DSP sent since, too
             self.ref.receive(k, self.sent[k])
         self.skip, self.joining = K + 3, False
 
-    def frame(self, inb):
+    def frame(self, inb, c=0):
         tag, self.age = 0x5100 | self.idx, self.age + 1
         zero = [0] * self.t.stream_in
         if self.k < 0:
@@ -99,14 +112,14 @@ class Dsp:
                 self.t.assertEqual(inb, zero, f"index {self.idx}: a waiting frame's in-block")
             return [tag, 0xFFFF]
         k, self.k = self.k, self.k + 1
-        want = self.ref.compose(k)
+        want = self.ref.compose(k, self.kk(c))
         if k >= self.skip:
             self.t.assertEqual(inb[:len(want)], want, f"index {self.idx}, frame {k}")
             self.t.assertEqual(inb[len(want):], zero[len(want):], f"index {self.idx}, frame {k}: past its words")
             self.checked += 1
         elif self.joining:
             self.t.assertEqual(inb, zero, f"index {self.idx}, frame {k}: no room, so silent")
-        _, ob = self.eng.frame(inb, [round(0.45 * (1 << 23) * (2 * self.rnd.random() - 1)) for _ in range(N)])
+        _, ob = self.eng.frame(inb, [round(0.45 * (1 << 23) * (2 * self.rnd.random() - 1)) for _ in range(N)], self.kk(c))
         self.ref.receive(k, ob)
         self.sent[k] = ob
         self.sent.pop(k - 8, None)
@@ -120,13 +133,15 @@ def run(rt, dsps, frames, events=None):
         if events and c in events:
             events[c]()
         for slot, d in dsps.items():
-            wrote[slot, c] = d.frame(filled.pop((slot, c), None))
+            wrote[slot, c] = d.frame(filled.pop((slot, c), None), c)
         for slot in sorted(dsps):
             if (slot, c - 1) in wrote:
                 block, before = wrote.pop((slot, c - 1)), rt.count("qv_no_room")
                 rt.take(slot, c - 1, block)
                 if dsps[slot].joining and block[1] != 0xFFFF and rt.count("qv_no_room") == before:
                     dsps[slot].join(block[1])
+            if slot in dsps:
+                rt.knobs(slot, dsps[slot].kk(c + 2))
             filled[slot, c + 2] = rt.fill(slot, c + 2)
 
 
@@ -203,6 +218,80 @@ class TestRuntime(unittest.TestCase):
             self.assertQuiet(rt)
             total += d.checked
         print(f"\n{len(self.plans)} programs, {total} frames bit-exact against qvs.ColdFire", file=sys.stderr)
+
+    def test_knobs_stream(self):
+        """Every program with knobs turning (B-E through both ends, a step every 7 frames): the in-blocks (TIME's
+        windows, the knob words) equal qvs.ColdFire's for the same knobs, and the DSP model runs on them."""
+        rnd = random.Random(5)
+        for idx, pl in enumerate(self.plans):
+            if not pl.knobs:
+                continue
+            steps = [tuple(rnd.randrange(128) for _ in range(4)) for _ in range(40)] + [(0,) * 4, (127,) * 4]
+            kk = lambda c, steps=steps: steps[(c // 7) % len(steps)]
+            rt, d = Runtime(self.so), Dsp(self, idx, pl, 3, seed=idx, kk=kk)
+            run(rt, {8 + idx % 8: d}, 400)
+            self.assertGreaterEqual(d.checked, 390)
+            self.assertQuiet(rt)
+
+    def test_knob_words(self):
+        """Each knob position asks for the parameter value qvk.value gives, and the words the runtime sends for it are
+        the firmware's own for that value (extract_knobs.mjs, the edit page or recalls): LEN's coefficient on each of
+        its steps, TIME's taps 42 a ms from the factory ones, the sweep's rate, depth and centre from its curves."""
+        for idx, pl in enumerate(self.plans):
+            kn = pl.knobs
+            for k in range(128):
+                for g, (st, f, lo, hi, kind) in enumerate(kn.len_):
+                    v = qvk.value(k, f, lo, hi)
+                    self.assertEqual(kn.oracle("len", g, v), [kn.coef(g, v)] * len(st), f"index {idx} LEN {k}")
+                    if pl.kwords:
+                        self.assertEqual(qvs.knob_values(pl, idx, (k, 64, 64, 64))[1 + g], kn.coef(g, v) << 4)
+            for g, (st, f, lo, hi, side) in enumerate(kn.time_):
+                name = {"pre": "predelay", "delay": ("dtimeL", "dtimeR")[g]}[kn.time_kind]
+                vals = kn.row["params"][name]["values"]       # every value (the page), or a stride (recalls)
+                base = kn.oracle("time", g, f) if str(f) in vals else None
+                for k in range(128):
+                    ms = kn.time_values(k)[g]
+                    if base is not None and str(ms) in vals:
+                        self.assertEqual(kn.oracle("time", g, ms), [(a + 42 * (ms - f)) & 0xFFFF for a in base],
+                                         f"index {idx} TIME {k}: {ms} ms")
+            if kn.sweep:
+                sw = kn.sweep
+                for k in (0, 1, 30, 63, 64, 65, 100, 127):
+                    s, d, rate, dep, cen = kn.sweep_values(k, 127 - k)
+                    data = json.loads(qvk.KNOBS.read_text()) if not hasattr(self, "_kd") else self._kd
+                    self._kd = data
+                    self.assertEqual((rate, dep), (data["rate"][s], data["depth"][s][d // sw["B"]]), f"index {idx}")
+                self.assertEqual(kn.sweep_values(64, 64)[2:4], (sw["rate"], sw["depth"]), f"index {idx}: the centre")
+
+    def test_labels(self):
+        """qv_label: knobs B-E name what they set on the program PROG picks, as qvk.Program.text, in 19 characters."""
+        rt = Runtime(self.so)
+        part = (ctypes.c_uint8 * 8)()
+        for idx, pl in enumerate(self.plans):
+            part[0] = idx
+            for slot in range(1, 5):
+                for k in range(128):
+                    part[slot] = k
+                    got = rt.lib.qv_label(slot, k, ctypes.addressof(part) + slot).decode()
+                    self.assertEqual(got, pl.knobs.text(slot, k), f"index {idx} slot {slot} value {k}")
+                    self.assertLessEqual(len(got), 19)
+            self.assertEqual(rt.lib.qv_label(0, idx, ctypes.addressof(part)).decode(), rt.lib.qv_name(idx).decode())
+
+    def test_absent_knobs(self):
+        """A knob a program lacks moves nothing in the in-block (TIME's windows, the knob words)."""
+        for idx, pl in enumerate(self.plans):
+            kn = pl.knobs
+            for slot, absent in ((0, not kn.len_), (1, not kn.time_), (2, not pl.ksweep), (3, not pl.ksweep)):
+                if not absent:
+                    continue
+                cf = qvs.ColdFire(pl, idx)
+                for kv in (0, 127):
+                    kb = [64] * 4
+                    kb[slot] = kv
+                    self.assertEqual(cf.compose(0, tuple(kb)), cf.compose(0, CENTRE), f"index {idx} knob {slot}")
+                if pl.ktables:
+                    tab = qvs.knob_tables(pl)
+                    self.assertEqual(len(tab), 128 * len(pl.ktables))
 
     def test_moving_window(self):
         """No release program streams a moving read; SMALL ROOM with its swept line forced out does (qvs --force 34)."""
