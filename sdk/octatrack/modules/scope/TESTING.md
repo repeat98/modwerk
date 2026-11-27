@@ -1,7 +1,6 @@
 # SCOPE testing
 
-Draft Modwerk port of octabam `modules/scope` at
-`3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9`.
+Modwerk catalog module. Octabam import pin `3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9`.
 
 ## Release procedure, 27 November 2026
 
@@ -25,8 +24,9 @@ RAM-booted until power cycle, which returns to the flashed base.
 
 The available USB device exposed no audio input on macOS, so the run did
 not capture MAIN/CUE or establish audio dropout counts. The unit's
-development stats give a frame-gap observation only. No worst-case
-ColdFire cycle or complete stack bound was measured.
+development stats give a frame-gap observation only. ColdFire cycles are
+in `evidence/performance.json`; stack is a disassembly bound in
+`evidence/memory.md`, not a hardware canary.
 
 On the flashed 0.8.1 release base `eb6679620d0c9ed7…`, with B02 playing,
 the published-source USB package `f8a1ffeb984e…` ran as a 45-second RAM
@@ -54,18 +54,33 @@ although its base label said "B02 playing project". The logs do not resolve
 whether playback was active during either measurement. Do not treat either
 price as a measured playing-audio cost until the transport state is established.
 
-`npm run module:qualify -- scope --procedure
-/private/tmp/scope-procedure-scope-020-20261127-2 --base 'Octatrack base
-311bb670, MKII, OS 1.40C'` previews the qualification record but says it
-cannot release yet: there is no worst-case ColdFire cycle record, and the
-package header alone does not account for stack, scratch, or reused memory.
-The hardware summary, limitations, and tutorial also require review before
-the record is written.
+### Shipped package vs development-twin image
 
-The later B02 procedure also passed unit steps 6–10, but its checkout was
-dirty. `module:qualify` regenerated the draft's CPU price from its evidence;
-it refused to write a complete qualification record without cycles and exact
-memory. A clean source-bound release procedure remains necessary.
+Procedure steps 6–10 used the committed USB package
+`f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273`
+on base `311bb670`. LCD captures and the open-window gap reading used a
+RAM-booted development twin whose private image SHA-256 was
+`e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd`, with the
+same SCOPE package bytes. The qualification record names the dev-twin image
+for hardware evidence; catalog install uses `f8a1ffeb`.
+
+### ColdFire performance (27 November 2026)
+
+Commands:
+
+```sh
+python3 sdk/octatrack/modules/scope/perf.py static
+npm run perf:audit -- check --stamp sdk/octatrack/modules/scope/evidence/performance.json
+```
+
+| Check | Result |
+| --- | --- |
+| record | coldfire record for scope@0.2.0-experimental |
+| cycles | worst event 602 of 9577 cycles (6%) |
+| stock benchmark | under the same flood the longest frame interrupt grows by 1.7 µs (0.5% of the 362.8 µs frame) and idle time falls by 0.8 points vs stock |
+| stress | 1000 messages/s at 250 BPM for 62 s, no stuck note, no hang, 0 dropped |
+
+Details and method strings: `evidence/performance.json` and `perf.py`.
 
 ## 0.2.0-experimental
 

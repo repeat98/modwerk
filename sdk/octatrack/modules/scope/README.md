@@ -1,6 +1,6 @@
 # Scope
 
-Version 0.2.0-experimental · by @ilia-murzinov · draft, not Modwerk-qualified.
+Version 0.2.0-experimental · by @ilia-murzinov · Modwerk catalog module.
 
 ## Overview
 
@@ -29,9 +29,10 @@ returns. Clip `!` appears only when the recent peak reaches 0 dBFS.
 
 ## Quick tutorial
 
-1. Play a track with clear level. Hold **[DOWN]** and press **[TEMPO]**.
-2. Turn **A** until the waveform fills most of the height without clipping.
-3. Press **[DOWN]** twice to reach **ALL**, then **[TEMPO]** to close.
+1. Select an audio track that is making sound. No effect slot is required.
+2. Hold [DOWN] first, then press [TEMPO]. The full-panel SCOPE window opens.
+3. Turn DATA ENTRY A (GAIN) and B (TIME). Press [UP] or [DOWN] to cycle OSC, XY and ALL.
+4. Press [TEMPO], [YES] or [NO] to close. Hold [DOWN] and press [TEMPO] again to reopen.
 
 ## Compatibility and limitations
 
@@ -41,7 +42,7 @@ returns. Clip `!` appears only when the recent peak reaches 0 dBFS.
 - **0.1.0** patched three stock sites; see PR #2182.
 - Hold **[DOWN]** before **[TEMPO]**. TEMPO alone stays stock.
 - Standalone: TUNER is not required.
-- Draft only: no Modwerk USB package or `device:qualify` evidence yet.
+- Shipped USB package `f8a1ffeb`; development-twin RAM trials used image `e300c134` (see TESTING.md).
 
 ## Tests and measurements
 

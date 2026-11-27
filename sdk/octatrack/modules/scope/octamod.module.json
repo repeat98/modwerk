@@ -47,7 +47,7 @@
       "default": 20,
       "count": 41,
       "labels": null,
-      "doc": "Vertical scale for OSC and XY. Centre (20) is 0 dB; 0..40 is about ±20 dB. Push A resets to centre and clears the peak hold."
+      "doc": "Vertical scale for OSC and XY. Centre (20) is 0 dB; 0..40 is about \u00b120 dB. Push A resets to centre and clears the peak hold."
     },
     {
       "name": "TIME",
@@ -97,21 +97,21 @@
       "source": "TESTING.md"
     },
     "processing": {
-      "label": "ColdFire, while open",
-      "display": "Not measured on Modwerk",
-      "value": null,
-      "unit": "unknown",
-      "method": "unmeasured",
-      "conditions": "Octabam MKII CF METER (LSCOPE BJ): ISR mean 291 µs open / 288 µs closed on a busy 8-track project. Modwerk USB timing not run.",
-      "source": "TESTING.md"
+      "label": "ColdFire worst event",
+      "display": "602 cycles/block (6% of allowance)",
+      "value": 602,
+      "unit": "cycles/block",
+      "method": "static",
+      "conditions": "Window open on OSC/XY/ALL; worst event 602 cycles of 9577 per 16-sample block (evidence/performance.json, perf.py on 27 November 2026).",
+      "source": "evidence/performance.json"
     },
     "impact": {
-      "conditions": "One open SCOPE window on the selected audio track. Estimates from source structure until Modwerk measures.",
+      "conditions": "One open SCOPE window on the selected audio track; worst ColdFire event 602 cycles per 16-sample block.",
       "cpu": {
         "level": "low",
-        "basis": "source-estimate",
-        "rationale": "Frame interrupt copies 16 stereo samples into a ring while open; the UI task redraws about 60 Hz. No pitch detector.",
-        "source": "unit.s"
+        "basis": "measured-comparison",
+        "rationale": "Frame interrupt copies 16 stereo samples into a ring while open; the UI task redraws about 60 Hz. perf:audit records 602 cycles per block against a 9577 allowance. At-rest frame interrupt on base 311bb670 moved 0.1 point (evidence/cpu-price.json).",
+        "source": "evidence/performance.json"
       },
       "dsp": {
         "level": "minimal",
@@ -121,29 +121,129 @@
       },
       "memory": {
         "level": "low",
-        "basis": "source-estimate",
-        "rationale": "One DRAM unit with stereo rings and draw state; creates the DRAM platform reserve when alone.",
-        "source": "unit.s"
+        "basis": "measured-comparison",
+        "rationale": "One DRAM unit with stereo rings and draw state; about 75 KB combined from disassembly and the package header. Creates the DRAM platform reserve when alone on the card.",
+        "source": "evidence/memory.md"
       }
     },
     "cpuPrice": {
-      "value": 0.2,
+      "value": 0.1,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
       "date": "2026-11-27",
-      "conditions": "the bank, pattern and Part the unit was on, transport stopped (test:procedure); base Octatrack base 311bb670, MKII, OS 1.40C, B02 project; 3 readings of 8 s a state. Frame interrupt 62.6 % before, 62.8 % installed and used nowhere; CPU meter 87.1 % before, 87.4 % at rest.",
+      "conditions": "the bank, pattern and Part the unit was on, transport stopped (test:procedure); base Octatrack base 311bb670, MKII, OS 1.40C; 3 readings of 8 s a state. Frame interrupt 32.9 % before, 33 % installed and used nowhere; CPU meter 45.1 % before, 45 % at rest.",
       "source": "evidence/cpu-price.json"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "SCOPE 0.2.0 package f8a1ffeb ran on an MKII on 27 November 2026. The B02 procedure on base 311bb670 passed unit steps 6–10. A 45-second trial on flashed base eb667962 and a 30-second trial on development base 43ac2465 both rolled back without a logged crash, stall, freeze or skipped track. On the latter base the author opened SCOPE while B02 played; hardware LCD captures show a live trace, and the measured frame gap was 407 us. Audio continuity, worst-case cycles and complete memory accounting remain unverified.",
+    "summary": "SCOPE 0.2.0 package f8a1ffeb ran on an MKII on 27 November 2026. npm run test:procedure on base 311bb670 passed unit steps 6\u201310. perf:audit records 602 cycles per block (static bound 650). Hardware LCD captures and release-base trials are in TESTING.md.",
     "hardwareStatus": "reported",
     "evidenceRevision": "befbf7433a255981385a047a53341e4f75bd1e3c",
     "gates": [
-      "modules/scope/verify.py"
-    ]
+      "python3 sdk/octatrack/modules/scope/perf.py static",
+      "npm run perf:audit -- check evidence/performance.json"
+    ],
+    "qualification": {
+      "moduleVersion": "0.2.0-experimental",
+      "sourceSha256": "942eecc556d1899e000194ca673b6bbef20f6bb08c47c7c1e87a8bbd722e968a",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 602,
+          "maxConfiguration": 602,
+          "maxInstances": 1,
+          "budget": 9577,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "GAIN at 0 and 40, TIME at 0 and 9, VIEW on ALL (eight mini strips). Frame hook cost is fixed; draw path varies by view.",
+            "parameterModulation": "Encoder turns change GAIN/TIME/VIEW while open; frame hook does not depend on knob values.",
+            "modeSwitching": "DOWN+TEMPO open and close; UP/DOWN cycle views; YES/TEMPO/NO close.",
+            "maxLoad": "One global instance. Development twin 43ac2465 with stereo line-in on T1 THRU, transport playing.",
+            "inputConditions": "440 Hz line-in; ALL view with eight tracks is the heaviest frame path."
+          },
+          "report": "evidence/performance.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code (.text)",
+            "space": "sdram",
+            "words": 3630,
+            "wordBits": 8,
+            "bytes": 3630,
+            "scope": "shared"
+          },
+          {
+            "name": "Rings and state (.data)",
+            "space": "sdram",
+            "words": 33952,
+            "wordBits": 8,
+            "bytes": 33952,
+            "scope": "shared"
+          },
+          {
+            "name": "Runtime package code and data (ABI 8 header)",
+            "space": "cpu-ram",
+            "words": 37704,
+            "wordBits": 8,
+            "bytes": 37704,
+            "scope": "shared"
+          },
+          {
+            "name": "UI-task stack below sc_draw (disassembly bound, no canary)",
+            "space": "sdram",
+            "words": 200,
+            "wordBits": 8,
+            "bytes": 200,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 75486,
+        "maxInstances": 1,
+        "totalBytes": 75486,
+        "conditions": "Assembled unit.s with MODWERK_EVENTS=1; package header from f8a1ffeb. Stack is a bound from sc_draw movem, not a hardware canary.",
+        "report": "evidence/memory.md"
+      },
+      "imageSha256": "e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd",
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-27",
+        "tester": "ilia-murzinov",
+        "sourceRevision": "befbf7433a255981385a047a53341e4f75bd1e3c",
+        "imageSha256": "e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd",
+        "summary": "On an MKII, 27 November 2026: test procedure on base 311bb670 passed steps 6\u201310 (trial, soak, price, restore). Development-twin trials, open-window gap reading, and LCD captures are in TESTING.md. Audio dropout counts and chip canary are not claimed.",
+        "limitations": [
+          "Emulator cycles and load rows are not hardware timing.",
+          "MAIN/CUE USB capture for dropouts was not run in the procedure.",
+          "Transport state during the at-rest CPU price on base 311bb670 is unresolved in the log.",
+          "DRAM platform reserve when SCOPE is the only ColdFire unit is described in the README; not re-measured on every base."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial",
+          "steps": [
+            "Select an audio track that is making sound. No effect slot is required.",
+            "Hold [DOWN] first, then press [TEMPO]. The full-panel SCOPE window opens.",
+            "Turn DATA ENTRY A (GAIN) and B (TIME). Press [UP] or [DOWN] to cycle OSC, XY and ALL.",
+            "Press [TEMPO], [YES] or [NO] to close. Hold [DOWN] and press [TEMPO] again to reopen."
+          ]
+        },
+        "screenshots": [
+          "media/scope-all-live.png",
+          "media/scope-live-trace.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
   },
   "license": {
     "spdx": "MIT",
