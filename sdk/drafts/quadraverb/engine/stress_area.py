@@ -5,7 +5,7 @@
 
 What the Quadraverb allows: one program a core (a slot's two program areas take half a core's arena). So T1 (core 1) and
 T5 (core 0) run programs, and the other six tracks have the effect with no area named (the base's refusal leaves a slot
-dry). Each running track walks through all 22 programs, the plates among them, one every sixteenth at 120 BPM: PROG
+dry). Each running track walks through the programs in its own order (16 in the two seconds, the two dearest first), one every sixteenth at 120 BPM: PROG
 moves (the area fades), and 60 frames later the stand-in for the base names the next program's area in the slot's
 record (what the base does once it has written the code), and that area sets itself up, clears and starts. MIX sweeps
 a triangle, slot E a square and slot D a sine, every slot gets a new value each sixteenth; trig splits on six tracks.
@@ -32,7 +32,7 @@ N = 16
 CALLS = 5513                 # 2.0 s of 16-sample blocks at 44.1 kHz
 STEP = 345                   # a sixteenth at 120 BPM, in blocks
 WRITE = 60                   # blocks from PROG moving to the base naming the new area (writing the code takes about 50)
-AREAS = 0x4000               # the 22 areas, 0x500 words apart, on each core
+AREAS = 0x4000               # every release area, 0x500 words apart, on each core
 TBL = 0x60000                # per running track: the record's word 0 each frame (X)
 INS = 0x80000                # per track: its in-blocks, frame by frame (X)
 OUTS = 0x100000              # per track: its out-blocks (X)
@@ -153,9 +153,10 @@ def main(argv):
         r7 = 0x6000 + 0x100 * (2 + 2 * i)
         rec = 0x7FB0 + 4 * ((r7 >> 8) & 15)
         running = i in RUNNING
-        order = list(range(22))
+        order = list(range(len(areas)))
         rnd.shuffle(order)
-        order = [16, 17] + [p for p in order if p not in (16, 17)]          # the dearest plates first
+        dear = [qvcf.PROGRAMS.index(p) for p in (53, 66)]                  # the dearest first
+        order = dear + [p for p in order if p not in dear]
         seq = [order[s % len(order)] for s in range(CALLS // STEP + 1)]
         word0 = [at[seq[min(len(seq) - 1, max(0, (f - WRITE) // STEP))]] if running else 0 for f in range(CALLS)]
         tbl, inb, outb = TBL + (i % 4) * 0x2000, INS, OUTS + (i % 4) * WOUT * CALLS   # a core's tracks read one in-table

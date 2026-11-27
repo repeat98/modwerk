@@ -8,7 +8,7 @@
   "author": {
     "github": "repeat98",
     "credits": [
-      "Alesis: the Quadraverb (1989) and its factory programs (software by Fast Forward Designs, hardware by Keith Barr and Alan Zak), which the build compiles from the owner's own ROM image; no Alesis program is in this repository",
+      "Alesis: the Quadraverb (1989) and its factory programs (software by Fast Forward Designs, hardware by Keith Barr and Alan Zak), which the build compiles from the owner's own ROM image; the program sources compiled from it (gen/) are in this repository under the owner's waiver of 27 November 2026, the ROM is not",
       "repeat98: the reverse engineering of the Quadraverb's DSP, the integer model and the compiled engine"
     ]
   },
@@ -16,35 +16,30 @@
   "presentation": {
     "label": "1989 DIGITAL REVERB",
     "family": "Reverb",
-    "summary": "76 factory programs of the Alesis Quadraverb (1989), each its original program run step for step on FX2: reverbs, delays, choruses, flanges, pitch shifts and Leslies.",
-    "overview": "Rooms, halls, chambers and plates, delays, choruses, flanges, pitch shifts and rotary speakers from the Quadraverb's factory programs. Each is the original's 96-step DSP program, compiled to DSP code when you pick it and run at 44.1 kHz with its own sweeps; its long delay lines live in the Octatrack's main memory. Not compared with a real Quadraverb.",
+    "summary": "48 factory programs of the Alesis Quadraverb (1989), each its original program run step for step on FX2: reverbs, choruses, echoes and the programs that combine them.",
+    "overview": "Rooms, halls, chambers and plates, choruses, echoes, and the guitar, string and vocal programs that combine them, from the Quadraverb's factory programs. Each is the original's 96-step DSP program, compiled to DSP code when you pick it and run at 44.1 kHz with its own sweeps; its long delay lines live in the Octatrack's main memory. Not compared with a real Quadraverb.",
     "highlights": [
-      "76 original programs: reverbs, delays, choruses, flanges, pitch shifts, Leslies",
+      "48 original programs: reverbs, choruses, echoes and combinations",
       "Each program is the original's, step for step, with its own LFO sweeps",
       "PROG picks the program by its number on the original; MIX 0 is exact dry"
     ],
     "usage": [
       "Choose QUADRAVERB in FX2 SETUP: hold FUNC, press FX2, turn LEVEL to it and press YES, then press FX2 for the main page.",
-      "PROG (A) picks the program by its number on the original Quadraverb: 10-12 rooms, 13-16 halls, 17-19 plates, 20-22 chambers, 40-43 delays.",
+      "PROG (A) picks the program by its number on the original Quadraverb: 10-12 rooms, 13-16 halls, 17-19 plates, 20-22 chambers, 04 and 33 choruses, 44 and 46-48 echoes.",
       "MIX (F): 0 dry, 127 wet only."
     ]
   },
   "controls": [
     {
       "name": "PROG",
-      "default": 9,
-      "count": 76,
+      "default": 4,
+      "count": 48,
       "doc": "the factory program, by its number on the original Quadraverb (10 SMALL ROOM by default)",
       "labels": [
         "00",
         "01",
         "02",
         "04",
-        "05",
-        "06",
-        "07",
-        "08",
-        "09",
         "10",
         "11",
         "12",
@@ -58,56 +53,33 @@
         "20",
         "21",
         "22",
-        "30",
         "33",
         "34",
         "35",
         "36",
-        "37",
-        "38",
-        "39",
-        "40",
-        "41",
-        "42",
-        "43",
         "44",
-        "45",
         "46",
         "47",
         "48",
         "49",
         "50",
-        "51",
         "52",
         "53",
         "54",
-        "55",
-        "56",
-        "57",
         "58",
-        "59",
-        "60",
         "61",
         "62",
         "63",
         "64",
         "65",
         "66",
-        "67",
-        "68",
-        "69",
-        "70",
         "71",
-        "72",
         "74",
         "75",
-        "76",
-        "77",
         "78",
         "79",
         "80",
         "81",
-        "82",
         "83",
         "84",
         "85",
@@ -130,12 +102,12 @@
     "limitations": [
       "Needs the Modwerk base's program areas and stream channel (loader ABI 9, the package requires `programs`), so it is USB-only. They are in the base 0.8.3 draft, on development twins only so far.",
       "FX2 only: each instance uses the first 15,870 words of its track's 16K-word FX2 buffer for its short delay lines, and keeps its long ones in the ColdFire's memory, which the base moves to and from the DSP every 16 samples.",
-      "One instance a DSP core at most: its two program areas take up to 2,336 of the about 4,700 words a core has for effect code, beside a Part's stock effects. The ColdFire's ring pool holds one plate, or two chambers, or a chamber and a room; a slot without room stays dry.",
+      "One instance a DSP core at most: its two program areas take up to 2,336 of the about 4,700 words a core has for effect code, beside a Part's stock effects. The ColdFire's 144 KiB ring pool holds two chambers, or a plate beside a small program (00, 53, 71 and 83 only alone); a slot without room stays dry.",
       "Each pick writes the program's code into one of two areas the base holds for the slot, so a pick is silent for a moment while the code and the new reverb's memory start; the other area keeps the program before.",
       "Unlike the original: 44.1 kHz instead of about 42 kHz (reverb times, delays and sweeps about 5 % shorter and faster), a mono input from the average of left and right, 24-bit words in the DSP and 16 bits where a word crosses to the ColdFire. Not compared with a real Quadraverb.",
-      "Not in this release: the 13 gated programs and the sweeps a signal onset restarts (03, 23-29, 31, 32, 86-88), whose gate needs a signal detector the original has in hardware, and 73 VERB SHIFTER.",
-      "The Leslies play their default speed (38 and 82 fast; 08, 39 and 67 slow): the original switches them by MIDI aftertouch, pitch bend or the sustain pedal, which this effect does not take. MIDI modulation of sweep rate and depth is not taken either.",
-      "Built from the owner's own Quadraverb 1.07 ROM image on the developer's computer: the build reads it, and nothing derived from it is in this repository."
+      "Not in this release: the gated programs and the sweeps a signal onset restarts (03, 23-29, 31, 32, 86-88), whose gate needs a signal detector the original has in hardware, and 73 VERB SHIFTER; the pitch shifts (07, 37, 51, 59, 60, 70) and the Leslies (08, 38, 39, 67, 82), whose code is too long to sit beside a Part's stock effects; 05, 30, 40, 41, 56, 76 and 77, which the engine does not build in this form yet; and 06, 09, 42, 43, 45, 55, 57, 68, 69 and 72, which do not yet match the model bit for bit in this form.",
+      "MIDI modulation of sweep rate and depth, which the original takes, is not taken.",
+      "Built from the owner's own Quadraverb 1.07 ROM image on the developer's computer; the program sources compiled from it (gen/) are in this repository under the owner's waiver of 27 November 2026, the ROM is not."
     ],
     "effectId": 10
   },
@@ -147,7 +119,7 @@
       "value": null,
       "unit": "see display",
       "method": "static",
-      "conditions": "Two program areas a slot on its core (program_words 1,168), the 25-word shell, the r7 block $00-$83, up to 15,870 words of the track's FX2 buffer in Y, and on the ColdFire 82,668 bytes of code and data plus a 136 KiB ring pool in bss. See TESTING.md.",
+      "conditions": "Two program areas a slot on its core (program_words 1,168), the 25-word shell, the r7 block $00-$83, up to 15,870 words of the track's FX2 buffer in Y, and on the ColdFire 171,432 bytes of code and data plus a 144 KiB ring pool in bss. See TESTING.md.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -156,7 +128,7 @@
       "value": null,
       "unit": "see display",
       "method": "emulator",
-      "conditions": "interlock_scan's stall model on step traces in dsp_host of the release form, all 22 programs, one instance, every place a tick can fall in a 16-sample block (engine/verify_area.py --cycles): the dearest, program 53, 341.6 in its dearest block and 353.1 while a pick fades it; declared 355 modeled. A model, not a measurement on a unit.",
+      "conditions": "interlock_scan's stall model on step traces in dsp_host of the release form, all 48 programs, one instance, every place a tick can fall in a 16-sample block (engine/verify_area.py --cycles): the dearest, program 53, 341.6 in its dearest block and 353.1 while a pick fades it; declared 355 modeled. A model, not a measurement on a unit.",
       "source": "evidence/performance.json"
     },
     "cpuPrice": {
@@ -171,7 +143,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Built on the developer's computer (27 Nov 2026), not run on a unit or heard. In dsp_host the release's shell and areas run all 22 programs bit-exact against the integer model with the stream as the ColdFire half sends it; the ColdFire half matches its model on the host. The development builds of programs 5, 40 and 56 were priced on an MKII.",
+    "summary": "Built on the developer's computer (27 Nov 2026), not run on a unit or heard. In dsp_host the release's shell and areas run all 48 programs bit-exact against the integer model with the stream as the ColdFire half sends it; the ColdFire half matches its model on the host. The development builds of programs 5, 40 and 56 were priced on an MKII.",
     "hardwareStatus": "untested",
     "evidenceRevision": "cab0eb2039203a17f43b8ec3c599a212f7b84f59",
     "gates": [
@@ -183,7 +155,7 @@
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
-    "declaration": "The module's own code and documentation are MIT (LICENSE). The Alesis Quadraverb programs are not in this repository: the build compiles them from the owner's own ROM image into gen/ (ignored by Git) and ~/.cache, and the packages built from them stay on the developer's computer until the owner allows their inclusion. No Elektron firmware, routines or tables are included."
+    "declaration": "The module's own code and documentation are MIT (LICENSE). The Alesis Quadraverb programs are Alesis's: the build compiles them from the owner's own ROM image into gen/, which is committed under the owner's waiver of 27 November 2026 (as Midiverb I/II's programs are), and the ROM stays on his computer. No Elektron firmware, routines or tables are included."
   },
   "media": [
     {

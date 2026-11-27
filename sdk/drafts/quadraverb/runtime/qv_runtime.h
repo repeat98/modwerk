@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * The Quadraverb's ColdFire half (qv_runtime.c): its ot_dsp_effects record, and the tables engine/qvcf.py generates
- * into gen/qv_tables.h from the owner's ROM image (never committed). This header holds no ROM data. */
+ * into gen/qv_tables.h from the owner's ROM image (committed under his 27 Nov 2026 waiver). This header holds no ROM
+ * data. */
 #ifndef QV_RUNTIME_H
 #define QV_RUNTIME_H
 #include <stdint.h>

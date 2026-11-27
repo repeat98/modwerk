@@ -8,36 +8,54 @@ runs stay apart from hardware ones.
 Built on the developer's computer and held to the models; not run on a unit or in an emulator, not heard
 (27 November 2026). How it works: [ENGINE.md, The release package](ENGINE.md#the-release-package-27-november-2026).
 
-Build, from the owner's ROM (everything written goes to `gen/` or `~/.cache`, outside Git). The package needs the
+Build. `gen/` is committed (the owner's waiver of 27 November 2026), so the last two steps alone rebuild the package;
+the first three regenerate `gen/` from the owner's ROM, which stays on his computer. The package needs the
 `ot_dsp_effects` table and the `programs` feature of the base side branch `base/octatrack-program-areas`, so its last
 two steps run in a checkout of that branch with this folder copied in, untracked:
 
 ```sh
 E=~/.cache/modwerk-local/quadraverb/engine                    # programs.json and lfo-all/ (FIRMWARE.md, ENGINE.md)
-python3 -B engine/qvarea.py areas $E/programs.json $E/lfo-all     # gen/areas.json: the 22 areas
+python3 -B engine/qvarea.py areas $E/programs.json $E/lfo-all     # gen/areas.json: the release's areas
 python3 -B engine/qvcf.py gen $E/programs.json $E/lfo-all --areas gen/areas.json   # gen/qv_tables.h
 python3 -B engine/qvcf.py asm                                     # gen/qv_runtime.s
-npm run module:dev -- quadraverb --build-only --out qv-raw.mwrm --slots fx2 --cycles 330 --cycles-kind modeled \
+npm run module:dev -- quadraverb --build-only --out qv-raw.mwrm --slots fx2 --cycles 355 --cycles-kind modeled \
   --state 132 --buffer 15870
 python3 -B sdk/runtime/loader/abi9.py qv-raw.mwrm --requires programs -o quadraverb-0.1.0.mwrm
 ```
 
-The build of 27 November 2026, with the fade: `quadraverb-0.1.0.mwrm`, 82,668 bytes (code and data, 139,264 of bss),
-SHA-256 `110a31f8ee388893a48dd2cb0bf7f8f7aece185b9c5943b7d8fd2c4953660af4`; 25 DSP words of shell; areas of 919-1,168
-words; declared 355 modeled cycles, from the traces below (the base charges 7/4 of it, 621 of the 726 one instance may
-take). In `~/.cache/modwerk-local/quadraverb/pkg/`; the build before the fade (`35faa1b5…`, declared 330, which four
-programs' traces passed: up to 341.6) is kept beside it as `quadraverb-0.1.0-before-fade.mwrm`.
+The build of 27 November 2026, 48 programs: `quadraverb-0.1.0-48.mwrm`, 172,020 bytes (171,432 of code and data, 147,456
+of bss: about 312 KiB of the 768 KiB module pool), SHA-256 `b1956a732f87644b8b58d9d207983112f7d98add6f963e8603bd48e8283d3d33`;
+25 DSP words of shell; areas of 919-1,168 words; declared 355 modeled cycles, from the traces below (the base charges
+7/4 of it, 621 of the 726 one instance may take). In `~/.cache/modwerk-local/quadraverb/pkg/`, beside the earlier builds:
+the 22 reverbs (`quadraverb-0.1.0.mwrm`, `110a31f8…`, 82,668 bytes, 139,264 of bss) and the build before the fade
+(`35faa1b5…`, `quadraverb-0.1.0-before-fade.mwrm`).
 
-**Cycles, traced** (`engine/verify_area.py --cycles <dsp_host with -steptrace>`; all 22 in evidence/performance.json,
+**Cycles, traced** (`engine/verify_area.py --cycles <dsp_host with -steptrace>`; all 48 in evidence/performance.json,
 `programs`): chip cycles a sample by interlock_scan's model, the shell and the area, one instance, every place a tick can
 fall in a block. The dearest: 53 BALLAD SNARE 2, 332.9 on average and 341.6 in the dearest block, 353.1 while it fades;
-the cheapest, 14 MEDIUM HALL, 272.1. Executed instructions a sample at most: 317.4 (53, fading). All under what the
+the cheapest, 04 STEREO CHORUS, 246.1. Executed instructions a sample at most: 317.4 (53, fading). All under what the
 base admits for one instance.
 
-Checked on the host: `engine/verify_area.py` (each of the 22 programs, the gates in its docstring) and
+Checked on the host: `engine/verify_area.py` (each of the 48 programs, the gates in its docstring) and
 `engine/test_qv_runtime.py` (the ColdFire half against qvs.ColdFire, 12 cases). Not checked anywhere: the frame
 interrupt's cost of `fill()` and `take()`, the base writing and switching a real area, the arena's room beside a Part's
 stock effects, the sound.
+
+### The 48 programs (27 November 2026)
+
+The owner allowed every program that plays bit for bit in the open form, 76, then chose 58 of them once the 76 did not
+fit; ten of the 58 failed as areas, so 0.1.0 has 48 (`manifest.py`). On the developer's computer, from the owner's ROM:
+
+| Set | What happened |
+| --- | --- |
+| 76 | 7 do not build as areas (05, 30, 40, 41, 56, 76, 77: nothing to stream, and an area's fade words come from its stream; `KeyError: 'PV'` in `qvc.assemble_text`) |
+| the other 69 | ColdFire side 418,522 bytes (`m68k-elf-size` of `gen/qv_runtime.s`: 251,880 of tables and area words, 163,840 of bss), about 409 KiB of the 768 KiB pool; the pitch shifts' areas 1,732-1,875 words and the Leslies' 1,296-1,369, two a slot |
+| 58: no pitch shifts, Leslies or the 7 | 347,896 bytes by the same measure; areas up to 1,168 words, as the reverbs' |
+| 58 in `verify_area.py` | 48 pass every gate; 10 fail and are left out (`NOT_EXACT`), first difference against the model: 06, 42, 43 and 45 at frame 50, 55 at 290, 57 at 258, 69 at 274 and 72 at 242 (audio, noise at MIX 127); 09 and 68 in their out-blocks (frames 789 and 187) |
+| 48 | every gate passes on all 48 at their final indices (`verify_area.py`, then `--cycles`); the package above |
+
+The ten failures are not understood yet. They play bit-exact in the open form (one program at a time, without the
+release's areas), so the difference is in the release form.
 
 ### The fade at a pick (27 November 2026)
 
@@ -53,7 +71,7 @@ ring (the dry at its MIX meanwhile) and starts from silence. So the old tail fad
 not run on into the new program. The original's carry-over cannot be reproduced here: two programs' memories are laid
 out differently (each program's lines are relocated, some streamed).
 
-**Checked:** `engine/verify_area.py` on each of the 22 programs. PROG leaves 40 frames after the start, comes back 10
+**Checked:** `engine/verify_area.py` on each of the 48 programs. PROG leaves 40 frames after the start, comes back 10
 frames later and leaves again; the output is bit-exact against the model of the ramp, and the wet is 0 once the ramp
 ends. Traced (evidence/performance.json): the test of PROG adds about 2 cycles a sample to every call; a call that
 fades costs about 11.5 more (the dearest program, 53, 341.6 while it plays, 353.1 while it fades).
@@ -61,7 +79,7 @@ fades costs about 11.5 more (the dearest program, 53, 341.6 while it plays, 353.
 ### Stress (27 November 2026)
 
 `python3 -B engine/stress_area.py <programs.json> <lfo_dir>`: eight tracks, four a core, 2.0 s in dsp_host with the guard
-and a dirty memory. T1 and T5 run programs, walking through all 22 (the dearest plates first) one every sixteenth at 120
+and a dirty memory. T1 and T5 run programs, walking through the programs (the two dearest first, 16 in the two seconds) one every sixteenth at 120
 BPM with a fade and a switch each time; the other six have the effect with no area. Three LFOs a track, all twelve slots
 moving, trig splits on six tracks (the docstring has the rest). The record, `npm run perf:audit -- check
 evidence/performance.json --stamp`:

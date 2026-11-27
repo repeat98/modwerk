@@ -519,15 +519,15 @@ unit. ROM-derived parts are made into `gen/` (ignored by Git) from the owner's R
 - **The ColdFire half** (`runtime/qv_runtime.c`, `runtime.json`, tables from `engine/qvcf.py gen`): the
   `ot_dsp_effects` record. `program()` reads PROG from the track's frame record; `code()` relocates the area; `take()`
   learns the program and its frame base from the tag and K and keeps each streamed line's ring; `fill()` composes the
-  in-block as `qvs.ColdFire` does. Rings come from a 136 KiB pool in bss (the dearest program's): two chambers fit side
-  by side, 80 or 81 only alone; a slot with no room stays silent and is counted.
+  in-block as `qvs.ColdFire` does. Rings come from a 144 KiB pool in bss (the dearest program's, 00 and 71): two chambers fit side
+  by side, 00, 53, 71 and 83 only alone; a slot with no room stays silent and is counted.
 - **The base:** take() runs from the frame after the out-block is named, before the in-block is (side branch
   `base/octatrack-program-areas` 5ecfbd2f4), so an area that waits for both words has every frame taken.
 
-**Checked:** `engine/verify_area.py` runs the shell with each of the 22 areas placed where it was not assembled,
+**Checked:** `engine/verify_area.py` runs the shell with each of the 48 areas placed where it was not assembled,
 relocated as `code()` relocates it, its blocks from the record in alternating banks, the in-blocks the runtime sends:
 bit for bit against qvs.SplitEngine and qvs.ColdFire at MIX 127, 64 and 0, trig splits at frames 1, 5, 7 and 13, a dirty
-Y, and two instances. `engine/test_qv_runtime.py` holds the C runtime to qvs.ColdFire on all 22 programs in the base's
+Y, and two instances. `engine/test_qv_runtime.py` holds the C runtime to qvs.ColdFire on all 48 programs in the base's
 call order, a switch, a resync, a full pool, bad tags and the K wrap, and `code()` to the real areas.
 
 ## Not settled

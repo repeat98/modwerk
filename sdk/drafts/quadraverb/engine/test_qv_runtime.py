@@ -200,14 +200,15 @@ class TestRuntime(unittest.TestCase):
         print(f"\n{len(self.plans)} programs, {total} frames bit-exact against qvs.ColdFire", file=sys.stderr)
 
     def test_moving_window(self):
-        """None of the 22 streams a moving read; SMALL ROOM with its swept line forced out does (qvs --force 34)."""
+        """No release program streams a moving read; SMALL ROOM with its swept line forced out does (qvs --force 34)."""
         forced = qvs.make_plan(PROGRAMS, 10, LFO, lat=qvcf.LAT, force=(0x34,))
+        at = qvcf.PROGRAMS.index(10)
         self.assertTrue(any(x.kind == "moving" for x in forced.windows))
         plans = list(self.plans)
-        plans[2] = forced
+        plans[at] = forced
         header = self.dir / "moving.h"
         header.write_text(qvcf.tables(plans, self.areas))
-        rt, d = Runtime(self.build(header, "moving")), Dsp(self, 2, forced, 4, seed=7)
+        rt, d = Runtime(self.build(header, "moving")), Dsp(self, at, forced, 4, seed=7)
         run(rt, {9: d}, frames_for(forced) + 4)
         self.assertGreaterEqual(d.checked, 600)
         self.assertQuiet(rt)
@@ -215,11 +216,12 @@ class TestRuntime(unittest.TestCase):
     def test_switch_two_slots(self):
         """Two chambers stream side by side; then one switches to a room mid-run and starts afresh."""
         rt = Runtime(self.so)
-        dsps = {8: Dsp(self, 13, self.plans[13], 3, seed=1), 9: Dsp(self, 12, self.plans[12], 4, seed=2)}
+        a, b, room = (qvcf.PROGRAMS.index(p) for p in (21, 20, 10))      # two chambers, SMALL ROOM
+        dsps = {8: Dsp(self, a, self.plans[a], 3, seed=1), 9: Dsp(self, b, self.plans[b], 4, seed=2)}
         first = dsps[9]
 
         def switch():
-            dsps[9] = Dsp(self, 2, self.plans[2], 3, seed=3)
+            dsps[9] = Dsp(self, room, self.plans[room], 3, seed=3)
         run(rt, dsps, 1300, {400: switch})
         self.assertGreaterEqual(first.checked, 390)
         self.assertGreaterEqual(dsps[9].checked, 890)
@@ -229,10 +231,11 @@ class TestRuntime(unittest.TestCase):
     def test_resync(self):
         """The DSP starts the same program again with no wait: its K jumps to 0. The three in-blocks filled before
         the runtime sees it carry the old stream (the latency); from then on it equals a fresh model."""
-        rt, dsps = Runtime(self.so), {10: Dsp(self, 7, self.plans[7], 3, seed=4)}
+        i = qvcf.PROGRAMS.index(15)
+        rt, dsps = Runtime(self.so), {10: Dsp(self, i, self.plans[i], 3, seed=4)}
 
         def restart():
-            dsps[10] = Dsp(self, 7, self.plans[7], 0, seed=5, skip=3)
+            dsps[10] = Dsp(self, i, self.plans[i], 0, seed=5, skip=3)
         run(rt, dsps, 1300, {500: restart})
         self.assertGreaterEqual(dsps[10].checked, 790)
         self.assertQuiet(rt, qv_resyncs=1)
@@ -241,9 +244,10 @@ class TestRuntime(unittest.TestCase):
         """The dearest program takes the whole pool: a chamber beside it stays silent, counted, until the first
         slot's lane closes and its rings go back (STALE frames with no fill); then the chamber streams."""
         rt = Runtime(self.so)
-        dsps = {8: Dsp(self, 16, self.plans[16], 3, seed=6), 9: Dsp(self, 12, self.plans[12], 5, seed=7, joining=True)}
+        big = max(range(len(self.plans)), key=lambda i: qvs.ColdFire(self.plans[i]).ring_words)
+        room = qvcf.PROGRAMS.index(20)
+        dsps = {8: Dsp(self, big, self.plans[big], 3, seed=6), 9: Dsp(self, room, self.plans[room], 5, seed=7, joining=True)}
         plate = dsps[8]
-        self.assertEqual(qvs.ColdFire(self.plans[16]).ring_words, max(qvs.ColdFire(p).ring_words for p in self.plans))
         run(rt, dsps, 1200, {300: lambda: dsps.pop(8)})
         self.assertGreaterEqual(plate.checked, 290)
         self.assertGreaterEqual(dsps[9].checked, 850)
@@ -260,7 +264,7 @@ class TestRuntime(unittest.TestCase):
         self.assertTrue(any(blk))
         rt.take(8, 1000, [0x0000, 0x1234])
         self.assertEqual(rt.fill(8, 1003), [0] * self.stream_in)
-        rt.take(8, 1001, [0x5100 | 22, 1001])        # an index past the 22
+        rt.take(8, 1001, [0x5100 | len(qvcf.PROGRAMS), 1001])        # an index past the list
         self.assertEqual(rt.fill(8, 1004), [0] * self.stream_in)
         rt.take(8, 1002, [0x5100 | 12, 1002] + out)
         self.assertTrue(any(rt.fill(8, 1005)))
@@ -295,7 +299,7 @@ class TestRuntime(unittest.TestCase):
             mem[0x110 + t * 64 + 24] = 5                          # bank 0
             mem[0x110 + 512 + t * 64 + 24] = (3 * t, 200)[t == 6]   # bank 1; 200 clamps to the last index
         count.value = 0x12345671
-        self.assertEqual([lib.qv_program(8 + t) for t in range(8)], [0, 3, 6, 9, 12, 15, 21, 21])
+        self.assertEqual([lib.qv_program(8 + t) for t in range(8)], [0, 3, 6, 9, 12, 15, len(qvcf.PROGRAMS) - 1, 21])
         count.value = 0x12345672
         self.assertEqual([lib.qv_program(8 + t) for t in range(8)], [5] * 8)
         self.assertEqual([lib.qv_program(s) for s in (*range(8), 16, 99)], [-1] * 10)

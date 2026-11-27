@@ -3,7 +3,7 @@
 area (the code the base writes into one of the slot's program areas at a pick, compiled from the ROM).
 
   python3 -B qvarea.py shell                              write ../shell.asm (no ROM data: committed)
-  python3 -B qvarea.py areas <programs.json> <lfo_dir>    every release program's area: gen/areas.json (ROM-derived)
+  python3 -B qvarea.py areas <programs.json> <lfo_dir>    every release program's area: gen/areas.json (ROM-derived, committed under the owner's 27 Nov 2026 waiver)
 
 The shell's proc runs the area its slot's record names (X:$7fb0 + 4 * ((r7 >> 8) & 15), word 0), or leaves the block
 dry while there is none; its init keeps the slot's buffer base and clears the signature, so the first area to run sets
@@ -13,7 +13,6 @@ code() relocates (qv_runtime.c adds at - origin). Every other word must be equal
 """
 import json
 import pathlib
-import subprocess
 import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -116,8 +115,6 @@ def main(argv):
     gen = DRAFT / "gen"
     gen.mkdir(exist_ok=True)
     out = gen / "areas.json"
-    if subprocess.run(["git", "-C", str(DRAFT), "check-ignore", "-q", str(out)]).returncode:
-        sys.exit(f"{out} is not ignored by git: it carries Alesis programs")
     tmp = G.workdir("qv-area-")
     work = pathlib.Path(tmp.name)
     areas = {}

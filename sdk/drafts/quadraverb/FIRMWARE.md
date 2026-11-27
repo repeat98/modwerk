@@ -9,6 +9,12 @@ The goal is an FX2 effect that plays the Alesis Quadraverb's reverbs (plate, roo
 - **Reverbs only** as the first module, one effect.
 - **Firmware only:** no real Quadraverb is available, so the module and its notes must say plainly that the sound has not been checked against a real unit.
 
+His decisions of 27 November 2026, which replace "Reverbs only":
+
+- **The program sources in Git:** his 25 November firmware waiver also covers committing what the build compiles from the ROM (`gen/`: the areas, the ColdFire tables and their assembly), so the package builds without the ROM. The ROMs stay on his computer; the development engines (`gen/engine.asm`, `gen/program.json`) stay ignored.
+- **More than the reverbs, one module:** the non-reverb programs join PROG under a one-effect waiver like Midiverb's.
+- **Which ones:** of the 76 programs that play bit for bit in the open form, the 58 that fit. With all 76 the ColdFire side needed about 409 KiB of the 768 KiB pool, the pitch shifts' and Leslies' code (1,296-1,875 words an area, two a slot) left a core little room for a Part's stock effects, and seven programs with nothing to stream did not build as areas yet. Ten of the 58 did not match the model bit for bit as areas (`engine/verify_area.py`), so 0.1.0 has 48 (`manifest.py`, `NOT_EXACT`).
+
 Nobody has published a reverse engineering of the Quadraverb's DSP (thement and Eric Brombaugh cover only the Midiverb, Midiverb II and Midifex). This draft does that work.
 
 ## How it works
@@ -229,4 +235,4 @@ In the graphic-EQ configuration, bytes 0x01-0x0b are the eleven band gains: 14 i
 
 ## Authorship
 
-Alesis made the Quadraverb (1989), and its programs and firmware are theirs. The firmware's credits read: software by Fast Forward Designs (Marcus Ryle, Michel Doidic, Carol Nakahara), hardware by Keith Barr and Alan Zak. Shipping programs read from the ROM needs the owner's waiver, as Midiverb I/II had. The emulator, the DSP model and the tools here are Modwerk's own, under the repository's MIT licence; they copy nothing from the firmware. The idea that a write scales the accumulator came from Wavefront's application notes for the AL3201 (AN3201-04 and AN3201-06), a later Keith Barr design.
+Alesis made the Quadraverb (1989), and its programs and firmware are theirs. The firmware's credits read: software by Fast Forward Designs (Marcus Ryle, Michel Doidic, Carol Nakahara), hardware by Keith Barr and Alan Zak. Shipping programs read from the ROM, and their compiled sources, has the owner's waiver (25 and 27 November 2026), as Midiverb I/II had. The emulator, the DSP model and the tools here are Modwerk's own, under the repository's MIT licence; they copy nothing from the firmware. The idea that a write scales the accumulator came from Wavefront's application notes for the AL3201 (AN3201-04 and AN3201-06), a later Keith Barr design.

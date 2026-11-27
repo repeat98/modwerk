@@ -1,6 +1,6 @@
 """Quadraverb: the Alesis Quadraverb's factory programs, compiled to straight-line DSP code at a pick.
 
-The release (0.1.0-experimental, not built yet): PROG (A) picks one of the 76 programs in PROGRAMS, MIX (F) sets dry and
+The release (0.1.0-experimental, not built yet): PROG (A) picks one of the 48 programs in PROGRAMS, MIX (F) sets dry and
 wet. Its package requires the base's program areas and stream channel (BASE_FEATURES, loader ABI 9): the base writes
 the picked program's code into one of the slot's two areas and moves the long delay lines to and from the ColdFire
 every frame (ENGINE.md, "On the base"). The code, its tables and its stream plan are compiled from the owner's own ROM
@@ -16,11 +16,17 @@ import pathlib
 from remix.schema import (BusRole, Category, Claims, DspSection, Formatter, Harness, Kind, Linked, MenuEntry, Module,
                           Param, Proof, YBase)
 
-# The release's programs, by their number on the original (user memory 0-89): every factory program the engine plays bit
-# for bit without the original's signal detector, as Midiverb offers every program. Left out: the gated ones and the
-# sweeps a signal onset restarts (FIRMWARE.md, "The gate": the detector is hardware), and 73 VERB SHIFTER (gated, and
-# the engine has no tick for its coefficient sweep).
-LEFT_OUT = (3, 23, 24, 25, 26, 27, 28, 29, 31, 32, 73, 86, 87, 88)
+# The release's programs, by their number on the original (user memory 0-89; owner, 27 Nov 2026): of the 76 that play
+# bit for bit in the open form, the 58 whose area fits beside a Part's stock effects and streams static lines, less the
+# ten not bit-exact in the release form yet (engine/verify_area.py). Left out: the gated ones and the sweeps a signal
+# onset restarts (FIRMWARE.md, "The gate": the detector is hardware), 73 VERB SHIFTER (gated, no tick for its
+# coefficient sweep), the pitch programs and the Leslies (areas of 1,296-1,875 words: two a slot leave a core little
+# room for stock effects; with them the ColdFire side is about 409 KiB), the programs with nothing to stream (an area's
+# fade words come from its stream so far) and NOT_EXACT.
+GATED = (3, 23, 24, 25, 26, 27, 28, 29, 31, 32, 73, 86, 87, 88)
+PITCH, LESLIE, NO_STREAM = (7, 37, 51, 59, 60, 70), (8, 38, 39, 67, 82), (5, 30, 40, 41, 56, 76, 77)
+NOT_EXACT = (6, 9, 42, 43, 45, 55, 57, 68, 69, 72)
+LEFT_OUT = GATED + PITCH + LESLIE + NO_STREAM + NOT_EXACT
 PROGRAMS = tuple(p for p in range(90) if p not in LEFT_OUT)
 # Base features the release package requires (sdk/runtime/loader/abi9.py base_features): the program areas and the
 # stream channel, both on the base 0.8.3 draft (#2246) only.

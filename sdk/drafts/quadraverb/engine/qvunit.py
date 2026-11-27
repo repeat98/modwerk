@@ -9,7 +9,7 @@ built in, MIX on knob F, nothing else. Never published.
 
 The generated engine carries an Alesis program (its steps, coefficients and LFO), so it never enters the repository,
 by construction: `gen` writes it to ~/.cache/modwerk-local/quadraverb/engine/pkg/<program>/ and copies it into the draft's
-gen/ folder, which the draft's .gitignore ignores (staged copies of the draft carry that .gitignore with them). `build`
+gen/ folder, where the draft's .gitignore ignores it (staged copies of the draft carry that .gitignore with them). `build`
 then runs `npm run module:dev -- quadraverb --build-only`, whose package goes to
 ~/.cache/modwerk-local/quadraverb/pkg/qv-dev-<program>.mwrm, outside the checkout too.
 
@@ -73,8 +73,8 @@ def gen(argv):
                 accesses=info["accesses"], distances=len(info["dist"]), body=info["words"],
                 moving=bool(info.get("mod")), realtime="--realtime" in argv)
     (out / "program.json").write_text(json.dumps(meta, indent=1) + "\n")
-    # The draft's copy, which the package builder reads (gen/ is ignored by the draft's .gitignore)
-    assert (DRAFT / ".gitignore").read_text().splitlines().count("gen/"), "the draft's .gitignore must ignore gen/"
+    # The draft's copy, which the package builder reads (the draft's .gitignore ignores these two; the release's gen/ is committed)
+    assert {"gen/engine.asm", "gen/program.json"} <= set((DRAFT / ".gitignore").read_text().splitlines()), "the draft's .gitignore must ignore the development engine"
     GEN.mkdir(exist_ok=True)
     for f in ("engine.asm", "program.json"):
         shutil.copyfile(out / f, GEN / f)
