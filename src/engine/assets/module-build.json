@@ -8,12 +8,16 @@
   "sourceTreeSha256": "8084677f839c24ca28ef713e7127693e911631918d81f9a63f2f74e1ae63ee7f",
 =======
   "sourceTreeSha256": "03a222bdfa66441483569b8aa832b5063307bc41e01660d55618481dd5047edb",
+<<<<<<< HEAD
 >>>>>>> b92ef1006 (Refresh module-build source tree hash after SCOPE listing.)
   "compilerSha256": "3bb3824f4e3f6f837b0f9854ca4bb78f67e499197d9eb0bd14237cbd73be5ee8",
 =======
   "sourceTreeSha256": "8335dca6912627a8f6efd7334a5b13e1ed9d3a34e3779e9f067676044113a7dd",
   "compilerSha256": "8af49c274be92a98fe2cf59b8a4c64c51ac0b9486b1ace0e42928cb279a576a5",
 >>>>>>> e1f163fc7 (Qualify SCOPE 0.2.0 for the Octatrack catalog.)
+=======
+  "compilerSha256": "8af49c274be92a98fe2cf59b8a4c64c51ac0b9486b1ace0e42928cb279a576a5",
+>>>>>>> e3f47703b (Bind module-build compiler hash to scope package list change.)
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.9-experimental",
