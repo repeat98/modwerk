@@ -1,10 +1,11 @@
-# Octatrack base 0.8.3: six fixes on top of 0.8.2, 26-27 November 2026
+# Octatrack base 0.8.3: seven changes on top of 0.8.2, 26-27 November 2026
 
 Source: `base/octatrack-next` after main `3e9ce92e3` (base 0.8.2, #2079) plus four changes, each its author's commit:
 the frame interrupt's Part read from SRAM (#2174, Laslo), a Keep that never loses to an unreadable saved-set file
 (#2109), module knob names that follow the drawn track (#2228, #2042), a USB Audio stream in the CPU limit (#2251), an
-attach watchdog that re-offers a unit a host addressed but never configured, and a USB reset that retires stock's
-mass-storage replies.
+attach watchdog that re-offers a unit a host addressed but never configured, a USB reset that retires stock's
+mass-storage replies, a record of which side gave up when the host's frames stop (#2290), and a forced reconnect that
+stays off the bus long enough for the host's reset retries.
 Base builds: see the end.
 
 ## 25 November 2026: the frame interrupt reads the current Part from SRAM (Laslo, lasl00)
@@ -204,13 +205,37 @@ store+0x2fe+30·track+6·fx.
   (macOS's probe of the mass storage), then installs with PLAY right after and rollbacks: no freeze, the send slots
   never left ACTIVE. Before the fix the same day: one freeze in about 25 reconnects.
 - **Open, separate:** the fourth install-PLAY-rollback cycle on that twin lost USB with the UI running: no freeze record,
-  no `usb` re-offer, back only after a power cycle. The same family as the 26 November rollback losses (USB Audio 0.4.1
-  among 18-19 packages); its cause is not found.
+  no `usb` re-offer, back only after a power cycle. Understood the same day (next section).
+
+## 27 November 2026: a host reset that meets the base's own reconnect (known issue)
+
+- **Seen:** on the owner's MKII behind a USB 2.0 hub (Genesys) on a Mac, the unit dropped off USB with its screen running,
+  back only after a power cycle: once in 5 install-PLAY-rollback cycles on twin `9cf5c4a8`, once in 6 with a LAYOUT
+  change right after the install on twin `4dd69450`, once in about 32 cycles on twin `ed5474c6`.
+- **The Mac's side** (`log stream` of the kernel and icdd): 0.3 s after the base took the unit off the bus, or as a
+  driver reset the device ("reset API"), the hub reset the port: "resetAndCreateDevice: reset did not enable port",
+  then every 0.37 s, then "persistent enumeration failures". A working reconnect shows "hardware connection lost" and
+  "enumerated" 0.7 s later, no reset failure.
+- **The unit's side** (the `usb_gone` record, #2290, kind 15): the host's frames stopped; 3 to 6 s later the pull-up was
+  on and the base back on the bus, the port either attached and enabled with the old address and no reset taken
+  (`4dd69450`), or held in reset, PORTSC1.PR set throughout (`ed5474c6`). Neither the attach watchdog's re-offers nor a
+  cable replug brought it back; a power cycle did.
+- **One way in, closed:** on `4dd69450` the install's reconnect waited out the patience (12 s: the grace and ten
+  seconds) and was forced; the unit came back half a second later, inside the host's reset retries. A forced detach now
+  stays off the bus for ten seconds, and the attach check retries, off ten seconds as well, when no reset came within
+  three seconds even when the port reads attached (`usb_function.c` UF_DOWN_LONG; host tests). Twin `ed5474c6`: 69
+  reconnects in 28 cycles (half with a LAYOUT change right after the install), none forced, no drop.
+- **Still open:** the other way in, a host driver resetting the device at a removal, dropped once in about 32 cycles on
+  `ed5474c6`. A controller reset that would recover a stuck port (USBCMD.RST, the transceiver as the bootloader sets it
+  up, stock's reset and start) was tried and reverted unproven: its twin never came up on USB after a RAM boot, which
+  a RAM boot does about once in six anyway. Shipped as a known issue (owner, 27 November 2026).
+- **Not tested:** a Mac without a hub, Windows.
+
 
 ## Builds and pending
 
-- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `88698afcaf9bca89…`,
-  browser = native `.bin` `f39567debdf46834…` (836,540 bytes; 15,188 container bytes free). Every change inside a declared site; the bootloader copy
+- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `5af431bd3e42d93c…`,
+  browser = native `.bin` `cf4fef8f637d8336…` (837,908 bytes; 13,820 container bytes free). Every change inside a declared site; the bootloader copy
   identical. Base-bound packages (Sidechain Compressor, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) bound to it
   with their bytes unchanged. Not yet booted on a unit.
 - Pending for #2251 on a unit: the per-width figures, the release image, an MKI, and why the stretch differed between
