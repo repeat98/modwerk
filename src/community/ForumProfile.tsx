@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { api } from './api'
 import { ForumAvatar, ForumMaintainerBadge, ForumRoleBadge } from './ForumIdentity'
 import { ForumTime } from './ForumTime'
-import { useCommunity } from './context'
 import { Icon } from '../components/Icon'
 import { DEVICES_BY_ID } from '../devices/registry'
 import type { ForumReplyItem, MemberProfile } from './forum-contract'
@@ -18,32 +17,32 @@ import { ForumRecentSkeleton, Skeleton } from './ForumSkeleton'
 const memberSince = (value: string) => new Date(value.includes('T') ? value : value.replace(' ', 'T') + 'Z').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
 const PROFILE_STATS = ['Threads', 'Replies', 'Likes received', 'Bug reports', 'Modules']
 export function ForumProfile({ username, onLoad, onFail }: { username: string; onLoad?: (profile: MemberProfile) => void; onFail?: () => void }) {
-  const { session } = useCommunity(), [profile, setProfile] = useState<MemberProfile | null>(null), [error, setError] = useState('')
-  const canMessage = !!session.user?.verified && session.user.username?.toLowerCase() !== username.toLowerCase()
+  const [profile, setProfile] = useState<MemberProfile | null>(null), [error, setError] = useState('')
   useEffect(() => { let cancelled = false; void api<MemberProfile>('/forum/profiles/' + encodeURIComponent(username)).then(value => { if (!cancelled) { setProfile(value); onLoad?.(value) } }).catch(error => { if (!cancelled) { setError(error.message); onFail?.() } }); return () => { cancelled = true } }, [username, onLoad, onFail])
   if (error) return <section className="configuration-section forum-profile"><p role="alert">{error}</p></section>
   // The loading card has the loaded one's avatar, lines and stat labels, so the threads below start where they stay.
-  if (!profile) return <section className="configuration-section forum-profile" aria-busy="true"><span className="forum-avatar forum-skeleton-box" /><div>
+  if (!profile) return <section className="configuration-section forum-profile" aria-busy="true"><span className="forum-avatar forum-skeleton-box" /><div className="forum-profile-identity">
     <span className="sr-only" role="status">Loading member profile…</span>
     <h2 aria-hidden="true"><Skeleton width="180px" /></h2>
-    <p className="forum-profile-since" aria-hidden="true"><Skeleton width="220px" /></p>
-    <dl className="forum-profile-stats" aria-hidden="true">{PROFILE_STATS.map(label => <div key={label}><dt>{label}</dt><dd><Skeleton width="28px" /></dd></div>)}</dl>
-  </div></section>
-  return <><section className="configuration-section forum-profile"><ForumAvatar username={profile.username} avatar={profile.avatar} /><div>
+    <p className="forum-profile-since" aria-hidden="true"><Skeleton width="160px" /></p>
+  </div><div className="forum-profile-record"><dl className="forum-profile-stats" aria-hidden="true">{PROFILE_STATS.map(label => <div key={label}><dt>{label}</dt><dd><Skeleton width="28px" /></dd></div>)}</dl></div></section>
+  const stats: [string, number][] = [['Threads', profile.threads], ['Replies', profile.replies], ['Likes received', profile.likesReceived], ['Bug reports', profile.reports], ['Modules', profile.maintains.length]]
+  // Who they are on the left, what they have done on the right; the page heading already names @username.
+  return <><section className="configuration-section forum-profile"><ForumAvatar username={profile.username} avatar={profile.avatar} /><div className="forum-profile-identity">
     <h2>{profile.displayName}<ForumRoleBadge contributions={profile.contributions} role={profile.role} betaTester={profile.betaTester} />{profile.maintains.length > 0 && <ForumMaintainerBadge />}</h2>
-    <p className="forum-profile-since">@{profile.username} · Member since {memberSince(profile.memberSince)}</p>
+    <p className="forum-profile-since">Member since {memberSince(profile.memberSince)}</p>
     {profile.bio && <p className="profile-bio">{profile.bio}</p>}
     <ProfileLinksView key={profile.username} profile={profile} />
-    <dl className="forum-profile-stats"><div><dt>Threads</dt><dd>{profile.threads}</dd></div><div><dt>Replies</dt><dd>{profile.replies}</dd></div><div><dt>Likes received</dt><dd>{profile.likesReceived}</dd></div><div><dt>Bug reports</dt><dd>{profile.reports}</dd></div><div><dt>Modules</dt><dd>{profile.maintains.length}</dd></div></dl>
+  </div><div className="forum-profile-record">
+    <dl className="forum-profile-stats">{stats.map(([label, value]) => <div key={label} data-zero={value === 0 || undefined}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
     <ForumStanding profile={profile} />
-    {canMessage && <a className="button button-quiet forum-profile-message" href={'#forum/messages/' + encodeURIComponent(username)}><Icon name="mail" size={15} />Send a message</a>}
   </div></section>
     <MaintainedModules maintains={profile.maintains} /></>
 }
 
 /** A member's latest replies, shown beside the threads they started. */
 export function ForumProfileReplies({ items }: { items?: ForumReplyItem[] }) {
-  return <aside className="forum-recent" aria-labelledby="forum-profile-replies-title"><div className="forum-list-heading"><h2 id="forum-profile-replies-title">Recent replies</h2><span>Latest first</span></div>{!items ? <ForumRecentSkeleton author={false} /> : items.length ? items.map(item => <article key={item.id}><div className="forum-meta"><ForumTime value={item.created_at} relative /></div><h3><a href={'#forum/thread/' + item.thread_id + '?post=' + item.id + '&page=' + item.page}>{item.title}</a></h3><p>{item.excerpt}</p></article>) : <p className="service-note">No replies yet.</p>}</aside>
+  return <aside className="forum-recent" aria-labelledby="forum-profile-replies-title"><div className="forum-list-heading"><h2 id="forum-profile-replies-title">Recent replies</h2></div>{!items ? <ForumRecentSkeleton author={false} /> : items.length ? items.map(item => <article key={item.id}><div className="forum-meta"><ForumTime value={item.created_at} relative /></div><h3><a href={'#forum/thread/' + item.thread_id + '?post=' + item.id + '&page=' + item.page}>{item.title}</a></h3><p>{item.excerpt}</p></article>) : <p className="service-note">No replies yet.</p>}</aside>
 }
 
 /** The member's tier, points and progress to the next tier, with the rules that earn points. */
@@ -54,7 +53,7 @@ function ForumStanding({ profile }: { profile: MemberProfile }) {
     <div className="forum-standing-head"><span className="forum-standing-tier">{standing.tier.name}</span><span className="forum-standing-rank">Tier {standing.rank} of {TIERS.length}</span><strong>{standing.points.toLocaleString()} <small>points</small></strong></div>
     {standing.next ? <><div className="forum-standing-bar" role="progressbar" aria-label={'Progress to ' + standing.next.name} aria-valuemin={standing.tier.from} aria-valuemax={standing.next.from} aria-valuenow={standing.points}><span style={{ width: Math.round(standing.progress * 100) + '%' }} /></div>
       <p className="forum-standing-next">{(standing.next.from - standing.points).toLocaleString()} points to {standing.next.name}</p></> : <p className="forum-standing-next">Top tier reached</p>}
-    <details className="forum-standing-rules"><summary>How points work</summary><ul>{rules.map(([label, points]) => <li key={label}><span>{label}</span><span>+{points}</span></li>)}</ul><p>Tiers: {TIERS.map(tier => tier.name + ' ' + tier.from).join(' · ')}. Removed posts and likes on your own posts do not count.</p></details>
+    <details className="forum-standing-rules"><summary>How points work<Icon name="back" size={12} /></summary><ul>{rules.map(([label, points]) => <li key={label}><span>{label}</span><span>+{points}</span></li>)}</ul><p>Tiers: {TIERS.map(tier => tier.name + ' ' + tier.from).join(' · ')}. Removed posts and likes on your own posts do not count.</p></details>
   </div>
 }
 

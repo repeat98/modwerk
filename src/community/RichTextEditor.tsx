@@ -48,29 +48,31 @@ export function RichTextEditor({id,label,value,onChange,name,placeholder='Write 
     else editor.chain().focus().extendMarkRange('link').setLink({href}).run()
     setLinkOpen(false);setError('')
   }
+  // The limit only shows once it is close.
+  const left=12000-value.length
   const tools=[
     {label:'Bold',text:<strong>B</strong>,active:state?.bold,run:()=>editor?.chain().focus().toggleBold().run()},
     {label:'Italic',text:<em>I</em>,active:state?.italic,run:()=>editor?.chain().focus().toggleItalic().run()},
     {label:'Strikethrough',text:<s>S</s>,active:state?.strike,run:()=>editor?.chain().focus().toggleStrike().run()},
-    {label:'Heading',text:'H2',active:state?.heading,run:()=>editor?.chain().focus().toggleHeading({level:2}).run()},
+    {label:'Heading',text:'H2',group:true,active:state?.heading,run:()=>editor?.chain().focus().toggleHeading({level:2}).run()},
     {label:'Bullet list',text:'• List',active:state?.bullet,run:()=>editor?.chain().focus().toggleBulletList().run()},
     {label:'Numbered list',text:'1. List',active:state?.ordered,run:()=>editor?.chain().focus().toggleOrderedList().run()},
     {label:'Quote',text:'“ Quote',active:state?.quote,run:()=>editor?.chain().focus().toggleBlockquote().run()},
-    {label:'Inline code',text:'<>',active:state?.inline,run:()=>editor?.chain().focus().toggleCode().run()},
+    {label:'Inline code',text:'<>',group:true,active:state?.inline,run:()=>editor?.chain().focus().toggleCode().run()},
     {label:'Code block',text:'{ }',active:state?.code,run:()=>editor?.chain().focus().toggleCodeBlock().run()},
   ]
   return <div className="forum-editor">
     <div className="forum-editor-toolbar" role="group" aria-label={label+' formatting'} aria-controls={id}>
-      {tools.map(tool=><button key={tool.label} type="button" title={tool.label} aria-label={tool.label} aria-pressed={!!tool.active} disabled={disabled||source||!editor} onMouseDown={event=>event.preventDefault()} onClick={tool.run}>{tool.text}</button>)}
+      {tools.map(tool=><button key={tool.label} type="button" className={tool.group?'forum-editor-group':undefined} title={tool.label} aria-label={tool.label} aria-pressed={!!tool.active} disabled={disabled||source||!editor} onMouseDown={event=>event.preventDefault()} onClick={tool.run}>{tool.text}</button>)}
       <button type="button" title="Add or edit a link" aria-pressed={!!state?.link} disabled={disabled||source||!editor} onMouseDown={event=>event.preventDefault()} onClick={()=>{setUrl(String(editor?.getAttributes('link').href??''));setError('');setLinkOpen(current=>!current)}}>Link</button>
-      <button type="button" aria-label="Undo" disabled={disabled||source||!state?.undo} onMouseDown={event=>event.preventDefault()} onClick={()=>editor?.chain().focus().undo().run()}>↶</button>
-      <button type="button" aria-label="Redo" disabled={disabled||source||!state?.redo} onMouseDown={event=>event.preventDefault()} onClick={()=>editor?.chain().focus().redo().run()}>↷</button>
+      <button type="button" className="forum-editor-group" title="Undo" aria-label="Undo" disabled={disabled||source||!state?.undo} onMouseDown={event=>event.preventDefault()} onClick={()=>editor?.chain().focus().undo().run()}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-4"/></svg></button>
+      <button type="button" title="Redo" aria-label="Redo" disabled={disabled||source||!state?.redo} onMouseDown={event=>event.preventDefault()} onClick={()=>editor?.chain().focus().redo().run()}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m15 14 5-5-5-5m5 5H9a5 5 0 0 0 0 10h4"/></svg></button>
       <button type="button" className="forum-editor-source" aria-pressed={source} disabled={disabled} onClick={()=>{setSource(current=>!current);setLinkOpen(false)}}>Markdown</button>
     </div>
     {linkOpen&&<div className="forum-editor-link"><label htmlFor={id+'-link'}>Link address</label><input id={id+'-link'} type="url" value={url} placeholder="https://…" onChange={event=>setUrl(event.target.value)} onKeyDown={event=>{if(event.key==='Enter'){event.preventDefault();saveLink()}if(event.key==='Escape'){event.preventDefault();setLinkOpen(false);editor?.commands.focus()}}}/><button type="button" className="text-button" onClick={saveLink}>Apply</button>{state?.link&&<button type="button" className="text-button" onClick={()=>{editor?.chain().focus().extendMarkRange('link').unsetLink().run();setLinkOpen(false)}}>Remove link</button>}<button type="button" className="text-button" onClick={()=>setLinkOpen(false)}>Cancel</button>{error&&<p className="file-error" role="alert">{error}</p>}</div>}
     {!source&&<MentionSuggestions id={id+'-mentions'} items={suggestions.items} active={suggestions.active} onPick={pickMention} onHover={suggestions.setActive}/>}
     {source?<textarea id={id} aria-label={label+' Markdown'} aria-describedby={id+'-editor-hint'} value={value} disabled={disabled} maxLength={12000} rows={8} onChange={event=>onChange(event.target.value)} placeholder={placeholder}/>:<EditorContent editor={editor}/>}
     {name&&<input type="hidden" name={name} value={value}/>}
-    <div className="forum-editor-footer"><span id={id+'-editor-hint'}>{source?'Edit Markdown directly.':'Select text to format it. Ctrl/⌘ + B or I works too.'}</span><span className={value.length>12000?'file-error':''}>{value.length.toLocaleString()} / 12,000</span></div>
+    <div className="forum-editor-footer"><span id={id+'-editor-hint'}>{source?'Edit Markdown directly.':'Select text to format it. Ctrl/⌘ + B or I works too.'}</span>{left<=2000&&<span className="forum-editor-count" data-state={left<0?'over':left<=1000?'near':undefined}>{left<0?(-left).toLocaleString()+' characters over the limit':left.toLocaleString()+' characters left'}</span>}</div>
   </div>
 }
