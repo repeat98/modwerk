@@ -73,8 +73,8 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
-    "fastBytes": null,
+    "memoryBytes": 4019,
+    "fastBytes": 0,
     "load": {
       "display": "About 3.3 % of the audio block a voice, 4.1 % at worst",
       "method": "hardware",
@@ -82,11 +82,25 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "334623eac52092392022a3f2a2772744ad175f7c4e78ab2d3bfa3ccc0f0115c9",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-27",
+      "tester": "chevyone",
+      "durationMinutes": null,
+      "summary": "0.1.0-experimental on chevyone's Analog Rytm MKII, OS 1.74, RAM-booted over the development link (SM01 to SM04 on the development base's voices variant 879c6c23; SM04 is this source). The author played it by ear on SM01 and SM02; the machine chosen on pads 1 to 8 (six voices, hi-hats and cymbals refused); the SYNTH page, labels and the range tap seen on screen; mw_voice_meter 3.3 % of the block a voice on average, 4.3 % at the dearest block; the voice stops rendering once its AMP decay ends and keeps playing at DEC INF.",
+      "limitations": [
+        "Ran from RAM on a development base with a USB test link, not the published base.",
+        "Not checked by ear on SM04: whether a long decay is ever cut short by the AMP gate.",
+        "Not run: a project save and power cycle with the range type, locks of every knob, six voices recorded for dropouts, beside other Rytm modules in one image, rytm-emu."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {

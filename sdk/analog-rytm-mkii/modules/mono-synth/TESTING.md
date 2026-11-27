@@ -47,6 +47,24 @@ By ear: not checked whether a long decay is ever cut before it ends.
 
 `media/machine-list.png`, `synth-t16.png` and `synth-t8.png`: SM04 on the author's unit, read over the link at 3x after the steps in `media/capture.json`. The list shows SY MONO last in the SY section of BD's machine list; a tap of A stepped the range to 8' (header TUNE 8FT) and three more brought it back to 16'.
 
+## Evidence binding
+
+`evidence.sourceSha256`, worked out in the module's folder as `shasum -a 256 build.json src/machine.c src/ms_dsp.c src/ms_gate.c src/amp_follow.s src/ms_dsp.h src/ms_gate.h | shasum -a 256` (the same as `sha256sum … | sha256sum`), is the source SM04 was built from. Memory: the package's `.run` 3,539 B and `.bss` 480 B, 4,019 B (`scripts/build-elemod-packages.mjs`); no fast RAM.
+
+## Test procedure (27 Nov 2026)
+
+`npm run test:procedure -- analog-rytm-mkii:mono-synth --package mono-synth-SM04.syx --no-unit` at `981ba53dd`: step 1 stops on the doctor's browser-builder line (no pinned Rytm `.elemod` until the pull request pins this module's package), so steps 2 to 12 did not run from the runner; for the Rytm it has no compatibility gate, cycle scan, soak or price yet. The unit steps were done by hand on SM04 instead, as recorded above: read the unit (`ident`), the machine on every track, the meter at rest and in use, the screenshots, and the unit left on SM04 for the author.
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| Hi-hat and cymbal tracks | the voice mask covers six voices | CC 15 = 40 and a note on all 12 channels, meter blocks a second | pass: six voices; CH, OH, CY, CB refused |
+| A track left on SY MONO at rest | a free-running oscillator never falls silent before LEV | meter 5 s after notes at AMP DEC 50 | pass: 0 blocks a second (SM02: 9,000) |
+| AMP DEC INF | the gate must not stop a held voice | BD at DEC 127, a note, meter 5 s later | pass: still rendering |
+| A long decay | the gate's estimate could end a tail early | host test against the record format's fall | pass on the host; by ear not run |
+| Six voices at once | 4.3 % a voice at worst | meter with six rendering | 26 % of the block together; dropouts not recorded |
+| The range tap | the type field and the label | PUSH_A over the link, screenshots | pass: T16 to T8 and back after three more |
+| Project save and power cycle | the type is saved with the sound | not run: the author's own stage | not run |
+
 ## Not tested
 
 - On a unit: whether a long decay is ever cut short by ear, the range tap, locks, the analog filter after it, several voices at once, a project save and a power cycle.
