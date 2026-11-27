@@ -49,7 +49,11 @@ example, `move.l #handler,d0` is `new: "203c00000000"` with
 `relocs: [{ "at": 2, "target": "handler" }]`, and `pea.l handler` is `487900000000`
 with the same reloc. `lea` declares an address register 0–7 and a symbol target;
 it emits the ISA instruction without retaining a stock opcode. `keep2` is still
-local-only and cannot be exported. `package-elemod-recipe.mjs` and the local
+local-only and cannot be exported. Porting an upstream `mod.json`, convert each
+`keep2` site by its stock opcode: `jsr` or `jmp` (`4eb9`, `4ef9`) to that op,
+`lea` (`41f9` + register × `0x200`) to `lea`, and `pea` or `cmpa.l #` (`4879`,
+`b1fc`, `b3fc`) to `bytes` with a reloc at 2. A target with an addend needs a
+symbol of its own (Machine Pages 1.2.1's `params.c`). `package-elemod-recipe.mjs` and the local
 adapter share these checks. Whole-image identity, local stock guards, instruction
 boundaries, overlap, resource and dependency checks remain required at link time.
 
