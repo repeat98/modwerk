@@ -1,9 +1,10 @@
-# Octatrack base 0.8.3: five fixes on top of 0.8.2, 26 November 2026
+# Octatrack base 0.8.3: six fixes on top of 0.8.2, 26-27 November 2026
 
 Source: `base/octatrack-next` after main `3e9ce92e3` (base 0.8.2, #2079) plus four changes, each its author's commit:
 the frame interrupt's Part read from SRAM (#2174, Laslo), a Keep that never loses to an unreadable saved-set file
-(#2109), module knob names that follow the drawn track (#2228, #2042), a USB Audio stream in the CPU limit (#2251), and
-an attach watchdog that re-offers a unit a host addressed but never configured.
+(#2109), module knob names that follow the drawn track (#2228, #2042), a USB Audio stream in the CPU limit (#2251), an
+attach watchdog that re-offers a unit a host addressed but never configured, and a USB reset that retires stock's
+mass-storage replies.
 Base builds: see the end.
 
 ## 25 November 2026: the frame interrupt reads the current Part from SRAM (Laslo, lasl00)
@@ -184,10 +185,32 @@ store+0x2fe+30·track+6·fx.
   twin to `764b6e71` ended "boot failed (exit 1)", and the unit stayed off USB until the owner's power cycle: the
   trap `docs/OCTATRACK_DRIVING.md` already names (a RAM boot after a recovery fails, #1386), not this rule.
 
+## 27 November 2026: a USB reset retires stock's mass-storage replies
+
+- **Seen:** on the owner's MKII (development twin `8a341725` of 0.8.2), a USB Audio 0.4.2 install a minute after a
+  rolled-back trial froze the screen and USB until a power cycle, the audio frames running. The battery-RAM log held a
+  freeze record, PC `0x4001cc30` at level 4 on task 0 (main/idle): the USB interrupt on top of the idle task.
+- **Cause, from OS 1.40C:** `0x4001cc2c`-`0x4001cc32` is stock's USB DISK reply sender (INQUIRY 36 bytes, REQUEST SENSE
+  18, READ CAPACITY 8, from `0x4001e116`, `0x4001e2aa`, `0x4001e30c`, `0x4001e36e`). It takes transfer descriptors 4-15
+  of stock's pool (`0x46c95000`, through the uncached alias) in turn and spins until the next one is inactive. The base
+  always offers mass storage, so a host probes it after every reconnect; a reset that came while a reply was primed left
+  that descriptor ACTIVE, and only the controller clears it. Stock's own ring reset clears slots 4-14, never 15. Read on
+  twin `005817e4`: macOS's polling moves the ring about 1.5 slots a second, so a stale slot freezes the unit within
+  about eight seconds; 8 reconnects there left none.
+- **Fix:** `ep0.c`'s bus-reset hook (every bus reset and session end, before stock's reset routine) flushes EP1's
+  transmit side, bounded, and clears every send slot's token (`usb_stock_sends.h`, host test
+  `test_usb_stock_sends.c`). Every reconnect the base makes ends in the host's bus reset.
+- **Unit (twin `9cf5c4a8`, this fix on `7c732ade`):** 30 LAYOUT changes, each confirmed as soon as the link was back
+  (macOS's probe of the mass storage), then installs with PLAY right after and rollbacks: no freeze, the send slots
+  never left ACTIVE. Before the fix the same day: one freeze in about 25 reconnects.
+- **Open, separate:** the fourth install-PLAY-rollback cycle on that twin lost USB with the UI running: no freeze record,
+  no `usb` re-offer, back only after a power cycle. The same family as the 26 November rollback losses (USB Audio 0.4.1
+  among 18-19 packages); its cause is not found.
+
 ## Builds and pending
 
-- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `1fa425c300a92033…`,
-  browser = native `.bin` `7ae7e6f6af9df790…` (836,464 bytes; 15,264 container bytes free). Every change inside a declared site; the bootloader copy
+- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `88698afcaf9bca89…`,
+  browser = native `.bin` `f39567debdf46834…` (836,540 bytes; 15,188 container bytes free). Every change inside a declared site; the bootloader copy
   identical. Base-bound packages (Sidechain Compressor, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) bound to it
   with their bytes unchanged. Not yet booted on a unit.
 - Pending for #2251 on a unit: the per-width figures, the release image, an MKI, and why the stretch differed between
