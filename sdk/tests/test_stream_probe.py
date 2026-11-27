@@ -79,6 +79,133 @@ def classify_model(words, counts, block):
     return c
 
 
+class State7:
+    """Just enough ColdFire to run dsp_hooks.s's state 7 as built: the instructions its scheduler uses, with N, Z and C
+    for its branches, one visit at a time, each ending at `jmp DONE`. A jsr to a name in `calls` runs it (its value is
+    d0) and leaves d0, d1, a0 and a1 garbage, as C may; any other jsr or jmp fails. Writes are logged; reads give what
+    was written (0 if nothing was), but TCD0's CSR reads idle, as the guarded entry needs to go on."""
+    POISON = 0xdeadbeef
+
+    def __init__(self, text, calls):
+        self.code, self.labels, self.calls = [], {}, calls
+        for line in text[text.index('dl_state7:'):text.index('dl_tick:')].splitlines():
+            line = line.split('|')[0].strip()
+            if line.endswith(':'):
+                self.labels.setdefault(line[:-1], []).append(len(self.code))
+            elif line and not line.startswith('.'):
+                op, _, rest = line.partition(' ')
+                self.code.append((op, [o.strip() for o in re.split(r',(?![^(]*\))', rest)] if rest else []))
+        self.symbols = {'UNCACHED': 0x08000000, 'DONE': 0x40004bc8}
+        self.memory, self.writes, self.d, self.a = {}, [], [0] * 8, [0] * 8
+
+    def address(self, name):
+        return self.symbols.setdefault(name, 0x41000000 + (int(hashlib.sha256(name.encode()).hexdigest()[:4], 16) << 8))  # by name
+
+    def value(self, text):
+        return sum(int(t, 0) if t[0].isdigit() else self.address(t) for t in text.split('+'))
+
+    def target(self, text, at):
+        if re.fullmatch(r'\d+[fb]', text):
+            spots = self.labels[text[:-1]]
+            return min(s for s in spots if s > at) if text[-1] == 'f' else max(s for s in spots if s <= at)
+        return self.labels[text][0]
+
+    def read(self, at, size):
+        if at == 0xfc04501e:
+            return 0x80
+        return int.from_bytes(bytes(self.memory.get(at + i, 0) for i in range(size)), 'big')
+
+    def write(self, at, size, v):
+        v &= (1 << 8 * size) - 1
+        self.writes.append((at, size, v))
+        for i, byte in enumerate(v.to_bytes(size, 'big')):
+            self.memory[at + i] = byte
+
+    def load(self, operand, size):
+        """(value, store): an operand's value and how to write it."""
+        if operand.startswith('#'):
+            return self.value(operand[1:]), None
+        mask = (1 << 8 * size) - 1
+        m = re.fullmatch(r'%([da])(\d)|%(sp)', operand)
+        if m:
+            regs, n = (self.a, 7) if m.group(3) else (self.d if m.group(1) == 'd' else self.a, int(m.group(2)))
+
+            def store(v):
+                regs[n] = v & 0xffffffff if regs is self.a else (regs[n] & ~mask & 0xffffffff) | (v & mask)
+            return regs[n] & mask, store
+        m = re.fullmatch(r'(-?\d*)\(%(sp|a\d)(?:,%d(\d)\.l)?\)', operand)
+        if m:
+            at = (self.a[7] if m.group(2) == 'sp' else self.a[int(m.group(2)[1])]) + int(m.group(1) or 0)
+            at += self.d[int(m.group(3))] if m.group(3) else 0
+        else:
+            at = self.value(operand)
+        at &= 0xffffffff
+        return self.read(at, size), lambda v: self.write(at, size, v)
+
+    def visit(self, sp=0x46000000):
+        """One state-7 visit with d2-d7/a2-a6 holding marks, which must be back at DONE, sp too; -> instructions run."""
+        self.a[7] = sp
+        marks = [0x01110000 * (n + 1) for n in range(11)]
+        self.d[2:8], self.a[2:7] = marks[:6], marks[6:]
+        flags, at, ran = dict(n=0, z=0, c=0), self.labels['dl_state7'][0], 0
+        while True:
+            op, ops = self.code[at]
+            at, ran = at + 1, ran + 1
+            name, _, suffix = op.partition('.')
+            size = {'b': 1, 'w': 2}.get(suffix, 4)
+            mask = (1 << 8 * size) - 1
+
+            def setnz(v):
+                flags.update(z=int((v & mask) == 0), n=(v & mask) >> 8 * size - 1, c=0)
+            if name in ('bra', 'beq', 'bne', 'bcs', 'bcc'):
+                if {'bra': 1, 'beq': flags['z'], 'bne': not flags['z'], 'bcs': flags['c'], 'bcc': not flags['c']}[name]:
+                    at = self.target(ops[0], at - 1)
+            elif name == 'jsr':
+                if ops[0] not in self.calls:
+                    raise AssertionError('state 7 calls ' + ops[0])
+                result = self.calls[ops[0]]()
+                self.d[0], self.d[1], self.a[0], self.a[1] = (result or 0) & 0xffffffff, self.POISON, self.POISON, self.POISON
+            elif name == 'jmp':
+                if ops[0] != 'DONE':
+                    raise AssertionError('state 7 jumps to ' + ops[0])
+                if self.a[7] != sp or self.d[2:8] != marks[:6] or self.a[2:7] != marks[6:]:
+                    raise AssertionError('state 7 left sp or d2-d7/a2-a6 changed')
+                return ran
+            elif name == 'movem':
+                for k, (regs, n) in enumerate([(self.d, n) for n in range(2, 8)] + [(self.a, n) for n in range(2, 7)]):
+                    if ops[0] == '(%sp)':
+                        regs[n] = self.read(self.a[7] + 4 * k, 4)
+                    else:
+                        self.write(self.a[7] + 4 * k, 4, regs[n])
+            elif name == 'lea':
+                m = re.fullmatch(r'(-?\d+)\(%sp\)', ops[0])
+                self.load(ops[1], 4)[1](self.a[7] + int(m.group(1)) if m else self.value(ops[0]))
+            elif name == 'adda':
+                v, store = self.load(ops[1], 4)
+                store(v + self.load(ops[0], 4)[0])
+            elif name in ('move', 'moveq', 'clr', 'tst'):
+                v = 0 if name == 'clr' else self.load(ops[0], size)[0]
+                if name != 'tst':
+                    self.load(ops[-1], size)[1](v)
+                setnz(v)
+            elif name in ('cmpi', 'cmp'):
+                s, d = self.load(ops[0], size)[0] & mask, self.load(ops[1], size)[0] & mask
+                setnz(d - s)
+                flags['c'] = int(d < s)
+            elif name in ('addq', 'subq', 'andi', 'ori', 'lsl'):
+                s = self.load(ops[0], size)[0]
+                d, store = self.load(ops[1], size)
+                v = {'addq': d + s, 'subq': d - s, 'andi': d & s, 'ori': d | s, 'lsl': d << s}[name]
+                store(v)
+                setnz(v)
+                if name in ('addq', 'subq'):
+                    flags['c'] = int(v >> 8 * size & 1 if name == 'addq' else d < s)
+            elif name == 'btst':
+                flags['z'] = int(not self.load(ops[1], 4)[0] >> self.value(ops[0][1:]) & 1)
+            else:
+                raise AssertionError('the model has no ' + op)
+
+
 def host():
     assembler = os.environ.get('ELEKLOADER_DSP_ASM')
     found = Path(assembler).with_name('dsp_host') if assembler else None
@@ -456,6 +583,121 @@ int main(void) {{
         mapping['mw_stream_rx1'] += 8
         with self.assertRaises(ValueError):
             stream_probe.check_link(mapping, args)
+
+    def chain(self, text, usb_loops, stream_loops, packet):
+        """One frame's state-7 chain run on State7, a visit per transfer's completion: -> (transfers in order as (host
+        address, count - 1, source, CITER), the C calls in order, instructions of the longest visit, visits)."""
+        events, model = [], None
+
+        def call(name, result=0):
+            def run():
+                events.append(name)
+                if name == 'dl_frame' and packet:
+                    model.write(model.address('dl_tx') + 0x08000000, 2, 0x4d57)  # the loader's packet waits, as dl_frame says
+                return result
+            return run
+        calls = {name: call(name) for name in ('mw_stream_complete', 'mw_stream_account', 'mw_stream_check')}
+        calls.update(dl_frame=call('dl_frame', packet), modwerk_usb_input_block=call('modwerk_usb_input_block', usb_loops),
+                     mw_stream_block=call('mw_stream_block', stream_loops))
+        model = State7(text, calls)
+        longest, visits, transfers = 0, 0, []
+        while not any(at == 0xfc04801d for at, _, _ in model.writes):  # until the frame interrupt is unmasked
+            start = len(model.writes)
+            longest, visits = max(longest, model.visit()), visits + 1
+            self.assertLess(visits, 8, 'the chain ends')
+            new = model.writes[start:]
+            if (0xfc04401e, 1, 0) in new:  # channel 0's start
+                host = [v for at, _, v in new if at == 0x2000001c]
+                saddr = [v for at, _, v in new if at == 0xfc045000][-1]
+                citer = [v for at, _, v in new if at == 0xfc045014][-1]
+                transfers.append((host[0], host[1], saddr, citer))
+                events.append('started')
+        self.assertTrue(all(v == 0 for at, _, v in model.writes if at == 0xfc0a400c), 'state 7 selects core 0 only')
+        self.assertNotIn(0xfc04501e, [at for at, _, _ in model.writes], "TCD0's CSR is never written")
+        self.assertEqual(model.read(model.address('dl_phase'), 4), 0)
+        unmask = next(i for i, (at, _, _) in enumerate(model.writes) if at == 0xfc04801d)
+        self.assertEqual(model.writes[unmask][2], 1)
+        return transfers, events, longest, visits
+
+    def test_channel_beside_usb_input(self):
+        """The release base: USB AUDIO IN's scheduler, then the channel's (usb). In one frame USB AUDIO IN's block goes
+        first, then the channel's, then the loader's packet, each from the completion of the one before; mw_stream_block
+        is asked once a frame, mw_stream_complete follows the channel's block alone, TCD0 goes back right before the
+        unmask and the lanes' check runs after it; d2-d7/a2-a6 and sp are kept on every visit. With no lane open the
+        hardware sees exactly what it sees without the channel."""
+        import usb_audio_input
+        core = stream_probe.build_core_module()
+        args = SimpleNamespace(stream_channel=True, resident_on_demand=True)
+        stream_probe.check_args(args)
+        usb = usb_audio_input.scheduler(self.hooks(core))
+        both = stream_probe.scheduler(usb, args, usb=True)
+        self.assertEqual(both.count('mw_stream_state0:'), 1)
+        tx = State7(both, {}).address('mw_stream_tx') + 0x08000000
+        usb_block = lambda loops: (0x6360, 32 * loops - 1, usb_audio_input.STAGE, 0x8000 | loops)
+        lane = lambda loops: (0x7be0, 32 * loops - 1, tx, 0x8000 | loops)
+        loader = (0x6320, 63, None, 0x8002)
+        for usb_loops in (0, 3, 5):
+            for stream_loops in (0, 1, 11, 29):  # 11: a plate's 352 halfwords; 29: the in-region's 928
+                for packet in (0, 1):
+                    with self.subTest(usb=usb_loops, stream=stream_loops, packet=packet):
+                        transfers, events, longest, visits = self.chain(both, usb_loops, stream_loops, packet)
+                        want = [usb_block(usb_loops)] * bool(usb_loops) + [lane(stream_loops)] * bool(stream_loops) + [loader] * packet
+                        self.assertEqual([t[:2] + t[3:] for t in transfers], [w[:2] + w[3:] for w in want])
+                        self.assertEqual([t[2] for t in transfers][:len(want) - packet], [w[2] for w in want][:len(want) - packet])
+                        self.assertEqual(visits, len(want) + 1)
+                        self.assertEqual(events.count('mw_stream_block'), 1)
+                        self.assertEqual(events.count('modwerk_usb_input_block'), 1)
+                        self.assertLess(events.index('modwerk_usb_input_block'), events.index('mw_stream_block'))
+                        if stream_loops:  # its completion right after its own transfer, before the next starts
+                            sent = [i for i, e in enumerate(events) if e == 'started'][bool(usb_loops)]
+                            self.assertEqual(events[sent + 1], 'mw_stream_complete')
+                        else:
+                            self.assertNotIn('mw_stream_complete', events)
+                        self.assertEqual(events[-2:], ['mw_stream_account', 'mw_stream_check'])
+                        self.assertLess(longest, 80, 'instructions in one visit')
+        # No lane open: the same writes, in the same order, as USB AUDIO IN's scheduler alone.
+        for usb_loops in (0, 5):
+            for packet in (0, 1):
+                runs = []
+                for text in (usb, both):
+                    model = State7(text, dict(dl_frame=lambda: packet, modwerk_usb_input_block=lambda: usb_loops,
+                                              mw_stream_block=lambda: 0, mw_stream_account=lambda: 0, mw_stream_check=lambda: 0))
+                    if packet:
+                        model.write(model.address('dl_tx') + 0x08000000, 2, 0x4d57)
+                    while not any(at == 0xfc04801d for at, _, _ in model.writes):
+                        model.visit()
+                    runs.append(model.writes)
+                self.assertEqual(runs[0], runs[1])
+        # The probes never run beside USB AUDIO IN, and the channel's in-region is clear of its block.
+        with self.assertRaises(ValueError):
+            stream_probe.scheduler(usb, SimpleNamespace(stream_probe=64, stream_read=0), usb=True)
+        self.assertEqual(stream_probe.USB_INPUT[:2], (usb_audio_input.DESTINATION & 0xfff, 160))
+        with self.assertRaisesRegex(ValueError, 'USB AUDIO IN'):
+            stream_probe.proof(a_words=160, transfers=stream_probe.TRANSFERS + (stream_probe.USB_INPUT,))
+
+    def test_channel_recovery_beside_usb_input(self):
+        """dsp.c's recovery in the release base: USB AUDIO IN gives up for its phases (3, 4), the channel for its own (5,
+        6) and core 1's (dl_c1_phase 2); state 7 selects core 0 once; B's read gives up too."""
+        import usb_audio_input
+        text = (SDK / 'elekloader/dsp.c').read_text()
+        # build_core.py's own USB AUDIO IN edits, as it makes them
+        text = usb_audio_input.replace(text, 'DSP_SELECT = dl_c1_phase ? 1u : (uint8_t)(dl_phase - 1u);',
+                                       'DSP_SELECT = dl_c1_phase ? 1u : 0u; /* state 7 always targets core 0 */')
+        text = usb_audio_input.replace(text, '    dl_phase = dl_c1_phase = 0;', '    if (dl_phase >= 3u) {\n'
+                                       '        extern void modwerk_usb_input_dma_failed(void);\n        modwerk_usb_input_dma_failed();\n'
+                                       '    }\n    dl_phase = dl_c1_phase = 0;')
+        dsp = stream_probe.dsp_c(text, SimpleNamespace(stream_channel=True), usb=True)
+        self.assertIn('if (dl_phase == 3u || dl_phase == 4u) {\n        extern void modwerk_usb_input_dma_failed', dsp)
+        self.assertIn('if (dl_phase >= 5u || dl_c1_phase == 2u) {', dsp)
+        self.assertEqual(dsp.count('DSP_SELECT = dl_c1_phase ? 1u : 0u;'), 1)
+        self.assertIn('mw_stream_read_failed();', dsp)
+        self.assertLess(dsp.index('mw_stream_dma_failed();'), dsp.index('    dl_phase = dl_c1_phase = 0;'))
+        # the channel adds nothing at the frame head and keeps USB AUDIO IN's cold words
+        args = SimpleNamespace(stream_channel=True, resident_on_demand=True)
+        self.assertEqual(stream_probe.place_receiver(args, lambda end: ('placed', end), None, 'A', 0x1fdf, None), ('placed', 0x1fdf))
+        self.assertEqual(stream_probe.cflags(args), ['-DMODWERK_STREAM_CHANNEL'])
+        names = set(stream_probe.inputs(args))
+        self.assertEqual(names, {'sdk/machines/octatrack/module-adapters/' + n for n in ('stream_probe.py', 'stream_channel.c', 'stream_channel.h')})
 
 
 if __name__ == '__main__':
