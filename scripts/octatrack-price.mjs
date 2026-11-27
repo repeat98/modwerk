@@ -182,6 +182,19 @@ export function curveRecord({ result, version, base, scene, seconds, measuredAt,
   return { record: { module: result.id, version, base, scene, seconds, measuredAt, tracks, rest: restCost(result.before, result.atRest), first, each, points, adds, admission, notes } }
 }
 
+/** --curve must carry a clean curve and admission run, even without --write. */
+export function curveRunProblems(results, wanted = 3) {
+  if (!results.length) return ['no curve measurement completed']
+  return results.flatMap(result => {
+    const prefix = result.id + ': '
+    if (!result.curve || result.curve.error) return [prefix + (result.curve?.error ?? 'no curve measurement completed')]
+    const made = curveRecord({ result, version: result.version, wanted })
+    if (made.problem) return [prefix + made.problem]
+    const problem = curveProblem({ points: result.curve.points, admission: result.curve.admission })
+    return problem ? [prefix + problem] : []
+  })
+}
+
 /** --write for one module's result: its price into its manifest, its readings beside it, its line off the pending list. What it did.
  *  A draft (sdk/drafts/<id>) gets the same as a listed module. */
 export function writePrice({ root, result, base, scene, seconds, measuredAt, readings = 1, inputs }) {
@@ -454,6 +467,10 @@ if (import.meta.filename === process.argv[1]) {
     if (!result.rolledBack || result.restore || result.notPlayed) break // never go on over a unit left in a state nobody chose
   }
   if (args.out) writeFileSync(args.out, JSON.stringify({ base: args.base, scene: args.scene, inputs, seconds, readings, slot: args.slot, measuredAt, results }, null, 1) + '\n')
+  if (args.curve) for (const problem of curveRunProblems(results, args.curve.split(',').length)) {
+    console.error('curve FAILED: ' + problem)
+    process.exitCode = 1
+  }
   if (args.write) for (const result of results) console.log(result.id.padEnd(28) + writePrice({ root, result, base: args.base, scene: args.scene, seconds, measuredAt, readings, inputs }))
   for (const result of results.filter(result => result.curve && !result.curve.error)) {
     const { first, each, adds, tracks, notes } = result.curve, wanted = args.curve.split(',').length
