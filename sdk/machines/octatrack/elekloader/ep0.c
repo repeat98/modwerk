@@ -26,6 +26,7 @@
 #include "vendor.h"
 #include "usb_base.h"
 #include "usb_attach.h"
+#include "usb_stock_sends.h"
 #ifdef MODWERK_USB_FUNCTIONS
 #include "usb_function.h"
 #endif
@@ -619,6 +620,8 @@ void modwerk_ep0_bus_reset(void)
 {
     struct mv_transport *t = vendor();
     ++resets;
+    /* Stock's USB DISK replies left ACTIVE by the reset would spin the next one forever (usb_stock_sends.h). */
+    usb_stock_sends_retire((volatile uint32_t *)0x4ec95000u, &ENDPTFLUSH);
     remaining_plus_one = 0;
     track_receive = 0;
 #ifdef MODWERK_USB_FUNCTIONS
