@@ -23,6 +23,40 @@ The author tested Ctrl All, Kit A/B and Real Units 0.2 on a Digitakt MKI on OS 1
 - Tested with elekloader's core and other FLEXMODS mods in the build, not with Modwerk's library mods.
 - Not tested in Modwerk on a unit.
 
+## Test procedure: kitab 0.2.0, 2026-11-27
+
+Build: revision `2a95fbcdd2fe` with uncommitted changes, package `imp-kitab.syx` SHA-256 `8f9b3d320529106aa8992929321fd9bf0b9a9b712aef28b292e62e826b334c76`. `npm run test:procedure -- kitab --no-unit --package <private>/imp-kitab.syx --out <private>/procedure`, 4 s. Emulator results are not hardware evidence; only what ran on the unit is.
+
+| # | Step | Layer | Result | Command | Evidence |
+|---|---|---|---|---|---|
+| 1 | Software checks | host | passed | `npm run module:doctor -- kitab` | logs/01-software.log |
+| 2 | Beside every other module | contract | not run: modules:compat compares the Octatrack's modules only; Digitakt mk1 has no gate beside every other module yet: its link refuses two modules on one site, so link the image beside the modules it must work with |  |  |
+| 3 | Name the build | host | passed |  | logs/03-build.log |
+| 4 | DSP cost model | contract | not run: the DSP cycle scan models the Octatrack's DSP only |  |  |
+| 5 | Emulator rehearsal | emulator | not run: Digitakt mk1 has no scripted emulator rehearsal yet |  |  |
+| 6 | Read the unit | unit | not run: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 7 | Scripted unit pass | unit | not run: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 8 | Soak | unit | not run: no soak for Digitakt mk1 yet (scripts/octatrack-soak.mjs drives the Octatrack) |  |  |
+| 9 | Cost on the unit | unit | not run: no price on the unit for Digitakt mk1 yet (device:price reads the Octatrack's frame interrupt) |  |  |
+| 10 | Put back | unit | not run: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 11 | Agent by hand | unit | emulator only: the captures and checks above; no unit |  |  |
+| 12 | Submitter's own stage | unit | not run: no unit; the owner takes the author's hardware report |  |  |
+
+### Edge cases for this change
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| TRK + NO with no temp save | the reload fails and must leave the kit as it was | emulator, first-boot project | pass: NO TEMP SAVE YET |
+| TRK + NO after FUNC + YES, then back to A | it copies 2,334 kit bytes both ways | emulator after SAVE PROJECT AS and FUNC + YES | pass for A to B (KIT B: SAVED, B in the corner); back to A not run: needs listening |
+| Pattern change while on B | edits must go back to the pattern left | not run: no Digitakt unit here | not run: no Digitakt unit here |
+| Project save, reload and power cycle | it writes kit memory | not run: no Digitakt unit here | not run: no Digitakt unit here |
+| Beside every Digitakt library mod | shared stock sites and core 4.4 | linked through the site build path, OS 1.54 | pass, except Digi EQ (core 2.1 only) |
+
+### For the pull request
+
+Not tested on a unit: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands).
+Edge cases: the table above, one row a case (or "Edge cases: none, because …").
+
 ## Not tested
 
 - Any Modwerk build on a unit: behaviour, CPU, saving and reloading a project, a power cycle.
