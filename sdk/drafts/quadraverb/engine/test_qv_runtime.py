@@ -52,6 +52,8 @@ class Runtime:
         lib.qv_program.argtypes, lib.qv_program.restype = [ctypes.c_uint], ctypes.c_int32
         lib.qv_code.argtypes = [ctypes.c_uint, ctypes.c_int32, ctypes.c_uint32, U32P]
         lib.qv_code.restype = ctypes.c_uint32
+        lib.qv_name.argtypes, lib.qv_name.restype = [ctypes.c_uint], ctypes.c_char_p
+        lib.qv_page.restype = ctypes.c_uint32
         self.effect = Effect.in_dll(lib, "qv_effect")
 
     def count(self, name):
@@ -144,6 +146,8 @@ class TestRuntime(unittest.TestCase):
         cls.areas = areas(len(cls.plans))
         cls.header = cls.dir / "qv_tables.h"
         cls.header.write_text(qvcf.tables(cls.plans, cls.areas))
+        cls.names = cls.dir / "qv_names.h"
+        cls.names.write_text(qvcf.names(PROGRAMS))
         cls.so = cls.build(cls.header, "lib")
         cls.stream_in = max(pl.in_words for pl in cls.plans)
 
@@ -154,7 +158,8 @@ class TestRuntime(unittest.TestCase):
     @classmethod
     def build(cls, header, name, *defs):
         so = cls.dir / f"{name}.so"
-        subprocess.run(["cc", "-DQV_HOST", f'-DQV_TABLES="{header}"', *defs, "-O2", "-Wall", "-Wextra", "-Werror",
+        subprocess.run(["cc", "-DQV_HOST", f'-DQV_TABLES="{header}"', f'-DQV_NAMES="{cls.names}"', *defs, "-O2",
+                        "-Wall", "-Wextra", "-Werror",
                         "-shared", "-fPIC", "-o", str(so), str(qvcf.SRC)], check=True)
         return so
 
@@ -304,10 +309,62 @@ class TestRuntime(unittest.TestCase):
         self.assertEqual([lib.qv_program(8 + t) for t in range(8)], [5] * 8)
         self.assertEqual([lib.qv_program(s) for s in (*range(8), 16, 99)], [-1] * 10)
 
-    @unittest.skipUnless(shutil.which("m68k-elf-gcc"), "no m68k-elf-gcc")
+    def test_names(self):
+        """Every value PROG can store (and past the list, as a lock or an old project could hold) names in stock's
+        message box the program qv_program then picks: its number on the original as the dial shows it (the manifest's
+        label), then its ROM name, in at most 19 characters."""
+        import json
+        from manifest import MODULE
+        rom = {p["p"]: p["name"] for p in json.loads(PROGRAMS.read_text())}
+        labels = MODULE.params[0].labels
+        lib = Runtime(self.so).lib
+        mem = (ctypes.c_uint8 * 0x800).in_dll(lib, "qv_host_mem")
+        ctypes.c_uint32.from_buffer(mem, 0xE0).value = 0
+        self.assertEqual(len(labels), len(qvcf.PROGRAMS))
+        for v in range(256):
+            mem[0x110 + 24] = v                                   # T1's FX2 knob A, bank 0
+            i = lib.qv_program(8)
+            self.assertEqual(i, min(v, len(qvcf.PROGRAMS) - 1), f"PROG {v}")
+            line, p = lib.qv_name(v).decode(), qvcf.PROGRAMS[i]
+            self.assertEqual(line, qvcf.short_name(p, rom[p]), f"PROG {v}")
+            self.assertTrue(line.startswith(labels[i] + " ") and line[3:] == " ".join(rom[p].upper().split())[:16].rstrip()
+                            and len(line) <= 19, f"PROG {v}: {line!r}")
+            self.assertIn(f"/* {i}: program {p} */", self.header.read_text())   # the area code() writes for it
+
+    def test_committed_names(self):
+        """gen/qv_names.h is what qvcf.py gen writes for manifest.PROGRAMS."""
+        self.assertEqual((qvcf.GEN / "qv_names.h").read_text(), qvcf.names(PROGRAMS))
+
+    def test_page(self):
+        """qv_page: the page address the base keeps at recipe + 48, the 'MWPG' recipe the nearest below the image."""
+        def page(at, value):
+            lib = Runtime(self.so).lib
+            image = (ctypes.c_uint8 * 0x4000).in_dll(lib, "qv_host_image")
+            if at is not None:
+                image[at:at + 4] = list(b"MWPG")
+                image[at + 48:at + 52] = list(value.to_bytes(4, "big"))
+            return lib.qv_page()
+        self.assertEqual(page(None, 0), 0)                        # no recipe
+        self.assertEqual(page(0x3f00, 0x4012_3456), 0x4012_3456)
+        self.assertEqual(page(0, 0x47FF_FFFC), 0x47FF_FFFC)       # 16 KiB below the image
+        self.assertEqual(page(0x3f00, 0), 0)                      # not built yet
+        self.assertEqual(page(0x3f00, 0x4800_0000), 0)
+
+    @unittest.skipUnless(shutil.which("m68k-elf-gcc") and shutil.which("m68k-elf-as"), "no m68k-elf-gcc")
     def test_coldfire_build(self):
-        subprocess.run(["m68k-elf-gcc", *qvcf.CF_FLAGS, f'-DQV_TABLES="{self.header}"', "-S", "-o", "/dev/null",
-                        str(qvcf.SRC)], check=True)
+        """The unit as the builder assembles it (sdk/runtime/loader/build.py: a DRAM unit, -mcpu=54455): the C, then
+        qv_entry.s, whose displaced instructions are the site's stock bytes (events.json ev_knob_store's guard)."""
+        import hashlib
+        unit, obj = self.dir / "unit.s", self.dir / "unit.o"
+        unit.write_text(qvcf.unit(f'-DQV_TABLES="{self.header}"', f'-DQV_NAMES="{self.names}"'))
+        subprocess.run(["m68k-elf-as", "-mcpu=54455", "--defsym", "MODWERK_EVENTS=1", str(unit), "-o", str(obj)], check=True)
+        dump = subprocess.run(["m68k-elf-objdump", "-d", str(obj)], check=True, stdout=subprocess.PIPE, text=True).stdout
+        entry = dump[dump.index("<qv_knob_entry>:"):]
+        code = [line.split("\t")[1].split() for line in entry.splitlines()[1:] if line.count("\t") >= 2]
+        end = code.index(["4e75"])                                                # its rts
+        tail = bytes.fromhex("".join(w for words in code[end - 3:end] for w in words))   # the three before it
+        self.assertEqual(hashlib.sha256(tail).hexdigest(),
+                         "dc6543d672cdf223fc2ec7cc3c04b8a584dbd6e7bb1e3590b91cd3e469e0b324")
 
 
 if __name__ == "__main__":
