@@ -859,8 +859,8 @@
       "fills": 0,
       "name": "Midiverb I/II",
       "module": "e7e04dd9",
-      "bytes": 63416,
-      "sha256": "1c2e43f69e96e82bac93a707d938e6f28bc772c91b0a01835fa65c169b1da2d8"
+      "bytes": 63748,
+      "sha256": "d554753cf04faaf5dd3921a1b2c6ec34ed8d75521ae55a78148736ff560bd8f9"
     }
   ],
   "usbAudio": {
