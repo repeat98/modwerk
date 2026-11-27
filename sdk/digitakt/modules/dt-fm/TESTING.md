@@ -27,6 +27,39 @@ The author reports testing 1.2.1 on a Digitakt mk1 on OS 1.54 with elekloader's 
 
 The author ran a Modwerk-built firmware with DT-FM 1.2.1, Digi Health, Digi Utils and Machine Pages on a Digitakt 1 on OS 1.54 with FAST AUDIO on, for about five minutes: six DT-FM tracks played before Digi Health's System Info showed 100 % CPU. The record is [evidence/hardware-performance-2026-10-22.md](evidence/hardware-performance-2026-10-22.md). It is one session's observation, not a worst-case measurement, and its firmware hash was not kept.
 
+## Test procedure: dt-fm 1.2.1, 2026-11-27
+
+Build: revision `0ca0453b48c3`, package `imp-dt-fm.syx` SHA-256 `4e5b8eb19c674aba73384e575b675ea28b14903176b9eafefe872d01e1da9fc3`. `npm run test:procedure -- dt-fm --no-unit --package <private>/imp-dt-fm.syx --out <private>/procedure`, 5 s. Emulator results are not hardware evidence; only what ran on the unit is.
+
+| # | Step | Layer | Result | Command | Evidence |
+|---|---|---|---|---|---|
+| 1 | Software checks | host | passed | `npm run module:doctor -- dt-fm` | logs/01-software.log |
+| 2 | Beside every other module | contract | not run: modules:compat compares the Octatrack's modules only; Digitakt mk1 has no gate beside every other module yet: its link refuses two modules on one site, so link the image beside the modules it must work with |  |  |
+| 3 | Name the build | host | passed |  | logs/03-build.log |
+| 4 | DSP cost model | contract | not run: the DSP cycle scan models the Octatrack's DSP only |  |  |
+| 5 | Emulator rehearsal | emulator | not run: Digitakt mk1 has no scripted emulator rehearsal yet |  |  |
+| 6 | Read the unit | unit | not run: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 7 | Scripted unit pass | unit | not run: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 8 | Soak | unit | not run: no soak for Digitakt mk1 yet (scripts/octatrack-soak.mjs drives the Octatrack) |  |  |
+| 9 | Cost on the unit | unit | not run: no price on the unit for Digitakt mk1 yet (device:price reads the Octatrack's frame interrupt) |  |  |
+| 10 | Put back | unit | not run: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands) |  |  |
+| 11 | Agent by hand | unit | emulator only: the captures and checks above; no unit |  |  |
+| 12 | Submitter's own stage | unit | not run: no unit; the owner takes the author's hardware report |  |  |
+
+### Edge cases for this change
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| DT-FM in the machine chooser and its SRC page | Machine Pages draws its page | emulator, OS 1.54 build with core 4.4 and Machine Pages 1.2 | pass: chooser and SRC page as captured |
+| Turning ALGO, RATIO and OP | the knobs edit four operators | emulator | fail in the emulator: the values did not change on any core or Machine Pages build tried, SOPHIE turned on the same build; not run on a unit |
+| Several DT-FM tracks | CPU per voice | the author's run of a Modwerk build, OS 1.54, FAST AUDIO | reported: six tracks before 100 % CPU (evidence/hardware-performance-2026-10-22.md) |
+| Beside every Digitakt library mod, OS 1.53 and 1.54 | Machine Pages and shared names | linked through the site build path | pass, except SOPHIE, CC Names, DigiChain users, NEIGHBOR, DIGISLICER (declared) and Digi EQ (core) |
+
+### For the pull request
+
+Not tested on a unit: Digitakt mk1 has no USB link the procedure drives yet: the machine recipe's next piece (docs/MACHINE_RECIPE.md#where-each-machine-stands).
+Edge cases: the table above, one row a case (or "Edge cases: none, because …").
+
 ## Not tested
 
 - Any Modwerk build on a unit: sound, CPU, saving and reloading a project, a power cycle.
