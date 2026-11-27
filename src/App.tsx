@@ -577,7 +577,7 @@ export default function App() {
           {phoneLibrary && <div className="library-results-slot" ref={setResultsSlot} />}
         </> : <>
           <div className="sidebar-brand">
-            <a className="app-brand" href="#overview"><img src={import.meta.env.BASE_URL + 'modwerk-mark.svg'} width="34" height="34" alt="" /><BrandName session={session} /><small>Community-built firmware</small></a>
+            <a className="app-brand" href="#overview"><img src={import.meta.env.BASE_URL + 'modwerk-mark.svg'} width="34" height="34" alt="" /><BrandName session={session} /></a>
             {drawerLayout && <button type="button" className="drawer-control" aria-label="Close navigation" onClick={() => drawerRef.current?.close()}><Icon name="close" /></button>}
           </div>
           <div className="sidebar-scroll">

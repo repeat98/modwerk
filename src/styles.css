@@ -103,7 +103,6 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .sidebar > * { flex-shrink: 0; }
 .app-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; margin-bottom: 24px; }
 .app-brand > span { font-size: 17px; font-weight: 650; letter-spacing: -.3px; }
-.app-brand small { display: block; font-weight: 400; font-size: 12px; letter-spacing: 0; color: var(--muted); margin-top: 4px; }
 .sidebar-section-label { font-size: var(--text-sm); font-weight: 500; color: var(--faint); padding: 0 12px 7px; }
 .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
 .sidebar-nav a { display: flex; align-items: center; gap: 10px; padding: 4px 10px; color: var(--muted); font-size: var(--text-base); border-radius: var(--radius-sm); min-height: var(--control-h); flex-shrink: 0; transition: background .15s; }
@@ -651,7 +650,6 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .page-heading h1 { overflow-wrap: anywhere; }
 .app-brand img { width: 42px; height: 42px; }
 .app-brand > span { font-size: 22px; letter-spacing: -.7px; }
-.app-brand small { font-size: 12px; letter-spacing: 0; }
 .preview-label { font-size: 10px; height: 30px; padding: 15px 18px 0; }
 .preview-controls { font-size: 9px; height: 25px; padding: 0 18px 12px; opacity: .85; }
 .signal-art { height: calc(100% - 55px); }
@@ -749,7 +747,6 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .loading-panel { display: grid; place-items: center; min-height: 200px; color: #ccc3b5; }
 @media (max-width: 990px) {
   .app-brand { padding-left: 5px; gap: 8px; }
-  .app-brand small { font-size: 12px; }
   .sidebar-footer { font-size: 12px; gap: 4px; }
   .workspace-content { padding: 25px; }
   .app-toolbar { padding: 0 var(--gutter); gap: 13px; }
@@ -764,7 +761,6 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .sidebar-nav a { font-size: 12px; gap: 8px; padding-left: 8px; padding-right: 8px; }
   .app-brand > span { font-size: 16px; }
   .app-brand img { width: 29px; height: 29px; }
-  .app-brand small { font-size: 12px; }
   .sidebar-footer { font-size: 12px; }
   .workspace-content { padding: 24px 20px; }
   .app-toolbar { padding: 0 var(--gutter); gap: 10px; }
@@ -829,7 +825,6 @@ select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .device-save-state { display: none; }
   .active-configuration select { flex: 1; max-width: none; }
   .resource-grid { grid-template-columns: 1fr; }
-  .app-brand small { font-size: 10px; }
   .sidebar-footer { white-space: normal; font-size: 11px; line-height: 1.5; }
 }
 @media (max-width: 600px) {
@@ -857,7 +852,6 @@ h1 { font-size: 29px; }
 .app-brand { margin-bottom: 20px; }
 .app-brand img { width: 35px; height: 35px; }
 .app-brand > span { font-size: 20px; }
-.app-brand small { font-size: 11px; }
 .workspace-content { padding: 24px 26px; }
 .page-heading { margin-bottom: 23px; }
 .active-configuration { padding: 7px 11px; margin-bottom: 22px; }
@@ -873,7 +867,6 @@ h1 { font-size: 29px; }
 .page-kicker { display: none; }
 h1 { font-size: var(--text-xl); }
 .app-brand > span { font-size: 19px; }
-.app-brand small { font-size: 11px; }
 .preview-label { font-size: 9px; }
 .preview-controls { font-size: 8px; }
 .sidebar-nav a, .configuration-nav button { font-size: 13px; }
@@ -1869,10 +1862,8 @@ h1 { font-size: var(--text-xl); }
 
 /* Desktop notifications sit beside the sidebar brand; phones keep the toolbar bell. */
 .sidebar-brand { position: relative; margin-bottom: 24px; }
-.sidebar-brand .app-brand { display: grid; grid-template-columns: 35px minmax(0, 1fr); gap: 2px 10px; margin: 0; }
-.sidebar-brand .app-brand > img { grid-row: 1 / 3; }
+.sidebar-brand .app-brand { gap: 10px; margin: 0; }
 .sidebar-brand .app-brand > span { line-height: 24px; }
-.sidebar-brand .app-brand > small { grid-column: 2; margin: 0; line-height: 16px; white-space: nowrap; }
 .notification-bell { position: relative; margin-left: auto; flex-shrink: 0; }
 .notification-bell ~ .configuration-button, .notification-bell ~ .mobile-menu { margin-left: 0; }
 .notification-bell-button { position: relative; display: grid; place-items: center; width: var(--control-h-sm); height: var(--control-h-sm); padding: 0; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text-secondary); cursor: pointer; }
@@ -2268,7 +2259,6 @@ h1 { font-size: var(--text-xl); }
 @media (min-width: 601px) {
   .sidebar-brand { height: var(--header-height); display: grid; align-items: center; padding: 0 .875rem; margin: 0; }
   .sidebar-brand .app-brand { padding: 0; }
-  .sidebar-brand .app-brand > small { font-size: .75rem; white-space: normal; }
   .sidebar-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; scrollbar-width: thin; padding: .75rem; }
   .primary-nav { gap: .125rem; }
   .primary-nav a { min-height: var(--control-h); font-weight: 500; }
