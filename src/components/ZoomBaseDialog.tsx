@@ -23,7 +23,7 @@ const PROMISES: BasePromise[] = [
   ['sliders', 'MIDI control', ', knobs, effects on and off, patches and tap tempo from MIDI CC'],
   ['play', 'Follows MIDI clock', ', the patch tempo and a transport the effects can read'],
   ['grid', 'A mixer', ' with saved buses, on its own screen'],
-  ['wave', 'More at once', ', the DSP limit rises from 225 to 300', true],
+  ['wave', 'More at once', ', the DSP limit rises from 225 to 300'],
   ['swap', 'Looper services', ' for the Looper effect: a big buffer, footswitch and CC'],
   ['shield', 'Your effects stay', ', the flash never touches them'],
 ]
@@ -111,10 +111,10 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
       : <button type="button" className="button button-primary" disabled={!onBase} onClick={() => { finished.current = true; onClose() }}>Done</button>)}
   </>
 
-  return <BaseDialogFrame canClose={!flashing} busy={flashing} focus={view + stage} finishedRef={finished} onClose={onClose} footer={footer}>
+  return <BaseDialogFrame intro={view === 'intro'} canClose={!flashing} busy={flashing} focus={view + stage} finishedRef={finished} onClose={onClose} footer={footer}>
     {view === 'intro' ? <BaseIntro title={<>{ZOOM_BASE.name.split(' ')[0]} on your {device.name}</>} promises={PROMISES}
       hero={<div className="module-preview link-hero" aria-hidden="true"><div className="preview-label"><span>BETA</span><span className="preview-led" /></div><ZoomPedalArt device={device} /></div>}
-      intro={<>Flash the base once over USB: Zoom’s own firmware, patched in your browser with Luca Matturro’s <a href="https://github.com/matujuice/zoom-ms-midistomp" target="_blank" rel="noreferrer">MIDISTOMP</a>. Zoom’s 2.10 updater puts the original back at any time. It’s a beta: please report problems in <strong>#zoom-pedals</strong> on the development Discord.</>}
+      intro={<>Zoom’s own firmware with Luca Matturro’s <a href="https://github.com/matujuice/zoom-ms-midistomp" target="_blank" rel="noreferrer">MIDISTOMP</a>, patched in your browser and flashed once over USB. Zoom’s 2.10 updater puts the original back at any time. Report problems in <strong>#zoom-pedals</strong> on the development Discord.</>}
       needs={'You need an ' + device.name + ', Zoom’s MS-70CDR 2.10 updater for Mac (the .zip; it works here on any computer), a USB cable, and Chrome or Edge on a computer.'}
       missing={status === 'unsupported' ? 'This browser can’t use MIDI. Open this page in Chrome or Edge on a computer.' : undefined} /> : <>
       <header className="base-install-header"><h2 id="base-install-title" tabIndex={-1}>Install the Modwerk base <span className="module-beta-badge">Beta</span></h2></header>
@@ -123,7 +123,7 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
       <section className="base-install-stage" aria-labelledby="base-stage-title">
         {stage === 'updater' && <>
           <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Zoom’s updater</h3>
-          <p>The base is built in your browser from Zoom’s own MS-70CDR 2.10 updater for Mac, as you download it (the .zip). The file stays on your computer.</p>
+          <p>Modwerk builds the base in your browser from Zoom’s MS-70CDR 2.10 updater for Mac (the .zip), which stays on your computer.</p>
           {stock ? <><p className="base-file-ready"><Icon name="check" size={18} />Zoom’s 2.10 updater is ready.</p><RiskAcceptance checked={accepted} onChange={setAccepted} />
             <label className="risk-accept zoom-printed-model"><input type="checkbox" checked={printed} onChange={event => setPrinted(event.target.checked)} /><span>The front of my pedal says {device.name}. A pedal running MIDISTOMP answers as an {device.name} whatever pedal it is, so this page can’t tell over USB, and the base is the {device.name}’s own firmware.</span></label></>
             : <a className="text-button" href={SUPPORT} target="_blank" rel="noreferrer">Download MS-70CDR_v2.10_Mac_E.zip from Zoom <Icon name="arrow" size={14} /></a>}
@@ -134,13 +134,14 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
         {stage === 'mode' && <>
           <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Put the pedal in update mode</h3>
           <ol className="base-instructions">
-            <li><strong>Unplug the pedal’s USB cable</strong><p>And its power supply, if one is plugged in. Close Zoom’s updater and editors.</p></li>
-            <li><strong>Hold Up and Down, and plug the USB cable back in</strong><p>Let go when the pedal shows its update screen.</p></li>
+            <li>Unplug the pedal’s USB cable, and its power supply if one is in.</li>
+            <li>Close Zoom’s updater and editors on the computer.</li>
+            <li>Hold <kbd>Up</kbd> and <kbd>Down</kbd>, plug the USB cable back in, and let go at the update screen.</li>
           </ol>
           {modeLine}
         </>}
         {stage === 'flash' && <>
-          <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Flash</h3>
+          <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Flashing the base</h3>
           <StagePlan stages={FLASH_STEPS} progressLabel="Flash progress" run={failed ? { at: failed.at, failed: true } : running && { at: running.step === 'done' ? 2 : STEP_AT[running.step], done: running.step === 'done', fraction: running.fraction }} />
           {flashing && <p className="base-install-warning" role="status"><span className="status-dot is-updating" />Don’t unplug the pedal or close this page until it’s done.</p>}
           {failed && <div className="file-error base-update-error" role="alert"><strong>The flash stopped.</strong><p>{failed.error}</p>{!updateMode && <p>Put the pedal in update mode again to try again.</p>}</div>}
@@ -148,9 +149,10 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
         </>}
         {stage === 'restart' && <>
           <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Start the pedal on the base</h3>
+          <p>The flash is done.</p>
           <ol className="base-instructions">
-            <li><strong>Unplug the USB cable</strong><p>The flash is done.</p></li>
-            <li><strong>Plug it in again, without holding any buttons</strong><p>It starts with MIDISTOMP’s boot screen.</p></li>
+            <li>Unplug the USB cable.</li>
+            <li>Plug it in again without holding any buttons: it starts with MIDISTOMP’s boot screen.</li>
           </ol>
           {restartLine}
         </>}

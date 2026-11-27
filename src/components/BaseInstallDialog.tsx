@@ -62,8 +62,9 @@ const TWO_UPDATES = 'Your Octatrack’s base is too old to take this one directl
 const STILL_PREVIOUS_BASE = 'Your Octatrack still runs the base it had before, so OS UPGRADE probably installed another .bin from the card. Remove every other .bin from the card’s top level, keep the downloaded one, then run OS UPGRADE again.'
 /** Even the step base does not fit the unit's base: only the card is left. */
 const TOO_OLD_FOR_USB = 'The base on your Octatrack is too old to take this update over USB. Update from the card.'
-/** Before an update that installs USB Audio off over a base that had it, or may have had it. */
-const AUDIO_OFF_NOTE = 'Load your module set after the base update to restore USB Audio. It will use the layout and Outbox assignments saved in your set. You can change them on the Octatrack under PROJ > MODWERK > SETTINGS > USB AUDIO.'
+/** Before an update that installs USB Audio off over a base that had it, or may have had it: what to do, then the detail. */
+const AUDIO_OFF_LEAD = 'Load your module set after the base update to restore USB Audio.'
+const AUDIO_OFF_REST = 'It will use the layout and Outbox assignments saved in your set. You can change them on the Octatrack under PROJ > MODWERK > SETTINGS > USB AUDIO.'
 /** Said before anything else in a browser without WebUSB (Safari, Firefox, any phone): the card is its way, not a failure. */
 const CARD_ROUTE = <><strong>Use the card to install the base and load modules.</strong> USB needs {USB_BROWSERS}.</>
 /** Folded away below the update: what to do when it goes wrong. */
@@ -93,11 +94,12 @@ const NOT_BACK: Partial<Record<BaseUpdateStep, string>> = {
 // What the guide promises: only what the base does today. Cross-compatibility,
 // automatic stress tests and bug reports are still to be built (docs/OCTATRACK_ELEKLOADER_MIGRATION.md).
 const ALSO_NEW: BasePromise[] = [
-  ['wave', 'Better DSP memory use', '. Effects load as needed, sharing one copy of their code between tracks on the same DSP core.', true],
-  ['check', 'Kept after a restart', ', the Octatrack loads your modules again when it starts'],
-  ['shield', 'A self-test on the Octatrack', ' for the modules it runs, from Status or PROJ > MODWERK'],
-  ['search', 'Missing modules named', ' when a project uses one the Octatrack doesn’t have'],
-  ['sliders', 'Stock effects stay', ', none of them get replaced'],
+  ['swap', 'Modules over USB', ': from this page, without the card or a restart'],
+  ['wave', 'Better DSP memory use', ': effects load as needed and share their code'],
+  ['check', 'Kept after a restart', ': your modules load again when it starts'],
+  ['shield', 'A self-test on the Octatrack', ' for the modules it runs'],
+  ['search', 'Missing modules named', ' when a project needs one'],
+  ['sliders', 'Stock effects stay', ': none of them get replaced'],
 ]
 /** The card steps after the download, kept for this tab so a reload comes back to the step it left (pendingBaseInstall
  * keeps the downloaded base the same way). */
@@ -290,7 +292,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   // Closing the page mid-update leaves a save that failed its check unrepeated, and the user unaware of it: `busy`.
   return <><BaseDialogFrame intro={view === 'intro'} className={cardGuide ? 'is-card-guide' : undefined} canClose={canClose} busy={updating} focus={view + stage} finishedRef={finished} onClose={onClose} footer={footer()}>
     {view === 'intro' ? <><BaseIntro hero={<LinkHero label="USB" />} title="Install the Modwerk base" promises={ALSO_NEW} beta={false}
-      intro={<>Install the base once. The original OS has no USB link for Modwerk, so this first install goes through the card in four steps: download the base, copy it to the card, install it with OS UPGRADE, then connect. After that, modules go from this page to your Octatrack without the card or a restart. Later base updates go over USB.</>}
+      intro={<>The original OS has no USB link for Modwerk, so this first install goes through the card. Later base updates go over USB.</>}
       needs={BASE_INSTALL_NEEDS}
       route={noUsb ? CARD_ROUTE : undefined} />
       {account === 'visitor' ? <p className="base-install-note base-install-account">{gate ? 'Before the download you’re asked to sign in or create a free account; you can skip that. An account lets you' : 'Signing in is optional: it lets you'} report problems and have the site remember that your Octatrack has the base. Your module sets stay in this browser. <a className="text-button" href={accountHref('login', 'octatrack')} onClick={leave}>Sign in</a> · <a className="text-button" href={accountHref('register', 'octatrack')} onClick={leave}>Create account</a></p>
@@ -298,12 +300,14 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
       {!['unsupported', 'ready', 'stock'].includes(state.status) && <p className="link-hint">Already installed the base? Connect your Octatrack, and this guide closes by itself.</p>}
     </> : view === 'done' ? <>
       <header className="base-install-header"><h2 id="base-install-title" tabIndex={-1}>The Modwerk base is installed</h2></header>
-      <p id="base-install-intro" className="base-install-intro">Your Octatrack runs the Modwerk base. From now on, modules and base updates go over USB from Your Octatrack.</p>
+      <p id="base-install-intro" className="base-install-intro">From now on, modules and base updates go over USB from Your Octatrack.</p>
       <section className="base-install-stage">{diagnosticsStep}</section>
     </> : <>
     <header className="base-install-header"><h2 id="base-install-title" tabIndex={-1}>{switching ? 'Change USB Audio' : <>{older ? 'Update' : 'Install'} the Modwerk base</>}</h2></header>
-    <p id="base-install-intro" className="base-install-intro">{outdated ? 'Modwerk was updated since you opened this page, so it doesn’t know the current base yet. Reload the page; it then checks your Octatrack again.' : switching && running && layout ? <>Your Octatrack is set to {layoutName(running)}. USB Audio is part of the base, so switching to {layoutName(layout)} updates the base over USB. Your modules are synced again afterwards. After the Octatrack restarts, your computer sees the new audio channels. On Windows, open Sound settings → Recording → Octatrack → Properties → Advanced and pick the new channel count: Windows keeps the old one until you do.</> : usb && 'step' in usb && usb.step === 'done' ? 'Your Octatrack runs the new Modwerk base.' : older ? (overUsb ? <>A new Modwerk base is out. Updating takes a minute or two over USB{installLayout ? <>, with {layoutName(installLayout)}</> : ''}. Your Octatrack restarts once.</> : <>A new Modwerk base is out. Your Octatrack has an older one{from && <> (<code>{from.slice(0, 8)}</code>)</>}. Update it from the card, the same way as the first time.</>) : 'Install once from the CompactFlash card. Later base updates go over USB.'}</p>
-    {turnsAudioOff && !outdated && !usb && !overUsb && stage === 'download' && <p className="base-install-note" role="note">{AUDIO_OFF_NOTE}</p>}
+    {/* Said once: not again on the card steps after the first, nor where the card-route note says it, nor under an
+        update that says Done. */}
+    {!(usb && 'step' in usb && usb.step === 'done') && !(cardGuide && (stage !== 'download' || noUsb)) && <p id="base-install-intro" className="base-install-intro">{outdated ? 'Modwerk was updated since you opened this page. Reload it to check your Octatrack again.' : switching && running && layout ? <>Your Octatrack is set to {layoutName(running)}. USB Audio is part of the base, so switching to {layoutName(layout)} updates the base over USB. Your modules are synced again afterwards. After the Octatrack restarts, your computer sees the new audio channels. On Windows, open Sound settings → Recording → Octatrack → Properties → Advanced and pick the new channel count: Windows keeps the old one until you do.</> : older ? (overUsb ? <>A new Modwerk base is out. Updating takes a minute or two over USB{installLayout ? <>, with {layoutName(installLayout)}</> : ''}. Your Octatrack restarts once.</> : <>A new Modwerk base is out. Your Octatrack has an older one{from && <> (<code>{from.slice(0, 8)}</code>)</>}. Update it from the card, the same way as the first time.</>) : 'Install once from the CompactFlash card. Later base updates go over USB.'}</p>}
+    {turnsAudioOff && !outdated && !usb && !overUsb && stage === 'download' && <p className="base-install-note" role="note"><strong>{AUDIO_OFF_LEAD}</strong> {AUDIO_OFF_REST}</p>}
     {noUsb && cardDownload && <p className="base-install-route" role="note"><Icon name="help" size={16}/><span>{CARD_ROUTE}</span></p>}
     {cardGuide && <StageProgress labels={['Download', 'Copy', 'Install', noUsb ? 'Load modules' : 'Connect']} at={stageIndex} />}
     {!outdated && <section className={'base-install-stage' + (cardDownload ? ' base-install-download' : '')} aria-labelledby="base-stage-title">
@@ -334,7 +338,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
             <li className={firmwareReady ? 'is-ready' : undefined}><Icon name={firmwareReady ? 'check' : 'file'} size={16}/><span>{firmwareReady ? 'Your OS 1.40C file is ready.' : <>Choose your original OS 1.40C file. <a className="text-button" href="#faq/base-firmware" target="_blank" rel="noreferrer">Where do I get it?</a></>}</span></li>
             <li><Icon name="warn" size={16}/><span><strong>Save your project and stop playback first.</strong></span></li>
             <li><Icon name="warn" size={16}/><span><strong>Then hands off</strong> until this window says Done: no keys, no power switch, no cable.</span></li>
-            {turnsAudioOff && <li><Icon name="warn" size={16}/><span>{AUDIO_OFF_NOTE}</span></li>}
+            {turnsAudioOff && <li><Icon name="warn" size={16}/><span><strong>{AUDIO_OFF_LEAD}</strong> <span className="base-update-aside">{AUDIO_OFF_REST}</span></span></li>}
           </ul>
           {firmwareReady && <RiskAcceptance checked={accepted} onChange={setAccepted}/>}
           <details className="base-install-recovery"><summary>If something goes wrong</summary><p>{USB_RECOVERY}{skipHint} Keep the original OS 1.40C .bin and .syx on your computer. <a href="#faq/recover" target="_blank" rel="noreferrer">Recovery in the FAQ</a></p></details>
@@ -345,7 +349,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     })()}
     {cardDownload && <>
       <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Download the base</h3>
-      <p>Modwerk builds the base in your browser. Your original OS file stays on this device.</p>
+      <p>Modwerk builds the base in your browser; your OS file never leaves this device.</p>
       <div className="base-download-file">
         <span className="base-download-file-icon"><Icon name="file" size={20}/></span>
         <div>
@@ -369,28 +373,30 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     </>}
     {stage === 'copy' && <>
       <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Copy the file to your card</h3>
-      <p>The download was requested. Find the Modwerk base .bin in your browser’s downloads.</p>
+      <p>The base .bin is in your browser’s downloads.</p>
       <ol className="base-instructions">
-        <li><strong>Open the Octatrack’s card on your computer</strong><p>Connect the USB cable. On the Octatrack, open <b>PROJECT → SYSTEM → USB DISK MODE</b> and press <b>YES</b>. Or take the card out and put it in a card reader.</p></li>
-        <li><strong>Copy the downloaded .bin onto the card</strong><p>Put it at the top level, outside any folder, and remove every other .bin there: OS UPGRADE may install one of those instead.</p></li>
-        <li><strong>Eject the drive on your computer</strong><p>Then leave USB DISK MODE on the Octatrack, or put the card back in.</p></li>
+        <li>Connect the USB cable to your computer.</li>
+        <li>Open <kbd>PROJECT</kbd> → <kbd>SYSTEM</kbd> → <kbd>USB DISK MODE</kbd> and press <kbd>YES</kbd>.</li>
+        <li>Copy the .bin to the card’s top level, and remove every other .bin there.</li>
+        <li>Eject the drive, then leave <kbd>USB DISK MODE</kbd> on the Octatrack.</li>
       </ol>
+      <details className="base-install-recovery"><summary>Details</summary><p>No cable at hand? Take the card out and put it in a card reader, then put it back in. Keep the .bin outside any folder: OS UPGRADE may install another .bin it finds there instead.</p></details>
     </>}
     {stage === 'install' && <>
       <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Install it on your Octatrack</h3>
       <ol className="base-instructions">
-        <li><strong>Open OS UPGRADE</strong><p>Go to <b>PROJECT → SYSTEM → OS UPGRADE</b>. Press <b>YES</b> and confirm.</p></li>
-        <li><strong>Keep the power on while it updates</strong><p>Wait until startup finishes, or the Octatrack explicitly asks you to restart.</p></li>
-        <li><strong>Follow the restart prompt, if shown</strong><p>Only then switch the Octatrack off and on again. Leave the USB cable connected.</p></li>
+        <li>Open <kbd>PROJECT</kbd> → <kbd>SYSTEM</kbd> → <kbd>OS UPGRADE</kbd>, press <kbd>YES</kbd> and confirm.</li>
+        <li>Keep the power on and the USB cable in until startup finishes.</li>
+        <li>Switch it off and on only if the Octatrack asks you to.</li>
       </ol>
       <details className="base-install-recovery"><summary>If the Octatrack doesn’t start or connect</summary><p>The original OS can be installed again: from the card with a CompactFlash card reader, or as the .syx through a MIDI interface and the startup menu. Follow <a href="#faq/recover" target="_blank" rel="noreferrer">recovery in the FAQ</a>. {REPORT_PROBLEMS}</p></details>
     </>}
     {stage === 'connect' && <>
       <h3 id="base-stage-title" data-stage-title tabIndex={-1}>{state.status === 'unsupported' ? 'Now load your modules from the card' : 'Waiting for your Octatrack'}</h3>
-      {state.status === 'unsupported' ? <><p>This browser can’t connect to USB devices, so it can’t check the install or sync over the cable. Your modules go onto the Octatrack as one file on the card instead:</p>
-        <ol className="card-set-steps"><li>Add modules to your module set from the library.</li><li>In <strong>Setup</strong>, under <strong>Load from the card</strong>, download the module file.</li><li>Copy it to the top folder of the card, then switch the Octatrack off and on. It starts with your modules.</li></ol>
-        <p>To sync over USB instead, without the card and without a restart, open Modwerk in <strong>{USB_BROWSERS}</strong>.</p></> : <>
-        <p>Keep the USB cable connected. Press <b>Connect Octatrack</b> and choose your Octatrack in the browser’s list.</p>
+      {state.status === 'unsupported' ? <><p>Your modules go onto the Octatrack as one file on the card.</p>
+        <ol className="base-instructions"><li>Add modules to your module set from the library.</li><li>In <strong>Setup</strong>, under <strong>Load from the card</strong>, download the module file.</li><li>Copy it to the card’s top folder, then switch the Octatrack off and on.</li></ol>
+        <details className="base-install-recovery"><summary>Sync over USB instead</summary><p>This browser can’t connect to USB devices, so it can’t check the install or sync over the cable. To sync over USB, without the card and without a restart, open Modwerk in {USB_BROWSERS}.</p></details></> : <>
+        <p>Press <strong>Connect Octatrack</strong> and choose your Octatrack in the browser’s list.</p>
         <p className="base-install-note" role="status">{found ? 'The downloaded base is confirmed. Opening your module set…' : state.status === 'connecting' ? 'Connecting to your Octatrack…' : state.status === 'busy' ? LINK_BUSY : stillPrevious ? STILL_PREVIOUS_BASE : state.status === 'stock' || state.status === 'ready' ? 'The downloaded base hasn’t been confirmed yet. Finish the installation, then connect again.' : 'Once the installed base is recognised, your module set opens automatically.'}</p>
         {state.notice && <p className="file-error" role="status">{state.notice.text}</p>}
         {state.notice?.tone === 'error' && <SupportActions link={link} what="Connecting after the base install" error={state.notice.text} />}

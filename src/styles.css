@@ -992,7 +992,7 @@ h1 { font-size: var(--text-xl); }
 .issue-report summary { cursor: pointer; color: var(--text-secondary); font-size: 13px; }
 .issue-report > summary { color: var(--issue-confirmed); }
 .issue-report-draft pre { max-height: 180px; overflow: auto; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--field); font: 12px/1.7 var(--mono); }
-.module-discussion-dialog .section-title { align-items: flex-start; }
+.module-discussion-dialog .section-title { flex-wrap: nowrap; align-items: flex-start; }
 .module-discussion-dialog .section-title h2 { margin-bottom: 0; }
 .module-discussion-dialog .dialog-actions { flex-direction: column; align-items: stretch; }
 .module-discussion-dialog p + p { margin-top: 14px; }

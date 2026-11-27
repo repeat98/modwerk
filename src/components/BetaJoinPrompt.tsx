@@ -66,7 +66,7 @@ export function BetaJoinPrompt() {
     finally { setBusy(false) }
   }
   if (!open) return null
-  return <dialog ref={dialog} className="base-install-dialog beta-join" aria-labelledby="beta-join-title" aria-describedby="beta-join-intro" onCancel={event => { event.preventDefault(); later() }}>
+  return <dialog ref={dialog} className="base-install-dialog beta-join is-intro" aria-labelledby="beta-join-title" aria-describedby="beta-join-intro" onCancel={event => { event.preventDefault(); later() }}>
     <button type="button" className="icon-button base-install-close" aria-label="Close" onClick={later}><Icon name="close" size={18} /></button>
     <LinkHero />
     <h2 id="beta-join-title" className="link-title" tabIndex={-1}>The beta is open for new testers <span className="module-beta-badge">Beta</span></h2>
