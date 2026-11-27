@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "module_key", "fn": "sc_key"},
+    {"event": "module_tick", "fn": "sc_mw_tick"},
+    {"event": "ev_usb_frame", "fn": "sc_usb_frame", "order": 50}
+  ]
+}
