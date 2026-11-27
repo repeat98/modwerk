@@ -53,6 +53,17 @@ class Values(unittest.TestCase):
         for name, p in zip(self.names, self.programs):
             self.assertTrue(name.startswith(f"{p['number']} ") and len(name) <= 19, name)
 
+    def test_prog_ends_at_each_banks_last_program(self):
+        # stream.c mv_count: the value past which a bank holds its last program; PROG's count follows BANK.
+        def count(row):
+            n = len(row)
+            while n > 1 and row[n - 2] == row[-1]:
+                n -= 1
+            return n
+        self.assertEqual([count(r) for r in self.rows], [63, self.count, 63])
+        for b, row in enumerate(self.rows):
+            self.assertEqual(len({self.programs[i]["number"] for i in row[:count(row)]}), len({self.programs[i]["number"] for i in row}))
+
     def test_the_knob_has_every_value(self):
         controls = json.loads((HERE / "octamod.module.json").read_text())["controls"]
         prog = next(c for c in controls if c["name"] == "PROG")

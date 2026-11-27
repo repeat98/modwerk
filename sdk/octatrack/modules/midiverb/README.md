@@ -10,7 +10,7 @@ The reverbs and effects of three late-1980s Alesis units on FX2: the Midiverb, t
 
 | Knob | Name | Range | Default | What it does |
 | --- | --- | --- | --- | --- |
-| A | PROG | 1-102 | 1 | The program in the current bank. A message box shows its number on the original and its name while you turn. 0.1.0's programs keep their places, so a project saved with 0.1.0 plays the same program; the ones added in 0.2.0 follow them (Midiverb and Midifex from 60 to 63, Midiverb II from 60 to 102). Past the bank's last program it stays on the last one. |
+| A | PROG | 1-63 (MV1, FEX), 1-102 (MV2) | 1 | The program in the current bank. A message box shows its number on the original and its name while you turn. A whole turn runs from the bank's first program to its last on every bank. 0.1.0's programs keep their places, so a project saved with 0.1.0 plays the same program; the ones added in 0.2.0 follow them (Midiverb and Midifex from 60 to 63, Midiverb II from 60 to 102). |
 | B | LEVL | 0-127 | 64 | Input level into the 12-bit converter: unity at 32, 64 is +6 dB, 127 about +12 dB. Higher levels use more of the 12 bits and sound cleaner; too high and the reverb crunches. |
 | D | BANK | MV1, MV2, FEX | MV1 | Midiverb, Midiverb II or Midifex programs. The bank's name shows while you turn. |
 | F | MIX | 0-127 | 40 | Dry and wet: 0 is exactly dry, 127 wet only. |

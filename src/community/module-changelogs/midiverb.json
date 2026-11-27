@@ -6,6 +6,7 @@
       "All 225 programs of the Midiverb, Midiverb II and Midifex are in: the 31 that needed more DSP time are back.",
       "New: the Midiverb II's chorus and flange programs (50-69), sweeping with the LFOs its own controller computed.",
       "Projects saved with 0.1.0 keep their programs: the added ones come after them on PROG, and the message box names each with its original number.",
+   "PROG ends at the bank's last program, so a whole turn spans every bank: 63 on the Midiverb and Midifex, 102 on the Midiverb II.",
       "Known issue: the triggered flanges (50, 53 and 57) sweep on their own; nothing triggers them.",
       "Known issue: the chorus and flange speeds follow an assumed pace, not one measured on a real Midiverb II."
     ]
