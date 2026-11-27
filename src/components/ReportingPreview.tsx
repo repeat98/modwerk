@@ -14,7 +14,7 @@ import '../community/forum.css'
 import './reporting-preview.css'
 
 const build = { machine: 'Octatrack', os: '1.40C', modules: builtModules(['miniverb', 'tapehead']) }
-const digi = { machine: 'Digitakt', os: '1.54', modules: builtModules(['digitakt-digihealth']) }
+const digi = { machine: 'Digitakt', os: '1.54', modules: builtModules(['digitakt-digimono']) }
 const digiReminder = { machine: 'Digitakt', os: '1.54', modules: builtModules(['digitakt-digieq', 'digitakt-digimono'], { digieq: '1.0.1-experimental', digimono: '0.13.2-experimental' }) }
 
 export default function ReportingPreview({ modulePage = false }: { modulePage?: boolean }) {
@@ -57,7 +57,7 @@ function ReportingComparison() {
         <div className="module-issue-dialog reporting-preview-form"><div className="section-title"><h2>Report an issue · Mini Verb</h2></div><p className="service-note">Your downloaded modules and versions are already attached.</p><IssueReport id="miniverb" author="repeat98" embedded workspaceContext={downloadedReportContext(build)} preview/></div>
       </PreviewPanel>
       <PreviewPanel number="06" title="Digitakt / Digitone issue form" description="Same form, with the matching device and OS.">
-        <div className="module-issue-dialog reporting-preview-form"><div className="section-title"><h2>Report an issue · DigiHealth</h2></div><p className="service-note">Your downloaded modules and versions are already attached.</p><DigiIssueReport id="digitakt-digihealth" embedded workspaceContext={downloadedReportContext(digi)} baseOs={digi.os} preview/></div>
+        <div className="module-issue-dialog reporting-preview-form"><div className="section-title"><h2>Report an issue · Digi Mono</h2></div><p className="service-note">Your downloaded modules and versions are already attached.</p><DigiIssueReport id="digitakt-digimono" embedded workspaceContext={downloadedReportContext(digi)} baseOs={digi.os} preview/></div>
       </PreviewPanel>
     </div>
     {reporting && <ModuleIssueDialog id={reporting} build={build} preview onClose={() => setReporting('')}/>}

@@ -90,10 +90,7 @@ const modules: Readonly<Partial<Record<string, Classification>>> = {
   'digitakt/digiperform': ['performance', 'Macros'],
   'digitakt/digimatrix': ['modulation', 'Modulation routing'],
   'digitakt/digieq': ['effects', 'Equalizer'],
-  'digitakt/digihealth': ['system', 'Diagnostics'],
-  'digitone/digihealth': ['system', 'Diagnostics'],
   'digitakt/digiutils': ['system', 'Meter'],
-  'digitakt/digineighbor': ['machines', 'Audio routing'],
   'digitakt/digisophie': ['machines', 'Drum synthesis'],
   'digitakt/live-looper': ['machines', 'Looper'],
   'digitakt/sample-tools': ['playback', 'Sample editing'],
@@ -102,7 +99,6 @@ const modules: Readonly<Partial<Record<string, Classification>>> = {
   'digitakt/note-accumulator': ['sequencing', 'Note generation'],
   'digitakt-ii/euclidean-scale': ['sequencing', 'Scale quantization'],
   'digitakt-ii/mute-latch': ['performance', 'Mutes & solos'],
-  'digitone/digitables': ['sequencing', 'Note generation'],
 }
 
 export function libraryClassification(machine: string, document: Manifest): Classification {

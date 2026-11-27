@@ -50,19 +50,6 @@ const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
     { title: 'Hear a variation.', text: 'Press PLAY. Press YES on the generator for a new seed; STOP/PLAY keeps the populated phrase.' },
     { title: 'Return to sample playback.', text: 'Stop playback and select normal FLEX or STATIC. The generated pattern stays in place. Expand the full instructions below for sample editing and the second SRC page.' },
   ] },
-  'digitakt-digislicer': { version: '2.1.1-experimental', steps: [
-    { title: 'Load a loop.', text: 'Choose DIGISLICER in FUNC + SRC, assign a drum loop with SAMP, then press SRC again for the waveform editor.' },
-    { title: 'Create 16 slices.', text: 'Press YES, choose CREATE GRID with UP/DOWN, select 16 with LEFT/RIGHT and confirm with YES. This replaces the sample’s existing slice layout.' },
-    { title: 'Adjust and save.', text: 'Select a slice with A and move its start with B. Close with SRC or NO and wait at least one second. All DIGISLICER tracks using this sample share the saved slices.' },
-    { title: 'Play the slices.', text: 'Press FUNC + TRK for keyboard mode and play trig keys 1–16. UP/DOWN selects later slice pages.' },
-    { title: 'Finish or reset.', text: 'Press STOP and leave keyboard mode. To remove the layout, reopen the editor and choose YES → DELETE ALL; playback returns to the SRC page’s GRID setting.' },
-  ] },
-  'digitakt-digineighbor': { version: '0.6.1-experimental', steps: [
-    { title: 'Route T1 into T2.', text: 'Put a sample and trigs on T1. On T2, choose NEIGHBOR in FUNC + SRC and set SLOT to 1.' },
-    { title: 'Let the source through.', text: 'Set T2 TUNE to 0, GAIN to 0 dB and LEV to 100, with no trig-note transpose. Add a T2 trig and use a long AMP HOLD or DECAY.' },
-    { title: 'Hear the processing.', text: 'Play the pattern and adjust T2’s filter. Lower T1 AMP VOL to hear only T2; the source tap is before T1’s volume.' },
-    { title: 'Reset the route.', text: 'Stop playback, restore T1 AMP VOL and set T2 SLOT to 0. Keep TUNE 0 and GAIN 0 dB for a neutral start.' },
-  ] },
   'digitakt-digisophie': { version: '1.2.0-experimental', steps: [
     { title: 'Choose FUSE.', text: 'Select SOPHIE in FUNC + SRC and choose FUSE with MODEL. No sample is needed.' },
     { title: 'Give notes an end.', text: 'Set SWEEP and FOLD to 0. On AMP, set HOLD to NOTE and choose a finite DEC; avoid INF. TRIG LEN sets when release begins.' },

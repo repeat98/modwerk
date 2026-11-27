@@ -34,7 +34,7 @@ Use the access steps below after installing a compatible build. The tutorial giv
 
 Location: SRC machine list.
 
-1. Use a build containing SOPHIE for the original Digitakt on OS 1.53; digihealth is optional.
+1. Use a build containing SOPHIE for the original Digitakt on OS 1.53.
 2. Select an audio track, press FUNC + SRC and choose SOPHIE from the machine list.
 3. Adjust TUNE through COLOR on the SRC page. Set note duration and release on AMP, then trigger the track from the sequencer or keyboard.
 
@@ -65,7 +65,7 @@ MODEL, COLOR, METAL and FBK interact, so compare models using the same pitch and
 
 - Original Digitakt (Mk1), OS 1.53 and 1.54, with Core 2.1 and Machine Pages, which draws SOPHIE's SRC and LFO pages. Digitakt II is not declared compatible.
 - Not with NEIGHBOR 0.6 or DIGISLICER 2.1, which draw their own SRC pages, or with Digi Mono and Digi Poly, whose DigiChain conflicts with Machine Pages.
-- digihealth is optional, not a dependency. One instance runs without FAST AUDIO; the author’s earlier hardware test found two practical with it enabled. Eight simultaneous SOPHIE tracks are not claimed.
+- One instance runs without FAST AUDIO, which the library no longer offers; the author’s earlier hardware test found two practical with it enabled. Eight simultaneous SOPHIE tracks are not claimed.
 - The pinned author README distinguishes the older hardware-tested release from later source revisions. That history does not qualify this Modwerk metadata revision.
 - FOLD replaces BR on SOPHIE’s SRC page; SAMP remains visible but has no effect on synthesis. DEC = INF can sustain notes indefinitely.
 

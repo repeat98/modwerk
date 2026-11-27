@@ -8,9 +8,6 @@ These guides cover the controls, access steps, a practical tutorial and the exis
 
 | Module | Guide |
 | --- | --- |
-| [digihealth](digihealth/README.md) | Compare a pattern's audio-render load with FAST AUDIO and SYSTEM INFO. |
-| [NEIGHBOR](digineighbor/README.md) | Route a source track through a second track's filter, envelope and sends. |
-| [DIGISLICER](digislicer/README.md) | Edit and save sample slices, then play and record them from the trig keys. |
 | [SOPHIE](digisophie/README.md) | Sequence a metallic percussion voice and shape its synthesis and AMP envelope. |
 | [digichain](digichain/README.md) | Use the shared SRC-page framework through Digi Poly. |
 | [Digi EQ](digieq/README.md) | Shape the master mix with four EQ bands. |

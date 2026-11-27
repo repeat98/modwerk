@@ -34,7 +34,7 @@ Use the access steps below after installing a compatible build. The tutorial giv
 
 Location: SRC machine list.
 
-1. Use a build containing DT-FM for the original Digitakt on OS 1.53 or 1.54; add digihealth to use FAST AUDIO.
+1. Use a build containing DT-FM for the original Digitakt on OS 1.53 or 1.54.
 2. Select an audio track, press FUNC + SRC and choose DT-FM from the machine list.
 3. Shape the sound on the SRC page: ALGO for the routing, OP for the operator that RATIO, LEVEL, ATTK and DECAY edit.
 
@@ -69,7 +69,7 @@ Operator 4 also has feedback, set by CHAR. The table follows the author's [algor
 ## Compatibility and limitations
 
 - Original Digitakt (Mk1), OS 1.53 and 1.54, with core 3.0 or newer and Machine Pages, which draws DT-FM's SRC page. Digitakt II is not declared compatible.
-- Its author warns that several DT-FM tracks can freeze the Digitakt without FAST AUDIO: add digihealth and turn FAST AUDIO on. Four tracks used about 95 % CPU without it and about 85 % with it; on a Modwerk build with FAST AUDIO, six tracks played before CPU reached 100 %. Eight tracks are not claimed.
+- Its author warns that several DT-FM tracks can freeze the Digitakt without FAST AUDIO, which the library no longer offers: keep to one or two tracks. Four tracks used about 95 % CPU without it and about 85 % with it; on a Modwerk build with FAST AUDIO, six tracks played before CPU reached 100 %. Eight tracks are not claimed.
 - Not with SOPHIE: DT-FM is a fork of it and uses the same names.
 - Needs core 3.0 or newer, so it does not build beside Digi EQ 1.0.2, which builds only on core 2.1.
 - Machine Pages conflicts with DigiChain, so DT-FM cannot be combined with Digi Mono or Digi Poly. NEIGHBOR 0.6 and DIGISLICER 2.1 draw their own SRC pages and stay incompatible.

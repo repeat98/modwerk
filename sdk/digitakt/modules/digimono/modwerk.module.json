@@ -115,8 +115,6 @@
       "digichain"
     ],
     "conflicts": [
-      "digineighbor",
-      "digislicer",
       "digisophie"
     ],
     "limitations": [

@@ -480,31 +480,6 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
       }
     ]
   },
-  "digitakt-digihealth": {
-    "version": "1.0.2-experimental",
-    "screenshots": [
-      {
-        "path": "media/settings.png",
-        "caption": "Open SETTINGS and tick SYSTEM INFO, then return to a playing pattern. The top bar alternates CPU/DSP load and free-memory figures every two seconds. Untick SYSTEM INFO to hide it.",
-        "alt": "Digitakt Settings with SYSTEM INFO enabled and CPU/DSP fields showing dashes."
-      },
-      {
-        "path": "media/status-a.png",
-        "caption": "Wait for the memory page: RAM is free heap memory and SMP is sample memory. These figures describe the current system, so compare the same project and passage when checking a change.",
-        "alt": "Digitakt AMP page with RAM 13.5M and SMP 64.0M in the top bar."
-      },
-      {
-        "path": "media/status-b.png",
-        "caption": "On the load page, CPU and DSP show current and recent peak workload on hardware. The dashes in this emulator capture mean timing is unavailable; they are not zero load. Keep the passage unchanged when comparing settings.",
-        "alt": "Digitakt SRC page with CPU and DSP timing fields displayed as dashes."
-      },
-      {
-        "path": "media/fast-audio.png",
-        "caption": "FAST AUDIO normally starts after boot; untick it in SETTINGS to disable it until the next power-on. Compare several readouts of the same passage with it enabled and disabled. The screenshot shows the setting, not a measured speed improvement.",
-        "alt": "Digitakt Settings with FAST AUDIO selected and enabled."
-      }
-    ]
-  },
   "digitakt-digimatrix": {
     "version": "1.0.1-experimental",
     "screenshots": [
@@ -569,31 +544,6 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
       }
     ]
   },
-  "digitakt-digineighbor": {
-    "version": "0.6.1-experimental",
-    "screenshots": [
-      {
-        "path": "media/chooser.png",
-        "caption": "Put a sample and trigs on T1, then select T2 and choose NEIGHBOR with FUNC + SRC. Press YES to confirm; T2 will process another track’s audio rather than a sample of its own.",
-        "alt": "Digitakt T2 machine chooser with NEIGHBOR selected."
-      },
-      {
-        "path": "media/src.png",
-        "caption": "Set SLOT on T2 to 1 to receive T1, then add a T2 trig. Start with TUNE 0, GAIN 0 dB and LEV 100; SLOT 0 or T2’s own number produces silence. TUNE can pitch-shift the routed audio.",
-        "alt": "NEIGHBOR SRC page with TUNE, BR, SLOT, GAIN and LEV."
-      },
-      {
-        "path": "media/amp.png",
-        "caption": "On T2’s AMP page, use a long HOLD or DECAY so the envelope lets T1 through. Lower T1’s AMP VOL to hear only T2: the source tap is before that volume. Restore T1’s volume and set T2 SLOT to 0 when finished.",
-        "alt": "Receiving track controls for ATK, HOLD, DEC, OVER, DEL, REV, PAN and VOL."
-      },
-      {
-        "path": "media/filter.png",
-        "caption": "Press FLTR on T2 and change FREQ to filter T1’s routed audio. Add resonance with RESO or shape the filter envelope; these controls process the receiving route.",
-        "alt": "Receiving track filter page with FREQ, RESO, TYPE and envelope controls."
-      }
-    ]
-  },
   "digitakt-digipoly": {
     "version": "2.0.1-experimental",
     "screenshots": [
@@ -611,26 +561,6 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
         "path": "media/chord.png",
         "caption": "On TRIG, set NOT1 as the root, NOT2 to +4 and NOT3 to +7; leave NOT4 off. Trigger the track to hear a major chord with the selected sample. Turn the extra notes off or select ONESHOT to return to single-note playback.",
         "alt": "POLY TRIG page with root note, three extra-note controls and chord keyboard."
-      }
-    ]
-  },
-  "digitakt-digislicer": {
-    "version": "2.1.1-experimental",
-    "screenshots": [
-      {
-        "path": "media/chooser.png",
-        "caption": "On an audio track, press FUNC + SRC, choose DIGISLICER below SLICE and confirm with YES. Use a drum loop for the first example.",
-        "alt": "Digitakt machine chooser with DIGISLICER selected."
-      },
-      {
-        "path": "media/src.png",
-        "caption": "Select the loop with SAMP and press SRC again for the slice editor. SLICE selects the played slice and LEN sets how many slices a note spans; custom slices override GRID. This capture is before the loop is assigned.",
-        "alt": "DIGISLICER SRC page with TUNE, PLAY, BR, SAMP, SLICE, LEN, GRID and LEV."
-      },
-      {
-        "path": "media/editor.png",
-        "caption": "Press YES in the editor, choose CREATE GRID, select 16 with LEFT/RIGHT and confirm with YES; this replaces existing slices. A selects a slice, B moves its start and C fine-tunes it. Close with SRC or NO, wait a second for saving, then use FUNC + TRK to play slices on trig keys.",
-        "alt": "DIGISLICER waveform editor with four transients and slice, move, fine and zoom controls."
       }
     ]
   },
@@ -682,41 +612,6 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
         "path": "media/fullscreen.png",
         "caption": "Press YES to toggle fullscreen and hide the top bar. The underlying track knobs, mutes and transport still work while viewing the signal. Press NO to close the utility and STOP when finished.",
         "alt": "Fullscreen X-Y view with the top bar hidden and a single point at the center."
-      }
-    ]
-  },
-  "digitone-digihealth": {
-    "version": "1.1.2-experimental",
-    "screenshots": [
-      {
-        "path": "media/settings.png",
-        "caption": "Open SETTINGS and tick SYSTEM INFO, then return to a playing pattern. Load and free-RAM pages alternate every two seconds; untick it to restore the normal top bar. This Digitone port has no FAST AUDIO toggle.",
-        "alt": "Digitone Settings with SYSTEM INFO enabled."
-      },
-      {
-        "path": "media/memory.png",
-        "caption": "Wait for the memory page to read free heap RAM. The picture shows RAM 13.1M; compare the same project when investigating a change. This is a system readout, not an individual module’s memory cost.",
-        "alt": "Digitone AMP page with RAM 13.1M in the top bar."
-      },
-      {
-        "path": "media/load.png",
-        "caption": "The load page shows CPU and audio-render DSP current and recent peak figures on hardware. DSP covers effects and mixing, not the separate FM voice CPU. Dashes in this emulator capture mean timing is unavailable, rather than zero load.",
-        "alt": "Digitone SYN1 page with CPU and DSP load fields showing dashes."
-      }
-    ]
-  },
-  "digitone-digitables": {
-    "version": "1.3.1-experimental",
-    "screenshots": [
-      {
-        "path": "media/tbl.png",
-        "caption": "Press AMP until its third page, or hold a track key for half a second and choose TABLES in the Mod Menu. Select a table with TBL and set SPD for its step rate, then hold the track key to open its editor. TBL OFF restores ordinary pitch playback.",
-        "alt": "Digitone AMP third page with TBL and SPD controls."
-      },
-      {
-        "path": "media/editor-step.png",
-        "caption": "Use trig keys or LEFT/RIGHT to choose a step and A or UP/DOWN for its semitone offset. Try offsets 0, +4 and +7, length 3 with C and loop point 1 with D; NO returns to TBL, where a held note plays the sequence. This picture shows table 1, length 4 and step 1 at +04.",
-        "alt": "Table 01 editor with length 04, loop 01 and step 01 NOTE +04."
       }
     ]
   },

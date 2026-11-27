@@ -130,24 +130,9 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
         links: [repo('gdeo607/digi1_mods')],
       },
       {
-        name: 'Digislicer', author: 'irpina',
-        description: 'The Digitakt slicing module, with its original source and documentation preserved in the machine SDK.',
-        links: [repo('irpina/digislicer')],
-      },
-      {
-        name: 'Digineighbor', author: 'irpina',
-        description: 'The Digitakt neighbor-processing module, with its original source and documentation preserved in the machine SDK.',
-        links: [repo('irpina/digineighbor')],
-      },
-      {
         name: 'Digihealth', author: 'irpina',
-        description: 'System information and diagnostic modules for Digitakt and Digitone, including the Digitakt FAST AUDIO work.',
+        description: 'The Digitakt FAST AUDIO planning that Modwerk\'s module builds follow.',
         links: [repo('irpina/digihealth')],
-      },
-      {
-        name: 'digitables', author: 'irpina',
-        description: 'The Digitone module for custom pitch tables, with its original implementation and attribution retained in the machine SDK.',
-        links: [repo('irpina/digitables')],
       },
       {
         name: 'Digisophie', author: 'Sjoerd (@soejrd)',
