@@ -12,7 +12,7 @@
   },
   "build": {
     "status": "pending",
-    "reason": "One FRACT owner may use any T1\u2013T8; exact new-build qualification pending."
+    "reason": "Development0.1.7 hardware evidence recorded; released-base audio, full qualification, human stage and first-release review remain pending."
   },
   "author": {
     "github": "ex1010",
@@ -122,11 +122,11 @@
       "Unlisted source draft; not offered by the public configurator.",
       "Eight registry slots exist; FRACT admits only one owner on T1\u2013T8.",
       "USB package requires the base identified by requiredBase; compatible base rebuilds relink imports.",
-      "Version0.1.7 is not hardware-qualified. Prior0.1.6 development9b86 format/USB results remain historical; new exact-build tests are pending."
+      "Version0.1.7 remains unqualified: development125c tested; private probe timing is separately scoped; exact released-base audio and human/persistence stage remain pending."
     ]
   },
   "resources": {
-    "recorded": "27 November2026: 0.1.7 memory/stack accounted; new-build hardware qualification pending",
+    "recorded": "27 November 2026: memory/stack, development audio and separate probe observations",
     "storage": {
       "label": "Public package memory",
       "display": "67,376 resident pool bytes; 616 own stack bytes per callback",
@@ -142,16 +142,16 @@
       "value": null,
       "unit": "cycles/block",
       "method": "unmeasured",
-      "conditions": "Current0.1.7 worst-case cycles and hardware timing are unmeasured. Earlier0.1.6 development9b86 mean/USB observations are historical, not qualification of this build.",
+      "conditions": "Static worst-case CPU cycles remain unmeasured. Probe89411 observed inclusive block peak168.80us including native FLEX and timer overhead; this does not qualify public f806 timing.",
       "source": "TESTING.md"
     },
     "impact": {
-      "conditions": "One FRACT owner on any T1\u2013T8, two live grain heads, moving controls and native-pitch packet splits. Stock sample pages reused; replacement retains two module extents. New-build hardware timing pending.",
+      "conditions": "One owner on any T1-T8, two live readers in three stored slots. Development125c observed on all eight tracks and in active USB stress; public-package timing and full qualification pending.",
       "cpu": {
         "level": "high",
         "basis": "measured-comparison",
-        "rationale": "Historical0.1.6 development9b86: maximum observed active-minus-quiet mean33.5points vs price40. Current0.1.7 retains that conservative declaration; no new-build measurement or worst-case/peak guarantee.",
-        "source": "release/hardware-20261127-iteration17.md"
+        "rationale": "Development125c: largest observed active-minus-quiet mean33.5points in20four-format windows versus descriptor40; no worst-case/peak guarantee.",
+        "source": "release/hardware-20261127-iteration18.md"
       },
       "dsp": {
         "level": "minimal",
@@ -172,14 +172,14 @@
       "measure": "machine-render",
       "tool": "npm run device -- do guard (through device-send.py on shared serve)",
       "date": "2026-11-27",
-      "conditions": "Historical0.1.6 development9b86:20verified format windows,120BPM,64T1trigs,44.1kHz88200frame16/24-bit mono/stereo. Largest active-minus-quiet mean33.5points. Current0.1.7 retains40pending new-build measurement; no worst-case/peak guarantee.",
-      "source": "release/hardware-20261127-iteration17.md"
+      "conditions": "Development125c/base46:20verified format windows,120BPM,64T1trigs,44.1kHz88200frame16/24-bit mono/stereo. Maximum active-minus-quiet mean33.5points. Descriptor40 unchanged; this is not static/peak headroom or public-package qualification.",
+      "source": "release/hardware-20261127-iteration18.md"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "0.1.7 source/module checks and isolated Linux byte reproduction pass. Qualification worktree SDK/runtime checks pass with separately submitted corrections#2283/#2294; unchanged main gates retain old hardcoded assumptions. New-build hardware stage1 pending USB recovery; prior0.1.6 results historical. Listening/persistence/owner review pending.",
-    "hardwareStatus": "untested",
+    "summary": "Development125c: fixed T1/T5 and12Part checks,2400-operation control soak, all8single-owner picks,20format windows and122sactive4chUSB with zero new guard skips. Private timing probe separately scoped. Full qualification, released-base audio, listening/persistence and first-release review pending. Shared SDK gate corrections#2283/#2294 remain separate. Exact public f806/base24e install/integrity/Undo passed; audio and full release qualification remain pending.",
+    "hardwareStatus": "reported",
     "gates": [
       "modules/fract-machine/verify.py"
     ],

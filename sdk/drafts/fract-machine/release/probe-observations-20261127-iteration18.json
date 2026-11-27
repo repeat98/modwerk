@@ -1,0 +1,138 @@
+{
+  "hardware": true,
+  "kind": "PRIVATE_PROBE_OBSERVATIONS",
+  "probePackageSha256": "89411b02fd8ff18696d18427cb60120247b531d0ddacf6f43b6c923406c63c8f",
+  "normalPackageSha256": "125c0ab3c7ac9b5cf8afc45710bca68ef62f8e55b34c8bb6fa20e6ae2379a165",
+  "base": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+  "conditions": "FR27M18fourbank formats;nativeFLEXPart1/defaultPart3/extremePart4;3swarm,GUARDreset,3swait for2complete probe epochs,5scollector,GUARDafter. NoUSB AUDIO companion. GUARD resets mw_frame_count as well as maxima; first failed flags5 capture retained and excluded. Original11textunits unchanged; wrapper/tick add measurement overhead.",
+  "rows": [
+    {
+      "format": "16m",
+      "condition": "native-flex",
+      "guardWindowMaxPercent": 60.7,
+      "guardWindowMaxUs": 220.2260378787879,
+      "meanIdlePercent": 57.47679683863669,
+      "probeWindows": 5,
+      "lifetimeOwnBlockPeakUs": 0,
+      "lifetimeOwnCallPeakUs": 0
+    },
+    {
+      "format": "16m",
+      "condition": "fract-default",
+      "guardWindowMaxPercent": 87.8,
+      "guardWindowMaxUs": 318.5477121212121,
+      "meanIdlePercent": 35.378447501209656,
+      "probeWindows": 5,
+      "lifetimeOwnBlockPeakUs": 142.56060606060606,
+      "lifetimeOwnCallPeakUs": 95.75
+    },
+    {
+      "format": "16m",
+      "condition": "fract-extreme",
+      "guardWindowMaxPercent": 89.4,
+      "guardWindowMaxUs": 324.35268181818185,
+      "meanIdlePercent": 31.437537557588303,
+      "probeWindows": 4,
+      "lifetimeOwnBlockPeakUs": 159.75757575757575,
+      "lifetimeOwnCallPeakUs": 124.78030303030303
+    },
+    {
+      "format": "16s",
+      "condition": "native-flex",
+      "guardWindowMaxPercent": 60.0,
+      "guardWindowMaxUs": 217.68636363636364,
+      "meanIdlePercent": 57.31654104602721,
+      "probeWindows": 5,
+      "lifetimeOwnBlockPeakUs": 159.75757575757575,
+      "lifetimeOwnCallPeakUs": 126.59848484848484
+    },
+    {
+      "format": "16s",
+      "condition": "fract-default",
+      "guardWindowMaxPercent": 87.4,
+      "guardWindowMaxUs": 317.09646969696973,
+      "meanIdlePercent": 34.71660786907737,
+      "probeWindows": 5,
+      "lifetimeOwnBlockPeakUs": 159.75757575757575,
+      "lifetimeOwnCallPeakUs": 126.59848484848484
+    },
+    {
+      "format": "16s",
+      "condition": "fract-extreme",
+      "guardWindowMaxPercent": 92.2,
+      "guardWindowMaxUs": 334.5113787878788,
+      "meanIdlePercent": 30.661572578639774,
+      "probeWindows": 6,
+      "lifetimeOwnBlockPeakUs": 161.38636363636363,
+      "lifetimeOwnCallPeakUs": 129.3560606060606
+    },
+    {
+      "format": "24m",
+      "condition": "native-flex",
+      "guardWindowMaxPercent": 60.3,
+      "guardWindowMaxUs": 218.77479545454545,
+      "meanIdlePercent": 57.38694053980987,
+      "probeWindows": 5,
+      "lifetimeOwnBlockPeakUs": 161.38636363636363,
+      "lifetimeOwnCallPeakUs": 129.3560606060606
+    },
+    {
+      "format": "24m",
+      "condition": "fract-default",
+      "guardWindowMaxPercent": 87.2,
+      "guardWindowMaxUs": 316.3708484848485,
+      "meanIdlePercent": 34.96946042410888,
+      "probeWindows": 5,
+      "lifetimeOwnBlockPeakUs": 161.38636363636363,
+      "lifetimeOwnCallPeakUs": 129.3560606060606
+    },
+    {
+      "format": "24m",
+      "condition": "fract-extreme",
+      "guardWindowMaxPercent": 90.2,
+      "guardWindowMaxUs": 327.25516666666664,
+      "meanIdlePercent": 31.263722298946306,
+      "probeWindows": 5,
+      "lifetimeOwnBlockPeakUs": 164.96212121212122,
+      "lifetimeOwnCallPeakUs": 131.21212121212122
+    },
+    {
+      "format": "24s",
+      "condition": "native-flex",
+      "guardWindowMaxPercent": 60.4,
+      "guardWindowMaxUs": 219.13760606060606,
+      "meanIdlePercent": 57.44195205785997,
+      "probeWindows": 6,
+      "lifetimeOwnBlockPeakUs": 164.96212121212122,
+      "lifetimeOwnCallPeakUs": 131.21212121212122
+    },
+    {
+      "format": "24s",
+      "condition": "fract-default",
+      "guardWindowMaxPercent": 88.8,
+      "guardWindowMaxUs": 322.17581818181816,
+      "meanIdlePercent": 34.43134735457165,
+      "probeWindows": 4,
+      "lifetimeOwnBlockPeakUs": 164.96212121212122,
+      "lifetimeOwnCallPeakUs": 131.21212121212122
+    },
+    {
+      "format": "24s",
+      "condition": "fract-extreme",
+      "guardWindowMaxPercent": 85.6,
+      "guardWindowMaxUs": 310.5658787878788,
+      "meanIdlePercent": 29.817875598086125,
+      "probeWindows": 5,
+      "lifetimeOwnBlockPeakUs": 168.79545454545453,
+      "lifetimeOwnCallPeakUs": 131.21212121212122
+    }
+  ],
+  "observedInclusiveOwnBlockPeakUs": 168.79545454545453,
+  "observedInclusiveOwnCallPeakUs": 131.21212121212122,
+  "maxCallsPerBlock": 2,
+  "wholeInterruptGuardShareUs": 290.24242424242425,
+  "nominalFrameUs": 362.81179138321994,
+  "maxTimerFrameRelativeError": 0.00015764170541099354,
+  "newGuardSkips": 0,
+  "limits": "Inclusive callback peak includes native FLEX and timer/call overhead, excludes trailing probe bookkeeping; lifetime value across cases. Guard maxima cover post-reset settling plus capture, not since boot. No CPU-cycle conversion, staticWCET, exclusive timing, public-package audio qualification, listening or release approval."
+}

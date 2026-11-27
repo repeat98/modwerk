@@ -1,5 +1,5 @@
 {
-  "status": "OWN_MEMORY_AND_STACK_ACCOUNTED_NEW_ALL_TRACK_PROFILE_NOT_YET_TESTED",
+  "status": "OWN_MEMORY_STACK_ACCOUNTED_DEVELOPMENT_HARDWARE_OBSERVED_RELEASE_QUALIFICATION_INCOMPLETE",
   "packageSha256": "f8063d691afc26ab4fe69a3fa709d2b12c68d93b203f0a84536d1755d33755c4",
   "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
   "codeAndInitializedDataBytes": 65964,
@@ -22,7 +22,7 @@
   "worstCaseColdFireCycles": null,
   "dspCodeWordsAdded": 0,
   "dspStateWordsAdded": 0,
-  "hardware": "0.1.7all-track profile pending new exact-build hardware qualification; prior0.1.6 observations remain historical.",
+  "hardware": "Development125c/base46 observations and separate probe89411 timing in hardware-20261127-iteration18.md; public f806 audio and full qualification pending. Public f806/base24e install/integrity/Undo passed; public audio and full qualification pending.",
   "details": "resources.md",
   "previousCandidateVersion": "0.1.6-experimental",
   "previousCandidatePackageSha256": "8c9603a42e6a4ab369d8bfe94fe1f5275a9b4a2c48b285323deb829d486294f0"

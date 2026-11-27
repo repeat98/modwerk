@@ -4,7 +4,7 @@ Unlisted0.1.7 package `f8063d691afc26ab4fe69a3fa709d2b12c68d93b203f0a84536d1755d
 
 The reviewed graph contains33 indirect sites, matched against the independently disassembled two-reader prototype. Regular/joined assembly frames use48/56bytes; the one-frame leaf uses4, and the short-Hann helper has no local frame. Unknown targets, recursion, changed images or loader layouts refuse reuse. Base/stock/interrupt frames are excluded; this is no whole-system stack reserve or timing bound.
 
-The 33 indirect sites match the prior two-reader image. Only the admission limit instruction byte changed; resource accounting was rerun. Current-build hardware timing remains unmeasured. Prior0.1.6 development9b86 active USB observations remain historical.
+The 33 indirect sites match the prior two-reader image. Only the admission limit instruction byte changed; resource accounting was rerun. Development125c hardware and separately scoped probe89411 timing observations are in [the current report](hardware-20261127-iteration18.md). Static worst-case CPU cycles and public-package audio remain unqualified. Prior0.1.6 results remain historical.
 
 ## Historical candidate resources — 10 November 2026
 

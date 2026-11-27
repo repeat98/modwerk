@@ -1,0 +1,41 @@
+{
+  "hardware": true,
+  "packageSha256": "125c0ab3c7ac9b5cf8afc45710bca68ef62f8e55b34c8bb6fa20e6ae2379a165",
+  "channels": 4,
+  "rate": 44100,
+  "frames": 5484032,
+  "seconds": 124.35446712018141,
+  "analysedSeconds": 118.35446712018141,
+  "trimSecondsAtEachEnd": 3,
+  "peakAbsolute32": [
+    3932160,
+    3970048,
+    15164416,
+    15307008
+  ],
+  "rms32": [
+    1145930.0308787252,
+    1144317.576360626,
+    4418918.146702343,
+    4412673.998016658
+  ],
+  "nonzeroSamples": [
+    5219432,
+    5219428,
+    5212350,
+    5211585
+  ],
+  "longestAllChannelExactZeroFrames": 0,
+  "longestAllChannelExactZeroMs": 0.0,
+  "adjacentBlockComparison": {
+    "16": {
+      "equalAdjacentBlocks": 3409,
+      "largestRepeatedChain": 11
+    },
+    "64": {
+      "equalAdjacentBlocks": 3,
+      "largestRepeatedChain": 2
+    }
+  },
+  "scope": "Digital capture inspection only; long exact zero and repeated-block observations are not listening, a complete dropout detector or musical approval."
+}

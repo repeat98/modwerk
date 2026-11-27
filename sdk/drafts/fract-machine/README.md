@@ -2,11 +2,11 @@
 
 Version 0.1.7-experimental · author @ex1010
 
-Two live readers are implemented with the earlier128-byte/three-slot storage ABI.
-Native inputs are committed at0de973642. Development9b86 passed the four-format
-matrix and a122.233s active4chUSB run without new guarded skips. Full stage1 is
-incomplete: the fixed procedure failedT5restriction/onePart4transition. This
-remains an unpublished candidate; see [current evidence](release/hardware-20261127-iteration17.md).
+Two live readers retain the 128-byte/three-slot Part ABI. One FRACT owner may use
+any T1-T8. Development125c passed the four-format matrix and a 122-second active
+MAIN+CUE USB case without new guarded render skips. It also passed T1/T5 and
+12 Part-transition checks. This remains an unpublished candidate: released-base
+audio, full qualification and the human stage are pending. See [current evidence](release/hardware-20261127-iteration18.md).
 
 ## Overview
 
@@ -75,7 +75,7 @@ See TESTING.md for identities, reported observations and limits. No active catal
 TESTING.md. The historical 0.1.2 candidate has a named-build functional hardware report.
 Current 0.1.6 targets released base0.8.2 and declares a 40% CPU budget after
 physical four-format measurements found the implicit 12% charge insufficient.
-The current two-reader matrix observed at most33.5added mean points; see [the named hardware record](release/hardware-20261127-iteration17.md). Full qualification and first-release approval remain pending.
+The current development125c matrix observed at most33.5added mean points; see [the named hardware record](release/hardware-20261127-iteration18.md). Full qualification and first-release approval remain pending.
 
 Historical 0.1.1 results remain in TESTING.md. The historical 0.1.2 candidate's Part and
 project reload, lifecycle and cold boot are scoped in

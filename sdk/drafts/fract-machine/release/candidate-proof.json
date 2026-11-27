@@ -22,8 +22,9 @@
   "stockCopies": 3,
   "stockFills": 0,
   "stockVerification": "PASS",
-  "hardware": "NOT_RUN",
+  "hardware": "INSTALL_INTEGRITY_UNDO_ONLY",
   "version": "0.1.7-experimental",
-  "qualification": "NEW_ALL_TRACK_PROFILE_NOT_YET_TESTED",
-  "hardwareReport": "qualification-20261127-iteration18.md"
+  "qualification": "DEVELOPMENT_AUDIO_OBSERVED_PUBLIC_INSTALL_ONLY_FULL_QUALIFICATION_PENDING",
+  "hardwareReport": "qualification-20261127-iteration18.md",
+  "hardwareEvidence": "public-install-20261127-iteration18.json"
 }

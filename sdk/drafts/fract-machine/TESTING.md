@@ -1,10 +1,12 @@
 # FRACT testing
 
-## Current 0.1.7 preparation — 27 November 2026
+## Current 0.1.7 observations — 27 November 2026
 
 One FRACT owner may now use any T1–T8; two live readers and the Part ABI are unchanged. The actual admission function passes all eight owners, 64 exclusion pairs, invalid tracks and Part immutability checks. Ten module tests, 52 SDK cases (four historical skips), nine runtime cases and seven probe cases pass. macOS and isolated Linux release packages are byte-identical. See [the exact-build record](release/qualification-20261127-iteration18.md).
 
-**New-build hardware stage 1 has not run.** Diagnostic base46 failed USB re-enumeration twice before the module was installed. Both attempts and the recovery readback are recorded locally. Prior 0.1.6 measurements below remain historical; they do not qualify 0.1.7. Listening, exact-version Keep/reboot and first-release approval remain pending.
+Development125c on base46 passed fixed T1/T5 and 12 Part checks, the 2400-operation control soak, all eight single-owner track picks, 20 four-format windows and 122 seconds of active MAIN+CUE four-channel USB stress with no new guard skips. CPU FULL refusals before refreshed native playback, CPU warning notes and failed probe attempts are retained. Private89411 timing is separate from normal125c. See [the hardware report](release/hardware-20261127-iteration18.md).
+
+**Full stage1 remains incomplete.** The procedure's price step was a false success with a misidentified filename; its partial rest data are not a valid curve. A correctly named single-owner repeat is recorded separately. Exact public f806/base24e install/integrity/Undo passed45seconds; released-base audio, remaining lifecycle/companion cases, listening, exact-version Keep/reboot and first-release approval remain pending. No waiver is granted.
 
 
 

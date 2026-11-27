@@ -8,31 +8,41 @@
     "static": null,
     "measured": null,
     "budget": null,
-    "method": "CPU cycles and static worst-case bound NOT MEASURED; targeted diagnostic guard observations do not establish a worst-case bound."
+    "method": "CPU cycles, static WCET and an exclusive module budget remain unmeasured. Private timer probe observed inclusive callback/block peaks; timer ticks are not CPU cycles."
   },
   "load": {
-    "frameUs": 362.8,
-    "stockLongestUs": null,
-    "moduleLongestUs": null,
-    "stockIdlePercent": null,
-    "moduleIdlePercent": null,
-    "method": "NOT MEASURED on0.1.7. Historical0.1.6 matrix is archived in release/history/20261127-016-two-reader/evidence/performance.json."
+    "frameUs": 362.81179138321994,
+    "stockLongestUs": 219.13760606060606,
+    "moduleLongestUs": 322.17581818181816,
+    "stockIdlePercent": 57.44195205785997,
+    "moduleIdlePercent": 34.43134735457165,
+    "method": "Private probe89411/base46: matched 24-bit stereo native FLEX versus FRACT default, PTCH64, same sample/loop/tempo/64 trigs; no USB audio. Three seconds warm, GUARD reset, three seconds settle, five seconds collection. Guard maxima cover settling plus capture; idle is probe-window mean. Observations, not static WCET or public-package qualification."
   },
   "stress": {
     "floodMessagesPerSecond": null,
-    "clockBpm": null,
-    "seconds": null,
+    "clockBpm": 120,
+    "seconds": 122.00270175002515,
     "stuckNotes": null,
-    "hangs": null,
-    "dropped": null,
-    "droppedExplanation": "NOT MEASURED on0.1.7; no prior-build stress result promoted.",
-    "method": "NOT MEASURED on0.1.7; no prior-build stress result promoted."
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "No new guarded render skips through final STOP in this active MAIN+CUE four-channel USB case. Digital recording has no all-channel exact-zero interval; repeated blocks remain an observation, not a complete dropout detector.",
+    "method": "Normal development125c/base46; 64 native parameter locks, three LFOs, 22 MAIN/PAN/SRNG control windows. Recorder ran at both endpoints, all four channels nonzero. No new crash/stall; historical base stall marker7 unchanged. No listening approval; MIDI stuck-note/flood fields inapplicable and left null."
   },
   "scope": {
     "packageSha256": "125c0ab3c7ac9b5cf8afc45710bca68ef62f8e55b34c8bb6fa20e6ae2379a165",
     "baseIdentity": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
     "ownerMethod": "https://github.com/repeat98/modwerk/pull/1274#issuecomment-6705531953",
     "waiver": "NOT_GRANTED",
-    "hardware": "NOT_RUN: diagnostic base46 failed USB re-enumeration twice before this module was installed."
+    "hardware": "Development125c: fixed procedure T1/T5 and 12 Part transitions, MIDI/control soak, all-eight-track picks, four-format matrix and active USB capture observed. Price/procedure and release limits are in the exact-build report.",
+    "probePackageSha256": "89411b02fd8ff18696d18427cb60120247b531d0ddacf6f43b6c923406c63c8f",
+    "publicPackageSha256": "f8063d691afc26ab4fe69a3fa709d2b12c68d93b203f0a84536d1755d33755c4"
+  },
+  "observedTiming": {
+    "inclusiveBlockPeakUs": 168.79545454545453,
+    "inclusiveCallPeakUs": 131.21212121212122,
+    "callsPerBlockMax": 2,
+    "wholeInterruptGuardShareUs": 290.24242424242425,
+    "maxTimerFrameRelativeError": 0.00015764170541099354,
+    "scope": "Private probe; original eleven executable units preserved. Includes native FLEX and timer/call overhead, excludes trailing probe bookkeeping. Whole-ISR share also pays base/other work; it is not module headroom. Lifetime callback maxima across twelve cases. No waiver granted."
   }
 }

@@ -1,0 +1,48 @@
+{
+  "hardware": true,
+  "packageSha256": "125c0ab3c7ac9b5cf8afc45710bca68ef62f8e55b34c8bb6fa20e6ae2379a165",
+  "windows": 20,
+  "price": 40,
+  "guardedSkips": "0\u21920",
+  "conditions": "FR27M18banksA-D;Part1nativeFLEXloop2/TSTRoff,Part3FRACTdefault,Part4extreme;120BPM64T1trigs;88200frames44.1kHz;3swarm+6smeasured;USB AUDIO4ch installed,recorder idle",
+  "formats": [
+    {
+      "format": "16m",
+      "flexQuiet": 27.0,
+      "flexActive": 31.6,
+      "fractQuiet": 31.0,
+      "fractDefault": 59.3,
+      "fractExtreme": 63.1,
+      "largestActiveMinusQuiet": 32.1
+    },
+    {
+      "format": "16s",
+      "flexQuiet": 27.1,
+      "flexActive": 31.7,
+      "fractQuiet": 31.0,
+      "fractDefault": 60.0,
+      "fractExtreme": 64.0,
+      "largestActiveMinusQuiet": 33.0
+    },
+    {
+      "format": "24m",
+      "flexQuiet": 27.1,
+      "flexActive": 31.7,
+      "fractQuiet": 31.0,
+      "fractDefault": 59.7,
+      "fractExtreme": 63.3,
+      "largestActiveMinusQuiet": 32.3
+    },
+    {
+      "format": "24s",
+      "flexQuiet": 27.1,
+      "flexActive": 31.7,
+      "fractQuiet": 31.0,
+      "fractDefault": 60.1,
+      "fractExtreme": 64.5,
+      "largestActiveMinusQuiet": 33.5
+    }
+  ],
+  "maxObservedAddedMean": 33.5,
+  "limit": "Mean price observation, no static/peak headroom guarantee."
+}
