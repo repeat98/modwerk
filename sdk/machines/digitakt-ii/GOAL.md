@@ -14,7 +14,7 @@ This is the Octatrack's stack on the Digitakt II ([machine recipe](../../../docs
 | --- | --- | --- |
 | Base | Started. The site builds the pinned Modwerk base `8650bb8a` on core 1.1: `e88273ed` (#1571) with the kit data ended before the project archive. On `e88273ed`, project and kit data survived Save Project, a cold boot and KIT Save and Load on one unit. Downloads stay off | [base source](elekloader/README.md); #1582 adds the shared Mixer and a guarded pre-send render |
 | Hooks | Core 1.1's UI hooks, frame values, key LEDs, and project and kit data, plus the base's sequencer phrase hook and project archive. The base's pitch and grid collections are not in the contract yet | [core hooks](README.md#core-hooks), [sequencer hooks](elekloader/modwerk/README.md) |
-| USB link | Being scoped: SysEx over the stock USB MIDI first | [USB link](#usb-link) below |
+| USB link | Being scoped: SysEx over the stock USB MIDI first; offline stock-binding and base-overlap preflight implemented, native responder not implemented | [USB link](#usb-link) below; [run the preflight](LINK.md#check-the-stock-bindings-before-porting) |
 | Loading without a reflash | Not started | [porting the runtime loader](../../runtime/loader/README.md#porting-to-another-machine) |
 | Base updates over USB | Not started | [two-slot base](../../../docs/OCTATRACK_TWO_SLOT_BASE.md) |
 | MCP device tools | Not started | [device tools](../../../docs/FRONTEND_MCP.md#then-test-the-connected-device) |
