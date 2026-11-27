@@ -14,7 +14,7 @@
     {
       "id": "build",
       "status": "failed",
-      "reason": "exit 1: npm run module:dev -- clyps --build-only --out '/Users/andrea/Documents/ChatGPT/Modwerk & OT/CLYPS-native-sprint01-local/official-checkpoint/clyps.mwrm'"
+      "reason": "exit 1: npm run module:dev -- clyps --build-only --out <local build output>/clyps.mwrm"
     },
     {
       "id": "cost-model",
