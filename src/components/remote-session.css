@@ -6,7 +6,7 @@
 .remote-session-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 20px; }
 .remote-session-actions .text-button { margin-right: auto; }
 
-.remote-session-banner { position: fixed; z-index: 60; right: 16px; bottom: 16px; width: min(520px, calc(100% - 32px)); max-height: min(60dvh, 480px); overflow: auto; border: 1px solid var(--control-border); border-radius: var(--radius-lg); background: var(--surface-raised); color: var(--text); padding: 14px 16px; box-shadow: var(--shadow-popover); }
+.remote-session-banner { position: fixed; z-index: 60; right: 16px; bottom: 16px; width: min(520px, calc(100% - 32px)); max-height: min(60dvh, 480px); overflow: auto; border: 1px solid var(--control-border); border-radius: var(--radius-md); background: var(--surface-raised); color: var(--text); padding: 14px 16px; box-shadow: var(--shadow-popover); }
 .remote-session-banner p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--muted); }
 .remote-session-banner strong { color: var(--text); }
 .remote-session-banner.is-ended { display: flex; gap: 12px; align-items: center; }

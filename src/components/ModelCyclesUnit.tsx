@@ -77,11 +77,11 @@ export function ModelCyclesUnit({ device, header, request = browserMidi() }: { d
     <a className="button button-quiet" href={deviceHref(device.id)}>Open {device.name} page <Icon name="arrow" size={15} /></a>
   </div>
   return <div className="configuration-page octatrack-hub">
-    {header}
+    {header ?? <header className="hub-page-heading"><div><h1>Your {device.name}</h1></div></header>}
     <div className="hub-split">
       <header className="hub-hero">
         <DeviceImage device={device} eager />
-        <div><h1 className="hub-view-title">{device.name}</h1>
+        <div><h2 className="hub-view-title">{device.name}</h2>
           <p role="status"><span className={'unit-led is-' + (ready ? 'on' : status === 'connecting' ? 'load' : 'off')} aria-hidden="true" />{line}</p>
           {error && <p role="alert">{error}</p>}
         </div>

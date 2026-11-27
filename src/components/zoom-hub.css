@@ -10,8 +10,8 @@
 /* Setup: the firmware routes side by side. */
 .zoom-firmware { width: 100%; border-collapse: collapse; margin: 10px 0 12px; font-size: 13px; }
 .zoom-firmware caption { text-align: left; color: var(--muted); padding-bottom: 6px; }
-.zoom-firmware th, .zoom-firmware td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-top: 1px solid var(--line); }
-.zoom-firmware thead th { color: var(--muted); font-weight: 500; border-top: 0; }
+.zoom-firmware th, .zoom-firmware td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); }
+.zoom-firmware thead th { color: var(--muted); font-weight: 500; }
 .zoom-pick { cursor: pointer; }
 .zoom-pick.is-disabled { opacity: .5; pointer-events: none; }
 
@@ -32,7 +32,7 @@
 .zoom-patch-name input { width: 14ch; font-family: inherit; }
 .zoom-patch-slot-empty { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; border: 1px dashed var(--line); border-radius: var(--radius-md); }
 .zoom-patch-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; margin-top: 10px; }
-.zoom-patch-pick select { flex: 1 1 12rem; min-height: 36px; }
+.zoom-patch-pick select { flex: 1 1 12rem; min-height: 44px; padding: 10px 42px 10px 12px; background-color: var(--field); color: var(--text); font-size: 14px; }
 .zoom-patch-programs { margin-top: 28px; }
 .zoom-patch-programs h3 { margin: 0; font-size: 15px; }
 .zoom-patch-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 4px; margin: 0; padding: 0; list-style: none; }
@@ -46,7 +46,7 @@
 .zoom-parameter { display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 6px; color: var(--text-secondary); text-align: center; font-size: 12px; overflow-wrap: anywhere; }
 .zoom-parameter-value { color: var(--text); font-variant-numeric: tabular-nums; }
 .zoom-parameter-choice { justify-content: start; }
-.zoom-parameter-choice select { width: 100%; min-height: 36px; margin-top: 5px; padding: 5px 28px 5px 8px; font-size: 12px; background-position: right 8px center; }
+.zoom-parameter-choice select { width: 100%; min-height: 44px; margin-top: 5px; padding: 5px 28px 5px 8px; background-color: var(--field); color: var(--text); font-size: 13px; background-position: right 8px center; }
 .zoom-parameter-dial { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--control-border); border-radius: 50%; background: var(--field); color: var(--accent); }
 .zoom-parameter-dial::before { content: ''; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-hover); }
 .zoom-parameter-dial::after { content: ''; position: absolute; inset: 7px 20px; border-radius: 2px; background: linear-gradient(currentColor 8px, transparent 8px); transform: rotate(var(--rotation)); }

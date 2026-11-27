@@ -3,11 +3,11 @@
   flex-wrap: wrap;
   gap: 2px;
   margin: 0 0 18px;
-  padding: 4px;
+  padding: 3px;
   width: fit-content;
   max-width: 100%;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--field);
 }
 .admin-views a {
@@ -15,7 +15,7 @@
   align-items: center;
   min-height: 44px;
   padding: 7px 13px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   color: var(--muted);
   font-size: 13px;
 }
@@ -58,7 +58,7 @@
 .admin-delivery caption { padding-block: 10px; text-align: start; font-weight: 600; }
 .admin-delivery :is(th, td) { padding: 10px; border-bottom: 1px solid var(--line); text-align: end; }
 .admin-delivery :is(th, td):nth-child(-n+2) { text-align: start; }
-.admin-delivery th { color: var(--muted); }
+.admin-delivery th { color: var(--muted); font-weight: 500; }
 .admin-help { margin-block: 10px; color: var(--text-secondary); font-size: 13px; }
 .admin-help > summary { cursor: pointer; width: fit-content; padding-block: 10px; }
 .admin-send { min-width: 0; margin: 8px 0 0; padding: 12px 0 0; border: 0; border-top: 1px solid var(--line); }
@@ -70,7 +70,7 @@
 .admin-history li:last-child { padding-bottom: 0; }
 .admin-history p, .admin-comment p { margin-block: 8px; }
 .admin-search { display: grid; gap: 6px; max-width: 32rem; margin-block: 14px; font-size: 13px; }
-.admin-search input { min-height: 42px; padding-inline: 12px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--field); color: var(--text); }
+.admin-search input { min-height: 44px; padding-inline: 12px; font-size: 14px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--field); color: var(--text); }
 .admin-comment { border-top: 1px solid var(--line); padding-block: 15px; overflow-wrap: anywhere; }
 .admin-comment small { margin-inline-start: 10px; }
 .admin-comment p { margin-block: 8px; }

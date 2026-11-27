@@ -13,9 +13,8 @@
 .firmware-feedback-library h3 { padding-left: 12px; }
 .firmware-feedback-library ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .firmware-feedback-choice { position: relative; width: 100%; display: flex; gap: 12px; align-items: flex-start; border: 1px solid transparent; border-radius: var(--radius-md); padding: 12px 10px; text-align: left; background: transparent; color: inherit; }
-.firmware-feedback-choice:hover { background: #ffffff04; }
-.firmware-feedback-choice.is-active { border-color: var(--line); background: var(--surface-raised); }
-.firmware-feedback-choice.is-active::before { content: ''; position: absolute; top: 8px; bottom: 8px; left: -1px; width: 4px; border-radius: 3px; background: var(--accent); }
+.firmware-feedback-choice:hover { background: var(--surface-hover); }
+.firmware-feedback-choice.is-active { background: var(--accent-soft); color: var(--text); }
 .firmware-feedback-choice-copy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .firmware-feedback-choice-copy strong, .firmware-feedback-choice-copy small, .firmware-feedback-choice-copy > span { display: block; }
 .firmware-feedback-choice-copy strong { font-size: 14px; font-weight: 600; line-height: 1.3; }
@@ -74,7 +73,7 @@
 .firmware-feedback-dialog .firmware-feedback-help { color: var(--faint); font-size: 11px; margin-top: 8px; }
 .firmware-feedback-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; flex-shrink: 0; padding: 12px 28px; border-top: 1px solid var(--line); }
 .firmware-feedback-footer-actions { display: flex; align-items: center; gap: 20px; }
-.firmware-feedback-footer .text-button { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; min-height: 40px; }
+.firmware-feedback-footer .text-button { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; }
 .firmware-feedback-flash-toggle > svg:last-child { transform: rotate(90deg); }
 .firmware-feedback-footer .firmware-feedback-later { font-size: 11px; color: var(--faint); }
 .firmware-feedback-next { min-height: 44px; font-size: 14px; }

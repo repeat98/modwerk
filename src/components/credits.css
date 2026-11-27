@@ -1,4 +1,4 @@
-.credits-page { width: 100%; max-width: 1060px; margin: 0 auto; }
+.credits-page { width: 100%; max-width: 1040px; margin: 0 auto; }
 .credits-heading { margin-bottom: 26px; }
 .credits-heading > div > p:last-child { max-width: 660px; font-size: 14px; line-height: var(--reading-line-height); }
 .credits-origin { padding-top: 20px; border-top: 1px solid var(--line); }

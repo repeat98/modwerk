@@ -177,8 +177,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-heading-actions a { display: inline-flex; align-items: center; min-height: 2.25rem; color: var(--text-secondary); font-size: .875rem; }
 .hub-heading-actions a:hover { color: var(--text); text-decoration: underline; }
 .hub-heading-actions .button { min-height: 44px; }
-.hub-split { display: grid; flex: 1 0 16rem; grid-template-columns: clamp(13.5rem, 22%, 16rem) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; border: 1px solid var(--chrome-edge); border-radius: var(--radius-lg); background: var(--sidebar); }
-.octatrack-hub:not(.zoom-hub) > .hub-split { background: var(--surface); }
+.hub-split { display: grid; flex: 1 0 16rem; grid-template-columns: clamp(13.5rem, 22%, 16rem) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); min-height: 0; border: 1px solid var(--chrome-edge); border-radius: var(--radius-lg); background: var(--surface); }
 .hub-hero { grid-column: 1 / -1; display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--chrome-edge); }
 .hub-hero .device-photo { width: clamp(8.5rem, 15cqi, 11rem); height: auto; flex: none; }
 .hub-hero .device-photo.is-cutout { padding: 0; }
@@ -216,16 +215,16 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-set-menu .icon-button { padding: 7px; }
 .hub-set-menu .configuration-menu-panel { width: 190px; }
 .hub-nav-foot { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -8px 0 0; padding: 0 10px; }
-.hub-nav-foot .text-button { min-height: 32px; font-size: 13px; }
+.hub-nav-foot .text-button { min-height: 32px; }
 .hub-set-picker { display: none; width: 100%; min-width: 0; min-height: 44px; padding: 10px 42px 10px 12px; border: 1px solid var(--control-border); border-radius: var(--radius-md); background-color: var(--field); color: var(--text); font: inherit; font-size: 16px; }
 .hub-pane { min-width: 0; min-height: 0; overflow: auto; padding: 24px 28px 28px; container: hub-pane / inline-size; }
 .hub-view[hidden] { display: none; }
 .hub-view-title { margin: 0; font-size: var(--text-lg); letter-spacing: -.2px; overflow-wrap: anywhere; }
 .hub-section, .hub-view .octatrack-diagnostics { margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); }
-.hub-section h3, .hub-cell h3 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.hub-section h3 { margin: 0 0 10px; color: var(--text); font-size: var(--text-md); font-weight: 600; }
+.hub-cell h3 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; }
 .hub-section p { margin: 6px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 .hub-section .button { min-height: 44px; }
-.hub-base h3 { color: var(--text); font-size: var(--text-md); }
 .hub-base > p:first-of-type { color: var(--text); }
 .hub-base > .button { min-height: 44px; margin: 8px 0 6px; }
 /* Help that only some need: folded under its question. */
@@ -263,7 +262,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-screen .hub-screen-notice, .hub-screen .hub-screen-note { margin: 10px 2px 0; color: var(--muted); }
 .hub-screen .hub-screen-notice { color: var(--text-secondary); }
 .hub-screen-download { min-height: 40px; padding: 0 2px; }
-.hub-section .hub-code { margin: 8px 0; padding: 10px 12px; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); font: 12px/1.6 var(--mono); white-space: pre; user-select: all; }
+.hub-section .hub-code { margin: 8px 0; padding: 10px 12px; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--field); font: 12px/1.6 var(--mono); white-space: pre; user-select: all; }
 .hub-view p.hub-empty { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
 /* Status: a control room's panel, divided by hairlines. Its rows are fixed; long lists scroll in their cell. */
 .hub-pane:has(> .hub-view-status:not([hidden])) { display: flex; padding: 0; overflow: hidden; }
@@ -413,7 +412,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-mobile-picker select { width: 100%; min-height: 48px; color: var(--text); font-size: 15px; font-weight: 600; }
 .hub-mobile-picker .icon-button { min-width: 48px; min-height: 48px; }
 .hub-mobile-set-actions { display: flex; flex-wrap: wrap; gap: 0 20px; margin: 4px 0 0; }
-.hub-mobile-set-actions .text-button { min-height: 44px; font-size: 13px; }
+.hub-mobile-set-actions .text-button { min-height: 44px; }
 .hub-mobile-empty { color: var(--muted); }
 .hub-mobile .module-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .hub-mobile .module-tile .module-tile-open .compact-preview { height: 96px; }
@@ -469,7 +468,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-studio-only li { display: inline-flex; align-items: center; gap: 6px; color: var(--text); font-weight: 500; }
 .load-studio-only p { margin: 0; }
 .load-blocked p + p { display: flex; gap: 16px; margin-top: 6px; }
-.load-blocked .text-button { color: var(--warn); font-size: 13px; }
+.load-blocked .text-button { color: var(--warn); }
 .load-dialog .progress-row { margin: 16px 0 12px; }
 .load-dialog .link-hint { margin: 0 0 12px; }
 .load-dialog .base-install-footer { flex-wrap: wrap; }

@@ -34,6 +34,7 @@
 .device-variants { color: var(--muted); font-weight: 450; font-size: var(--text-lg); letter-spacing: -.2px; }
 .device-hero-meta { display: flex; align-items: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
 .device-hero-actions { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.device-hero-actions .button { min-height: 44px; }
 
 .device-invite { margin-bottom: 24px; }
 .device-invite h2 { font-size: var(--text-lg); letter-spacing: -.2px; }
