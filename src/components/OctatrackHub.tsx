@@ -78,14 +78,13 @@ function MobileModuleSets({ sets, selectedId, onSelect, onNew, onImport, onSetAc
   return <div className="configuration-page hub-mobile">
     {header}
     <section className="hub-mobile-sets" aria-label="Module sets">
-      {selected && <div className="hub-mobile-picker">
+      {selected ? <div className="hub-mobile-picker">
         <label><span>Module set</span><select value={selected.id} onChange={event => onSelect(event.target.value)}>{sets.map(set => <option key={set.id} value={set.id}>{set.name} · {modules(set.moduleIds.length)}</option>)}</select></label>
         <SetMenu set={selected} onAction={onSetAction} />
-      </div>}
-      <p className="hub-mobile-set-actions"><button type="button" className="text-button" onClick={onNew}><Icon name="plus" size={14} />New module set</button><button type="button" className="text-button" onClick={onImport}>Import JSON</button><a className="text-button" href="#module-sets">Starting points</a></p>
+      </div> : <div className="hub-empty-set"><p>Start a module set, then add modules from the library.</p><button type="button" className="button button-primary" onClick={onNew}><Icon name="plus" size={16} />New module set</button></div>}
+      <p className="hub-mobile-set-actions">{selected && <button type="button" className="text-button" onClick={onNew}><Icon name="plus" size={14} />New module set</button>}<button type="button" className="text-button" onClick={onImport}>Import JSON</button><a className="text-button" href="#module-sets">Starting points</a></p>
     </section>
-    {selected ? <>{grid}<ConfigurationHandoff onExport={() => onSetAction(selected.id, 'export')} exported={false} /></>
-      : <p className="hub-mobile-empty">Start a module set, then add modules from the library.</p>}
+    {selected && <>{grid}<ConfigurationHandoff onExport={() => onSetAction(selected.id, 'export')} exported={false} /></>}
   </div>
 }
 

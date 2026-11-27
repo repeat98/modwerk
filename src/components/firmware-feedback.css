@@ -109,7 +109,7 @@
   .firmware-feedback-footer-actions { gap: 14px; }
 }
 @media (max-width: 720px) {
-  .app-dialog.firmware-feedback-dialog { width: calc(100% - 20px); height: calc(100dvh - 20px); max-height: calc(100dvh - 20px); border-radius: var(--radius-md); }
+  .app-dialog.firmware-feedback-dialog { width: calc(100% - 20px); height: calc(100dvh - 20px); max-height: calc(100dvh - 20px); border-radius: var(--radius-lg); }
   .firmware-feedback-header { padding: 24px 20px 20px; }
   .firmware-feedback-close { top: 12px; right: 12px; }
   .firmware-feedback-dialog .firmware-feedback-header h2 { padding-right: 32px; }
@@ -130,13 +130,15 @@
   .firmware-feedback-carousel-toolbar { flex-wrap: wrap; }
   .firmware-feedback-quick-test li { gap: 12px; }
   .firmware-feedback-dialog .firmware-feedback-quick-test p { font-size: 13px; }
-  .firmware-feedback-footer { padding: 10px 20px 14px; gap: 4px; }
-  .firmware-feedback-footer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; width: 100%; }
+  .firmware-feedback-details summary { min-height: 44px; align-content: center; padding-block: 0; }
+  .firmware-feedback-footer { padding: 10px 20px max(14px, env(safe-area-inset-bottom)); gap: 8px; }
+  .firmware-feedback-footer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; width: 100%; }
   .firmware-feedback-next { grid-column: 1 / -1; justify-content: center; }
   .firmware-feedback-footer-actions .text-button { justify-content: center; }
-  .firmware-feedback-flash-toggle { min-height: 32px; }
+  .firmware-feedback-footer .text-button { min-height: 44px; }
+  .firmware-feedback-footer .firmware-feedback-later { font-size: var(--text-sm); color: var(--muted); }
   .firmware-feedback-module-actions { gap: 8px; }
-  .firmware-feedback-module-actions .button { font-size: 11px; padding-inline: 6px; }
+  .firmware-feedback-module-actions .button { font-size: var(--text-sm); padding-inline: 6px; }
 }
 .downloaded-module-overview { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .downloaded-module-overview .button { flex-shrink: 0; }

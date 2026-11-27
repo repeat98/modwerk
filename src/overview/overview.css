@@ -119,7 +119,8 @@
   .overview-heading { gap: 12px; margin-bottom: 14px; }
   .overview-heading h1 { font-size: 24px; }
   .overview-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
-  .overview-chip { justify-content: center; gap: 5px; min-height: 36px; padding: 0 4px; border: 0; border-radius: 6px; }
+  .overview-chip { justify-content: center; gap: 5px; min-height: 44px; padding: 0 4px; border: 0; border-radius: 6px; }
+  .overview-breakdown summary { min-height: 44px; align-content: center; padding-block: 0; }
   .overview-chip-label:has(+ .overview-chip-short) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .overview-chip-short { display: inline; }
   .machine-grid { grid-template-columns: 1fr; gap: 14px; }
