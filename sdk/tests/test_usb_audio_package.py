@@ -100,11 +100,23 @@ class UsbAudioPackage(unittest.TestCase):
         for call in ('    bsr     post_frame\n', '    bsr post_emac_leave\n', '    bsr     post_emac_leave\n'):
             for at in [i for i in range(len(text)) if text.startswith(call, i)]:
                 self.assertIn('tstb    mwua_post', text[max(0, at - 160):at], call)
-        # The track stores are skipped only at high speed, in the two-pair profile, with no track word sent.
+        # MAIN + CUE does the built-in's work: once a frame the producer sets mwua_main_cue, only at high speed, in
+        # the two-pair profile, with words 16-19 sent and Main first; the track stores and the routed copy test it.
+        flag = text.split('    moveal  %d1,%a1                 | a1 != 0: skip the sum this block\n', 1)[1]
+        flag = flag.split('    moveb   %d0,mwua_main_cue\n', 1)[0]
+        for test in ('tstl    %d1', 'mvzb    mwua_pairs,%d1\n    subql   #2,%d1', 'cmpil   #0xf0000,%d1',
+                     'mvzb    mwua_fs_pair,%d1\n    subql   #8,%d1', 'moveq   #1,%d0'):
+            self.assertIn(test, flag)
         skip = text.split('.Lpre_words:\n', 1)[1].split('.Lstems_store:\n', 1)[0]
-        for test in ('movel   %a1,%d0', 'mvzb    mwua_pairs,%d0', 'subql   #2,%d0', 'andil   #0xffff,%d0',
-                     'lea     %a3@(64),%a3'):
+        for test in ('tstb    mwua_main_cue', 'lea     %a3@(64),%a3'):
             self.assertIn(test, skip)
+        route = text.split('mwua_route:', 1)[1].split('    bsr mwua_copy\n', 1)[0]
+        self.assertLess(route.index('tstb aud_hs'), route.index('bne mwua_copy_main_cue'))
+        self.assertLess(route.index('bne audio_copy80'), route.index('bne mwua_copy_main_cue'))
+        copy = text.split('mwua_copy_main_cue:', 1)[1].split('rts', 1)[0]
+        for test in ('lea %a2@(64),%a2', 'moveml %a2@,%d1-%d4', 'moveml %d1-%d4,%a1@', 'lea %a2@(80),%a2',
+                     'lea %a1@(16),%a1'):
+            self.assertIn(test, copy)
 
     def test_the_setting_offers_main_and_cue_only_in_the_twenty_channel_layout(self):
         twenty, tracks = builder.source(functions, usb, LAYOUT), builder.source(functions, usb, 'USB AUDIO OUT TRACKS')

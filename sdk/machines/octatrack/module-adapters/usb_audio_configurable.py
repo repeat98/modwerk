@@ -26,8 +26,8 @@ def configure_source(text):
     for marker in ('| d2 = the stem', '    | The gain history', '| ==== TRACKS POST', '    .balign 4\npost_hidx:'):
         old = '.if USB_LAYOUT == LAYOUT_TRACKS_POST\n' + marker
         text = checked(text, old, '.if 1\n' + marker)
-    # Module data is uncached, so the gain history's eight-track pass cost every frame of every layout about
-    # 2.6 points of the frame interrupt with no stream (owner's MKII, 26 November 2026). It serves the POST tap
+    # The gain history's eight-track pass cost every frame of every layout about 2.6 points of the frame interrupt
+    # with no stream (owner's MKII, 26 November 2026). It serves the POST tap
     # alone, so it runs only while that is on; turning POST on starts from the history of when it was last on,
     # settled within four frames. mwua_begin_frame sets mwua_post before this shim, so it holds for the frame.
     text = checked(text, '''    moveq   #0,%d0                  | state only, no per-sample table
@@ -61,22 +61,39 @@ def configure_source(text):
     moveal  %sp@+,%a4
     bra     .Lstems_done
 .Lpre_words:
-    | MAIN + CUE sends no track word: its sixteen uncached stores a frame are skipped. Only there: it is the one
-    | layout with a profile of its own (two pairs), so leaving it re-enumerates and the stream restarts on fresh
-    | slots. In a layout that can start sending a track without that (ALL from MAIN + CUE ONLY, TRACK 8 from MAIN),
-    | the packets would first carry the ring's words from before.
-    movel   %a1,%d0
-    beqs    .Lstems_store           | full speed sends the tracks' sum: copy them
-    mvzb    mwua_pairs,%d0
-    subql   #2,%d0
-    bnes    .Lstems_store
-    movel   mwua_sent_words,%d0
-    andil   #0xffff,%d0             | tracks 1-8's words
-    bnes    .Lstems_store
+    | MAIN + CUE sends no track word: its sixteen stores a frame are skipped. Only there: it is the one layout with
+    | a profile of its own (two pairs), so leaving it re-enumerates and the stream restarts on fresh slots. In a
+    | layout that can start sending a track without that (ALL from MAIN + CUE ONLY, TRACK 8 from MAIN), the packets
+    | would first carry the ring's words from before.
+    tstb    mwua_main_cue           | set once a frame, below the speed check
+    beqs    .Lstems_store
     lea     %a3@(64),%a3            | past the slot's track words, left as they were
     bra     .Lstems_done
 .Lstems_store:
 ''' + loop + '.Lstems_done:\n' + text[end:]
+    # MAIN + CUE at high speed does the built-in's work (owner's MKII, 27 November 2026: recording cost 4 points of
+    # the frame interrupt more than the built-in's code, mostly the routed C copy). mwua_main_cue holds only when the
+    # copy's routes are Main then Cue: two pairs, words 16-19 sent and the first pair Main (mwua_fs_pair is route[0]).
+    text = checked(text, '''    seq     %d1                     | d1 = 0xff at high speed
+    moveal  %d1,%a1                 | a1 != 0: skip the sum this block
+''', '''    seq     %d1                     | d1 = 0xff at high speed
+    moveal  %d1,%a1                 | a1 != 0: skip the sum this block
+    moveq   #0,%d0                  | mwua_main_cue, for the producer and the packet copy
+    tstl    %d1
+    beqs    .Lmc_flag
+    mvzb    mwua_pairs,%d1
+    subql   #2,%d1
+    bnes    .Lmc_flag
+    movel   mwua_sent_words,%d1
+    cmpil   #0xf0000,%d1
+    bnes    .Lmc_flag
+    mvzb    mwua_fs_pair,%d1
+    subql   #8,%d1
+    bnes    .Lmc_flag
+    moveq   #1,%d0
+.Lmc_flag:
+    moveb   %d0,mwua_main_cue
+''')
     text = checked(text, '    movel   %d4,aud_produced\n.endif\n', '''    movel   %d4,aud_produced
     tstb    mwua_post
     beqs    .Lpost_gate_done
@@ -141,6 +158,8 @@ mwua_route:                        | a0 dTD, a3 buffer, a5 wrap, a6 slot
     beqs 1f
     tstb mwua_direct
     bne audio_copy80
+    tstb mwua_main_cue
+    bne mwua_copy_main_cue
     moveq #0,%d1
     bras 2f
 1:  moveq #1,%d1
@@ -157,9 +176,21 @@ mwua_route:                        | a0 dTD, a3 buffer, a5 wrap, a6 slot
     bsr mwua_packet_bytes
     addal %d6,%a1
     rts
+mwua_copy_main_cue:                | d0 frames from a2 to a1: each slot's words 16-19, as the built-in copies them
+    lea %a2@(64),%a2               | (clobbers d1-d4, as audio_copy16 does at the same call)
+    tstl %d0
+    beqs 2f
+1:  moveml %a2@,%d1-%d4
+    moveml %d1-%d4,%a1@
+    lea %a2@(80),%a2
+    lea %a1@(16),%a1
+    subql #1,%d0
+    bnes 1b
+2:  rts
     .bss
     .balign 4
 mwua_gain: .space 4
+mwua_main_cue: .space 1
 '''
     return text
 
