@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "module": "digitone/mutiny",
+  "version": "0.2.1",
+  "date": "2026-11-27",
+  "upstream": {
+    "repository": "https://github.com/mbaumannn/mutiny",
+    "revision": "1d9f65b6e5412fc44689074c1030a146e1ccaae1",
+    "path": "mods/mutiny",
+    "license": "GPL-2.0-or-later"
+  },
+  "changes": [
+    "MUTINY 0.2.1 (tag v0.2.1, 1d9f65b), imported unchanged with mods/mutiny and src/engine, src/runtime in the repository's layout. It answers seq-events' generator and fire events, adds a Mod Menu entry and project data (MUT2), and hooks one place where the pattern length is read (OS 1.44).",
+    "build.json is the author's mod.json: its site became an address, length and SHA-256 guard; it requires seq-events, pinned to the build the author tested."
+  ],
+  "files": [
+    {
+      "from": "mods/mutiny/mutiny.c",
+      "to": "src/mods/mutiny/mutiny.c",
+      "sha256": "8b498c04080c4e06ca0e096ef6f4ed97d797f89576f6a6f737d4e2c67caf7fbf"
+    },
+    {
+      "from": "mods/mutiny/cmd.c",
+      "to": "src/mods/mutiny/cmd.c",
+      "sha256": "c55fd233009716e240158e3eab6641492a89513c31f4344dbbe1eede66257722"
+    },
+    {
+      "from": "mods/mutiny/playback.c",
+      "to": "src/mods/mutiny/playback.c",
+      "sha256": "7d148be73f280f23b6811ab50abd47a11af6096a2c36c12a0d0109c76209a551"
+    },
+    {
+      "from": "mods/mutiny/commit.c",
+      "to": "src/mods/mutiny/commit.c",
+      "sha256": "ab1c67c04451cbddd3257d215c51d1daa8784dda838644492abaa7973e68df1a"
+    },
+    {
+      "from": "mods/mutiny/input.c",
+      "to": "src/mods/mutiny/input.c",
+      "sha256": "f250171d614130484184361a53906c3744d38a07868973b5bba162cdd4ce295f"
+    },
+    {
+      "from": "mods/mutiny/page.c",
+      "to": "src/mods/mutiny/page.c",
+      "sha256": "fa7ec4033ebbf6d16ba66f7a9420125065dfdf938a26b678dc188c232c1cbed8"
+    },
+    {
+      "from": "mods/mutiny/preview.c",
+      "to": "src/mods/mutiny/preview.c",
+      "sha256": "97c5b236abf26ccd610458ba0026cfac291b5f2baed83e588fffa21ac29e2b0a"
+    },
+    {
+      "from": "mods/mutiny/port144.c",
+      "to": "src/mods/mutiny/port144.c",
+      "sha256": "dfae56b93ad3c8f7692a1bda0be5c57f59bc934ddfe576abab70e6318b303b54"
+    },
+    {
+      "from": "mods/mutiny/storage.c",
+      "to": "src/mods/mutiny/storage.c",
+      "sha256": "4858a41ac053245b820c7e0c11201b42083fca6564e1311526fff04b06a917ae"
+    },
+    {
+      "from": "mods/mutiny/tick.c",
+      "to": "src/mods/mutiny/tick.c",
+      "sha256": "f6cd5d1f4c6b352c8bb0fa0e5ee8ef089b0c0ac43803252bd95313d79ccb6f6c"
+    },
+    {
+      "from": "mods/mutiny/len.s",
+      "to": "src/mods/mutiny/len.s",
+      "sha256": "c1da5ed84121d39d19924c2470d8b3e9aae5be44c4a0fbf83e9d37d9f58043b9"
+    },
+    {
+      "from": "src/engine/engine.c",
+      "to": "src/src/engine/engine.c",
+      "sha256": "d3169f9c89e0e634675cd98c4082b969b809e4c792fccfc1bd4bbbcbf34d251b"
+    },
+    {
+      "from": "src/runtime/runtime.c",
+      "to": "src/src/runtime/runtime.c",
+      "sha256": "7e721c0e761f0d2cf46247f993afb8ba71cc056df3989843e5d6eb1bef65de42"
+    },
+    {
+      "from": "mods/mutiny/cmd.h",
+      "to": "src/mods/mutiny/cmd.h",
+      "sha256": "8bb2ba25db39aa42a209b1626233bdc90f92706279c3cc1c345122d9ddf26c63"
+    },
+    {
+      "from": "mods/mutiny/commit.h",
+      "to": "src/mods/mutiny/commit.h",
+      "sha256": "93e66b1f53d60a8733d5c0070d6c4a49f50ac60049a147147092c74df8871b39"
+    },
+    {
+      "from": "mods/mutiny/hooks.h",
+      "to": "src/mods/mutiny/hooks.h",
+      "sha256": "7ff0100d6d457812ec331524d8a02dfce46103a546b2207910c1fcaacbb2b4f4"
+    },
+    {
+      "from": "mods/mutiny/input.h",
+      "to": "src/mods/mutiny/input.h",
+      "sha256": "ee7b580587b927c7e636dbfc167ddb1b7a62509a2a8cef8ff8b9eb9c15bc053b"
+    },
+    {
+      "from": "mods/mutiny/page.h",
+      "to": "src/mods/mutiny/page.h",
+      "sha256": "e80bce0db9036eb1cbe95ea938a251c8d0ae2940fccce371d84fa09b6bf19cf9"
+    },
+    {
+      "from": "mods/mutiny/playback.h",
+      "to": "src/mods/mutiny/playback.h",
+      "sha256": "e078189ae3291c390fe486f2ec48a6f22419141dfe1b4f669f3415bb78fdd0f2"
+    },
+    {
+      "from": "mods/mutiny/port144.h",
+      "to": "src/mods/mutiny/port144.h",
+      "sha256": "5d0801c07a36a180dabb4502ff97e8d535a7010fd54be6a7c2e92570753007ac"
+    },
+    {
+      "from": "mods/mutiny/preview.h",
+      "to": "src/mods/mutiny/preview.h",
+      "sha256": "bd6cececc615fb28802d88fc3499b06ad5b21cd80b92b21a05097545fcc525a2"
+    },
+    {
+      "from": "mods/mutiny/storage.h",
+      "to": "src/mods/mutiny/storage.h",
+      "sha256": "e999c66bdabc69fd0b0a620d339285539cba32afe0d24170d2e3c3c65dc824e0"
+    },
+    {
+      "from": "mods/mutiny/tick.h",
+      "to": "src/mods/mutiny/tick.h",
+      "sha256": "2394a184d29714d31a7147428ad1261071024a63d22b925e86d440c0e07acc71"
+    },
+    {
+      "from": "src/engine/engine.h",
+      "to": "src/src/engine/engine.h",
+      "sha256": "ef7fa32f8ae519b6bb297b46afa3f0f345da974e785deeec0902c765145e46ba"
+    },
+    {
+      "from": "src/runtime/runtime.h",
+      "to": "src/src/runtime/runtime.h",
+      "sha256": "6e465c9ac56f0662c3c5d6cd107409a6bca5ee52303f6f45f797bcf8b67f984a"
+    },
+    {
+      "from": "elekloader b893c93: elekloader/sdk/include/digitone-mk1/core3.h",
+      "to": "src/digitone-mk1/core3.h",
+      "sha256": "e8a146f4c47e816a3a38543309ad8f09563c15b433008f8eaaec471b9485871b"
+    },
+    {
+      "from": "elekloader b893c93: elekloader/sdk/include/digitone-mk1/seq.h",
+      "to": "src/digitone-mk1/seq.h",
+      "sha256": "abeed26545a34ba6cc67875db85c9122f9731856368b88b9eb3d71fca34306c7"
+    },
+    {
+      "from": "elekloader b893c93: elekloader/sdk/include/seq-events.h",
+      "to": "src/seq-events.h",
+      "sha256": "ba17dc0205794956125521c9346235649d7eb1ac828580066c94c3b4d10632b9"
+    },
+    {
+      "from": "README.md",
+      "to": "upstream/README.md",
+      "sha256": "f11379bff0cef15497785d18146905fbd297403bfa67dcccd96b5878c4ed6e52"
+    },
+    {
+      "from": "NOTICE",
+      "to": "upstream/NOTICE",
+      "sha256": "bc8a8d148bd4c5e6fa400b2da85ece95b7804a6278ea601acc8a27dd7b7d0642"
+    },
+    {
+      "from": "MODELS.md",
+      "to": "upstream/MODELS.md",
+      "sha256": "5671a8b0986f0e097b7ff5e59c056b5d0b1b40e8d26ebbca58ec4af75b64098b"
+    },
+    {
+      "from": "LICENSE",
+      "to": "LICENSE",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    }
+  ],
+  "excluded": [
+    "mods/mutiny/mod.json",
+    "tests/",
+    "tools/",
+    "Makefile"
+  ],
+  "transformations": [
+    "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json."
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata.",
+  "evidence": "sdk/digitone/modules/mutiny/TESTING.md",
+  "requires": [
+    "seq-events"
+  ]
+}
