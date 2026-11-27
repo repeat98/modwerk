@@ -401,6 +401,17 @@ int main(void)
     CHECK(LOG->incident[(before + 1u) % DIAG_INCIDENTS].kind == DIAG_START && USB_GONE->state == 3u);
     expected = 0, usb_rs = 1u, uf_now = 0;
 
+    /* Late entries before the first tick (stock's own start, 61 on a tester's unit at every power-up) make no LATE, so
+     * the session's first real one is logged when it comes, not ten minutes later. */
+    mw_frame_skips = 0, mw_late_over = 61u, skip_at = 0; /* a power-up clears the statics */
+    restart();
+    before = LOG->incidents;
+    tick();
+    CHECK(LOG->incidents == before);
+    mw_late_over = 62u;
+    tick();
+    CHECK(LOG->incidents == before + 1u && last()->kind == DIAG_LATE && last()->a == 62u << 24 && last()->second == 0u);
+
     if (failures) fprintf(stderr, "%u failure(s)\n", failures);
     else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages, the frames before a stall, the power-up's restore and USB_GONE passed");
     return failures != 0;

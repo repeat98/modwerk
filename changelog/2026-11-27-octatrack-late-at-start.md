@@ -1,0 +1,1 @@
+Octatrack base: every start logged a late-frame record before anything played. That record then kept the unit's log from noting real late frames for the next ten minutes. Late frames from the start itself are still counted, but they no longer make a record. Ships with the next base.

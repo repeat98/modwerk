@@ -86,7 +86,8 @@ struct diag_load {
  * offered itself again because the host never enumerated it (usb_attach.h: OTGSC in the high half, PORTSC1 in the low),
  * LATE how many late frame entries the base held since boot (machine_registry.c), each a DSP frame skipped, in the low
  * 24 bits, and in the top byte how many entries since boot came later than the wait can hold (190 µs or more, 255 at
- * most; 0 on bases before it was counted), BRAKE with
+ * most; 0 on bases before it was counted); both counts include the entries of stock's start, before the log's first
+ * tick, which make no incident after base 0.8.3 (it and earlier logged one at every start, second 0), BRAKE with
  * bit 23 set how many patterns began with module machines silenced as predicted past the frame ceiling (status.c),
  * SET how many modules are installed, their ids in
  * `machine`, `fx` and `keys` read as one run of 56 bytes (14 ids of 4, after a restore from the card and each Keep); after a

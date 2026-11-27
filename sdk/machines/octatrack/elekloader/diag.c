@@ -353,7 +353,9 @@ void modwerk_diag_tick(void)
 static void diag_tick(void)
 {
     volatile struct diag_log *l = LOG;
-    if (!started) { start(l); stalls = stall_count(); started = 1; return; }
+    /* The late entries of stock's own start, before this first tick (tens to 172 on units), make no incident: logged at
+     * second 0 they held back the session's first real one for HOT_GAP. The counts stay since boot. */
+    if (!started) { start(l); stalls = stall_count(); frame_skips = mw_frame_skips, late_overs = mw_late_over; started = 1; return; }
     test_freeze();
     ticks = ticks + 1u;
     uint32_t stalled = stall_count(); /* a stall record since the last tick: keep the frames before it */
