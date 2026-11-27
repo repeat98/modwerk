@@ -78,6 +78,40 @@ Not done: a unit run, and an emulator capture of the box (docs/MODULE_UI_CAPTURE
 knob handler. With Scale Quantizer or FM Synth installed the names do not show (they take the knob store first, as
 Midiverb's TESTING.md says).
 
+### 73 programs (27 November 2026)
+
+The owner asked for as many programs as possible. On the developer's computer, from the owner's ROM, with the stand-in
+that keeps the page outside the bank (`engine/verify_area.py`, 32 gates a program):
+
+| Set | What happened |
+| --- | --- |
+| the ten NOT_EXACT (06, 09, 42, 43, 45, 55, 57, 68, 69, 72) | failed as before with the corrected stand-in (06: audio from frame 50, its out-block in the program's frame 2). The cause: until the program has sent 3 frames the area skipped its copy in, while the model's windows get zeros, and in a small ring (06, 111 words) or a window beside its line's head (55) the ring pointer walks line words into the windows within those frames. The copy now runs with y1 = 0 until then (`engine/qvs.py`); all ten pass every gate |
+| the seven with nothing to stream (05, 30, 40, 41, 56, 76, 77) | an area now gets its stream code without a line: the fade words, the tag and K. All seven pass every gate |
+| the pitch shifts (07, 37, 51, 59, 60, 70) and Leslies (08, 38, 39, 67, 82) | all pass every gate; areas of 1,295-1,874 words, under the base's 2,048 a record (`dsp_programs.c` MOST) |
+| all 76 | image 274,972 bytes, 12,828 past the 262,144 a module may take (`base/octatrack-pool-raise`); the three longest areas are left out: 60 CONCERT GUITAR (1,874 words), 51 AMAZING BASS (1,862), 59 GREASE GUITAR (1,825) |
+| 73 | every gate passes on all 73 at their final indices; the package below |
+
+`quadraverb-0.1.0-max-names.mwrm` in `~/.cache/modwerk-local/quadraverb/pkg/`, 258,292 bytes, SHA-256
+`4e8ff37dfc4dddb926b05eeb05ec43f78e50f86dac0908572583a65703a3a601`: ABI 9, requires `programs`, image 257,676 of
+262,144, bss 163,840 (the ring pool, 70 DELAYED REVERB's 160 KiB), both 421,516 of 524,288; 25 DSP words of shell; areas
+of 808-1,801 words; `--cycles 355` modeled. Built as above, but in a checkout of `base/octatrack-pool-raise`
+(`f35ec5c41`, twin7's branch) with this folder copied in.
+
+- **Module pool**, by the site's own accounting (`poolExtent`, `src/engine/elekloader/module-set.ts` on
+  `base/octatrack-pool-raise`): 422,368 bytes. With every published Octatrack module on main (48 packages, 931,600)
+  and USB Audio 0.4.2 (131,776), 1,485,744: 87,120 under 1.5 MiB, so 611,408 of the 2 MiB pool stay free.
+- **DSP code:** the record's `program_words` is the longest area, 1,801 (70), and the base claims two areas of it at
+  every pick: 3,602 words (2,336 with the 48) of a core's arena of about 4,741 / 4,867 with nothing placed
+  (docs/OCTATRACK_DSP_WINDOW.md). A Part with more than about two stock effects on that core can leave the slot dry.
+  Without 07, 37 and 70 (70 programs) the claim would be 2,736.
+- **Cycles** (`--cycles`, on the 25 new programs and 53): the dearest new one, 67 SUSPEDAL LEZLY, 307.4 in its
+  dearest block and 319.0 while it fades; 53 stays the dearest, 341.8 and 353.4 (the zero copy adds 0.2 to its dearest
+  block). The other 47 were traced before the zero copy.
+- **Host:** `engine/test_qv_runtime.py`, 15 tests pass on the 73 (the C runtime against qvs.ColdFire, 92,440 frames
+  bit-exact; every PROG value's name; `code()` on the real areas).
+
+Not done: `stress_area.py`, `evidence/performance.json` (still the 48-program build's), a unit run, listening.
+
 ### The 48 programs (27 November 2026)
 
 The owner allowed every program that plays bit for bit in the open form, 76, then chose 58 of them once the 76 did not

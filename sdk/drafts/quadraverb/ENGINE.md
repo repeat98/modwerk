@@ -508,7 +508,7 @@ unit. ROM-derived parts are made into `gen/` (ignored by Git) from the owner's R
   writes it. Its own signature (`$51A000 | index`) makes the first call after a switch set itself up afresh; it clears
   its ring over calls (the dry at its mix meanwhile) and starts at the first call that begins a frame once the base has
   named both blocks in the record. Its tables are P words after its code, copied at set-up (`move p:(r1)+,x0`), so an
-  area is 919-1,168 words. When PROG leaves the value it started with, its wet ramps to 0 over 256 samples (back if PROG
+  area is 808-1,801 words. When PROG leaves the value it started with, its wet ramps to 0 over 256 samples (back if PROG
   returns), so a pick fades the old program out before the base switches. `qvarea.py areas` assembles each at two origins: the words that move by the distance
   (9-10 a program: DO ends, jumps, the tables' address) are what `code()` relocates.
 - **The stream from the record:** each frame the area takes this frame's host bank from X:$207, where stock's bank take
@@ -516,21 +516,23 @@ unit. ROM-derived parts are made into `gen/` (ignored by Git) from the owner's R
   points it at its parameter copies (X:$25d-$3dc), so the first release package (`110a31f8`), which masked r6, read its
   in-blocks from X:$1be0 and wrote its out-blocks to X:$1840, inside stock's X tables, and rang on the unit (27 November
   2026); while a word is 0 that block is skipped. The out-block starts
-  with the program's tag (`$5100 | index`) and K, its frame number since it started (modulo $8000); the copy in waits
-  until the program has sent 3 frames (the model's in-blocks are all zero until then). The plans are made at the base's
+  with the program's tag (`$5100 | index`) and K, its frame number since it started (modulo $8000), even for a program
+  with nothing to stream. Until the program has sent 3 frames the copy in writes zeros (y1 = 0), as the model's
+  in-blocks are: skipping it left stale line words in the windows of a small ring (06) or of a window beside its line's
+  head (55), so ten programs differed from the model until 27 November 2026. The plans are made at the base's
   latency, 3 frames, with the area's 32 dry words reserved.
 - **The ColdFire half** (`runtime/qv_runtime.c`, `runtime.json`, tables from `engine/qvcf.py gen`): the
   `ot_dsp_effects` record. `program()` reads PROG from the track's frame record; `code()` relocates the area; `take()`
   learns the program and its frame base from the tag and K and keeps each streamed line's ring; `fill()` composes the
-  in-block as `qvs.ColdFire` does. Rings come from a 144 KiB pool in bss (the dearest program's, 00 and 71): two chambers fit side
-  by side, 00, 53, 71 and 83 only alone; a slot with no room stays silent and is counted.
+  in-block as `qvs.ColdFire` does. Rings come from a 160 KiB pool in bss (the dearest program's, 70): two chambers fit side
+  by side, 70 only alone; a slot with no room stays silent and is counted.
 - **The base:** take() runs from the frame after the out-block is named, before the in-block is (side branch
   `base/octatrack-program-areas` 5ecfbd2f4), so an area that waits for both words has every frame taken.
 
-**Checked:** `engine/verify_area.py` runs the shell with each of the 48 areas placed where it was not assembled,
+**Checked:** `engine/verify_area.py` runs the shell with each of the 73 areas placed where it was not assembled,
 relocated as `code()` relocates it, its blocks from the record in alternating banks, the in-blocks the runtime sends:
 bit for bit against qvs.SplitEngine and qvs.ColdFire at MIX 127, 64 and 0, trig splits at frames 1, 5, 7 and 13, a dirty
-Y, and two instances. `engine/test_qv_runtime.py` holds the C runtime to qvs.ColdFire on all 48 programs in the base's
+Y, and two instances. `engine/test_qv_runtime.py` holds the C runtime to qvs.ColdFire on all 73 programs in the base's
 call order, a switch, a resync, a full pool, bad tags and the K wrap, and `code()` to the real areas.
 
 ## Not settled

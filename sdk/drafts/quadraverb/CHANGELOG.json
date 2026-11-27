@@ -3,11 +3,11 @@
     "version": "0.1.0-experimental",
     "date": "2026-11-27",
     "changes": [
-      "First release: 48 factory programs of the Alesis Quadraverb (1989) on FX2: reverbs, choruses, echoes and the programs that combine them.",
+      "First release: 73 factory programs of the Alesis Quadraverb (1989) on FX2: reverbs, choruses, flanges, echoes, pitch shifts, Leslies and the programs that combine them.",
       "PROG (A) picks the program by its number on the original Quadraverb; MIX (F) sets dry and wet, 0 exact dry.",
       "Needs the Modwerk base with program areas and the stream channel, over USB.",
       "Known issue: not compared with a real Quadraverb; reverb times are about 5 % shorter than the original's.",
-      "Known issue: the gated programs, VERB SHIFTER, the pitch shifts, the Leslies, the flanges and some delays are not in this release yet."
+      "Known issue: the gated programs, VERB SHIFTER and three pitch shifts (51, 59, 60) are not in this release yet."
     ]
   }
 ]
