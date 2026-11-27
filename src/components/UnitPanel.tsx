@@ -65,7 +65,7 @@ function CardSetDialog({ name, written, error, notice, onDownload, onInstall, on
   }, [])
   return <dialog ref={dialog} className="app-dialog card-set-dialog" aria-labelledby="card-set-dialog-title" onCancel={event => { event.preventDefault(); onClose() }} onKeyDown={event => event.stopPropagation()}>
     <header className="login-prompt-header">
-      <h2 id="card-set-dialog-title">{written ? saved ? 'Put ' + CARD_SET_FILE + ' on the card' : 'Prepare the file for your card' : 'The module file couldn’t be written'}</h2>
+      <h2 id="card-set-dialog-title">{written ? saved ? 'Put ' + CARD_SET_FILE + ' on the card' : 'Prepare the card file' : 'The module file couldn’t be written'}</h2>
       <button type="button" className="icon-button" aria-label="Close" onClick={onClose}><Icon name="close" size={18} /></button>
     </header>
     {written ? <>

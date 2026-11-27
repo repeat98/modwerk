@@ -37,7 +37,10 @@
 @keyframes link-word { 0%, 30% { opacity: 1; } 33.4%, 100% { opacity: 0; } }
 @keyframes link-trig { 0%, 6% { fill: #f0a07a; stroke: #f0a07a; opacity: 1; } 14%, 100% { fill: #2c2837; stroke: var(--signal); opacity: .4; } } /* lit trigs glow warm, as on the unit */
 @media (prefers-reduced-motion: reduce) { .link-hero * { animation: none !important; } .signal-art .link-hero-word.is-first { opacity: 1; } }
-.base-install-dialog .file-error { margin: 12px 0 0; }
+.base-install-dialog .file-error { margin: 12px 0 16px; padding: 12px 16px; line-height: 1.5; }
+/* The install's last view: done, said with a check. */
+.base-install-intro.base-install-done { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); }
+.base-install-done svg { flex: none; color: var(--grade-in-use); }
 /* Phones: a sheet with 16px gutters; the body scrolls under a footer that stays, its buttons sized to their words and
    wrapping to a second row (primary last, full width) rather than cutting a label off. */
 @media (max-width: 600px) {
@@ -82,10 +85,11 @@
 }
 @media (min-width: 601px) and (max-height: 800px) { .is-intro .link-feature-rest, .is-intro .link-feature-kept { display: none; } }
 @media (min-width: 601px) and (max-height: 760px) { .is-intro > .module-preview.link-hero { display: none; } .is-intro .link-title { padding-right: 40px; } }
-/* Phones: the features as a 2×3 grid of small tiles, headline only, so the whole prompt fits on one screen. */
+/* Phones: the features as a plain two-column list, icon and headline only, so the whole prompt fits on one screen. */
 @media (max-width: 600px) {
-  .link-promises { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; font-size: 13px; line-height: 1.3; }
-  .link-promises li { flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 12px 12px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); }
+  .link-promises { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin-bottom: 16px; font-size: 13px; line-height: 1.35; }
+  .link-promises li { align-items: flex-start; gap: 8px; }
+  .link-feature-icon { margin-top: 0; }
   .link-feature-rest { display: none; }
   .link-hero .link-hero-art text:not(.link-hero-name, .link-hero-word) { font-size: 15px; }
   .link-needs { font-size: 12px; line-height: 1.5; }

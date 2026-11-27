@@ -93,7 +93,7 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
     : <p className="base-install-note" role="status">Waiting for your pedal…</p>
   const modeLine = updateMode ? <p className="success-note" role="status"><Icon name="check" size={16} /> Your {device.name} is in update mode.</p>
     : connected && identity?.model !== device.name ? <p className="file-error" role="status">This is an {identity?.model}, not an {device.name}. The base goes only on an {device.name}.</p>
-    : connected ? <p className="base-install-note" role="status">Your pedal is running normally. Unplug it, then plug it in again while holding Up and Down.</p>
+    : connected ? <p className="base-install-note" role="status">Waiting for the update screen. Your pedal is running normally.</p>
     : status === 'connecting' ? <p className="base-install-note" role="status">Looking for your pedal…</p>
     : <p className="base-install-note" role="status">{state.notice && state.notice.tone === 'error' ? state.notice.text : 'Once the pedal is in update mode, this page finds it by itself.'}</p>
 
@@ -105,7 +105,7 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
     {stage === 'updater' && (stock ? <button type="button" className="button button-primary" disabled={!accepted || !printed} onClick={() => setStage('mode')}>Next<Icon name="arrow" size={16} /></button>
       : <button type="button" className="button button-primary" onClick={() => fileRef.current?.click()}><Icon name="file" size={16} />Choose Zoom’s updater</button>)}
     {stage === 'mode' && (status === 'idle' && !updateMode ? <button type="button" className="button button-primary" onClick={() => void link.connect()}>Connect</button>
-      : <button type="button" className="button button-primary" disabled={!updateMode} onClick={() => void flash()}><Icon name="arrow" size={16} />Flash the base</button>)}
+      : <button type="button" className="button button-primary" disabled={!updateMode} onClick={() => void flash()}>Flash the base<Icon name="arrow" size={16} /></button>)}
     {stage === 'flash' && <button type="button" className="button button-primary" disabled={flashing || !updateMode} onClick={() => void flash()}>{flashing ? 'Flashing…' : 'Try again'}</button>}
     {stage === 'restart' && (status === 'idle' ? <button type="button" className="button button-primary" onClick={() => void link.connect()}>Connect</button>
       : <button type="button" className="button button-primary" disabled={!onBase} onClick={() => { finished.current = true; onClose() }}>Done</button>)}

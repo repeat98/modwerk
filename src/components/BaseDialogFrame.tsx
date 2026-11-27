@@ -62,7 +62,7 @@ export function BaseIntro({ hero, title, intro, promises, needs, missing, route,
 
 /** The numbered stages along the top, those before `at` ticked. */
 export function StageProgress({ labels, at }: { labels: readonly string[]; at: number }) {
-  return <ol className="base-install-progress" aria-label="Installation progress">{labels.map((label, index) => <li key={label} aria-current={index === at ? 'step' : undefined} className={index < at ? 'is-past' : undefined}><span aria-hidden="true">{index < at ? <Icon name="check" size={13} /> : index + 1}</span>{label}</li>)}</ol>
+  return <ol className="base-install-progress" aria-label="Installation progress">{labels.map((label, index) => <li key={label} aria-current={index === at ? 'step' : undefined} className={index < at ? 'is-past' : undefined}><span aria-hidden="true">{index < at ? <Icon name="check" size={13} /> : index + 1}</span><span>{label}</span></li>)}</ol>
 }
 
 /** One operation's steps, the same row before, during and after, so the window never changes its layout: what will
