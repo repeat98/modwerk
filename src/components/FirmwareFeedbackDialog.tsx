@@ -14,6 +14,8 @@ type Props = {
   build: DownloadedBuild
   onConfirm: (ids: string[]) => Promise<void>
   onReport: (id: string) => void
+  /** Report the whole downloaded set, for when the member can't tell which module is at fault. */
+  onReportSet?: () => void
   onLater: () => void
   onClose: () => void
   inline?: boolean
@@ -22,7 +24,7 @@ type Props = {
 }
 
 /** The downloaded build stays intact while the member explores and tests each module. */
-export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onLater, onClose, inline = false, pendingIds, issueReportedIds = [] }: Props) {
+export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onReportSet, onLater, onClose, inline = false, pendingIds, issueReportedIds = [] }: Props) {
   const dialog = useRef<HTMLDialogElement>(null), guidePane = useRef<HTMLElement>(null), body = useRef<HTMLDivElement>(null), choices = useRef<HTMLUListElement>(null), heading = useId(), description = useId(), submitting = useRef(false)
   const [selectedId, setSelectedId] = useState(build.modules[0]?.id ?? '')
   const [reported, setReported] = useState<string[]>([]), [savingId, setSavingId] = useState(''), [error, setError] = useState('')
@@ -78,6 +80,7 @@ export function FirmwareFeedbackDialog({ build, onConfirm, onReport, onLater, on
               <button type="button" className="button button-quiet module-issue-action" disabled={busy} aria-haspopup="dialog" aria-label={'Report an issue with ' + selected.name} onClick={() => onReport(selected.id)}><Icon name="message" size={17}/>Report an issue</button>
             </div>
             <p className="firmware-feedback-help">Only confirm after testing on your {build.machine}. No forum post.</p>
+            {onReportSet && build.modules.length > 1 && <button type="button" className="text-button firmware-feedback-report-set" disabled={busy} aria-haspopup="dialog" onClick={onReportSet}>Not sure which module? Report the whole set</button>}
             {error && <p className="file-error" role="alert">{error}</p>}
           </div>}
           </ModuleGuide>
