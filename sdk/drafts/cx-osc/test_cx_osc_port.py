@@ -44,7 +44,7 @@ class CxOscPort(unittest.TestCase):
         contributes = [c for c in runtime.get("contribute", []) if c.get("to") == "ot_machines"]
         self.assertEqual(len(contributes), 1)
         self.assertIn("cx_machine", contributes[0].get("data", ""))
-        self.assertIn("fm_machine_name", contributes[0].get("replaces", []))
+        self.assertEqual(contributes[0].get("replaces", []), [])
 
     def test_machine_registration_flags_setup_all(self):
         text = (HERE / "cx_registration.s").read_text()

@@ -12,35 +12,7 @@
     {
       "to": "ot_machines",
       "order": 45,
-      "data": "cx_machine",
-      "replaces": [
-        "fm_machine_name",
-        "fm_src_names",
-        "fm_name_a",
-        "fm_setup_row",
-        "fm_chooser_row",
-        "fm_setup_open",
-        "fm_tick",
-        "fm_chooser_open",
-        "fm_main_commit",
-        "fm_src_commit",
-        "fm_src_commit2",
-        "fm_setup_edit6",
-        "fm_setup_draw6",
-        "fm_validate",
-        "po_lfdname",
-        "ml_win_count",
-        "ml_src_count",
-        "ml_name_bound",
-        "ml_draw_bound",
-        "ml_hi_bound",
-        "ml_cur_bound",
-        "ml_clamp1",
-        "ml_clamp2",
-        "ml_clamp3",
-        "ml_clamp4",
-        "ml_clamp5"
-      ]
+      "data": "cx_machine"
     },
     {
       "to": "ot_machine_starts",

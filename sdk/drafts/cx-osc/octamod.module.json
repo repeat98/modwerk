@@ -137,7 +137,7 @@
       "display": "6 % of a frame (mean, one playing track)",
       "value": 6,
       "unit": "percent-of-frame",
-      "method": "machine-render",
+      "method": "hardware",
       "conditions": "device:test audition on dev twin; peak guarded render 19.4 % on T1, 16.4 % on T5 in the same run.",
       "source": "TESTING.md"
     },
