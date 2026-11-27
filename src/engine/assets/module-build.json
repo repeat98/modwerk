@@ -40,6 +40,7 @@
     "arp-key-locks": "0.1.0-experimental",
     "temp-save": "0.1.1-experimental",
     "tuner": "0.1.0-experimental",
+    "scope": "0.2.0-experimental",
     "slow-lfo": "0.1.0-experimental",
     "bar-led": "0.1.0-experimental",
     "stem-rec": "0.1.0-experimental",
@@ -79,8 +80,8 @@
       "sha256": "6f4823e51ae30e79f387f2e83dc684c74c7547be223f2e4246c7d51096aa6df5"
     },
     "requested-packages.json": {
-      "bytes": 1362663,
-      "sha256": "02175a862b45011ea337caf9433e821ab187aa0484c9dbcdbfd2b441fa2da4d6"
+      "bytes": 1455458,
+      "sha256": "eea43b735926a89c95262ac835b3e987f2151a18c7f59c9d6544c1add473aa92"
     },
     "utility-packages.json": {
       "bytes": 11735,

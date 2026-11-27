@@ -5,6 +5,15 @@ Draft Modwerk port of octabam `modules/scope` at
 
 ## Release procedure, 27 November 2026
 
+On the flashed 0.8.1 release base `eb6679620d0c9ed7…`, with B02 playing,
+the published-source USB package `f8a1ffeb984e…` ran as a 45-second RAM
+trial. The loader's verdict reported no crash, stall, freeze or skipped
+track; it rolled the trial back, and `do inventory` then returned `[]`.
+The loader's refusal counter rose from 216 to 228 during the trial; the
+release base does not answer development requests, so the cause was not
+established. macOS exposed no Octatrack audio input during this run, so no
+audio was captured and no dropout result is claimed.
+
 The procedure in `/private/tmp/scope-procedure-scope-020-20261127-2` tested
 SCOPE 0.2.0-experimental package SHA-256
 `f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273`
