@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/realunits.c",
+    "src/realunits.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:FLTR, AMP and LFO pages:knob value text"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.54": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x4000f348",
+          "op": "jsr",
+          "target": "ru_val_text_s",
+          "len": 6,
+          "stockSha256": "4aa702039aab40762c2055c43d2826a77799794ff4634781aec56843aedc5bce"
+        },
+        {
+          "addr": "0x400657fa",
+          "op": "jsr",
+          "target": "ru_pop_text_s",
+          "len": 6,
+          "stockSha256": "7c7938430ba93cea47a48e7aab46394edcad109048ef83604be7259e9a0d51d3"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "kitab-2026-11-27",
+  "about": "Kit A/B 0.2 for Digitakt OS 1.54: the author's released .elemod file, pinned unchanged.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "kitab-0.2.elemod",
+      "sha256": "e19f3c2fcba07a6f645be1e9ca1d0511900f1188f2c9ad4fc59b2f1e0549ad65",
+      "id": "kitab",
+      "version": "0.2",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "ceredmeat/FLEXMODS",
+        "tag": "v1.0"
+      },
+      "title": "Kit A/B",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Ten Digitakt MKI mods: new LFO waves with pictures, a looping random LFO, Kit A/B, Ctrl All, real units, mute snapshots, track solo, velocity humanise and Euclidean accents.",
+      "description": "Kit A/B, after the Analog Rytm mod: hold TRK and press NO to hear the active pattern's temp-saved kit (B, what FUNC+NO would bring back) while your edited kit (A) is kept aside; TRK+NO again brings your edits back. The temp copy is never overwritten, so FUNC+YES and FUNC+NO work as before. A small B shows in the top-right corner while B plays. Changing pattern while B plays puts your edits back into the pattern you left.",
+      "category": "Workflow",
+      "author": "Cere, made with Claude",
+      "needs_core": "4.1",
+      "on_unit": "All ten tested together on a real Digitakt MKI (OS 1.54) with core and seq-events: LFO waves and pictures, Deja Vu loops and destinations, Kit A/B, Ctrl All, real-unit displays, mute snapshots, track solo, humanise, Euclid accents and the MOD SETTINGS row. OS 1.53 not supported."
+    }
+  ]
+}
