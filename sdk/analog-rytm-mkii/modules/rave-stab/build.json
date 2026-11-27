@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/machine.c",
+    "src/ra_dsp.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [
+    {
+      "to": "core_machines",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:rave_stab_machine",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "mw_voices",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:rave_stab_voice",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "mw_machine_sections",
+      "order": 50,
+      "data": "270b0000",
+      "relocs": []
+    },
+    {
+      "to": "core_params",
+      "order": 9,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:rave_stab_params",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "machine:39",
+    "ui:SYNTH page of the SY RAVE machine",
+    "param:the value text of slot 39's CHD and VOI records (chord and voicing names)"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [
+        "-DPARAM_RECORDS_AT=0x401bfbc8"
+      ],
+      "sites": []
+    }
+  }
+}

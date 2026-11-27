@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 3,
+  "id": "rave-stab",
+  "name": "Rave Stab",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "chevyone",
+    "credits": [
+      "chevyone"
+    ]
+  },
+  "maintainers": [
+    "chevyone"
+  ],
+  "presentation": {
+    "label": "RAVE STAB",
+    "family": "Machine",
+    "summary": "SY RAVE: a six-voice digital chord stab, thirteen chords and nine voicings a step can lock, detune, saw to pulse, a strum and a pitch drop, through the Rytm's own analog filter and AMP.",
+    "overview": "An original chord voice computed on the Rytm's ColdFire at 48 kHz. Six band-limited oscillators play a chord in a voicing, both taken at each hit so a pattern can lock a progression step by step. DET spreads them against each other, WAV runs from saw through square to a narrow pulse and PCH drops or scoops the chord into its pitch at the hit, the zap of a rave stab. The track's own analog filter, AMP and OVR shape it: the filter's envelope makes the stab's sweep. EURK keeps the chord a musician found by accident in HH Alloy's metal oscillators.",
+    "highlights": [
+      "Thirteen chords on CHD, nine voicings on VOI, each lockable per step.",
+      "Played chromatically: the note transposes the whole chord.",
+      "DET from exact to 30 cents of spread, WAV from saw to a 12 % pulse.",
+      "Tap the TUN encoder for the register: an octave down, two, at the note or up."
+    ],
+    "usage": [
+      "Select the BD track, press FUNC + SRC, choose SY RAVE and press YES.",
+      "Close the filter and give it a short filter envelope for the classic stab.",
+      "Lock CHD and VOI on steps for a chord progression on one track."
+    ]
+  },
+  "access": {
+    "location": "The machine list of the BD, SD or BT track: SY RAVE, in the SY section. Its SYNTH page.",
+    "steps": [
+      "Select a track and press FUNC + SRC.",
+      "Choose SY RAVE and press YES.",
+      "On the SYNTH page, tap the TUN encoder to step the register."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, on the Modwerk base's digital voices.",
+      "Offered on the BD, SD and BT tracks only until its cost is measured on a unit.",
+      "Not yet heard on a unit."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "machine:39",
+      "ui:SYNTH page of the SY RAVE machine",
+      "param:the value text of slot 39's CHD and VOI records (chord and voicing names)"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 4200,
+    "fastBytes": null,
+    "load": {
+      "display": "6.8 % of a block a voice (7.95 % at most)",
+      "method": "hardware",
+      "conditions": "mw_voice_meter on a MKII, OS 1.74, RH01: one voice ringing for 20 s while played; mean 6.76 %, dearest block 7.95 %."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host: 31 checks of pitch, the thirteen chords, voicings, the hit's latch, waves, band-limiting, the strum, the held level, the pitch drop, levels, velocity and smoothing (tools/host_test.c). On a MKII (RH01-RH03): the page, the CPU (6.76 % of a block a voice) and the developer's listening."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by chevyone: no code, samples or tables from any instrument."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "SY RAVE",
+      "alt": "Six stacked waves forming a chord.",
+      "credit": "chevyone",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    }
+  ]
+}
