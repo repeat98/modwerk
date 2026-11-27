@@ -351,7 +351,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
   const saveFailures = new Set([...found.values()].flatMap(member => member.saveFailures ?? []))
-  const problems = events.filter(entry => !selection(entry) && (saveFailures.has(entry) || PROBLEMS.includes(entry.data.event) || entry.data.event === 'link_failed' || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
+  const problems = events.filter(entry => !selection(entry) && (saveFailures.has(entry) || PROBLEMS.includes(entry.data.event) || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const checks = Object.entries(Object.groupBy(events.filter(selection), entry => entry.username)).sort((a, b) => b[1].length - a[1].length)
   const days = Map.groupBy(counts, row => row.day)
