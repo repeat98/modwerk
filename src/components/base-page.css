@@ -144,6 +144,7 @@
   .ot-controls .base-screen figure { display: block; }
   .ot-controls .base-lcd { padding: .75rem; }
   .ot-controls .base-screen figcaption { padding: .625rem 0 0; }
+  .base-actions .text-button, .ot-install .base-actions > a:not(.button) { display: inline-flex; align-items: center; min-height: 44px; }
 
   .base-release-changes > div, .base-device-facts { grid-template-columns: 1fr; }
   .base-device-picture { display: none; }

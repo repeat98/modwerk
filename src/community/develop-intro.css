@@ -3,13 +3,13 @@
 .start-developing { --path: #e6cfa8; max-width: 720px; }
 .start-developing ::selection { background: var(--path); color: #19191c; }
 .developer-hero { margin: 8px 0 48px; }
-.developer-hero h1 { font-size: var(--text-xl); line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; overflow-wrap: anywhere; }
+.developer-hero h1 { font-size: clamp(34px, 6vw, 48px); line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; overflow-wrap: anywhere; }
 .developer-hero h1 span { display: block; color: var(--path); }
 .developer-intro { max-width: 34ch; margin-top: 18px; color: var(--text-secondary); font-size: 20px; line-height: 1.45; text-wrap: pretty; }
 
 .developer-path { counter-reset: step; margin: 0; padding: 0; list-style: none; }
 .developer-path > li { counter-increment: step; position: relative; padding: 0 0 56px 64px; }
-.developer-path > li::before { content: counter(step); position: absolute; left: 0; top: -4px; display: grid; place-items: center; width: 40px; height: 40px; color: var(--path); font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.developer-path > li::before { content: counter(step); position: absolute; left: 0; top: -4px; display: grid; place-items: center; width: 40px; height: 40px; border: 1.5px solid var(--path); border-radius: 50%; background: var(--background); color: var(--path); font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .developer-path > li:not(:last-child)::after { content: ''; position: absolute; left: 19.5px; top: 44px; bottom: 4px; width: 1px; background: var(--line); }
 .developer-path > li:last-child { padding-bottom: 0; }
 .developer-path h2 { margin: 0 0 10px; font-size: 26px; line-height: 1.2; letter-spacing: -.2px; }
@@ -20,8 +20,8 @@
 .start-developing .copy-button.button-primary { min-height: 52px; padding: 12px 24px; border-radius: var(--radius-sm); font-size: 17px; }
 .developer-path details { margin-top: 6px; }
 .developer-path .developer-hint + details { margin-top: 14px; }
-.developer-path summary { width: fit-content; padding: 6px 0; cursor: pointer; color: var(--muted); font-size: 15px; }
-.developer-path summary:hover { color: var(--text); }
+.developer-path summary { width: fit-content; padding: 6px 0; cursor: pointer; color: var(--accent); font-size: 15px; }
+.developer-path summary:hover { color: var(--accent-hover); }
 .developer-path summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
 .start-developing .starter-prompt { border: 0; border-radius: 0; background: transparent; overflow: visible; }
 .start-developing .starter-prompt pre, .start-developing .start-code pre { max-height: 320px; margin-top: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; }
@@ -69,7 +69,10 @@
   .developer-path > li { padding: 0 0 44px 46px; }
   .developer-path > li::before { top: -2px; width: 32px; height: 32px; font-size: 15px; }
   .developer-path > li:not(:last-child)::after { left: 15.5px; top: 36px; }
-  .developer-path h2 { font-size: 22px; }
+  .developer-path h2 { font-size: 21px; margin-bottom: 8px; }
+  .developer-lead { margin-bottom: 16px; font-size: 16px; }
+  .developer-hint, .developer-path summary, .developer-setup p, .developer-prompt-actions > span { font-size: 14px; }
+  .developer-path summary { padding-block: 12px; line-height: 20px; }
   .start-developing .copy-button.button-primary { width: 100%; }
   .developer-task-choice { display: flex; }
   .developer-task-choice button { flex: 1; padding: 8px 10px; font-size: 15px; }

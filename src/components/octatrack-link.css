@@ -39,7 +39,8 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .module-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
 .module-tile { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface-raised); }
 .module-tile-open { display: flex; flex-direction: column; align-items: stretch; width: 100%; padding: 0 0 10px; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
-.module-tile:has(.module-tile-open:hover) { background: var(--surface-hover); border-color: var(--line-hover); }
+/* Touch screens keep :hover after a tap, which would leave the tile you just closed looking selected. */
+@media (hover: hover) { .module-tile:has(.module-tile-open:hover) { background: var(--surface-hover); border-color: var(--line-hover); } }
 .module-tile .module-tile-open .compact-preview { width: 100%; height: 112px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
 .module-tile-open strong { margin: 8px 10px 0; font-size: 13px; }
 .module-tile-open small { overflow: hidden; margin: 2px 10px 0; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
@@ -72,6 +73,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .module-tile.is-add a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 100%; min-height: 168px; border: 1px dashed var(--control-border); border-radius: var(--radius-md); color: var(--muted); font-size: 11px; }
 .module-tile.is-add a:hover { border-color: var(--accent-line); color: var(--accent); }
 .module-tile.is-add strong { color: var(--text); font-size: 13px; }
+@media (max-width: 600px) { .module-tile.is-add small { padding-inline: 10px; font-size: var(--text-sm); line-height: 1.45; text-align: center; } }
 .module-grid-save { margin-top: 14px; }
 @media (pointer: coarse), (max-width: 600px) { .module-tile-action.icon-button, .module-tile-action.text-button { min-width: 44px; height: 44px; } }
 /* Full width while a unit with the base is connected: the grid, then the sticky sync bar. */
@@ -411,17 +413,18 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
   .hub-hero .device-photo { max-width: 160px; }
   .hub-view-set .module-tiles { grid-template-columns: minmax(0, 1fr); }
 }
-/* Your Octatrack on a phone (MobileModuleSets): heading, set picker with its menu, two columns of tiles, then the handoff. */
+/* Your Octatrack on a phone or touch tablet (MobileModuleSets): heading, set picker with its menu, tiles (two across on a phone), then the handoff. */
 .hub-mobile .hub-heading-actions :is(a, button) { min-height: 44px; }
-.hub-mobile-sets { margin-bottom: 18px; }
+/* The handoff at the end says where the sets are kept. */
+.hub-mobile:has(> .configuration-section) .hub-page-heading p { display: none; }
+.hub-mobile-sets { max-width: 36rem; margin-bottom: 18px; }
 .hub-mobile-picker { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 6px; }
 .hub-mobile-picker label { display: grid; gap: 6px; min-width: 0; color: var(--muted); font-size: 12px; }
-.hub-mobile-picker select { width: 100%; min-height: 48px; color: var(--text); font-size: 15px; font-weight: 600; }
+.hub-mobile-picker select { width: 100%; min-height: 48px; border-radius: var(--radius-md); background-color: var(--field); color: var(--text); font-size: 15px; font-weight: 600; }
 .hub-mobile-picker .icon-button { min-width: 48px; min-height: 48px; }
 .hub-mobile-set-actions { display: flex; flex-wrap: wrap; gap: 0 20px; margin: 4px 0 0; }
 .hub-mobile-set-actions .text-button { min-height: 44px; }
-.hub-mobile-empty { color: var(--muted); }
-.hub-mobile .module-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.hub-mobile .module-tiles { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
 .hub-mobile .module-tile .module-tile-open .compact-preview { height: 96px; }
 .hub-mobile .module-tile-open { padding-bottom: 12px; }
 .hub-mobile .module-tile-open strong { font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
@@ -432,11 +435,10 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-mobile .module-tile:has(.module-tile-controls > .module-tile-action:only-child) .module-tile-open > :is(strong, small) { margin-right: 50px; }
 .hub-mobile .module-tile-action.icon-button { background: none; color: var(--muted); }
 .hub-mobile .configuration-section { margin: 22px 0 0; }
-.hub-mobile .configuration-section h2 { margin: 0 0 6px; font-size: 16px; }
+.hub-mobile .configuration-section h2 { margin: 0 0 6px; font-size: var(--text-md); }
 .hub-mobile .configuration-section p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.6; }
-.hub-mobile .configuration-section .button { width: 100%; min-height: 44px; justify-content: center; }
+.hub-mobile .configuration-section .button { width: min(100%, 22rem); min-height: 44px; justify-content: center; }
 .hub-mobile .configuration-section [role=status] { margin: 12px 0 0; }
-@media (max-width: 360px) { .hub-mobile .module-tiles { grid-template-columns: minmax(0, 1fr); } }
 /* The library's add control names the set it adds to (beta). */
 .unit-strip .button { min-height: 32px; margin-left: 6px; padding: 5px 12px; }
 .toolbar-load { flex-shrink: 0; height: var(--control-h-sm); padding: 0 12px; }
