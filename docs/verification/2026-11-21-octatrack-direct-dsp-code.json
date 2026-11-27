@@ -70,7 +70,7 @@
       "module": "recorder-loop-fix",
       "version": "0.1.0-experimental",
       "source": "sdk/octatrack/modules/recorder-loop-fix/manifest.py",
-      "packageSha256": "1c68607ec4822058ece9213d757f01d15e3c8a496fe8b46794a7809e2fe40e51",
+      "packageSha256": "48af2c34b00f9dfb8647258c54be6932fceaa1c5c1ce5af1497bbab1b661ec9a",
       "moduleDspWords": 0
     },
     {

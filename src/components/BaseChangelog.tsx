@@ -12,7 +12,7 @@ type BaseRelease = {
 const releases: Record<'octatrack' | 'rytm' | 'zoom', [BaseRelease, ...BaseRelease[]]> = {
   octatrack: [
     {
-      version: '0.8.4', title: 'Twice the room for modules, and clearer answers from MODULES', note: '2026-11-27-octatrack-base-0-8-4',
+      version: '0.8.4', title: 'Twice the room for modules, and clearer answers from MODULES', note: '2026-11-27-octatrack-module-pool-2-mib',
       changes: [
         { area: 'Modules', detail: 'Modules share 2 MiB instead of 768 KiB, so a large set installs whole, and one module may hold up to 256 KiB of code and data. The room comes from sample memory: Flex machines and recorders have 1.5 MB less, about 9 seconds of stereo audio.' },
         { area: 'Effects', detail: 'An effect can change its DSP code with a program knob while it plays, switching between two audio frames, for effects like the Quadraverb reverbs.' },
