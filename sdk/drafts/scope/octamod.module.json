@@ -3,7 +3,7 @@
   "id": "scope",
   "key": "SCOPE",
   "name": "Scope",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "category": "system",
   "author": {
     "github": "ilia-murzinov",
@@ -65,11 +65,11 @@
     "firmware": "1.40C",
     "effectId": null,
     "location": "Audio tracks",
-    "conflicts": ["tuner"],
+    "conflicts": [],
     "uiClaims": ["key:DOWN+TEMPO"],
     "limitations": [
-      "Draft Modwerk port. Tried by hand on one MKII over USB (26 Nov 2026), alone on release base 0.8.1; not timed, soaked or priced.",
-      "Patches the same TEMPO, frame and UI-loop sites as Tuner. A set cannot install both until a Modwerk base hook owns those sites (propose a hook). Until then this module lists Tuner as a conflict.",
+      "0.2.0 uses core hooks (module_key, module_tick) and ev_usb_frame instead of patching TEMPO, the frame tail and the UI loop, so Tuner can share a set. ev_usb_frame must run every audio block on the base you test; confirm on a development twin before claiming hardware proof.",
+      "0.1.0-experimental patched three stock sites and listed Tuner as a conflict; see git history and PR #2182.",
       "Hold DOWN before TEMPO. Pressing TEMPO alone opens the stock tempo window.",
       "XY uses a hotter vertical scale than OSC. Clip ! appears only when the recent peak reaches 0 dBFS.",
       "DRAM unit: on a card build without another DRAM module, choosing SCOPE creates the platform DRAM reserve from Flex sample RAM (same class of cost as Tuner).",
@@ -84,7 +84,7 @@
       "value": null,
       "unit": "unknown",
       "method": "unmeasured",
-      "conditions": "One DRAM linked unit (unit.s from octabam scope.s) and three six-byte detours. Exact package size pending a Modwerk package build.",
+      "conditions": "One DRAM linked unit (unit.s). 0.2.0: three hook words, zero stock sites; 37,704 bytes in a dev build.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -129,7 +129,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Reported by hand on one MKII over USB, 26 Nov 2026: package 48522941… on release base 0.8.1, alone. A RAM trial and a Keep with clean verdicts; TEMPO alone stays stock, DOWN then TEMPO opens OSC, XY and ALL, and TEMPO, YES and NO close it. The base refused removal while the window was open and removed it cleanly once closed. verify.py passes 14 checks under ot_emu. Not timed, soaked or priced; test:procedure not run.",
+    "summary": "0.2.0 package f8a1ffeb… (26 Nov 2026): device:test (+ soak) on twin-dev-1014; device:test on twin-evusb-frame 6fe02628; DOWN+TEMPO by hand on twin-evusb-frame (live scope). Tuner+Scope selftest 3/3 on 4c7eb79b. CPU price on 4c7eb79b (cpu-price-0.2.0.json). Release base 0.8.1 and removal-while-open still from 0.1.0 until re-run on hooks base.",
     "hardwareStatus": "reported",
     "evidenceRevision": "6e8f9fb4ecadff9cddbf529743000c0cb8a076c2",
     "gates": [

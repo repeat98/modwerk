@@ -3,6 +3,52 @@
 Draft Modwerk port of octabam `modules/scope` at
 `3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9`.
 
+## 0.2.0-experimental
+
+**Hardware status: reported by hand on one MKII over USB, 26 November 2026,
+plus automated runs on a development twin.** Package from `npm run module:dev --
+scope --build-only`: SHA-256 `f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273`,
+module `5f161c91`, 37,704 bytes, 198 relocations, **three hooks, zero stock
+sites** (`runtime.json`: `module_key`, `module_tick`, `ev_usb_frame`).
+
+**Which twin raises `ev_usb_frame`.** SCOPE's ring subscribes to that hook.
+Only a base built with **`--usb-audio <layout>`** (USB Audio linked into the
+image) leaves `0x4000d9a0` to USB Audio and does not raise the hook from the
+base shim. Bases with USB function slots, including **`--packaged-usb-audio`**
+and the beta base, install `FRAME_DETOUR` at `0x4000d9a0` and raise
+`ev_usb_frame` every block; packaged USB Audio subscribes beside SCOPE
+(`base_usb_functions.sites()`, [HOOKS.md](../../machines/octatrack/HOOKS.md)).
+
+| Twin dir | Build flags (subset) | Base id (26 Nov 2026) | `ev_usb_frame` path |
+| --- | --- | --- | --- |
+| `~/modwerk-builds/twin-dev-1014` | `… --packaged-usb-audio --usb-input …` (no `--usb-audio` layout) | `4c7eb79b844c8139…` | base shim; packaged USB Audio also subscribes |
+| `~/modwerk-builds/twin-evusb-frame` | `… --dev --dsp-loader --usb-midi --site-events …` (no packaged USB Audio, no layout) | `6fe0262876380656…` | base shim only |
+
+Unit: ilia-murzinov's MKII. Automated runs used **twin-dev-1014** first; a
+second twin **twin-evusb-frame** held another `device:test` and a manual
+DOWN+TEMPO pass with Scope kept (after an earlier doc mistake about
+`--packaged-usb-audio`).
+
+| Case | How run | Result |
+| --- | --- | --- |
+| `npm run device:test` (default 30 s) | twin-dev-1014; trial rolled back | pass: selftest 2/2 (`device-test.md`); base shim raises `ev_usb_frame` |
+| `npm run device:test --soak 120` | twin-dev-1014 | pass (`device-test-soak.md`) |
+| `npm run device:test` (default 30 s) | **twin-evusb-frame** (`6fe02628…`); trial rolled back | pass: selftest 2/2, inventory unchanged (`device-test-evusb.md`) |
+| Tuner + Scope one set | on twin-dev-1014 | pass: `selftest` 3/3 intact (Tuner + Scope Keep) |
+| DOWN + TEMPO UX | by hand on twin-dev-1014 | pass (reported) |
+| DOWN + TEMPO UX | by hand on **twin-evusb-frame** (`6fe02628…`), Scope kept | pass (reported): TEMPO alone stock; DOWN+TEMPO opens Scope with live trace; closes cleanly |
+| `npm run device:price` | twin-dev-1014; trial rolled back | at rest adds −0.1 % frame, +0.1 % CPU (`evidence/cpu-price-0.2.0.json`) |
+| Part put-back | `octatrack-part-state.mjs restore` | not automatic: Part 2 working copy differs from saved after qualify/soak; RELOAD by hand if you need a clean Part |
+| `verify.py` (octabam bus) | local | skip: no `sdk/out/mainos_bus.bin` in this worktree |
+
+`module:doctor --draft scope` is green on cross-compatibility with Tuner (no
+`conflicts` entry).
+
+Do not use `device:test --seconds 90` on this harness: qualify's batched
+`stats` step exceeds the dev socket timeout (40 s). Default 30 s is fine.
+
+Logs and generated entries: `~/modwerk-builds/scope-0.2.0-steps/`.
+
 ## 0.1.0-experimental
 
 **Hardware status: reported by hand on one MKII over USB, 26 November 2026,
@@ -90,7 +136,7 @@ SCOPE_PROJECT=<project folder> python3 modules/scope/verify.py   # from that oct
 
 ```sh
 npm run module:doctor -- --draft scope    # experimental lines green but cross-compatibility
-npm run modules:compat -- --with scope    # three clashes with Tuner (same detour sites)
+npm run modules:compat -- --with scope    # 0.2.0: no Tuner clash; 0.1.0 had three site clashes
 ```
 
 ## Octabam evidence (not Modwerk USB)
