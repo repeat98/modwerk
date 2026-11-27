@@ -58,6 +58,11 @@
       "name": "ev_note_queue",
       "when": "each event a note source queues for the render (the sequencer's fires a step ahead, with the step's p-locks), with the time it plays, at the queue's entry (OS 1.43 0x400fff04, 1.44 0x40100178); elekloader core 4.1 and newer",
       "handler": "void f(event, time)"
+    },
+    {
+      "name": "ev_key_leds",
+      "when": "the key-LED frame, before the stock views set theirs, at the frame's call to the views' LED update (0x40018332 in OS 1.43 and 1.44); the first setter of an LED wins; elekloader core 3.3 and newer",
+      "handler": "void f(mgr); mgr is the LedManager"
     }
   ],
   "proposed": [

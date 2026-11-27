@@ -21,6 +21,13 @@ void modwerk_machine_flush_data(uint32_t address, uint32_t length)
 #endif
 
 uint8_t modwerk_test_memory[0x40000] __attribute__((aligned(4))); /* pages from 0x10000: 128 ids need 0xd000 */
+/* The working Parts' stores (fxpage.c PART_STORE), and the formatter calls modwerk_fxpage_names makes. */
+static uint8_t part_stores[4][6322];
+static int no_project;
+const volatile uint8_t *modwerk_test_part_store(unsigned part) { return no_project ? 0 : part_stores[part]; }
+static unsigned formats;
+static uint32_t format_code, format_value;
+void modwerk_test_format(uint32_t code, char *line, uint32_t value) { ++formats, format_code = code, format_value = value; line[0] = 0; }
 #define donor (modwerk_test_memory + 0x100)
 #define image (modwerk_test_memory + 0x1000)
 static unsigned recipe(void) /* 1 integer, 1 string, slot 2 inherited, one formatter with one fixup at 8 */
@@ -56,6 +63,18 @@ int main(void)
 #else
     CHECK(!pushes && !pushed_at && !pushed_bytes && !pushed_before);
 #endif
+    /* MODE renames follow the drawn track (#2042): the renaming formatter (one with fixups, slot 8, on FX SETUP) runs
+     * with this track's own SETUP value of its FX2 slot; another track's, an FX1 page it does not serve, a stock page
+     * or no project runs nothing. Track 2, Part 1: FX2 SETUP's third value at 0x2fe + 30 * 2 + 6 + 2. */
+    part_stores[1][0x2fe + 60 + 6 + 2] = 3, part_stores[1][0x2fe + 90 + 6 + 2] = 0x80;
+    modwerk_fxpage_names(ADDR(d), 2, 1, 1);
+    CHECK(formats == 1 && format_code == ADDR(image + 128) && format_value == 3);
+    modwerk_fxpage_names(ADDR(d), 3, 1, 1);
+    CHECK(formats == 2 && format_value == 0xffffff80u);                          /* read signed, as stock does */
+    modwerk_fxpage_names(ADDR(d), 2, 1, 0); modwerk_fxpage_names(0x1000, 2, 1, 1); modwerk_fxpage_names(ADDR(d) + 2, 2, 1, 1);
+    modwerk_fxpage_names(ADDR(d), 8, 1, 1); modwerk_fxpage_names(ADDR(d), 2, 4, 1); modwerk_fxpage_names(ADDR(pages[26]), 2, 1, 1);
+    no_project = 1; modwerk_fxpage_names(ADDR(d), 2, 1, 1); no_project = 0;
+    CHECK(formats == 2);
     /* FX2 lists it after the stock rows; FX1 does not; the tables name its descriptor and row. */
     CHECK(modwerk_fx2_list[4] == ADDR(d) && !modwerk_fx2_list[5] && modwerk_fx2_list[3] == 0x2300 && !modwerk_fx1_list[3]);
     CHECK(TABLE(1)[27] == ADDR(d) && TABLE(3)[27] == 4 && TABLE(0)[27] == 0x1000 && !TABLE(2)[27] && TABLE(1)[26] == 0x1000);
@@ -66,6 +85,7 @@ int main(void)
           modwerk_fx2_list[5] == ADDR(pages[27]) && TABLE(3)[27] == 5);
     modwerk_fxpage_drop(26);
     CHECK(!modwerk_fx1_list[3] && modwerk_fx2_list[4] == ADDR(d) && TABLE(1)[26] == 0x1000 && !TABLE(3)[26]);
+    formats = 0; modwerk_fxpage_names(ADDR(pages[26]), 2, 1, 0); CHECK(!formats);   /* a dropped page: nothing */
     /* Refused: another donor's bytes, a fixup past its code, the image cut short, a stock effect's id. */
     bytes = recipe(); image[8] ^= 1; CHECK(!modwerk_fxpage_build(26, image, bytes, 2));
     bytes = recipe(); image[52 + 16 + 13] = 14; CHECK(!modwerk_fxpage_build(26, image, bytes, 2));

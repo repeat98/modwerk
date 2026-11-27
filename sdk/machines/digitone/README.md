@@ -31,6 +31,7 @@ Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 f
 | `ev_voice_on` | a voice's note-on in the render; the handler may change the pitch word | `void f(voice, track, event)` |
 | `ev_hold` | a track key held on its own; none taken opens the Mod Menu | `int f(brain, event, track)` |
 | `ev_midi_cc` | a MIDI CC on a track's channel or the auto channel, before the stock applies it (core 3.2 and newer) | `int f(track, cc, value, flags)`; nonzero takes it |
+| `ev_key_leds` | the key-LED frame, before the stock views set theirs; the first setter of an LED wins (core 3.3 and newer) | `void f(mgr)` |
 | `ev_note_queue` | an event a note source queues for the render, a step ahead, with its p-locks and the time it plays (core 4.1 and newer) | `void f(event, time)` |
 | Tables | `core_params` (parameter ids 182–184), `core_pages` (pages 27–30), `core_projdata` (blocks saved with the project), `core_menu` (Mod Menu entries), `core_audio` (exclusive or insert audio owners, core 3.2 and newer) | — |
 

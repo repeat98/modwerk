@@ -425,7 +425,8 @@ int main(void)
     CHECK(!ticks(1, 1) && !attached() && status(4) == 1u);
     describes(1);
     stock_awaited = 0;
-    CHECK(!ticks(31, 1) && attached() && status(3) == 4u);
+    CHECK(!ticks(600, 1) && !attached());              /* a forced detach stays off ten seconds */
+    CHECK(!ticks(1, 1) && attached() && status(3) == 4u);
     back();
     CHECK(!modwerk_usb_reconnecting());
 
@@ -441,6 +442,14 @@ int main(void)
     CHECK(isrs == 1u);
     modwerk_usb_function_frame(), modwerk_usb_function_frame();  /* the frame interrupt's block */
     CHECK(frames == 2u && isrs == 1u && !locked);
+    /* What the host streams, from the function's endpoint as the function enables it (status.c's CPU booking). */
+    { uint32_t ctrl = UF_REG(CTRL3);
+      CHECK(status(1) == 1u);
+      UF_REG(CTRL3) = 0x00080008u; CHECK(modwerk_usb_function_streams() == 0u);   /* typed, not enabled: no stream */
+      UF_REG(CTRL3) = 0x00880008u; CHECK(modwerk_usb_function_streams() == 1u);   /* to the host */
+      UF_REG(CTRL3) = 0x00880088u; CHECK(modwerk_usb_function_streams() == 3u);   /* and from it */
+      CHECK(modwerk_usb_function_stream_bytes() == 65u);                           /* the high-speed block's EP3 IN packet */
+      UF_REG(CTRL3) = ctrl; }
     /* A format selected on the panel changes both descriptors and the producer
      * only while detached. A class-only host can finish this reconnect. */
     static uint8_t choices[2][BLOCK];
@@ -488,7 +497,7 @@ int main(void)
      * Check the same installation against each link status. A second attach
      * must keep the original deadline and the already published descriptors. */
     struct link_case { unsigned session, port; int retry; } cases[] = {
-        {0x800, 0, 1}, {0, 0, 0}, {0x800, 1, 0}, {0x800, 0x100, 0}, {0x800, 0x80, 0}
+        {0x800, 0, 1}, {0, 0, 0}, {0x800, 1, 1}, {0x800, 0x100, 0}, {0x800, 0x80, 0}
     };
     for (unsigned k = 0; k < sizeof cases / sizeof cases[0]; ++k) {
         UF_REG(OTGSC) = cases[k].session;
@@ -498,10 +507,11 @@ int main(void)
         unsigned first_attach = status(3);
         CHECK(!ticks(180, 1));
         CHECK(attached() == !cases[k].retry);
-        CHECK(!ticks(31, 1) && attached());
+        unsigned off = cases[k].retry ? 601u : 31u;     /* a retry stays off ten seconds, inside the lease */
+        CHECK(!ticks(off, 1) && attached());
         CHECK(status(3) == first_attach + (unsigned)cases[k].retry);
         describes(1);
-        CHECK(!ticks(1200 - 211 - 1, 1) && ticks(1, 1) == 1u);
+        CHECK(!ticks(1200 - 180 - off - 1, 1) && ticks(1, 1) == 1u);
         CHECK(!status(0) && status(3) == first_attach + (unsigned)cases[k].retry);
         leave();
         UF_REG(FLUSH) = UF_REG(COMPLETE) = 0;
@@ -515,7 +525,7 @@ int main(void)
     UF_REG(PORTSC1) = 0;
     arrive();
     CHECK(!ticks(62 + 31 + 180, 1) && !attached());
-    CHECK(!ticks(31, 1) && attached());
+    CHECK(!ticks(600, 1) && !attached() && ticks(1, 1) == 0u && attached()); /* ten seconds off before the second attach */
     UF_REG(PORTSC1) = 1u;
     back();
     CHECK(!status(0) && !ticks(1200, 1));

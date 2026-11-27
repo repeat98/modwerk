@@ -43,6 +43,8 @@ extern volatile struct diag_lates modwerk_test_lates;
 #define LATES (&modwerk_test_lates)
 extern volatile struct diag_freeze_pc modwerk_test_freeze_pc;
 #define FREEZE_PC (&modwerk_test_freeze_pc)
+extern volatile struct diag_usb_gone modwerk_test_usb_gone;
+#define USB_GONE (&modwerk_test_usb_gone)
 extern volatile uint16_t modwerk_test_interrupted[4]; /* the frame interrupt's exception frame: format and vector, SR, PC */
 #define INTERRUPTED modwerk_test_interrupted
 extern volatile uint32_t modwerk_test_tcb;
@@ -84,6 +86,8 @@ typedef char diag_trace_fits_battery_ram[0x100ffb30u + sizeof(struct diag_trace)
 typedef char diag_lates_fit[sizeof(struct diag_lates) == 24u ? 1 : -1];
 #define FREEZE_PC ((volatile struct diag_freeze_pc *)0x100f9728u) /* after MWLR (battery-ram.json) */
 typedef char diag_freeze_pc_fits[sizeof(struct diag_freeze_pc) == 48u ? 1 : -1];
+#define USB_GONE ((volatile struct diag_usb_gone *)0x100f9758u) /* after MWFZ (battery-ram.json) */
+typedef char diag_usb_gone_fits[0x100f9758u + sizeof(struct diag_usb_gone) <= 0x100f9800u ? 1 : -1];
 /* The exception frame of the interrupt modwerk_diag_frame runs in: the eDMA frame transfer's (level 6, stock's handler
  * 0x40004840 saves 16 bytes, then its step 7 is dsp_hooks.s's dl_state7, which saves 44 and keeps the stack pointer in
  * modwerk_diag_frame_sp before it calls dl_frame: build_core.py's DSP_EDITS), so the frame (format and vector, SR, PC)
@@ -202,6 +206,32 @@ static void add_freeze_pc(volatile struct diag_log *l)
     b[20] = (uint8_t)(z->sr[3] >> 8), b[21] = (uint8_t)z->sr[3];
     push(l, r);
 }
+static uint8_t byte_of(uint32_t n) { return (uint8_t)(n < 255u ? n : 255u); }
+static void put32(volatile uint8_t *b, uint32_t v) { b[0] = (uint8_t)(v >> 24), b[1] = (uint8_t)(v >> 16), b[2] = (uint8_t)(v >> 8), b[3] = (uint8_t)v; }
+/* The frame interrupt's USB_GONE record (diag.h), with its own boot and second: the first sample whole, the others
+ * in short. */
+static void add_usb_gone(volatile struct diag_log *l)
+{
+    volatile struct diag_usb_gone *g = USB_GONE;
+    g->state = 3u;
+    volatile struct diag_incident *r = slot(l);
+    bare(r, DIAG_USB_GONE);
+    const volatile struct diag_usb_sample *s = &g->sample[0];
+    r->boot = g->boot, r->second = g->second, r->a = s->otgsc, r->screen = s->portsc, r->tempo24 = s->usbcmd;
+    r->cpu = s->uf_timer, r->dsp0 = s->wd_detached, r->dsp1 = s->wd_off;
+    volatile uint8_t *b = r->machine; /* machine, fx and keys: one run of 56 bytes */
+    put32(b, s->deviceaddr), put32(b + 4, s->frindex);
+    b[8] = s->uf_state, b[9] = s->uf_off_ticks, b[10] = s->uf_flags, b[11] = s->wd_tries, b[12] = s->flags;
+    b[13] = (uint8_t)g->stopped, b[14] = byte_of(g->ticks), b[15] = byte_of(g->ep0), b[16] = byte_of(g->uf), b[17] = s->uf_reconnects;
+    b[18] = b[19] = 0;
+    for (unsigned k = 1; k < DIAG_USB_GONE_SAMPLES; ++k) {
+        volatile uint8_t *c = b + 20u + 12u * (k - 1u);
+        s = &g->sample[k];
+        put32(c, s->otgsc), put32(c + 4, s->portsc);
+        c[8] = (uint8_t)s->usbcmd, c[9] = s->uf_state, c[10] = s->flags, c[11] = s->wd_tries;
+    }
+    push(l, r);
+}
 /* The power-up's battery restore of the current bank (status.s mw_boot_restore, in place of main's init call of stock's
  * 0x40025770 at 0x4001fb78, before any tick). Stock refuses the whole bank when any of its checks has a single value to
  * fix: the bank is then never copied in nor applied, every Part and pattern of it reads as stock's empty defaults, and
@@ -244,6 +274,8 @@ static void start(volatile struct diag_log *l)
         l->version = DIAG_VERSION, l->magic = DIAG_MAGIC;
     }
     if (l->freeze_state) add_freeze(l), add_freeze_pc(l), l->freeze_state = 0; /* the last session froze; a = 0 if it never came back */
+    volatile struct diag_usb_gone *g = USB_GONE; /* the last session's host left and its tick never added the record */
+    if (g->magic == DIAG_USB_GONE_MAGIC && (g->state == 1u || g->state == 2u) && g->boot == l->boot) add_usb_gone(l);
     l->boot = l->boot + 1u;
     add(l, DIAG_START, crashes << 16 | (stalls & 0xffffu), 1);
     add(l, DIAG_BASE, (uint32_t)modwerk_base_digest[0] << 24 | (uint32_t)modwerk_base_digest[1] << 16 | (uint32_t)modwerk_base_digest[2] << 8 | modwerk_base_digest[3], 0);
@@ -351,6 +383,8 @@ static void diag_tick(void)
         add(l, DIAG_LATE, (over < 255u ? over : 255u) << 24 | (held < 0xffffffu ? held : 0xffffffu), 1), skip_at = ticks, frame_skips = held, late_overs = over;
     uint32_t reoffered = mw_usb_reoffers; /* the host never enumerated the unit and it offered itself again: each time, the controller then */
     if (reoffered != reoffers) { if (!reoffers) add(l, DIAG_USB, mw_usb_reoffer_regs, 1); reoffers = reoffered; } /* a boot's first: five with no host would crowd the log */
+    volatile struct diag_usb_gone *g = USB_GONE; /* the host's frames stopped while one was expected: once its samples are in */
+    if (g->magic == DIAG_USB_GONE_MAGIC && g->state == 2u && g->boot == l->boot) add_usb_gone(l);
     if (ticks % 30u) return; /* twice a second, as status.c's meter */
     uint32_t cpu = modwerk_status[0], d0p = modwerk_status[2], d1p = modwerk_status[4];
     ++n, cpu_sum += cpu, d0_sum += modwerk_status[1], d1_sum += modwerk_status[3], played += PLAYING;
@@ -426,8 +460,44 @@ static void freeze_pc(volatile struct diag_log *l, unsigned k)
     if (!k) z->magic = DIAG_FREEZE_PC_MAGIC;
 }
 
+/* The host's USB frames (diag.h's USB_GONE), from the frame interrupt: one register read a frame. FRINDEX standing
+ * still for USB_STILL frames is a host gone or asleep (a full-speed host sends one every millisecond, under three
+ * frames); what the base expected then decides whether its standing still for three seconds is recorded. */
+#define USB_STILL 8u
+#define USB_GONE_FRAMES 8268u /* three seconds of frames */
+#define USB_GONE_A_BOOT 4u
+static uint32_t usb_index, usb_still, usb_expected, usb_gone, usb_t0, usb_e0, usb_u0, usb_stopped;
+static void usb_watch(volatile struct diag_log *l)
+{
+    volatile struct diag_usb_gone *g = USB_GONE;
+    uint32_t index = modwerk_usb_frindex();
+    if (index != usb_index) { /* the frames move: an episode is over, a short one with the samples it has */
+        if (usb_expected && usb_still >= USB_GONE_FRAMES && g->state == 1u) g->state = 2u;
+        usb_index = index, usb_still = 0;
+        return;
+    }
+    if (usb_still > USB_GONE_FRAMES + (DIAG_USB_GONE_SAMPLES - 1u) * SAMPLE_FRAMES) return; /* its samples are in */
+    if (++usb_still == USB_STILL) {
+        usb_expected = usb_gone < USB_GONE_A_BOOT && modwerk_usb_host_expected();
+        usb_t0 = modwerk_runtime_ticks, usb_e0 = mw_ep0_runs, usb_u0 = mw_uf_calls, usb_stopped = modwerk_usb_reconnect_state();
+    }
+    if (!usb_expected || usb_still < USB_GONE_FRAMES || (usb_still - USB_GONE_FRAMES) % SAMPLE_FRAMES) return;
+    unsigned k = (usb_still - USB_GONE_FRAMES) / SAMPLE_FRAMES;
+    if (!k) {
+        ++usb_gone;
+        g->magic = 0, g->state = 1u, g->boot = l->boot, g->second = ticks / 60u;
+        g->ticks = sixteen(modwerk_runtime_ticks - usb_t0), g->ep0 = sixteen(mw_ep0_runs - usb_e0), g->uf = sixteen(mw_uf_calls - usb_u0);
+        g->stopped = (uint16_t)usb_stopped;
+        for (unsigned i = 0; i < sizeof g->sample; ++i) ((volatile uint8_t *)g->sample)[i] = 0;
+    }
+    modwerk_usb_sample(&g->sample[k]);
+    if (!k) g->magic = DIAG_USB_GONE_MAGIC;
+    if (k == DIAG_USB_GONE_SAMPLES - 1u) g->state = 2u;
+}
+
 /* In the frame interrupt (level 5): a few compares a frame, and once a freeze the context, well under the 200 µs
- * the frame interrupt may be held (OCTATRACK_HARDWARE_TRAPS.md). It writes only the freeze slot and FREEZE_PC. */
+ * the frame interrupt may be held (OCTATRACK_HARDWARE_TRAPS.md). It writes only the freeze slot, FREEZE_PC and
+ * USB_GONE. */
 void modwerk_diag_frame(void)
 {
     static uint32_t seen, still, last;
@@ -439,6 +509,7 @@ void modwerk_diag_frame(void)
     volatile uint16_t *f = trace[traced % DIAG_TRACE_FRAMES];
     f[0] = (uint16_t)(gap < 65535u ? gap : 65535u), f[1] = (uint16_t)(ran < 65535u ? ran : 65535u), traced = traced + 1u;
     last = now;
+    usb_watch(l);
     if (still + 1u > tick_gap) tick_gap = still + 1u;          /* the longest run of frames without a tick */
     if (t != seen) {
         if (l->freeze_state == 1u) l->freeze.a = still, l->freeze_state = 2u;
