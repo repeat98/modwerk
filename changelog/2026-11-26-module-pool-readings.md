@@ -1,0 +1,1 @@
+Fixes the Octatrack module-memory check counting 16 to 32 bytes too few for each module on base 0.8: the base's loader keeps a larger record per module since 0.8 added two site events, and the check now follows the base's events. Readings of Mini Verb 0.2.4, Euclid 0.1.6 and Repitch 0.2.2 on a 0.8.2 twin match it exactly.
