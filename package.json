@@ -84,6 +84,7 @@
   },
   "dependencies": {
     "@block65/webcrypto-web-push": "2.0.0",
+    "@noble/hashes": "2.4.0",
     "@tiptap/markdown": "3.31.4",
     "@tiptap/pm": "3.31.4",
     "@tiptap/react": "3.31.4",

@@ -25,6 +25,7 @@ type Lock = { schema: number; kind: string; kit: { version: string; protocol: nu
 /** Kit files Modwerk replaces with its own implementation: each holds a re-export of the module named here, and the
  * lock keeps the upstream file's sha256 under kit.replaced, so an update can say when upstream changed one. */
 export const KIT_REPLACEMENTS: Readonly<Record<string, string>> = {
+  'src/bytes.ts': 'src/engine/elektron/bytes.ts',
   'src/codec/aplib.ts': 'src/engine/elektron/codec/pack.ts',
   'src/codec/elz.ts': 'src/engine/elektron/codec/depack.ts',
   'src/codec/transport.ts': 'src/engine/elektron/codec/transport.ts',

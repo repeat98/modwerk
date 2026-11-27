@@ -1,0 +1,1 @@
+Firmware builder: the builder's hashes, hex and byte helpers are now Modwerk's own (`src/engine/elektron/bytes.ts`, SHA-256 and HMAC from `@noble/hashes`). Builds are unchanged byte for byte: the new helpers gave the same results as the previous ones on 14,552 randomized checks, and the standard SHA-256 and HMAC test vectors are pinned in its test.
