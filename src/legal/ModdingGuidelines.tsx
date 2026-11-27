@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import Markdown from 'react-markdown'
-import { BackLink } from '../components/BackLink'
 import source from '../../MODDING_GUIDELINES.md?raw'
 import './modding-guidelines.css'
 
@@ -25,7 +24,6 @@ export function ModdingGuidelines({ activeTopic }: { activeTopic?: string }) {
     if (activeTopic) goToTopic(activeTopic)
   }, [activeTopic])
   return <article className="guidelines-page">
-    <BackLink href="#library">Module library</BackLink>
     <header className="guidelines-intro"><Markdown>{introduction}</Markdown></header>
     <div className="guidelines-reading">
       <nav className="guidelines-index" aria-label="Guideline topics">

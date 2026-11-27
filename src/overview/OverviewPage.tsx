@@ -31,7 +31,7 @@ export function OverviewPage({ overview }: { overview: Overview }) {
     </header>
     <div className="machine-grid">
       {shown.filter(machine => machine.kind === 'mods').map(machine => <MachineTile key={machine.device.id} machine={machine} />)}
-      {filter !== 'research' && filter !== 'open' && <DevelopTile machines={overview.machines.filter(machine => machine.count).map(machine => machine.device.name)} />}
+      {filter !== 'research' && filter !== 'open' && <DevelopTile />}
       {shown.filter(machine => machine.kind !== 'mods').map(machine => <MachineTile key={machine.device.id} machine={machine} />)}
       {(filter === 'all' || filter === 'open') && <><FridgeTile /><AddMachineTile /></>}
     </div>
@@ -48,14 +48,13 @@ export function OverviewPage({ overview }: { overview: Overview }) {
 }
 
 // Building a module for the machines that have mods, in three plain steps. It sits right after those machines.
-function DevelopTile({ machines }: { machines: string[] }) {
+function DevelopTile() {
   return <a className="overview-tile is-develop" href="#submit">
     <span className="overview-art">
-      <span className="overview-waiting"><strong>Build your own mod</strong><small>{machines.join(' · ')}</small></span>
       <span className="overview-pitch">Describe your idea, paste the starter prompt into your AI assistant, build it together.</span>
     </span>
     <div className="overview-tile-body">
-      <div className="overview-tile-line"><h2 className="overview-tile-name">Start developing</h2><Icon name="plus" size={16} /></div>
+      <div className="overview-tile-line"><h2 className="overview-tile-name">Build your own mod</h2><Icon name="plus" size={16} /></div>
     </div>
   </a>
 }
@@ -64,11 +63,10 @@ function DevelopTile({ machines }: { machines: string[] }) {
 function AddMachineTile() {
   return <a className="overview-tile is-develop is-add-machine" href="#forum?category=requests">
     <span className="overview-art">
-      <span className="overview-waiting"><strong>Add your machine</strong><small>Any instrument · any maker</small></span>
       <span className="overview-pitch">Not only Elektron. Suggest the instrument you want to mod and help open its firmware.</span>
     </span>
     <div className="overview-tile-body">
-      <div className="overview-tile-line"><h2 className="overview-tile-name">Suggest a machine</h2><Icon name="plus" size={16} /></div>
+      <div className="overview-tile-line"><h2 className="overview-tile-name">Add your machine</h2><Icon name="plus" size={16} /></div>
     </div>
   </a>
 }

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Icon, type IconName } from './Icon'
-import { LinkHero } from './LinkHero'
+import { Icon } from './Icon'
 import { api, post } from '../community/api'
 import { useCommunity } from '../community/context'
 import { accountHref } from '../community/member-access'
@@ -12,11 +11,11 @@ const KEY = 'modwerk.beta-join:2026-10-24'
 const ROUTE = betaInvitationRoute('public')
 // What a tester signs up for now that loading over USB is for everyone (OCTATRACK_BASE_RELEASED): new modules first and
 // the beta-only pages. Discord is then asked for by the beta note (OwnerNote.tsx); diagnostics are offered, never required.
-const ASKS: [IconName, string, string][] = [
-  ['wave', 'Try new modules first', 'Beta modules go to testers before everyone else, over USB like any other module.'],
-  ['message', 'Report bugs on Discord', 'In #beta-testers, under the same name as here.'],
-  ['shield', 'Share diagnostics if you like', 'They show where a build or sync went wrong. It’s optional; you’re asked after joining.'],
-  ['warn', 'Have a way back', 'A CompactFlash card reader or a MIDI interface, to restore the original OS if USB stops working.'],
+const ASKS: [string, string][] = [
+  ['Try new modules first', 'Beta modules go to testers before everyone else, over USB like any other module.'],
+  ['Report bugs on Discord', 'In #beta-testers, under the same name as here.'],
+  ['Share diagnostics if you like', 'They show where a build or sync went wrong. It’s optional; you’re asked after joining.'],
+  ['Have a way back', 'A CompactFlash card reader or a MIDI interface, to restore the original OS if USB stops working.'],
 ]
 
 function betaJoinDismissed() {
@@ -68,10 +67,9 @@ export function BetaJoinPrompt() {
   if (!open) return null
   return <dialog ref={dialog} className="base-install-dialog beta-join" aria-labelledby="beta-join-title" aria-describedby="beta-join-intro" onCancel={event => { event.preventDefault(); later() }}>
     <button type="button" className="icon-button base-install-close" aria-label="Close" onClick={later}><Icon name="close" size={18} /></button>
-    <LinkHero />
-    <h2 id="beta-join-title" className="link-title" tabIndex={-1}>The beta is open for new testers <span className="module-beta-badge">Beta</span></h2>
+    <div className="base-install-header"><h2 id="beta-join-title" className="link-title" tabIndex={-1}>The beta is open for new testers <span className="module-beta-badge">Beta</span></h2></div>
     <p id="beta-join-intro" className="base-install-intro">Beta testers try new modules before everyone else and tell us what breaks. It’s open to new testers for a short time, while places last.</p>
-    <ul className="link-promises">{ASKS.map(([icon, lead, rest]) => <li key={lead}><span className="link-feature-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><span><strong>{lead}</strong> {rest}</span></li>)}</ul>
+    <ul className="link-promises">{ASKS.map(([lead, rest]) => <li key={lead}><span><strong>{lead}</strong> {rest}</span></li>)}</ul>
     <p className={'link-needs' + (usb ? '' : ' is-missing')}>You need an Octatrack (MKI or MKII), your OS 1.40C file, a USB cable and Chrome or Edge on a computer.</p>
     {!usb ? <p className="file-error" role="alert">Beta modules load over USB, which this browser can’t do. Open Modwerk in Chrome or Edge on a computer to join.</p>
       : !user ? <p className="base-install-note">Sign in or create an account to join.</p>

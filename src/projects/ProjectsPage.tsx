@@ -18,7 +18,6 @@ export function ProjectsPage({ route = 'projects' }: { route?: string }) {
       <h1>{PROJECT_TITLE}</h1>
       <p>Independent mods and tools for your instrument. Check each project’s page for compatibility and installation instructions. These projects cannot be added to a Modwerk configuration.</p>
     </header>
-    {!filtered && <nav className="projects-starting-points" aria-label="Suggested starting points"><span>Start with a workflow</span>{[{ name: 'DigiChain', label: 'Prepare sample chains' }, { name: 'DNX', label: 'Organize Digitone projects' }, { name: 'Monomodule', label: 'Play in your DAW' }].map(item => <button key={item.name} type="button" onClick={() => setQuery(item.name)}>{item.label}<Icon name="arrow" size={14} /></button>)}</nav>}
     <div className="projects-filters">
       <label className="projects-search"><span className="sr-only">Search other projects</span><Icon name="search" size={17} /><input type="search" placeholder="Search projects, creators or features" value={query} onChange={event => setQuery(event.target.value)} /></label>
       <label className="projects-machine"><span className="sr-only">Filter projects by instrument</span><select value={machine} onChange={event => setMachine(event.target.value)}><option value="all">All instruments</option>{Object.entries(PROJECT_MACHINES).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select></label>
@@ -31,7 +30,6 @@ export function ProjectsPage({ route = 'projects' }: { route?: string }) {
       <a className="project-author" href={'https://github.com/' + item.author} target="_blank" rel="noopener noreferrer">{item.author}<span className="sr-only"> on GitHub (opens in a new tab)</span></a>
       <p>{item.description}</p>
       <ul className="project-machines" aria-label="Related instruments">{item.machines.map(id => <li key={id}>{PROJECT_MACHINES[id]}</li>)}</ul>
-      <a className="project-open" href={item.repository} target="_blank" rel="noopener noreferrer">Visit project <Icon name="external" size={14} /><span className="sr-only">: {item.name} (opens in a new tab)</span></a>
     </article>)}</div> : <div className="no-results"><Icon name="search" size={28} /><h2>No projects match these filters</h2><p>Try another instrument, project type or search term.</p><button className="button button-quiet" type="button" onClick={reset}>Clear filters</button></div>}
     <footer className="projects-footer"><p>Made something useful for these machines?</p><a className="button button-quiet" href={SUPPORT_MAILTO + '?subject=' + encodeURIComponent('Project for the Modwerk directory') + '&body=' + encodeURIComponent('Project name:\nProject URL:\nInstruments:\nWhat it does:\n')}><Icon name="mail" size={15} />Want me to add your project?</a><small>A curated selection, based on a clear purpose, useful documentation and distinct workflows. GitHub previews belong to their respective projects. Thanks to <a href="https://elektronmods.com/mods.php" target="_blank" rel="noopener noreferrer">Elektronmods</a> for initial discoveries.</small></footer>
   </div>
