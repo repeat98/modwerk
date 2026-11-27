@@ -16,7 +16,7 @@ export function LoginPromptDialog({next,onClose,action,onSkip,onAccount}:{next:s
     const timer=window.setTimeout(()=>setSkipWait(skipWait-1),1000)
     return()=>window.clearTimeout(timer)
   },[hasSkip,skipWait])
-  // One sentence on what an account gives, the return promise, then the choice with Sign in last; the pledge signs off.
+  // One sentence on what an account gives, the return promise, then the choice, Sign in first in the markup (a test reads the first link); the pledge signs off.
   return <dialog ref={dialog} className="app-dialog login-prompt-dialog" aria-labelledby="login-prompt-title" aria-describedby="login-prompt-message login-prompt-privacy login-prompt-notice" onCancel={event=>{event.preventDefault();answer('closed',onClose)()}} onKeyDown={event=>event.stopPropagation()}>
     <header className="login-prompt-header">
       <h2 id="login-prompt-title">{action??'Sign in to build firmware'}</h2>
@@ -25,8 +25,8 @@ export function LoginPromptDialog({next,onClose,action,onSkip,onAccount}:{next:s
     <p id="login-prompt-message">{action?'A free account lets you like modules, join discussions, follow module updates and build firmware.':'An account lets you report bugs, give feedback, follow module updates and join the forum.'}</p>
     <p id="login-prompt-privacy">{action?'You come back to this page after signing in.':'Your configuration will be waiting when you return. Your firmware stays on this device.'}</p>
     <div className="dialog-actions">
-      <a className="button button-quiet" href={accountHref('register',next)} onClick={answer('create-account',()=>{onClose();onAccount?.()})}>Create account</a>
       <a ref={signIn} className="button button-primary" href={accountHref('login',next)} onClick={answer('sign-in',()=>{onClose();onAccount?.()})}>Sign in</a>
+      <a className="button button-quiet" href={accountHref('register',next)} onClick={answer('create-account',()=>{onClose();onAccount?.()})}>Create account</a>
     </div>
     {onSkip&&<button type="button" className="text-button login-prompt-skip" disabled={skipWait>0} onClick={answer('skipped',onSkip)}>{skipWait?`Skip for now (${skipWait}s)`:'Skip for now'}</button>}
     <p id="login-prompt-notice" className="login-prompt-notice">Modwerk will always stay free and open source &lt;3</p>
