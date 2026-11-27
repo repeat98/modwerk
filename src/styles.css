@@ -8,12 +8,12 @@
   -webkit-font-smoothing: antialiased;
   scrollbar-color: var(--line-hover) transparent;
   /* Neutral charcoal surfaces retain the instrument-inspired dark palette. */
-  --background: #1d1d21;
+  --background: #19191d;
   --sidebar: #232327;
   --surface: #2c2c31;
   --surface-raised: #303036;
   --surface-hover: #38383f;
-  --field: #1a1a1e;
+  --field: #151518;
   --preview: #232328;
   --line: #3d3d45;
   --chrome-edge: rgb(255 255 255 / 8%);
