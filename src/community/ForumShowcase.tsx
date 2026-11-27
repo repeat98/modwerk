@@ -64,7 +64,7 @@ export function ForumShowcase({ machine, category, shareHref, layout = 'strip' }
   if (settled && !session.forumMedia) return null
   const loading = !items && !failed, empty = !loading && !items?.length
   return <section className="forum-showcase" data-layout={layout} aria-labelledby="forum-showcase-title" aria-busy={loading}>
-    <div className="forum-list-heading"><h2 id="forum-showcase-title">{layout === 'grid' ? 'Latest shares' : 'Fresh from the community'}</h2>{layout === 'strip' && <a className="text-button" href={'#forum?category=showcase' + (machine ? '&machine=' + machine : '')}>Browse the Showcase<Icon name="arrow" size={13} /></a>}</div>
+    <div className="forum-list-heading"><h2 id="forum-showcase-title">{layout === 'grid' ? 'Latest shares' : 'Showcase'}</h2>{layout === 'strip' && <a className="text-button" href={'#forum?category=showcase' + (machine ? '&machine=' + machine : '')}>Browse all<Icon name="arrow" size={13} /></a>}</div>
     <ul key={feedKey} className="forum-showcase-strip" data-empty={empty || undefined}>
       {empty && <LoadingCard ghost />}
       <li className="forum-showcase-invite"><a href={shareHref}>

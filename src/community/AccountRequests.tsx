@@ -47,8 +47,7 @@ export function AccountRequestInbox({ archived }: { archived: boolean }) {
   return <>
     <AdminViews section="requests" views={requestViews} active={view}/>
     <section className="configuration-section">
-      <div className="section-title"><h2>{archived ? 'Request history' : 'Removal requests'}</h2>
-        {!loading && !loadError && <span className="pill">{items.length}</span>}
+      <div className="section-title"><h2>{archived ? 'Request history' : 'Removal requests'}{!loading && !loadError && <span className="subtle">{items.length}</span>}</h2>
       </div>
       {loading && <p role="status">Loading requests…</p>}
       {!loading && !loadError && !items.length && <p className="admin-empty">{archived ? 'No completed or cancelled requests.' : 'No active removal requests.'}</p>}

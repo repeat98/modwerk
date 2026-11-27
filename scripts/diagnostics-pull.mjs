@@ -8,7 +8,7 @@
 //   npm run diagnostics:pull             # write every retained record to ~/.cache/modwerk-local/diagnostics/latest.json
 import { createHash, randomBytes } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -208,6 +208,52 @@ export function stabilityLines(found, events, versions = new Map(), owner = OWNE
   })
 }
 
+/** Each module machine's skipped renders in the field beside what admission books for it (frame-costs.json), most first
+ * (owner, 26 November 2026: nothing put the two side by side). A start's count (the guard's skips since the start, hushed renders included) goes to every
+ * machine on a track it shed; `several`: starts with two or more of its tracks in one Part. The owner's unit is left out. */
+export function shedLines(found, costs = {}, sigs = new Map(), owner = OWNER) {
+  const rows = new Map()
+  for (const [name, member] of found) {
+    if (name === owner) continue
+    for (const records of Map.groupBy([...member.incidents?.values() ?? []], r => r.epoch + '/' + r.boot).values()) {
+      const sheds = records.filter(r => r.kind === 'shed')
+      if (!sheds.length) continue
+      const skipped = Math.max(...sheds.map(r => r.a & 0xffffff)), shed = sheds.reduce((mask, r) => mask | r.a >>> 24, 0), most = new Map()
+      for (const r of records) {
+        const count = new Map()
+        for (let t = 0; t < 8; t++) {
+          const m = r.machines ?? [], sig = m[3 * t] <= 1 && m[3 * t + 1] ? String.fromCharCode(m[3 * t + 1], m[3 * t + 2]) : ''
+          if (sig && shed >> t & 1) count.set(sig, (count.get(sig) ?? 0) + 1)
+        }
+        for (const [sig, n] of count) most.set(sig, Math.max(n, most.get(sig) ?? 0))
+      }
+      for (const [sig, n] of most) {
+        const row = rows.get(sig) ?? rows.set(sig, { units: new Set(), starts: 0, skipped: 0, several: 0 }).get(sig)
+        row.units.add(name)
+        row.starts++
+        row.skipped += skipped
+        if (n > 1) row.several++
+      }
+    }
+  }
+  return [...rows].sort((a, b) => b[1].skipped - a[1].skipped).map(([sig, r]) => {
+    const id = sigs.get(sig), cost = costs[id]
+    return `  ${id ?? 'unknown'} (${sig}): ${r.units.size} unit${r.units.size > 1 ? 's' : ''}, ${r.starts} start${r.starts > 1 ? 's' : ''}, ${r.skipped.toLocaleString('en-US')} renders skipped` +
+      (r.several ? `, ${r.several} of those starts with two or more of its tracks` : '') + (cost ? `; booked first ${cost.first}, each ${cost.each}` : '; not booked')
+  })
+}
+/** Each machine's Part signature (two letters) to its module id: the module's own descriptor in its C source, or its port. */
+export function machineSignatures(root) {
+  const sigs = new Map(), modules = join(root, 'sdk/octatrack/modules')
+  for (const id of readdirSync(modules)) for (const file of readdirSync(join(modules, id)).filter(f => f.endsWith('.c'))) {
+    const m = /\.sig\s*=\s*\{\s*'(.)'\s*,\s*'(.)'/.exec(readFileSync(join(modules, id, file), 'utf8'))
+    if (m) sigs.set(m[1] + m[2], id)
+  }
+  for (const [id, port] of Object.entries(JSON.parse(readFileSync(join(root, 'sdk/machines/octatrack/module-adapters/machine-ports.json'), 'utf8')).ports))
+    if (port?.machine?.sig) sigs.set(port.machine.sig, id)
+  return sigs
+}
+
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
 const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (PROJ or FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big',
   'left out after a failed start', 'held after a failed start']
@@ -300,7 +346,7 @@ function crashLine({ count, vector, pc, code, memory }) {
   return line + ` code ${hex(code)} uncached ${hex(memory)}`
 }
 
-export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map(), names = namesFor, versions = new Map() } = {}) {
+export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map(), names = namesFor, versions = new Map(), costs = {}, sigs = new Map() } = {}) {
   const found = members(events)
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
@@ -339,6 +385,7 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
     ...checks.length ? ['', 'Card-build checks that refused a selection (on every module change; not failures): ' + checks.map(([name, rows]) => `@${name} ${rows.length}`).join(', ')] : [],
     '', `Stability per base (without @${OWNER}'s development unit; OS upgrades and reflashes left out; hours from the units' load logs):`,
     ...stabilityLines(found, events, versions),
+    ...(found => found.length ? ['', `Skipped renders by machine (the last 30 days, older bases included, without @${OWNER}'s unit; a start with several machines counts for each), beside what admission books for it now (frame-costs.json):`, ...found] : [])(shedLines(found, costs, sigs)),
     '', 'Daily USB sync counts (everyone, sharing or not):',
     ...[...days].map(([day, rows]) => '  ' + day + '  ' + rows.map(row => row.event.replace('usb_sync_', '') + ' ' + row.count).join(', ')),
   ].join('\n')
@@ -388,7 +435,8 @@ async function main() {
     reports = reportsByMember(JSON.parse(execFileSync('gh', ['issue', 'list', '--label', 'issue-report', '--state', 'all', '--limit', '300',
       '--search', 'created:>=' + from.slice(0, 10), '--json', 'number,title,state,body'], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })))
   } catch (error) { note = '\n\nGitHub reports not matched: ' + (error.stderr?.toString().trim() || error.message) }
-  console.log(summary(data, { base, layouts, reports, versions }) + note + '\n\nEvery record: ' + file)
+  const costs = JSON.parse(fromMain('sdk/machines/octatrack/frame-costs.json')).costs, sigs = machineSignatures(fileURLToPath(ROOT))
+  console.log(summary(data, { base, layouts, reports, versions, costs, sigs }) + note + '\n\nEvery record: ' + file)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
