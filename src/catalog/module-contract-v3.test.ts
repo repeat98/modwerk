@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import MACHINES from '../devices/machines.generated.json'
 import type { MachineProfile } from '../devices/machine-contract'
 import { LIBRARY_CATEGORIES, libraryClassification } from './library-classification'
-import { MODULE_V3_CATEGORIES, compareCoreVersions, parseElemodBuild, parseModwerkModule, requireModwerkPublication, type ModwerkModule } from './module-contract-v3'
+import { MODULE_V3_CATEGORIES, compareCoreVersions, parseElemodBuild, parseElemodDependency, parseModwerkModule, requireModwerkPublication, type ModwerkModule } from './module-contract-v3'
 
 const machines = MACHINES as MachineProfile[]
 const template = (machine = 'digitakt') => JSON.parse(readFileSync(resolve('sdk/templates/elemod/modwerk.module.json'), 'utf8')
@@ -78,6 +78,15 @@ describe('module contract v3', () => {
     expect(() => parse({ ...value, evidence: { ...value.evidence, hardware: null } })).toThrow('hardware report')
     expect(() => parse({ ...value, evidence: { ...value.evidence, tier: 'owner-verified' } })).toThrow('name the owner')
     expect(() => parse({ ...value, evidence: { ...value.evidence, verifiedBy: 'repeat98' } })).toThrow('only owner-verified')
+  })
+
+  it('lets a framework name an older core than its machine\'s', () => {
+    const digitakt = machines.find(machine => machine.id === 'digitakt')!
+    const document = JSON.parse(readFileSync(resolve('sdk/digitakt/dependencies/dt-support/dependency.json'), 'utf8'))
+    expect(parseElemodDependency(document, digitakt).platform.core).toBe('2.1')
+    const { core: _core, ...platform } = document.document.platform
+    expect(parseElemodDependency({ ...document, document: { ...document.document, platform } }, digitakt).platform.core).toBe(digitakt.sdk!.core!.version)
+    expect(() => parseElemodDependency({ ...document, document: { ...document.document, platform: { ...platform, core: 'new' } } }, digitakt)).toThrow('core release')
   })
 
   it('checks the module against its machine profile', () => {
