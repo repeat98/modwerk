@@ -235,7 +235,12 @@ with tempfile.TemporaryDirectory() as tmp:
         assert not num(0x460d1e70) and not num(0x460d175c)
         if args.project_change or args.project_reload:
             switch(1)
-            tap(ARR); tap(1); tap(ARR); tap(YES); tap(3)
+            if args.performance_overlay:
+                tap(ARR); tap(ARR); tap(6); tap(ARR)
+                for _ in range(3): tap(0x20)
+                tap(0x1b); tap(YES)
+            else:
+                tap(ARR); tap(1); tap(ARR); tap(YES); tap(3)
             witness = json.loads(args.symbols_module.read_text())
             assert hashlib.sha256(args.package.read_bytes()).hexdigest() == witness['sha256']
             origin = callbacks()[0] - witness['offsets']['clyps_project_init']
@@ -272,7 +277,11 @@ with tempfile.TemporaryDirectory() as tmp:
             if args.project_reload == 'missing':
                 assert receipt['bank'] == 0 and receipt['defined'] == 8, receipt
             else:
-                assert receipt['bank'] == 1 and receipt['defined'] == 0, receipt
+                assert receipt['bank'] == 1 and receipt['defined'] == (8 if args.performance_overlay else 0), receipt
+                if args.performance_overlay:
+                    tap(ARR)
+                    assert num(origin + witness['offsets']['mode']) == 0
+                    assert num(origin + witness['offsets']['playing']) == 0
             switch(0, polls=2000)  # Let the stock card task finish first.
             assert call('modwerk_runtime_free',0) == free
             receipt['off_pool'] = free

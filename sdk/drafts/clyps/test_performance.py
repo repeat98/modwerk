@@ -14,6 +14,12 @@ class PerformancePanel(unittest.TestCase):
             subprocess.run(['cc','-std=c99','-Wall','-Wextra','-Werror','-I',sdk/'runtime/loader',
                             here/'tests/performance_host.c','-o',exe],check=True)
             subprocess.run([exe],check=True)
+            subprocess.run([exe, 'fresh-session'],check=True)
+            for transport in ('stop', 'play'):
+                for read in ('eof', 'complete'):
+                    for order in ('init-first', 'read-first'):
+                        with self.subTest(transport=transport, read=read, order=order):
+                            subprocess.run([exe, transport, read, order], check=True)
 
 
 if __name__ == '__main__':

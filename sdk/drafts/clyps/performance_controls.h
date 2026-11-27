@@ -160,6 +160,12 @@ static void setup_confirm(void)
             refs = (rows[slot] & ~(15u << shift)) | (draft << shift);
         }
         if (!valid(refs)) { refused = 1; return; }
+        unsigned sr = critical();
+        if (bank_uncertain) {
+            restore(sr);
+            refused = 1;
+            return;
+        }
         rows[slot] = refs;
         defined |= 1u << slot;
         /* A lane that came from the edited cell no longer matches it. */
@@ -167,6 +173,7 @@ static void setup_confirm(void)
             if (origin(org_play, track) == slot + 1) set_origin(org_play, track, 0);
             if (origin(org_req, track) == slot + 1) set_origin(org_req, track, 0);
         }
+        restore(sr);
     }
     open_view(ROW);
 }

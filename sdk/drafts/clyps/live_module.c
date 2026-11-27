@@ -90,6 +90,9 @@ static void set_origin(volatile uint32_t *o, unsigned lane, unsigned row)
 #endif
 static unsigned last_run, last_seen_row, last_seen_pending;
 #ifdef CLYPS_PERFORMANCE
+/* The performance adapter retains its only row namespace until stock can
+ * certify a project incarnation and bank generation. The current hooks cannot. */
+static volatile unsigned bank_uncertain;
 static unsigned last_live;
 #endif
 static uint32_t last_seen_sources;
@@ -140,6 +143,9 @@ static int grid(unsigned pattern)
 
 static int supported(void)
 {
+#ifdef CLYPS_PERFORMANCE
+    if (bank_uncertain) return 0;
+#endif
     return !bank_read_active && !BYTE(0x80000034u) && !ARRANGER && !LONG(0x80006546) && !(BYTE(0x80000028) & 1) &&
            BYTE(0x800065bd) == 0 && BYTE(0x800065be) == 0 &&
            BYTE(0x800065bf) == 0 && BYTE(0x800065c0) == 0 && grid(0);
@@ -221,10 +227,27 @@ static unsigned slot_state(unsigned t, unsigned p)
 
 /* These notifications bracket the stock card task's serialized bank reader.
  * Only bank A is qualified. Never read its grid while stock replaces it. */
+#ifdef CLYPS_PERFORMANCE
+static void suspend_bank(void)
+{
+    bank_uncertain = 1;
+    playing = requested = pending_row = last_row = 0;
+    ORIGIN_CLEAR();
+    view = NATIVE;
+    mode = visible = locked = operation = row_view = 0;
+}
+#endif
+
 void clyps_bank_load(unsigned mask, uint32_t caller)
 {
     (void)caller;
-    bank_read_active = mask & 1u;
+    if (!(mask & 1u)) return;
+    unsigned sr = critical();
+    bank_read_active = 1;
+#ifdef CLYPS_PERFORMANCE
+    suspend_bank();
+#endif
+    restore(sr);
 }
 
 unsigned clyps_bank_loaded(void)
@@ -238,6 +261,8 @@ void clyps_project_init(void)
 {
     unsigned sr = critical();
 #ifdef CLYPS_PERFORMANCE
+    if (defined || playing || requested || pending_row || bank_read_active)
+        suspend_bank();
     view = NATIVE;
     mode = operation = end_of_path = lock_note = was_window = 0;
     last_view = CLIP;
@@ -247,7 +272,10 @@ void clyps_project_init(void)
 #endif
     playing = requested = 0;
     src_list = src_cursor = 0;
-    defined = visible = locked = armed = row_view = refused = track = slot = 0;
+#ifndef CLYPS_PERFORMANCE
+    defined = 0;
+#endif
+    visible = locked = armed = row_view = refused = track = slot = 0;
     /* Held edges retain their original owner across the UI transition. */
     last_row = pending_row = first_row = zoom = editing = draft = missing = 0;
     restore(sr);
@@ -290,6 +318,13 @@ static void submit(unsigned refs, unsigned row)
     if (refused)
         return;
     unsigned sr = critical();
+#ifdef CLYPS_PERFORMANCE
+    if (bank_uncertain) {
+        refused = 1;
+        restore(sr);
+        return;
+    }
+#endif
     pending_row = row;
     requested = refs;
 #ifdef CLYPS_PERFORMANCE

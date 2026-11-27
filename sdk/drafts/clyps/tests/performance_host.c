@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include <assert.h>
+#include <stdio.h>
+#include <string.h>
 #define CLYPS_HOST_TEST
 #define CLYPS_PERFORMANCE
 #include "../live_module.c"
@@ -15,6 +17,7 @@ static uint32_t host_long(uintptr_t addr)
     if (addr == 0x460d1736u) return record;
     return 0;
 }
+static unsigned grid_reads;
 static uint8_t host_byte(uintptr_t addr)
 {
     if (addr == 0x80000034u) return bank;
@@ -27,6 +30,7 @@ static uint8_t host_byte(uintptr_t addr)
         return (uint8_t)bits;
     }
     if (addr >= BANK_BASE && addr < BANK_BASE+16*PATTERN_BYTES) {
+        ++grid_reads;
         unsigned offset = (addr-BANK_BASE)%PATTERN_BYTES;
         if (offset == 0x8e51 || offset == 0x8e53)
             return bad_grid && addr >= BANK_BASE+PATTERN_BYTES ? 32 : 16;
@@ -49,7 +53,50 @@ static void select_track(unsigned t)
     assert(!module_key(0x10 + t,0));
 }
 static unsigned org(const volatile uint32_t *o, unsigned lane) { return origin(o, lane); }
-int main(void)
+/* A fresh install: since the bank guard (Codex 06-B), project_init with rows defined suspends
+ * CLYPS for the instance, so a new scenario starts from cleared module memory. */
+static void host_fresh(void)
+{
+    bank_uncertain = 0; defined = 0; playing = requested = 0; pending_row = last_row = 0;
+    for (unsigned i = 0; i < 16; ++i) rows[i] = 0;
+    clyps_project_init();
+    assert(!bank_uncertain);
+}
+/* Codex 06-B: stock returns the same callback after EOF and after a completed read. Rows,
+ * values and mask survive; the sources go back to the stock and CLYPS stays suspended. */
+static void bank_case(int active, int success, int init_first)
+{
+    tap(ARR); assert(view == CLIP); tap(6); tap(ARR); assert(view == ROW);
+    for (unsigned i = 0; i < 3; ++i) tap(DOWN);
+    tap(PAGE_KEY); tap(YES); tap(3);
+    assert(defined == 8 && rows[3] == 6 && playing == 6);
+    uint32_t snapshot[16];
+    memcpy(snapshot, rows, sizeof rows);
+    running = active;
+    if (active) { tap(3); assert(pending_row == 4); }
+    clyps_bank_load(2, 0);                                /* an unrelated bank changes nothing */
+    clyps_bank_loaded();
+    assert(defined == 8 && playing == 6 && pending_row == (active ? 4u : 0u));
+    if (init_first) clyps_project_init();
+    clyps_bank_load(1, 0);
+    unsigned before = grid_reads;
+    int source = 0;
+    clyps_audio_source(&source, 0, 0);
+    clyps_wrap();
+    (void)success;                                        /* the module cannot tell EOF from success */
+    clyps_bank_loaded();
+    bank = 1; clyps_project_init(); bank = 0;
+    clyps_bank_loaded();                                  /* an extra notification cannot certify A */
+    clyps_audio_source(&source, 0, 0);
+    clyps_wrap();
+    for (unsigned n = 0; n < 20; ++n) module_tick(&(struct modwerk_runtime_api){0});
+    assert(!supported() && !module_key(ARR, 1));
+    assert(grid_reads == before && source == 0);           /* occupancy never reads a suspended bank */
+    assert(!playing && !requested && !pending_row && !last_row);
+    assert(!org_play[0] && !org_play[1] && !org_req[0] && !org_req[1]);
+    assert(defined == 8 && !memcmp(snapshot, rows, sizeof rows));
+}
+static void alpha2_session(void)
 {
     midi=1;
     assert(!module_key(ARR,1));
@@ -107,7 +154,9 @@ int main(void)
     clyps_bank_load(1,0);
     assert(!module_key(ARR,1) && !mode);
     clyps_bank_loaded();
-    clyps_project_init(); assert(!mode && !defined && !last_row && !playing);
+    clyps_project_init();                                /* Codex 06-B: rows kept, CLYPS suspended */
+    assert(!mode && defined == 18 && !last_row && !playing && !supported());
+    host_fresh();
 
     /* D33 · A1: the stock tab and CLYPS name the same track in every view. */
     stock_track = 2;
@@ -126,7 +175,7 @@ int main(void)
     assert(view == CLIP && !playing && !requested);
 
     /* C1/C2: Panorama TRACK + TRIG launches one cell; the path and the other lanes stay. */
-    clyps_project_init(); stock_track = 0;
+    host_fresh(); stock_track = 0;
     tap(ARR); tap(ARR); tap(PAGE_KEY); tap(YES);         /* R01 = home */
     tap(DOWN); tap(DOWN); tap(PAGE_KEY); tap(YES);
     tap(PAGE_KEY); tap(DOWN); tap(7); tap(YES);          /* R03: T1 = A08 */
@@ -194,7 +243,7 @@ int main(void)
     running = 0; tap(YES); assert(!playing && !last_row && !org(org_play,0));
 
     /* Sprint 06-A · WP-A1: FUNC, TEMPO and mutes never leave CLYPS. */
-    clyps_project_init(); stock_track = 0;
+    host_fresh(); stock_track = 0;
     tap(ARR); assert(view == CLIP);
     assert(!module_key(0x2d,1) && !module_key(0x2d,0) && view == CLIP && mode);
     held_key = 0x2d; assert(!module_key(0x11,1)); assert(!module_key(0x11,0)); held_key = 64;
@@ -232,7 +281,7 @@ int main(void)
     tap(NO); assert(view == ROW);
 
     /* WP-A2: one occupancy model. Unscanned counts as available; then trigs decide. */
-    clyps_project_init();
+    host_fresh();
     assert(slot_state(0, 5) == SLOT_AVAILABLE);
     content[0][0] = 1; content[1][2] = 0x80; content[4][7] = 4;
     tap(ARR);                                           /* entry scans every pattern */
@@ -242,5 +291,14 @@ int main(void)
     content[1][2] = 0; for (unsigned n = 0; n < 16; ++n) module_tick(&(struct modwerk_runtime_api){0});
     assert(slot_state(2, 1) == SLOT_EMPTY);             /* an edit shows within one rolling pass */
     tap(5); assert(requested == 5 || playing == 5);     /* an empty slot is still launchable as before */
+}
+
+int main(int argc, char **argv)
+{
+    if (argc == 1 || !strcmp(argv[1], "fresh-session")) alpha2_session();
+    else {
+        assert(argc == 4);
+        bank_case(!strcmp(argv[1], "play"), !strcmp(argv[2], "complete"), !strcmp(argv[3], "init-first"));
+    }
     return 0;
 }
