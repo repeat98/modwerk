@@ -1951,6 +1951,7 @@ h1 { font-size: var(--text-xl); }
 .notification-meta { justify-content: space-between; gap: 10px; }
 .notification-kind { gap: 5px; color: #adaaba; font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
 .notification-list li[data-kind="announcement"] .notification-kind, .notification-list li[data-kind="module_update"] .notification-kind { color: #d0b48e; }
+.notification-list li[data-kind$="like"] .notification-kind { color: #d6a7bc; }
 .notification-when { gap: 7px; flex-shrink: 0; }
 .notification-unread-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px #929bff33; }
 .notification-list strong { font-size: 13px; line-height: 1.5; font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
