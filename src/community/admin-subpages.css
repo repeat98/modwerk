@@ -7,7 +7,7 @@
   width: fit-content;
   max-width: 100%;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--field);
 }
 .admin-views a {
@@ -15,7 +15,7 @@
   align-items: center;
   min-height: 44px;
   padding: 7px 13px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--muted);
   font-size: 13px;
 }
@@ -24,7 +24,7 @@
 .admin-subpage .configuration-section { min-width: 0; }
 .admin-subpage .section-title { flex-wrap: wrap; gap: 10px; }
 .admin-subpage .inbox-controls { margin-block: 12px 18px; }
-.admin-record { margin-top: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--background); }
+.admin-record { margin-top: 9px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--background); }
 .admin-record > summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto 16px;
@@ -52,7 +52,7 @@
 .admin-record-body a, .admin-related a { color: var(--accent); }
 .admin-record-body blockquote { margin-inline: 0; padding-inline-start: 12px; border-inline-start: 2px solid var(--accent-line); }
 .admin-record .pill[data-overdue="true"] { color: var(--issue-confirmed); }
-.admin-empty { margin-top: 14px; padding: 20px; border: 1px dashed var(--control-border); border-radius: 8px; color: var(--muted); font-size: 14px; }
+.admin-empty { margin-top: 14px; padding: 20px; border: 1px dashed var(--control-border); border-radius: var(--radius-md); color: var(--muted); font-size: 14px; }
 .admin-table-wrap { overflow-x: auto; }
 .admin-delivery { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .admin-delivery caption { padding-block: 10px; text-align: start; font-weight: 600; }
@@ -70,7 +70,7 @@
 .admin-history li:last-child { padding-bottom: 0; }
 .admin-history p, .admin-comment p { margin-block: 8px; }
 .admin-search { display: grid; gap: 6px; max-width: 32rem; margin-block: 14px; font-size: 13px; }
-.admin-search input { min-height: 42px; padding-inline: 12px; border: 1px solid var(--control-border); border-radius: 6px; background: var(--field); color: var(--text); }
+.admin-search input { min-height: 42px; padding-inline: 12px; border: 1px solid var(--control-border); border-radius: var(--radius-sm); background: var(--field); color: var(--text); }
 .admin-comment { border-top: 1px solid var(--line); padding-block: 15px; overflow-wrap: anywhere; }
 .admin-comment small { margin-inline-start: 10px; }
 .admin-comment p { margin-block: 8px; }

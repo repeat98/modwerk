@@ -2,8 +2,8 @@
 .module-video h2 { display: flex; align-items: baseline; gap: 10px; }
 .module-video h2 small { color: var(--faint); font-size: 12px; font-weight: 400; }
 .module-video-player.forum-video { max-width: 760px; }
-.module-video-player iframe { border-radius: 12px; }
-.module-video-player .forum-video-play.has-poster { position: relative; display: block; overflow: hidden; padding: 0; border-radius: 12px; border-color: var(--line); background: var(--preview); text-align: left; }
+.module-video-player iframe { border-radius: var(--radius-lg); }
+.module-video-player .forum-video-play.has-poster { position: relative; display: block; overflow: hidden; padding: 0; border-radius: var(--radius-lg); border-color: var(--line); background: var(--preview); text-align: left; }
 .module-video-player .forum-video-play.has-poster:hover { border-color: var(--line-hover); background: var(--preview); }
 
 .module-video-art { position: absolute; inset: 0; opacity: .5; transition: opacity .2s; }

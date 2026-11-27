@@ -13,6 +13,10 @@
 @media (min-width: 601px) and (max-width: 1100px) {
   :root[data-shell='desktop'][data-platform='darwin'] .sidebar-brand .app-brand > img { display: none; }
 }
+/* At drawer widths the sidebar is a dialog, so the toolbar starts at the window's left edge: clear the traffic lights. */
+@media (600px < width <= 1024px) {
+  :root[data-shell='desktop'][data-platform='darwin'] .app-toolbar { padding-left: 5.5rem; }
+}
 :root[data-shell='desktop'][data-platform='darwin'] .desktop-menu-button { display: none; }
 
 /* An app, not a page: chrome is not selectable or draggable, and its controls keep the arrow cursor. */
@@ -21,8 +25,8 @@
 :root[data-shell='desktop'] :is(img, svg, a) { -webkit-user-drag: none; }
 
 .desktop-menu-button { display: none; }
-:root[data-shell='desktop'] .desktop-menu-button { display: inline-grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); }
-:root[data-shell='desktop'] .desktop-menu-button:hover { background: #ffffff10; color: var(--text); }
+:root[data-shell='desktop'] .desktop-menu-button { display: inline-grid; place-items: center; width: var(--control-h-sm); height: var(--control-h-sm); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted); }
+:root[data-shell='desktop'] .desktop-menu-button:hover { background: var(--surface-hover); color: var(--text); }
 
 /* The desktop through the sidebar (data-material: Mica on Windows 11, vibrancy on macOS): the window is see-through,
    the workspace paints itself, and the sidebar keeps a tint so its text stays as readable as on the solid colour. */

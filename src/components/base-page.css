@@ -3,7 +3,7 @@
 .base-heading h1 { font-size: 1.75rem; }
 .base-sequence, .base-screens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .base-device, .base-sequence {
-  background: var(--surface); border: 1px solid var(--line); border-radius: .625rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md);
 }
 
 .base-picker { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; margin: 0; }
@@ -21,9 +21,9 @@
 .base-stack-layers dd { max-inline-size: 35ch; margin: .2rem 0 0; color: var(--text-secondary); font-size: .875rem; line-height: 1.45; }
 .base-device { display: flex; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; padding: 1rem 1.5rem; }
 .base-section-heading h2 { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem .75rem; font-size: clamp(1.25rem, 2.5vw, 1.625rem); line-height: 1.25; }
-.base-status { padding: .15rem .5rem; border-radius: .375rem; border: 1px solid var(--line); color: var(--text-secondary); font-size: .75rem; font-weight: 500; }
+.base-status { padding: .15rem .5rem; border-radius: var(--radius-sm); border: 1px solid var(--line); color: var(--text-secondary); font-size: .75rem; font-weight: 500; }
 .base-section-heading p { max-width: 55ch; margin: .5rem 0 0; color: var(--text-secondary); font-size: .9375rem; line-height: var(--reading-line-height); }
-.base-device-facts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(8rem, 22%); gap: 1rem 1.5rem; align-items: center; margin-top: 1.5rem; padding: 1rem 1.5rem; border: 1px solid var(--line); border-radius: .625rem; background: var(--sidebar); }
+.base-device-facts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(8rem, 22%); gap: 1rem 1.5rem; align-items: center; margin-top: 1.5rem; padding: 1rem 1.5rem; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--sidebar); }
 .base-device-picture { display: grid; justify-items: center; align-content: center; }
 .base-device-picture :is(img, svg) { display: block; width: 100%; height: 6rem; object-fit: contain; }
 .base-device-picture .photo-credit { margin: .25rem 0 0; color: var(--muted); font-size: .6875rem; text-align: center; }

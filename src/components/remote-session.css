@@ -1,12 +1,12 @@
 .app-dialog.remote-session-dialog { width: min(560px, calc(100% - 32px)); }
 .remote-session-dialog h2 { margin-bottom: 14px; }
 .remote-session-reason { margin: 0 0 16px; padding: 10px 14px; border-left: 3px solid var(--accent, #d9a441); background: #ffffff0a; color: #eee9e0; font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
-.remote-session-limit { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid #55514a; border-radius: 8px; }
+.remote-session-limit { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid #55514a; border-radius: var(--radius-md); }
 .remote-session-limit svg { flex: none; margin-top: 3px; }
 .remote-session-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 20px; }
 .remote-session-actions .text-button { margin-right: auto; }
 
-.remote-session-banner { position: fixed; z-index: 60; right: 16px; bottom: 16px; width: min(520px, calc(100% - 32px)); max-height: min(60dvh, 480px); overflow: auto; border: 1px solid #55514a; border-radius: 12px; background: #262528; color: #eee9e0; padding: 14px 16px; box-shadow: 0 12px 50px #0008; }
+.remote-session-banner { position: fixed; z-index: 60; right: 16px; bottom: 16px; width: min(520px, calc(100% - 32px)); max-height: min(60dvh, 480px); overflow: auto; border: 1px solid #55514a; border-radius: var(--radius-lg); background: #262528; color: #eee9e0; padding: 14px 16px; box-shadow: 0 12px 50px #0008; }
 .remote-session-banner p { margin: 0; font-size: 13px; line-height: 1.6; color: #bcb6ae; }
 .remote-session-banner strong { color: #eee9e0; }
 .remote-session-banner.is-ended { display: flex; gap: 12px; align-items: center; }

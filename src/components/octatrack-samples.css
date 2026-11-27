@@ -1,8 +1,8 @@
 .octatrack-samples { min-width: 0; container-type: inline-size; }
 .octatrack-samples h2 { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; margin: 0; }
 .octatrack-samples p { color: var(--muted); line-height: 1.5; }
-.samples-wip { font-size: .7rem; font-weight: 500; border: 1px solid var(--line); border-radius: 5px; padding: .25rem .45rem; }
-.samples-drop { border: 1px dashed var(--line); border-radius: 10px; padding: 1.1rem; }
+.samples-wip { font-size: .7rem; font-weight: 500; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: .25rem .45rem; }
+.samples-drop { border: 1px dashed var(--line); border-radius: var(--radius-md); padding: 1.1rem; }
 .samples-drop p { margin-top: 0; }
 .samples-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
 .octatrack-samples button, .samples-tree summary { min-height: 44px; }
@@ -13,10 +13,10 @@
 .samples-tree { list-style: none; padding: 0; margin: .5rem 0; }
 .samples-tree .samples-tree { margin-left: .85rem; border-left: 1px solid var(--line); padding-left: .5rem; }
 .samples-tree summary { padding: .65rem 0; cursor: pointer; overflow-wrap: anywhere; }
-.samples-tree button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: .75rem; text-align: left; border: 1px solid transparent; border-radius: 6px; padding: .5rem; background: transparent; color: inherit; cursor: pointer; }
+.samples-tree button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: .75rem; text-align: left; border: 1px solid transparent; border-radius: var(--radius-sm); padding: .5rem; background: transparent; color: inherit; cursor: pointer; }
 .samples-tree button[aria-pressed="true"] { border-color: var(--line); background: var(--surface); }
 .samples-tree button span, .samples-preview strong, .samples-preview p { overflow-wrap: anywhere; min-width: 0; }
 .samples-tree small { flex-shrink: 0; color: var(--muted); }
-.samples-preview { min-width: 0; padding: 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.samples-preview { min-width: 0; padding: 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); }
 .samples-preview audio { width: 100%; }
 @container (max-width: 600px) { .samples-workspace { grid-template-columns: minmax(0, 1fr); } }

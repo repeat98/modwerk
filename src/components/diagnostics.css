@@ -1,7 +1,7 @@
-.diagnostics-invitation { width: min(540px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; position: fixed; padding: 28px; border: 1px solid var(--control-border); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 24px 90px #000a; }
+.diagnostics-invitation { width: min(540px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; position: fixed; padding: 28px; border: 1px solid var(--control-border); border-radius: var(--radius-lg); background: var(--surface); color: var(--text); box-shadow: 0 24px 90px #000a; }
 .diagnostics-invitation::backdrop { background: #000b; backdrop-filter: blur(4px); }
 .diagnostics-close { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; }
-.diagnostics-heading-icon { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-bottom: 16px; border: 1px solid var(--accent-line); border-radius: 10px; color: var(--accent); background: var(--accent-soft); }
+.diagnostics-heading-icon { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-bottom: 16px; border: 1px solid var(--accent-line); border-radius: var(--radius-md); color: var(--accent); background: var(--accent-soft); }
 .diagnostics-invitation h2 { margin: 0; padding-right: 24px; outline: none; font-size: 25px; line-height: 1.2; letter-spacing: -.5px; }
 .diagnostics-intro { margin: 12px 0 22px; color: var(--text-secondary); font-size: 14px; line-height: 1.65; }
 .diagnostics-facts { display: grid; gap: 18px; margin: 0; padding: 0; list-style: none; }

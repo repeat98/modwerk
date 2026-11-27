@@ -17,14 +17,14 @@
 .developer-hint { max-width: 52ch; margin: 16px 0 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
 
 .start-developing .copy-button { min-height: 40px; padding: 8px 14px; font-size: 14px; }
-.start-developing .copy-button.button-primary { min-height: 52px; padding: 12px 24px; border-radius: 10px; font-size: 17px; }
+.start-developing .copy-button.button-primary { min-height: 52px; padding: 12px 24px; border-radius: var(--radius-md); font-size: 17px; }
 .developer-path details { margin-top: 6px; }
 .developer-path .developer-hint + details { margin-top: 14px; }
 .developer-path summary { width: fit-content; padding: 6px 0; cursor: pointer; color: var(--accent); font-size: 15px; }
 .developer-path summary:hover { color: var(--accent-hover); }
 .developer-path summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
 .start-developing .starter-prompt { border: 0; border-radius: 0; background: transparent; overflow: visible; }
-.start-developing .starter-prompt pre, .start-developing .start-code pre { max-height: 320px; margin-top: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; }
+.start-developing .starter-prompt pre, .start-developing .start-code pre { max-height: 320px; margin-top: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-md); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; }
 .developer-setup p { max-width: 56ch; margin: 8px 0 16px; color: var(--muted); font-size: 15px; line-height: 1.55; }
 .developer-setup a:not(.button) { color: var(--accent); }
 .developer-setup .start-code { margin: 14px 0 12px; }
@@ -32,7 +32,7 @@
 
 /* New or update: one segmented control instead of two cards. */
 .developer-task-choice { display: inline-flex; margin: 6px 0 22px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); }
-.developer-task-choice button { min-height: 44px; padding: 8px 18px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 16px; font-weight: 550; }
+.developer-task-choice button { min-height: 44px; padding: 8px 18px; border: 0; border-radius: var(--radius-md); background: transparent; color: var(--muted); font-size: 16px; font-weight: 550; }
 .developer-task-choice button:hover { color: var(--text); }
 .developer-task-choice button[aria-pressed="true"] { background: var(--surface-hover); color: var(--text); box-shadow: 0 1px 2px #0006; }
 .starter-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; }
@@ -40,7 +40,7 @@
 .start-developing .starter-field { gap: 8px; color: var(--text-secondary); font-size: 15px; }
 .start-developing .starter-field small { font-size: 13px; }
 /* 16px fields also keep iPhone Safari from zooming in on focus. */
-.start-developing .starter-field input, .start-developing .starter-field textarea, .start-developing .starter-field select { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: 10px; background-color: var(--field); color: var(--text); font: inherit; font-size: 16px; }
+.start-developing .starter-field input, .start-developing .starter-field textarea, .start-developing .starter-field select { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: var(--radius-md); background-color: var(--field); color: var(--text); font: inherit; font-size: 16px; }
 .start-developing .starter-field select { padding-right: 42px; }
 .start-developing .starter-field textarea { min-height: 96px; line-height: 1.5; }
 .developer-prompt-actions { display: flex; flex-direction: row-reverse; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px 18px; margin: 22px 0 8px; }
