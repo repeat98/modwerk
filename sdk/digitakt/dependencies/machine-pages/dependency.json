@@ -32,7 +32,8 @@
       "events": [
         "ev_tick"
       ],
-      "claims": []
+      "claims": [],
+      "core": "2.1"
     }
   }
 }

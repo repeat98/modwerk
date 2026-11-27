@@ -19,6 +19,7 @@ parser.add_argument('--firmware', type=Path, required=True)
 parser.add_argument('--plan', type=Path, required=True)
 parser.add_argument('--out', type=Path, required=True)
 parser.add_argument('--fixture-loop', action='store_true', help='Seed an original one-second DOC_LOOP on the disposable +Drive before boot')
+parser.add_argument('--prune', action='store_true', help='After a successful capture keep only the PNGs and capture-report.json in --out (otherwise the firmware, +Drive and snapshots stay, about 0.4 GB a run)')
 args = parser.parse_args()
 repo = Path(__file__).resolve().parents[1]
 out = args.out.resolve()
@@ -93,3 +94,8 @@ try:
     }, indent=2) + '\n')
 finally:
     session.close()
+if args.prune:
+    import shutil
+    for item in out.iterdir():
+        if item.name != 'capture-report.json' and item.suffix != '.png':
+            shutil.rmtree(item) if item.is_dir() and not item.is_symlink() else item.unlink()

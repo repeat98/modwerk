@@ -187,7 +187,7 @@ export function BasePage({ machine: device }: { machine?: string }) {
           <h3 id="ot-install-title">Installation and recovery</h3>
           <p>Back up your projects. For the first install, have your <a href="#faq/base-firmware">original OS 1.40C file</a> and a CompactFlash card ready.</p>
           <p>Keep the original OS and a card reader or MIDI interface for recovery.</p>
-          <div className="base-actions"><a className="button button-primary" href="#octatrack/setup">Open Octatrack setup <Icon name="arrow" size={15} /></a><a href="#faq/risks">Installation risks</a></div>
+          <div className="base-actions"><a href="#octatrack/setup">Open Octatrack setup</a><a href="#faq/risks">Installation risks</a></div>
         </div>
         <div className="ot-install-topics">
           <details className="base-reference"><summary>Install the base from a card</summary>

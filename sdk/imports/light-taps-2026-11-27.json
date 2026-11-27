@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/light-taps",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-27",
+  "changes": [
+    "First release. Light pad taps, which the panel sends without a strike, play as soft hits at velocity 8 (GLOBAL row LIGHT TAPS, project storage field light_taps_enabled). Three jsr sites over the panel driver's pad and key event posts and its ms tick (0x4008232c, 0x40082492, 0x40081944); a held pad's key repeats are ignored, and a light-tapped pad posts its own pad release when let go."
+  ],
+  "runtimeSourceSha256": "d5cbabb6ed5714c1ee29d993a80524d001f56a1cd6edf2c239365421a95c663d",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/light-taps/light-taps-0.1.0-experimental-os1.74.elemod",
+      "sha256": "16a0d98169d80180197ff158334b543ce06a78407cd55c97ec63535d21602215"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/light-taps/TESTING.md",
+  "requires": []
+}

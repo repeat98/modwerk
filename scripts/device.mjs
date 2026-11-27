@@ -39,6 +39,7 @@
 // Each command is one whole transaction. A trial is rolled back unless --accept
 // is given; Ctrl-C rolls back early. If this process dies mid-trial, unplug USB:
 // the base rolls back any module that was not accepted.
+import { panelInput, panelKeys } from './device-panel.mjs'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync, crc32 } from 'node:zlib'
 import { basename, join, resolve } from 'node:path'
@@ -146,19 +147,19 @@ const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x
   ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => ['TRIG' + (i + 1), i])),
   ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => ['T' + (i + 1), 0x10 + i])),
   ...Object.fromEntries(['A', 'B', 'C', 'D', 'E', 'F'].map((e, i) => ['PUSH' + e, 0x38 + i])) }
+const NOT_DEV = 'This base does not answer development requests: build it with --dev.'
 async function devIn(request, value, length) {
   const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request, value, index }, length)
   if (reply.status !== 'ok' || reply.data?.byteLength !== length) throw new Error(request === 16 ?
     'The base refused this MEM read: development bases read 0x40000400-0x40cfffff, 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and 0x100f0000-0x100fffff only (dev.c).' :
-    'This base does not answer development requests: build it with --dev.')
+    NOT_DEV)
   return new Uint8Array(reply.data.buffer, reply.data.byteOffset, reply.data.byteLength)
 }
 /** FUNC+PLAY: hold every key but the last, tap the last, release the held ones. */
 async function keys(spec) {
   const codes = spec.split('+').map(name => KEYS[name.toUpperCase()] ?? Number(name))
   if (codes.some(code => !Number.isInteger(code) || code < 0 || code > 63)) throw new Error('Unknown key in ' + spec + ': ' + Object.keys(KEYS).join(' '))
-  for (const code of codes) { await devIn(5, code | 0x100, 1); await wait(code === codes.at(-1) ? 80 : 30) }
-  for (const code of codes.reverse()) { await devIn(5, code, 1); await wait(30) }
+  await panelKeys(devIn, codes)
 }
 async function screen(png = values.png) {
   const frame = (await devIn(7, 0, 1028)).subarray(4)
@@ -355,9 +356,10 @@ const REPORT_HEX = new Set(['buffers', 'arenas', 'hostFlags', 'manager', 'used',
  * masks' second words and a pad at the end; fxids.h). The base answers only its own length. */
 async function reportView() {
   for (const words of [78, 81, 83, 85]) { // 32, 64, 96 or 128 ids
-    try { const bytes = await devIn(11, 0, 4 * words); return new DataView(bytes.buffer, bytes.byteOffset, 4 * words) } catch { /* the other length */ }
+    // Only a refusal means the other length; the unit away (USB Audio's reconnect) keeps its own message, which the test tools wait out.
+    try { const bytes = await devIn(11, 0, 4 * words); return new DataView(bytes.buffer, bytes.byteOffset, 4 * words) } catch (error) { if (error.message !== NOT_DEV) throw error }
   }
-  throw new Error('This base does not answer development requests: build it with --dev.')
+  throw new Error(NOT_DEV)
 }
 /** status.c's tail of the report (version 11 and up): word i of the first 78. */
 async function statusWords() {
@@ -406,14 +408,14 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
     let m
     if ((m = /^w(\d+)$/.exec(step))) await wait(Number(m[1]))
-    else if ((m = /^enc([A-F]|LEVEL)([+-]\d+)$/i.exec(step))) await devIn(8, 0x30 | ('ABCDEF'.indexOf(m[1].toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(m[1].toUpperCase()) : 6) | (Number(m[2]) & 0xff) << 8, 1)
-    else if ((m = /^fader(\d+)$/.exec(step))) await devIn(8, 0x40 | Number(m[1]) << 8, 1)
+    else if ((m = /^enc([A-F]|LEVEL)([+-]\d+)$/i.exec(step))) await panelInput(devIn, 8, 0x30 | ('ABCDEF'.indexOf(m[1].toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(m[1].toUpperCase()) : 6) | (Number(m[2]) & 0xff) << 8)
+    else if ((m = /^fader(\d+)$/.exec(step))) await panelInput(devIn, 8, 0x40 | Number(m[1]) << 8)
     else if (step === 'ui') await ui()
     else if (step === 'screen') await screen()
     else if ((m = /^([+-])([A-Z0-9]+)$/i.exec(step))) { // +BANK holds, -BANK lets go
       const code = KEYS[m[2].toUpperCase()]
       if (code === undefined) throw new Error('Unknown key in ' + step + ': ' + Object.keys(KEYS).join(' ')) // not TRIG1 (undefined | 0x100)
-      await devIn(5, code | (m[1] === '+' ? 0x100 : 0), 1)
+      await panelInput(devIn, 5, code | (m[1] === '+' ? 0x100 : 0))
     }
     else if ((m = /^png:(\S+)$/.exec(step))) await screen(m[1])
     else if ((m = /^mem:(0x[0-9a-f]+):(\d+)$/i.exec(step))) { // RAM, read-only, hex; any length (500-byte reads)
@@ -708,12 +710,12 @@ if (command === 'serve') {
     const [, name, delta] = /^([A-F]|LEVEL)([+-]\d+)$/i.exec(file) ?? []
     const encoder = 'ABCDEF'.indexOf(name?.toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(name.toUpperCase()) : name?.toUpperCase() === 'LEVEL' ? 6 : -1
     if (encoder < 0 || !Number(delta) || Math.abs(delta) > 127) throw new Error('Use enc A+3, enc F-1 or enc LEVEL+2.')
-    await devIn(8, 0x30 | encoder | (Number(delta) & 0xff) << 8, 1); process.exit(0)
+    await panelInput(devIn, 8, 0x30 | encoder | (Number(delta) & 0xff) << 8); process.exit(0)
   }
   if (command === 'fader') {
     const position = Number(file)
     if (!Number.isInteger(position) || position < 0 || position > 255) throw new Error('Use fader 0-255.')
-    await devIn(8, 0x40 | position << 8, 1); process.exit(0)
+    await panelInput(devIn, 8, 0x40 | position << 8); process.exit(0)
   }
   if (command === 'loader') {
     const bytes = await devIn(9, 0, 60), view = new DataView(bytes.buffer, bytes.byteOffset, 60)

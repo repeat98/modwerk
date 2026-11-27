@@ -80,8 +80,20 @@ export function builderReleases(machine: ElekloaderMachine, moduleId: string, ca
 }
 
 export type PreparedBuild = Prepared
-export function prepareBuild(builder: Builder, input: { machine: ElekloaderMachine; release: string; stock: File; moduleIds: readonly string[] }, catalog: Catalog = BUILDER_CATALOG): Promise<PreparedBuild> {
-  return prepare(builder, { catalog: selectionCatalog(input.machine, input.moduleIds, catalog), device: MACHINE_DEVICE[input.machine], os: input.release, stock: input.stock, ids: input.moduleIds })
+/** The kit's prepare on the newest core new enough; if the mods do not combine with it, again on each older core in turn,
+ * since a newer core can take a stock place an older mod patches (elekloader 0.11's pick_core). Refused on every core,
+ * it answers the newest core's refusal. */
+export async function prepareBuild(builder: Builder, input: { machine: ElekloaderMachine; release: string; stock: File; moduleIds: readonly string[] }, catalog: Catalog = BUILDER_CATALOG): Promise<PreparedBuild> {
+  const device = MACHINE_DEVICE[input.machine], forOs = (core: Catalog['cores'][number]) => core.device === device && core.os === input.release
+  let cut = selectionCatalog(input.machine, input.moduleIds, catalog), first: PreparedBuild | undefined
+  for (;;) {
+    const prepared = await prepare(builder, { catalog: cut, device, os: input.release, stock: input.stock, ids: input.moduleIds })
+    if (prepared.ok || !prepared.check) return prepared.ok ? prepared : first ?? prepared
+    first ??= prepared
+    const tried = kitPlanBuild(cut, device, input.release, input.moduleIds).core
+    cut = { ...cut, cores: cut.cores.filter(core => core !== tried) }
+    if (!tried || !cut.cores.some(forOs)) return first
+  }
 }
 
 /** Private source-port qualification uses the same worker, with locally compiled, pinned .elemods.
