@@ -107,7 +107,7 @@ for case in json.load(open(sys.argv[1], encoding='utf8')):
                     got = words(uc, sp + 4, 7)
                     assert got[0] == ITEM and got[5:] == [0xffffffff, 8]
                     for i, address in enumerate(got[1:5]):
-                        expected = [MENU, 0, case['helperCalls']['mw_stock_function_manager'] if row[i] else 0, row[i]]
+                        expected = [MENU if i in (1, 3) else 0, 0, case['helperCalls']['mw_stock_function_manager'] if row[i] else 0, row[i]]
                         assert words(uc, address, 4) == expected, 'Stock callback record ABI changed'
                     constructed = True
                 else:

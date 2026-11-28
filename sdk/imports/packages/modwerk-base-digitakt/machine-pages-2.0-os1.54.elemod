@@ -1,0 +1,40 @@
+{
+ "elemod": 2,
+ "id": "machine-pages",
+ "version": "2.0",
+ "title": "machine pages",
+ "description": "Machine Pages' contract is part of Modwerk's Digitakt base now: this package has no code and keeps the SRC machines that name it building unchanged.",
+ "category": "system",
+ "author": "repeat98",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.54",
+  "syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "section3_sha256": "5c58bf9e3949ef09977c5fc007a61e8d026931f67f1621238379dfb8ee4d31a2",
+  "section3_len": 2479680
+ },
+ "sections": {},
+ "symbols": {},
+ "exports": [],
+ "imports": [],
+ "weak": [],
+ "relocs": [],
+ "sites": [],
+ "collections": {},
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [],
+  "core": "5.0"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [
+  "digichain"
+ ],
+ "signature": null
+}

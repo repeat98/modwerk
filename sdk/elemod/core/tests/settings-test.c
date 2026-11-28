@@ -29,7 +29,7 @@ void mw_stock_item_construct(void *item, const struct mw_menu_function *label,
         if (inputs[i]->manager) {
             void *copied = 0;
             inputs[i]->manager(&copied, inputs[i], 2);
-            assert(copied == &menu);
+            assert(copied == (inputs[i] == select || inputs[i] == change ? &menu : 0));
         }
     }
     construction_calls++;
@@ -50,7 +50,7 @@ int main(void) {
         for (unsigned i = 0; i < 4; i++) row[i] = i == missing ? 0 : callback;
         core_additem(&menu, row);
         for (unsigned i = 0; i < 4; i++) {
-            assert(saved[i].payload == &menu && !saved[i].reserved);
+            assert(saved[i].payload == (i == 1 || i == 3 ? &menu : 0) && !saved[i].reserved);
             assert(saved[i].invoke == row[i]);
             assert(saved[i].manager == (row[i] ? mw_stock_function_manager : 0));
         }

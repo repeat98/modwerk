@@ -6,7 +6,9 @@ Digitakt mods are linkable objects. One core patches the OS once at a few shared
 
 ## Modwerk stack
 
-Today mods reach the unit as a full OS file sent with Transfer. The Digitakt is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): its core grows into a Modwerk base with a hook registry, a USB link, the runtime loader's ColdFire glue, base updates over USB, the MCP's device tools and the machine page. None of it is started. Until it ships this guide's core is what builds, a mod that needs a stock site other mods will want waits for the base's hook, and the full OS file sent with Transfer stays the fallback after it.
+Today mods reach the unit as a full OS file sent with Transfer. The Digitakt is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): a Modwerk base with a hook registry, a USB link, the runtime loader's ColdFire glue, base updates over USB, the MCP's device tools and the machine page.
+
+**The base** is Modwerk's own, version 5.0 for OS 1.53 and 1.54, in [base/](base/README.md): the October core (`sdk/elemod/core/`) grown to interface 2.1 with DTIM0, the SRC machines of `core_machines`, and Machine Pages' contract (`ev_render_voices`, `cm_ui_v3`, `cm_ui_v31` and its SRC and LFO page sites), so the machine mods need no separate dependency. `npm run elemod:base -- digitakt` builds it from source and checks it against [base-binding.json](base-binding.json); its hooks are in [events.json](events.json). Every shipped mod links on it alone and in pairs (`npm run digi:link-all -- --machine digitakt --core <base> --package <machine-pages>`). It has not run on a unit yet, so site builds still link the catalogue's core below until a tester has run the base; then the site switches over. The USB link, loader glue and machine page are not started; the full OS file sent with Transfer stays the fallback after them.
 
 ## Create a mod
 
@@ -37,6 +39,7 @@ Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 f
 | `ev_enc` | an encoder event | `int f(brain, EncoderEvent*)`; nonzero takes it |
 | `ev_settings` | building the SETTINGS menu | `void f(menu)`; add rows with `core_additem(menu, row)` |
 | `ev_render_in` / `ev_render_out` | entry and exit of the audio render | `void f(void)` |
+| `ev_render_voices` | in the render, after playback has written every track's block (Modwerk base; Machine Pages' event today) | `void f(int32_t *blocks)`; order 10–49 makes a track's sound, 50–89 changes it |
 | SRC machines | the table `core_machines`: new SRC machines take ids 4–127, treated by the OS like the stock machine they stand in for | — |
 
 A site the core does not expose and other mods will need is proposed as a core hook before the mod ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)); a site only this mod needs, it patches through `sites` in `build.json` ([choose how a module hooks in](../../../docs/module-guides/README.md#choose-how-a-module-hooks-in)).

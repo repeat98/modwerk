@@ -1,0 +1,483 @@
+{
+ "schema": 1,
+ "device": "digitakt-mk1",
+ "os": [
+  "1.53",
+  "1.54"
+ ],
+ "about": "The stock sites Modwerk's Digitakt mk1 base owns as hooks (sdk/machines/digitakt/base), in the Octatrack registry's format; a value given per OS ({\"1.53\": ..., \"1.54\": ...}) differs between them. Modules subscribe in build.json and never patch these sites. Addresses, lengths and SHA-256 guards only, no stock bytes. Adding a hook is one reviewed entry at the end; released indices are never renumbered.",
+ "events": [
+  {
+   "event": "ev_tick",
+   "index": 0,
+   "kind": "call",
+   "site": "0x4000a770",
+   "length": 6,
+   "guard": {
+    "1.53": "13ab557aaee5d356f2db123a198e1ffd86d3eff36974fe4b51d29956271f3a79",
+    "1.54": "17f64e76a33cd9f8211972ddc05c984d52cbd31fe16231ae768c5f0a6dce1388"
+   },
+   "prototype": "void f(void *ctrl)",
+   "when": "the UI compose check, before stock's own",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Set *((unsigned char *)ctrl + 0x20) = 1 to ask for a redraw. Not a clock.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_draw",
+   "index": 1,
+   "kind": "call",
+   "site": "0x4000a7d6",
+   "length": 6,
+   "guard": {
+    "1.53": "12b965b9100a691a982969e270fc3e67aa394915187f4e4644d76f89470e374a",
+    "1.54": "1fd873aa9a14c8691484085d12abd1cd864aab22a56387dd6a682396ea2bf72a"
+   },
+   "prototype": "void f(void *bmp, void *ctrl)",
+   "when": "after the OS has drawn the frame, before it is shown",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Draw over the frame. Stock's outputs are kept.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_key",
+   "index": 2,
+   "kind": "call",
+   "site": "0x4000b770",
+   "length": 6,
+   "guard": "fd093959ea0b44395bc971bb16a4bd179b9032cb712bdb5d06f4458fc148ef58",
+   "prototype": "int f(void *brain, void *event)",
+   "when": "a key event, before stock handles it",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Nonzero takes the event: later handlers and stock do not see it.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_enc",
+   "index": 3,
+   "kind": "call",
+   "site": "0x4000b7ba",
+   "length": 6,
+   "guard": "b64e1b142d9a31dede4506a839e453a9c1ce529f3687898ea70489a111277e87",
+   "prototype": "int f(void *brain, void *event)",
+   "when": "an encoder event, before stock handles it",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Nonzero takes the event.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_settings",
+   "index": 4,
+   "kind": "call",
+   "site": "0x40058800",
+   "length": 6,
+   "guard": "c7589861366d298dd3e07f1f5ebce25db0435f9cad638eae321d68e7542f6c74",
+   "prototype": "void f(void *menu)",
+   "when": "at the end of building the SETTINGS menu",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Add rows with core_additem(menu, row): label, select, draw, change.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_render_in",
+   "index": 5,
+   "kind": "call",
+   "site": "0x40077428",
+   "length": 6,
+   "guard": "0682088f8b8f8b0760d2f195d03bf17728bc872575efaf90dff0ac96d30db5ba",
+   "prototype": "void f(void)",
+   "when": "entry of the audio render, before stock saves EMAC",
+   "context": "the audio render interrupt, about 1,500 times a second: short, no firmware call that can block",
+   "contract": "The base saves and restores every register and the EMAC state around the handlers.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_render_out",
+   "index": 6,
+   "kind": "call",
+   "site": "0x400784c8",
+   "length": 6,
+   "guard": "1f662c862f0ad2083b74f2bd725af32176471631724d23772d24dc48a1e65895",
+   "prototype": "void f(void)",
+   "when": "exit of the audio render, after stock's end-of-render work",
+   "context": "the audio render interrupt, about 1,500 times a second: short, no firmware call that can block",
+   "contract": "The base saves and restores every register and the EMAC state around the handlers.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_render_voices",
+   "index": 7,
+   "kind": "call",
+   "site": "0x40077fba",
+   "length": 6,
+   "guard": {
+    "1.53": "5181c52f3e1d44ffa7a732058855f98b3431533e9c7f38684d4739f47fe261aa",
+    "1.54": "039364694af129be95aaf0f68e65e99e67c0a24eb30fb60a70981bff367fb4a6"
+   },
+   "prototype": "void f(int32_t *blocks)",
+   "when": "in the render, after playback has written every track's block (8 tracks x 32 Q31 samples), before the overdrive",
+   "context": "the audio render interrupt, about 1,500 times a second: short, no firmware call that can block",
+   "contract": "Write a track's block to make or change its sound. EMAC saved and restored.",
+   "order": "lower first, then module id; 10-49 makes a track's sound, 50-89 changes one already made",
+   "subscribers": []
+  },
+  {
+   "event": "core_machines",
+   "index": 8,
+   "kind": "table",
+   "record": "pointer to struct cm_machine (id, name, short name, icon, params, render; optionally tag \"UI30\" and a struct cm_ui page)",
+   "context": "read by the base at boot and by its SRC machine and page sites",
+   "contract": "ids 4-127, claimed as machine:<id>; the OS treats a machine as the stock machine params names, and renders it as render",
+   "order": "the first descriptor of an id counts",
+   "sites": [
+    {
+     "site": "0x40022fe6",
+     "length": 6,
+     "guard": "6249bd4a5dff26d8db35e02ea29300b8ef070ff4e4dda2a0c742059af83e1eb3",
+     "entry": "mw_mlist"
+    },
+    {
+     "site": "0x400225f0",
+     "length": 8,
+     "guard": "c6e2fbb68acfbe73d3e27922d8e969ae112504d5302e463e40a9a12887c6475d",
+     "entry": "mw_mset"
+    },
+    {
+     "site": "0x4002a76e",
+     "length": 4,
+     "guard": "4d8287ec36bda4eb70db5e3717f1042a6441d17eaa29d135190d12354436d984",
+     "entry": "48780004"
+    },
+    {
+     "site": "0x4002a4e0",
+     "length": 12,
+     "guard": "610169769140ead48e768061b41909aa049b6a4472e0c999354a288c16cca7cb",
+     "entry": "mw_mstep"
+    },
+    {
+     "site": "0x4002a9e8",
+     "length": 16,
+     "guard": "5fb87f56bb92d5776d32984adada70d0548a60e98854d1990727760dd26d84d9",
+     "entry": "mw_mopen"
+    },
+    {
+     "site": "0x40079124",
+     "length": 6,
+     "guard": {
+      "1.53": "9d472bf765b6ec74375e5d0c4ebe79a15bb19a2c4c437549d812568dde0a56fc",
+      "1.54": "563a70374d82729aaa3c1f4ee417f0bdea9f9e1b46af60c3ee3a63e94de6a017"
+     },
+     "entry": "mw_mname"
+    },
+    {
+     "site": "0x40079144",
+     "length": 6,
+     "guard": {
+      "1.53": "b2f65c0245a338e520d1b20633ec75e5795666f0e76c805874cc389207dee815",
+      "1.54": "0844eafef60a238dfe91cdfe91328311d87ca5d68b640131f94764c46ef89ab5"
+     },
+     "entry": "mw_mshort"
+    },
+    {
+     "site": "0x40029e9c",
+     "length": 8,
+     "guard": "74c5c24f09bf544b8fad303723b3935f248a9f48eefdbd230049cf63bd8fee5e",
+     "entry": "mw_micon"
+    },
+    {
+     "site": "0x40078f72",
+     "length": 6,
+     "guard": "c73694c82b7e3dd6bf8b3c8e1516bb538a6b898e8b6c8c0e86ea9513419b2bbc",
+     "entry": "mw_mparams"
+    },
+    {
+     "site": "0x40077272",
+     "length": 8,
+     "guard": "847846956dd42e57096fe20c036a4964c0c607ac7125065f842d3934048ecea8",
+     "entry": "mw_mrender"
+    },
+    {
+     "site": "0x4007a2ea",
+     "length": 20,
+     "guard": "262ef31fb24fcfdfe92ab54be10be5d7139511487c4dbc39804ba25492a2f36a",
+     "entry": "mw_mload"
+    },
+    {
+     "site": "0x4002ba7e",
+     "length": 6,
+     "guard": "26708d2ffdc9267a0dc186240bb8403cdc29aa8a888bd6721d6f44c21385e36e",
+     "entry": "mw_mplays"
+    },
+    {
+     "site": "0x4002aee0",
+     "length": 6,
+     "guard": "26708d2ffdc9267a0dc186240bb8403cdc29aa8a888bd6721d6f44c21385e36e",
+     "entry": "mw_mplays"
+    },
+    {
+     "site": "0x40028f7e",
+     "length": 6,
+     "guard": "26708d2ffdc9267a0dc186240bb8403cdc29aa8a888bd6721d6f44c21385e36e",
+     "entry": "mw_mplays"
+    },
+    {
+     "site": {
+      "1.53": "0x400a1706",
+      "1.54": "0x400a1862"
+     },
+     "length": 6,
+     "guard": "26708d2ffdc9267a0dc186240bb8403cdc29aa8a888bd6721d6f44c21385e36e",
+     "entry": "mw_mplays"
+    },
+    {
+     "site": "0x4003a43e",
+     "length": 6,
+     "guard": "be9e9e9baabfef8751280894431da2a79a878246d7ea863e688b06c8c6ad4545",
+     "entry": "mw_mplays_page"
+    },
+    {
+     "site": "0x40039e80",
+     "length": 2,
+     "guard": "771260b3e7ad3e3bbe992aa16c9958440f42bf5762b268b299898d6eefe67772",
+     "entry": "727f"
+    },
+    {
+     "site": "0x4003b49e",
+     "length": 2,
+     "guard": "771260b3e7ad3e3bbe992aa16c9958440f42bf5762b268b299898d6eefe67772",
+     "entry": "727f"
+    },
+    {
+     "site": "0x40039dac",
+     "length": 2,
+     "guard": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+     "entry": "707f"
+    },
+    {
+     "site": "0x4003afe4",
+     "length": 2,
+     "guard": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+     "entry": "707f"
+    },
+    {
+     "site": "0x4003b448",
+     "length": 2,
+     "guard": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+     "entry": "707f"
+    },
+    {
+     "site": "0x4003b6d4",
+     "length": 2,
+     "guard": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+     "entry": "707f"
+    },
+    {
+     "site": "0x40039e86",
+     "length": 6,
+     "guard": {
+      "1.53": "b5ab09c58fb2d52e2e93ffb4c3f2e595834e2d85405ea423f8c65ebb01aac747",
+      "1.54": "abe7c8a63931431833c642afd9342d2c6290f908c6fee1a7446d4ec4ac2344b9"
+     },
+     "entry": "mw_samp_table"
+    },
+    {
+     "site": "0x40039dcc",
+     "length": 6,
+     "guard": {
+      "1.53": "d8bd02f12d67d725d257228a403b9aadd37d7b90d2c098dc7ea0d3d7d0ac4d74",
+      "1.54": "dd2de8cb59053eabaf696fc007fc502de6b58c42b4e20fc563135f6f5f9cf664"
+     },
+     "entry": "mw_samp_table"
+    },
+    {
+     "site": "0x4003afee",
+     "length": 6,
+     "guard": {
+      "1.53": "5461b2bc1909bb527f76caa8042b3aabb167058f186c47e6da9afc61794fe66c",
+      "1.54": "af6dc59e1184d2992265d65f579fcb1c30671caa2674c4dc130746e3f73d4204"
+     },
+     "entry": "mw_samp_table"
+    },
+    {
+     "site": "0x4003b452",
+     "length": 6,
+     "guard": {
+      "1.53": "5461b2bc1909bb527f76caa8042b3aabb167058f186c47e6da9afc61794fe66c",
+      "1.54": "af6dc59e1184d2992265d65f579fcb1c30671caa2674c4dc130746e3f73d4204"
+     },
+     "entry": "mw_samp_table"
+    },
+    {
+     "site": "0x4003b4ac",
+     "length": 6,
+     "guard": {
+      "1.53": "7f00fec295b1073a29641c35a342ba167c53d48afe20d78c4625f944641df2cb",
+      "1.54": "fde04e9dc7455ea74f96aac1625d05ab755eaf8e0e011236ccef2de4965d2a95"
+     },
+     "entry": "mw_samp_table"
+    },
+    {
+     "site": "0x4003b6de",
+     "length": 6,
+     "guard": {
+      "1.53": "b5ab09c58fb2d52e2e93ffb4c3f2e595834e2d85405ea423f8c65ebb01aac747",
+      "1.54": "abe7c8a63931431833c642afd9342d2c6290f908c6fee1a7446d4ec4ac2344b9"
+     },
+     "entry": "mw_samp_table"
+    },
+    {
+     "site": "0x40011322",
+     "length": 6,
+     "guard": "abfb2dc462ce68779ce4f21deb2739607f12bf3a7adb5433847b8b996d0c03bf",
+     "entry": "mw_mowner"
+    },
+    {
+     "site": "0x400791d6",
+     "length": 6,
+     "guard": "2ebc34e214f019af8a3f8cb7648e592edd431d5960908154cb3005b3f5b48b7c",
+     "entry": "mw_mcc"
+    },
+    {
+     "site": "0x40079240",
+     "length": 6,
+     "guard": "fab81bf4e78da1c198218679175eba41e275deb44cb4c80096a47a5e5330642c",
+     "entry": "mw_mnrpn"
+    },
+    {
+     "site": "0x400657cc",
+     "length": 6,
+     "guard": "3b618e4eaaafbc05f3a3649b08bde56616971a07cc578ed13570b010e70bf072",
+     "entry": "mw_layout"
+    },
+    {
+     "site": "0x4000fe8a",
+     "length": 10,
+     "guard": "5a18bd3f39db0448ad3452128af8f9e63d1e9c011cafecfc54210fba10c19677",
+     "entry": "mw_label_short"
+    },
+    {
+     "site": "0x4000feac",
+     "length": 10,
+     "guard": "5a18bd3f39db0448ad3452128af8f9e63d1e9c011cafecfc54210fba10c19677",
+     "entry": "mw_label_long"
+    },
+    {
+     "site": "0x4000f324",
+     "length": 8,
+     "guard": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
+     "entry": "mw_value_text"
+    },
+    {
+     "site": "0x4000f2bc",
+     "length": 8,
+     "guard": "7357d174dda33b71e4d29ed8e6d02a3b96a76167a0a44ebe35f2a439406880f4",
+     "entry": "mw_knob_gfx"
+    },
+    {
+     "site": "0x40065794",
+     "length": 10,
+     "guard": "6fac3f4794a986259c5b1076561f1b40f68fd968c6940bb6c785ee20e1334617",
+     "entry": "mw_ui_record"
+    },
+    {
+     "site": "0x400657ee",
+     "length": 10,
+     "guard": "6fac3f4794a986259c5b1076561f1b40f68fd968c6940bb6c785ee20e1334617",
+     "entry": "mw_popup"
+    },
+    {
+     "site": "0x4000ff20",
+     "length": 6,
+     "guard": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+     "entry": "mw_range"
+    },
+    {
+     "site": "0x400100c4",
+     "length": 6,
+     "guard": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+     "entry": "mw_range"
+    },
+    {
+     "site": "0x4000f534",
+     "length": 6,
+     "guard": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+     "entry": "mw_range"
+    },
+    {
+     "site": "0x4000f5fc",
+     "length": 6,
+     "guard": "d3c6f631568fb7f26a844c1e364989f7ebc04db477e5d6bf13b33bda9b26878e",
+     "entry": "mw_range_f"
+    },
+    {
+     "site": "0x40060b8e",
+     "length": 6,
+     "guard": {
+      "1.53": "2089e24a3da4b21a87a1724df31552cb6f4ff6d713d2ff60a1750f391471e710",
+      "1.54": "348bda2f007e286fe03335905a468d107ca5b515969d4cd3adabcd24a09dd485"
+     },
+     "entry": "mw_lfo_label"
+    },
+    {
+     "site": {
+      "1.53": "0x400a4374",
+      "1.54": "0x400a44d0"
+     },
+     "length": 6,
+     "guard": "81ec6bd4f514d9f1ac3300455338b01169f581a9eba9bcbdb8c5d68c865084fa",
+     "entry": "mw_lfo_list"
+    },
+    {
+     "site": {
+      "1.53": "0x400a43f0",
+      "1.54": "0x400a454c"
+     },
+     "length": 6,
+     "guard": "3900fb0c2d68aa3c036b14b69338b9c4498b92b1a090707f96375c14607b45ed",
+     "entry": "mw_lfo_lshort"
+    },
+    {
+     "site": "0x40065de6",
+     "length": 6,
+     "guard": "752240e3f074673bf7d0e6dba45d264fa097aba6578c196030eeeada3d7b5fd5",
+     "entry": "mw_lfo_bgroup"
+    },
+    {
+     "site": "0x40065e68",
+     "length": 6,
+     "guard": {
+      "1.53": "034daf466a84a080e7aa51b52900b82e2b79577991ccfa4dbe9382f58e729569",
+      "1.54": "7afd5dfe45b41d3f80b646533b2647c26a8412b2d5463c7d930a06551737f2b3"
+     },
+     "entry": "mw_lfo_bname"
+    },
+    {
+     "site": "0x4003b314",
+     "length": 6,
+     "guard": "430d21da6f8a168fa69041d4619b17bc229ff0db503be583281dc96585cfbadc",
+     "entry": "mw_sample_d0"
+    },
+    {
+     "site": "0x4003b5b2",
+     "length": 6,
+     "guard": "7212dc8bce4d59b25677b6c581025995dd597668cc8a605473ad545d6c978e97",
+     "entry": "mw_sample_d2"
+    },
+    {
+     "site": "0x4002a382",
+     "length": 6,
+     "guard": "56b34659cd862f9a3842db744fdc66748017e519f8030fced7aca6cb52630d30",
+     "entry": "mw_mtype"
+    }
+   ],
+   "subscribers": []
+  }
+ ]
+}
