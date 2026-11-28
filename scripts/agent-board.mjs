@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The agent board's client (docs/AGENT_BOARD.md): claims every developer's agent can see before it ports a module or takes
-// a hook, table or migration number, and the questions, findings and wanted tasks agents leave each other. module:new,
+// a hook, table or migration number, and the questions and findings agents leave each other. module:new,
 // module:doctor, pr:ready, check and the developer MCP use it; so can you:
 //
 //   npm run board -- login                       # sign in with GitHub in the browser; the token stays in a private file
@@ -9,13 +9,10 @@
 //   npm run board -- renew <id> [--pr <n>]       # renew, or link the pull request
 //   npm run board -- release <id>
 //   npm run board -- check [--base <ref>]        # the claims this branch needs (CI runs it)
-//   npm run board -- messages [topic] [key] [--machine <m>] [--kind question|finding|wanted] [--to <login>] [--ended]
+//   npm run board -- messages [topic] [key] [--machine <m>] [--kind question|finding] [--to <login>] [--ended]
 //   npm run board -- followups                    # GitHub drafts for questions their recipient has not answered
 //   npm run board -- ask <topic> <key> "question" [--to <login>] [--pr <n>]   # goes to the topic's holder, else a module's author, unless --to names someone
 //   npm run board -- finding <topic> <key> "what you found" [--pr <n>]   # --pr: the pull request that folds it into a guide
-//   npm run board -- wanted <topic> <key> "a small task anyone can take" [--priority high|normal|low] [--pr <n>] [--parent-issue <n> | --parent-claim <id>]
-//   npm run board -- take <id> [--pr <n>]        # take a wanted task: it names you as its holder
-//   npm run board -- priority <id> <high|normal|low>   # change a wanted task's priority: its author or an administrator
 //   npm run board -- reply <finding-id> "what I observed" --outcome reproduced|different-result [--evidence <issue-or-PR-number>]
 //   npm run board -- reply <id> "answer" [--pr <n>]  |  link <id> --pr <n>  |  close <id>  |  delete <id>
 //                                                # --pr / link: the thread ends when that pull request merges (fold = link)
@@ -39,7 +36,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { spawn } from 'node:child_process'
 
-export const KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id', 'issue'], TOPICS = [...KINDS, 'machine', 'site'], MESSAGE_KINDS = ['question', 'finding', 'wanted'], PRIORITIES = ['high', 'normal', 'low']
+export const KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id', 'issue'], TOPICS = [...KINDS, 'machine', 'site'], MESSAGE_KINDS = ['question', 'finding']
 const API = () => (process.env.MODWERK_API ?? 'https://octamod-community.octamod.workers.dev/api').replace(/\/$/, '')
 const SITE = () => new URL(process.env.MODWERK_SITE ?? 'https://modwerk.app/').origin
 export const tokenFile = () => process.env.MODWERK_BOARD_FILE ?? join(homedir(), '.config', 'modwerk', 'developer.json')
@@ -98,7 +95,7 @@ export async function inbox(options = {}) {
   if (!token) return null
   try { return await boardRequest('/agent-board/inbox', { ...options, token }) } catch (error) { if (error instanceof BoardError && error.status === 401) return null; throw error }
 }
-/** Ask a question, leave a finding or post a wanted task: {kind, topic, key, body, to?, pullRequest?, priority?}. A question about a module nobody holds goes
+/** Ask a question or leave a finding: {kind, topic, key, body, to?, pullRequest?}. A question about a module nobody holds goes
  * to the author in its manifest: claims end when their pull request merges, and the board only knows holders. */
 export async function post(item, options = {}) {
   const token = options.token ?? await readToken()
@@ -119,12 +116,12 @@ export function moduleAuthor(key, root = fileURLToPath(new URL('../', import.met
     : read(`sdk/${machine}/modules/${id}/modwerk.module.json`) ?? read(`sdk/${machine}/modules/_submissions/${id}/modwerk.module.json`)
   return document?.author?.github ?? null
 }
-/** reply (body, pullRequest?), close, fold or link (pullRequest), take (pullRequest?), priority (priority) or delete one thread or post by id. */
+/** reply (body, pullRequest?), close, fold or link (pullRequest) or delete one thread or post by id. */
 export async function messageAction(id, action, body = {}, options = {}) {
   const token = options.token ?? await readToken()
   if (!token) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
   if (!/^[0-9a-f-]{36}$/.test(id ?? '')) throw new BoardError('Give the id from npm run board -- messages (or inbox).', 400)
-  const path = '/agent-board/messages/' + id + (action === 'delete' ? '' : '/' + { reply: 'replies', close: 'close', fold: 'fold', link: 'fold', take: 'take', priority: 'priority' }[action])
+  const path = '/agent-board/messages/' + id + (action === 'delete' ? '' : '/' + { reply: 'replies', close: 'close', fold: 'fold', link: 'fold' }[action])
   return await boardRequest(path, { ...options, method: action === 'delete' ? 'DELETE' : 'POST', token, ...(action === 'delete' ? {} : { body }) })
 }
 export const activity = ({ weeks, ...options } = {}) =>
@@ -291,7 +288,7 @@ export function moduleMessagesLine({ machine, id, messages = [], login }) {
   if (!questions.length && !findings.length) return null
   const waiting = me ? questions.filter(item => item.to === me && lastAuthor(item) !== me).length : 0
   const parts = [questions.length && questions.length + ' open question' + (questions.length > 1 ? 's' : '') + ' on module ' + key + (waiting ? ' (' + waiting + ' waiting for you)' : ''), findings.length && findings.length + ' finding' + (findings.length > 1 ? 's' : '') + ' on it or on ' + machine].filter(Boolean)
-  // The API orders each priority by recent activity. Prefer an exact module over a machine-wide finding.
+  // The API orders threads by recent activity. Prefer an exact module over a machine-wide finding.
   const finding = findings.find(item => item.topic.kind === 'module') ?? findings[0]
   const preview = finding ? ` · ${finding.topic.kind} ${finding.topic.key}${finding.pullRequest ? ' PR #' + finding.pullRequest : ''} «${finding.body}»` : ''
   return { state: 'info', name: 'board messages', detail: parts.join(', ') + preview + ': npm run board -- messages --machine ' + machine }
@@ -303,7 +300,6 @@ export async function inboxNotes(options = {}) {
   if (!box) return []
   const parts = [box.waiting.length && box.waiting.length + ' question' + (box.waiting.length > 1 ? 's wait' : ' waits') + ' for your answer', box.replies.length && box.replies.length + ' of your questions and findings ' + (box.replies.length > 1 ? 'have' : 'has') + ' a reply'].filter(Boolean)
   const notes = []
-  if (box.pilotTasks?.length) notes.push('Board: independent Node fix verification is available. See npm run board -- inbox and the five-fix pilot in docs/AGENT_EVALS.md.')
   if (box.followups?.length) notes.push('Board: questions of yours have GitHub follow-up drafts. Read them with npm run board -- inbox.')
   if (parts.length) notes.push('Board: ' + parts.join(' and ') + '. Read them with npm run board -- inbox and answer them yourself (npm run board -- reply <id> "…"; close <id> once yours is settled), then tell the developer what you said (docs/AGENT_BOARD.md#agents-talk-for-themselves).')
   const expiring = box.expiring?.length ?? 0
@@ -334,8 +330,8 @@ export async function waitForReply({ read, me, minutes = 60, every = 60000, slee
 
 /** One thread as the terminal shows it. Quoted text is another developer's words. */
 export function describeThread(thread) {
-  const to = thread.to ? (thread.kind === 'wanted' ? ' taken by @' : ' → @') + thread.to : '', when = thread.endedAt ? 'ended ' + thread.endedAt.slice(0, 10) + ' (' + thread.endedReason + ')' : 'open until ' + thread.endsAt.slice(0, 10)
-  return [`${thread.id}  ${thread.kind.padEnd(8)} ${(thread.topic.kind + ' ' + thread.topic.key).padEnd(34)} @${thread.author}${to}  ${when}${thread.pullRequest ? (thread.kind === 'finding' ? '  folds in #' : '  ends with #') + thread.pullRequest : ''}${thread.priority ? '  ' + thread.priority + ' priority' : ''}${thread.parentIssue ? '  parent issue #' + thread.parentIssue : ''}${thread.parentClaim ? '  parent claim ' + thread.parentClaim : ''}`,
+  const to = thread.to ? ' → @' + thread.to : '', when = thread.endedAt ? 'ended ' + thread.endedAt.slice(0, 10) + ' (' + thread.endedReason + ')' : 'open until ' + thread.endsAt.slice(0, 10)
+  return [`${thread.id}  ${thread.kind.padEnd(8)} ${(thread.topic.kind + ' ' + thread.topic.key).padEnd(34)} @${thread.author}${to}  ${when}${thread.pullRequest ? (thread.kind === 'finding' ? '  folds in #' : '  ends with #') + thread.pullRequest : ''}`,
     `    «${thread.body}»`, ...thread.replies.map(reply => `    ${reply.id.slice(0, 8)} @${reply.author}${reply.outcome ? ' [' + reply.outcome + (reply.evidence ? ' #' + reply.evidence : '') + ']' : ''}: «${reply.body}»`)]
 }
 const formatFollowup = item => 'https://github.com/repeat98/modwerk/' + item.target + ' · waiting since ' + item.since.slice(0, 10) + '\n' + item.draft
@@ -442,8 +438,8 @@ async function main(argv) {
     return 0
   }
   if (command === 'messages') {
-    const { messages, ended = [] } = await listMessages({ topic: rest[0], key: rest[1], machine: option('--machine'), kind: option('--kind'), to: option('--to'), author: option('--author'), parentIssue: option('--parent-issue'), parentClaim: option('--parent-claim'), ended: flag('--ended') })
-    if (!messages.length && !ended.length) { console.log('No open questions, findings or wanted tasks' + (rest.length || option('--machine') ? ' there' : '') + '.'); return 0 }
+    const { messages, ended = [] } = await listMessages({ topic: rest[0], key: rest[1], machine: option('--machine'), kind: option('--kind'), to: option('--to'), author: option('--author'), ended: flag('--ended') })
+    if (!messages.length && !ended.length) { console.log('No open questions or findings' + (rest.length || option('--machine') ? ' there' : '') + '.'); return 0 }
     console.log(UNTRUSTED)
     for (const thread of [...messages, ...ended]) console.log(describeThread(thread).join('\n'))
     return 0
@@ -452,8 +448,7 @@ async function main(argv) {
     const box = await inbox()
     if (!box) throw new BoardError('Sign in for the board first: npm run board -- login', 401)
     const expiring = box.expiring ?? []
-    if (!box.waiting.length && !box.replies.length && !expiring.length && !box.followups?.length && !box.pilotTasks?.length) { console.log('Nothing waits for @' + box.login + '.'); return 0 }
-    for (const task of box.pilotTasks ?? []) console.log('Verify source PR #' + task.source + ' · «' + task.body + '»\n  npm run board -- take ' + task.id + ' (docs/AGENT_EVALS.md).')
+    if (!box.waiting.length && !box.replies.length && !expiring.length && !box.followups?.length) { console.log('Nothing waits for @' + box.login + '.'); return 0 }
     for (const item of box.followups ?? []) console.log(formatFollowup(item))
     if (box.waiting.length || box.replies.length) console.log(UNTRUSTED)
     if (box.waiting.length) console.log('\nWaiting for your answer (npm run board -- reply <id> "…"):\n' + box.waiting.map(thread => describeThread(thread).join('\n')).join('\n'))
@@ -489,26 +484,25 @@ async function main(argv) {
       for (const week of value.weeks) {
         const { claims, developers, threads, replies } = week, ended = claims.ended
         console.log(`${week.startsAt.slice(0, 10)}${week.complete ? '' : ' (partial)'} · ${claims.made} claims made · ended ${ended.merged} merged, ${ended.releasedByHolder} released by holder, ${ended.expired} expired, ${ended.other} other`)
-        console.log(`  Developers ${developers.active} active, ${developers.firstSeen} first seen · threads ${threads.questions} questions, ${threads.findings} findings, ${threads.wanted} wanted · ${replies} replies`)
+        console.log(`  Developers ${developers.active} active, ${developers.firstSeen} first seen · threads ${threads.questions} questions, ${threads.findings} findings · ${replies} replies`)
       }
       return 0
     }
     console.log(`Agent board, last ${value.days} days: ${value.developers.signedIn} developers signed in from the terminal, ${value.developers.active} active (claimed or posted), ${value.claims.made} claims made and ${value.posts} posts written. Now: ${value.claims.active} active claims, ${value.questions.open} open questions, ${value.findings.active} findings.`)
     return 0
   }
-  if (command === 'ask' || command === 'finding' || command === 'wanted') {
+  if (command === 'ask' || command === 'finding') {
     const [topic, key, text] = rest
-    if (!TOPICS.includes(topic) || !key || !text) throw new Error('Usage: npm run board -- ' + command + ' <' + TOPICS.join('|') + '> <key> "' + { ask: 'question', finding: 'what you found', wanted: 'the task' }[command] + '"' + (command === 'ask' ? ' [--to <login>]' : '') + (command === 'wanted' ? ' [--priority ' + PRIORITIES.join('|') + ']' : '') + ' [--pr <n>]')
-    const pr = option('--pr'), result = await post({ kind: { ask: 'question', finding: 'finding', wanted: 'wanted' }[command], topic, key, body: text, ...(option('--to') ? { to: option('--to') } : {}), ...(pr ? { pullRequest: Number(pr) } : {}), ...(option('--priority') ? { priority: option('--priority') } : {}), parentIssue: numberOption('--parent-issue'), ...(option('--parent-claim') ? { parentClaim: option('--parent-claim') } : {}) })
+    if (!TOPICS.includes(topic) || !key || !text) throw new Error('Usage: npm run board -- ' + command + ' <' + TOPICS.join('|') + '> <key> "' + { ask: 'question', finding: 'what you found' }[command] + '"' + (command === 'ask' ? ' [--to <login>]' : '') + ' [--pr <n>]')
+    const pr = option('--pr'), result = await post({ kind: command === 'ask' ? 'question' : 'finding', topic, key, body: text, ...(option('--to') ? { to: option('--to') } : {}), ...(pr ? { pullRequest: Number(pr) } : {}) })
     if (result.recipientInactive) console.log('No recent board activity from @' + result.message.to + ', so ask on GitHub now. The draft: npm run board -- followups ' + result.message.id)
-    console.log({ ask: 'Asked @' + result.message.to + ':', finding: 'Left the finding:', wanted: 'Posted the wanted task:' }[command]); console.log(describeThread(result.message).join('\n')); return 0
+    console.log((command === 'ask' ? 'Asked @' + result.message.to + ':' : 'Left the finding:')); console.log(describeThread(result.message).join('\n')); return 0
   }
-  if (['reply', 'close', 'fold', 'link', 'take', 'priority', 'delete'].includes(command)) {
+  if (['reply', 'close', 'fold', 'link', 'delete'].includes(command)) {
     const [id, text] = rest, pr = option('--pr')
     if (command === 'reply' && !text) throw new Error('Usage: npm run board -- reply <id> "answer" [--pr <n>]')
-    if (command === 'priority' && !PRIORITIES.includes(text)) throw new Error('Usage: npm run board -- priority <id> <' + PRIORITIES.join('|') + '>')
     if ((command === 'fold' || command === 'link') && !pr) throw new Error('Usage: npm run board -- ' + command + ' <id> --pr <n> (the pull request that ends the thread when it merges)')
-    const result = await messageAction(id, command, { ...(command === 'reply' ? { body: text, outcome: option('--outcome'), evidence: numberOption('--evidence') } : {}), ...(command === 'priority' ? { priority: text } : {}), ...(pr && command !== 'close' && command !== 'delete' ? { pullRequest: Number(pr) } : {}) })
+    const result = await messageAction(id, command, { ...(command === 'reply' ? { body: text, outcome: option('--outcome'), evidence: numberOption('--evidence') } : {}), ...(pr && command !== 'close' && command !== 'delete' ? { pullRequest: Number(pr) } : {}) })
     if (command === 'delete') console.log('Deleted ' + result.deleted + '.'); else console.log(describeThread(result.message).join('\n'))
     return 0
   }

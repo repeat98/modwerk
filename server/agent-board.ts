@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // The agent board (docs/AGENT_BOARD.md): claims every developer's agent can read before it ports a module or takes a
-// hook, table or migration number or fixes an issue, and the questions, findings, wanted tasks and replies agents leave each other. Reads are public;
+// hook, table or migration number or fixes an issue, and the questions, findings and replies agents leave each other. Reads are public;
 // a write needs a GitHub-linked developer or board session.
 import type { Database, Env } from './platform'
 import { throttle } from './auth'
@@ -31,10 +31,8 @@ const DAY = 86400000, CLAIM_EXPIRY_NOTICE_DAYS = 3, FOLLOWUP_DAYS = 3
 // machine: what holds across one instrument; site: an area of the site and Worker (forum, worker, configurator).
 export const TOPIC_KINDS = [...CLAIM_KINDS, 'machine', 'site'] as const
 export type TopicKind = typeof TOPIC_KINDS[number]
-export const MESSAGE_KINDS = ['question', 'finding', 'wanted'] as const
+export const MESSAGE_KINDS = ['question', 'finding'] as const
 export type MessageKind = typeof MESSAGE_KINDS[number]
-// A wanted task's priority: its author sets it, and its author or an administrator changes it.
-export const PRIORITIES = ['high', 'normal', 'low'] as const
 export const MESSAGE_LIMIT = 500, QUESTION_DAYS = 30, ANSWERED_DAYS = 7, FINDING_DAYS = 90, OPEN_THREADS = 20, REPLY_LIMIT = 50, ACTIVITY_DAYS = 30
 
 /** Board text reaches other developers' agents, so it is plain prose on one line: no links, paths, addresses, code,
@@ -86,11 +84,6 @@ function topicOf(kind: unknown, key: unknown): { kind: TopicKind; key: string } 
   }
   if (!CLAIM_KINDS.includes(kind as ClaimKind)) throw new HttpError(400, 'Choose a topic: ' + TOPIC_KINDS.join(', ') + '.')
   return { kind: kind as ClaimKind, key: claimKey(kind as ClaimKind, key) }
-}
-function priorityOf(value: unknown) {
-  if (value === undefined || value === null || value === '') return 'normal'
-  if (!PRIORITIES.includes(value as typeof PRIORITIES[number])) throw new HttpError(400, 'Choose a priority: ' + PRIORITIES.join(', ') + '.')
-  return value as typeof PRIORITIES[number]
 }
 function githubLogin(value: unknown): string | null {
   if (value === undefined || value === null || value === '') return null
@@ -162,13 +155,13 @@ async function reserveZoomCollection(db: Database, userId: string, now: string, 
 }
 
 type Outcome = 'reproduced' | 'different-result'
-type MessageRow = { id: string; kind: MessageKind | 'reply'; parent_id: string | null; topic_kind: TopicKind; topic_key: string; user_id: string; github_login: string; to_login: string | null; body: string; pull_request: number | null; priority: string | null; created_at: string; active_at: string; ended_at: string | null; ended_reason: string | null; parent_issue: number | null; parent_claim: string | null; outcome: Outcome | null; evidence: number | null }
+type MessageRow = { id: string; kind: MessageKind | 'reply'; parent_id: string | null; topic_kind: TopicKind; topic_key: string; user_id: string; github_login: string; to_login: string | null; body: string; pull_request: number | null; created_at: string; active_at: string; ended_at: string | null; ended_reason: string | null; outcome: Outcome | null; evidence: number | null }
 // A suspended account's posts disappear at once; the hourly run deletes them.
 const MESSAGE_SELECT = 'SELECT m.*,u.github_login FROM agent_messages m JOIN users u ON u.id=m.user_id AND u.suspended=0'
 // Who wrote a thread's last post: a question waits for whoever did not.
 const LAST_WORD = 'COALESCE((SELECT r.user_id FROM agent_messages r WHERE r.parent_id=m.id ORDER BY r.created_at DESC,r.rowid DESC LIMIT 1),m.user_id)'
 // A question lapses 30 days after its last post, or 7 once someone other than its asker has the last word: an answer the asker
-// lets stand settles it, and a reply from the asker keeps it open. A finding or wanted task lapses 90 days after it was left.
+// lets stand settles it, and a reply from the asker keeps it open. A finding lapses 90 days after it was left.
 // Both apply even before the hourly run ends the thread, and both bind the three cutoffs from cutoffs().
 const LIVE = `m.ended_at IS NULL AND ((m.kind='question' AND m.active_at>? AND (m.active_at>? OR ${LAST_WORD}=m.user_id)) OR (m.kind<>'question' AND m.created_at>?))`
 const ENDED = `(m.ended_at IS NOT NULL OR (m.kind='question' AND (m.active_at<=? OR (m.active_at<=? AND ${LAST_WORD}<>m.user_id))) OR (m.kind<>'question' AND m.created_at<=?))`
@@ -178,9 +171,6 @@ function threadView(row: MessageRow, replies: MessageRow[], now: number) {
   const lapses = Date.parse(row.kind === 'question' ? row.active_at : row.created_at) + (row.kind === 'question' ? (answered ? ANSWERED_DAYS : QUESTION_DAYS) : FINDING_DAYS) * DAY
   const ended = row.ended_at ?? (lapses <= now ? new Date(lapses).toISOString() : null)
   return { id: row.id, kind: row.kind, topic: { kind: row.topic_kind, key: row.topic_key }, author: row.github_login, to: row.to_login, body: row.body, pullRequest: row.pull_request, createdAt: row.created_at, activeAt: row.active_at,
-    ...(row.kind === 'wanted' ? { priority: row.priority ?? 'normal' } : {}),
-    ...(row.parent_issue ? { parentIssue: row.parent_issue } : {}),
-    ...(row.parent_claim ? { parentClaim: row.parent_claim } : {}),
     ...(ended ? { endedAt: ended, endedReason: row.ended_reason ?? 'expired' } : { endsAt: new Date(lapses).toISOString() }),
     replies: replies.map(reply => ({ id: reply.id, author: reply.github_login, body: reply.body, createdAt: reply.created_at,
       ...(reply.outcome ? { outcome: reply.outcome, evidence: reply.evidence } : {}) })) }
@@ -204,11 +194,7 @@ export async function boardReply(db: Database, userId: string, id: string, value
   if (!parent) throw new HttpError(404, 'No open board thread has that id.')
   const reference = pullRequest(evidence)
   if (outcome !== undefined || reference !== null) {
-    const pilot = parent.kind === 'wanted' && parent.user_id === 'tars' && parent.topic_key?.startsWith('eval-pilot-')
-    if (pilot) {
-      const holder = await db.prepare('SELECT github_login FROM users WHERE id=?').bind(userId).first<{ github_login: string }>()
-      if (!holder || holder.github_login !== parent.to_login || outcome !== 'different-result') throw new HttpError(403, 'Only the verifier who took this task can record a different result. Link your case PR for a successful verification.')
-    } else if (parent.kind !== 'finding' || (outcome !== 'reproduced' && outcome !== 'different-result')) throw new HttpError(400, 'Record reproduced or different-result on a finding.')
+    if (parent.kind !== 'finding' || (outcome !== 'reproduced' && outcome !== 'different-result')) throw new HttpError(400, 'Record reproduced or different-result on a finding.')
     if (parent.user_id === userId) throw new HttpError(400, 'An independent result comes from another developer.')
     if (pr) throw new HttpError(400, 'Use evidence for the issue or PR that records your result.')
   }
@@ -223,7 +209,7 @@ export async function boardReply(db: Database, userId: string, id: string, value
   return await thread(db, id, nowMs)
 }
 
-/** Questions, findings, wanted tasks and replies (docs/AGENT_BOARD.md, "Questions and findings"). */
+/** Questions, findings and replies (docs/AGENT_BOARD.md, "Questions and findings"). */
 async function messageRoutes(request: Request, url: URL, env: Env, db: Database, adminId: string | null, nowMs: number): Promise<Response> {
   const path = url.pathname, now = new Date(nowMs).toISOString(), live = cutoffs(nowMs)
   if (path === '/api/agent-board/messages' && request.method === 'GET') {
@@ -234,16 +220,14 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
     if (!Number.isSafeInteger(offset) || offset < 0) throw new HttpError(400, 'Invalid message offset.')
     if (moduleContext) where.push("m.kind IN ('question','finding') AND m.topic_kind IN ('module','machine')")
     const kind = value('kind'), topic = value('topic'), key = value('key'), machine = value('machine'), to = value('to'), author = value('author')
-    if (kind) { if (!MESSAGE_KINDS.includes(kind as MessageKind)) throw new HttpError(400, 'Choose question, finding or wanted.'); where.push('m.kind=?'); binds.push(kind) }
+    if (kind) { if (!MESSAGE_KINDS.includes(kind as MessageKind)) throw new HttpError(400, 'Choose question or finding.'); where.push('m.kind=?'); binds.push(kind) }
     if (topic) { if (!TOPIC_KINDS.includes(topic as TopicKind)) throw new HttpError(400, 'Choose a topic: ' + TOPIC_KINDS.join(', ') + '.'); where.push('m.topic_kind=?'); binds.push(topic) }
     if (key) { if (key.length > 120) throw new HttpError(400, 'That key is too long.'); where.push('m.topic_key=?'); binds.push(key) }
     // Everything about one machine: the machine itself and every module, hook and DSP region keyed under it.
     if (machine) { if (!new RegExp(`^${NAME}$`).test(machine) || machine.length > 40) throw new HttpError(400, 'Name the machine (for example octatrack).'); where.push("m.topic_kind<>'site' AND (m.topic_key=? OR m.topic_key LIKE ?)"); binds.push(machine, machine + '/%') }
     if (to) { where.push('m.to_login=?'); binds.push(githubLogin(to)) }
     if (author) { where.push('u.github_login=?'); binds.push(githubLogin(author)) }
-    if (value('parentIssue')) { where.push('m.parent_issue=?'); binds.push(pullRequest(Number(value('parentIssue')))) }
-    if (value('parentClaim')) { where.push('m.parent_claim=?'); binds.push(value('parentClaim')) }
-    const rows = (await db.prepare(MESSAGE_SELECT + ' WHERE ' + [...where, LIVE].join(' AND ') + " ORDER BY CASE m.priority WHEN 'high' THEN 0 WHEN 'low' THEN 2 ELSE 1 END,m.active_at DESC,m.rowid DESC LIMIT ? OFFSET ?").bind(...binds, ...live, moduleContext ? 101 : 100, offset).all<MessageRow>()).results
+    const rows = (await db.prepare(MESSAGE_SELECT + ' WHERE ' + [...where, LIVE].join(' AND ') + ' ORDER BY m.active_at DESC,m.rowid DESC LIMIT ? OFFSET ?').bind(...binds, ...live, moduleContext ? 101 : 100, offset).all<MessageRow>()).results
     const messages = await threads(db, rows.slice(0, 100), nowMs)
     const ended = value('ended') === '1' ? await threads(db, (await db.prepare(MESSAGE_SELECT + ' WHERE ' + [...where, ENDED].join(' AND ') + ' ORDER BY COALESCE(m.ended_at,m.active_at) DESC LIMIT 50').bind(...binds, ...live).all<MessageRow>()).results, nowMs) : undefined
     return response({ messages, ...(ended ? { ended } : {}), ...(rows.length > 100 ? { nextOffset: offset + 100 } : {}) })
@@ -252,11 +236,10 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
     const user = needBoardUser(await boardUser(request, env, db))
     await throttle(db, 'agent-board:' + user.id, CLAIM_WRITES_PER_HOUR)
     const body = await jsonBody(request)
-    if (!MESSAGE_KINDS.includes(body.kind as MessageKind)) throw new HttpError(400, 'Choose question, finding or wanted.')
+    if (!MESSAGE_KINDS.includes(body.kind as MessageKind)) throw new HttpError(400, 'Choose question or finding.')
     const kind = body.kind as MessageKind, about = topicOf(body.topic, body.key), text = messageBody(body.body), pr = pullRequest(body.pullRequest)
     let to = githubLogin(body.to)
-    if (kind !== 'wanted' && body.priority !== undefined) throw new HttpError(400, 'Only a wanted task has a priority.')
-    if (kind !== 'question' && to) throw new HttpError(400, `A ${kind === 'wanted' ? 'wanted task' : 'finding'} is for everyone. To address someone, ask a question.`)
+    if (kind !== 'question' && to) throw new HttpError(400, 'A finding is for everyone. To address someone, ask a question.')
     if (to === user.github_login) throw new HttpError(400, 'That question is addressed to you.')
     // A question about something someone holds goes to its holder unless it names someone else.
     if (kind === 'question' && !to && about.kind !== 'machine' && about.kind !== 'site') {
@@ -267,16 +250,13 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
     // The client fills in a module's author from its manifest; a question still to nobody would wait in no inbox.
     if (kind === 'question' && !to) throw new HttpError(400, 'Name who should answer (--to <login>): nobody else holds this, so the question would reach no inbox.')
     const open = await db.prepare('SELECT COUNT(*) AS n FROM agent_messages m WHERE m.user_id=? AND m.parent_id IS NULL AND ' + LIVE).bind(user.id, ...live).first<{ n: number }>()
-    if ((open?.n ?? 0) >= OPEN_THREADS) throw new HttpError(409, `You have ${OPEN_THREADS} open questions, findings and wanted tasks. Close one you no longer need first (npm run board -- close <id>).`)
+    if ((open?.n ?? 0) >= OPEN_THREADS) throw new HttpError(409, `You have ${OPEN_THREADS} open questions and findings. Close one you no longer need first (npm run board -- close <id>).`)
     const id = crypto.randomUUID()
-    const parentIssue = pullRequest(body.parentIssue), parentClaim = body.parentClaim ?? null
-    if ((parentIssue || parentClaim !== null) && (kind !== 'wanted' || (parentIssue && parentClaim !== null))) throw new HttpError(400, 'Choose one parent issue or claim for a wanted task.')
-    if (parentClaim !== null && (typeof parentClaim !== 'string' || !await db.prepare('SELECT id FROM agent_claims WHERE id=? AND released_at IS NULL AND (expires_at IS NULL OR expires_at>?)').bind(parentClaim, now).first())) throw new HttpError(400, 'Choose an active parent claim from the board.')
     const recipientInactive = kind === 'question' && to !== 'tars' && !await recentBoardActivity(db, to!, nowMs)
-    await db.prepare('INSERT INTO agent_messages(id,kind,topic_kind,topic_key,user_id,to_login,body,pull_request,priority,created_at,active_at,parent_issue,parent_claim) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)').bind(id, kind, about.kind, about.key, user.id, to, text, pr, kind === 'wanted' ? priorityOf(body.priority) : null, now, now, parentIssue, parentClaim).run()
+    await db.prepare('INSERT INTO agent_messages(id,kind,topic_kind,topic_key,user_id,to_login,body,pull_request,created_at,active_at) VALUES(?,?,?,?,?,?,?,?,?,?)').bind(id, kind, about.kind, about.key, user.id, to, text, pr, now, now).run()
     return response({ message: await thread(db, id, nowMs), ...(recipientInactive ? { recipientInactive: true } : {}) }, 201)
   }
-  const match = path.match(/^\/api\/agent-board\/messages\/([0-9a-f-]{36})(?:\/(replies|close|fold|take|priority))?$/)
+  const match = path.match(/^\/api\/agent-board\/messages\/([0-9a-f-]{36})(?:\/(replies|close|fold))?$/)
   if (!match) throw new HttpError(404, 'Board route not found.')
   const [, id, action] = match
   if (!action && request.method === 'GET') {
@@ -293,40 +273,23 @@ async function messageRoutes(request: Request, url: URL, env: Env, db: Database,
     return response({ deleted: id })
   }
   if (!action || request.method !== 'POST') throw new HttpError(405, 'Method not allowed.')
-  const user = action === 'replies' || action === 'take' || !adminId ? needBoardUser(await boardUser(request, env, db)) : null
+  const user = action === 'replies' || !adminId ? needBoardUser(await boardUser(request, env, db)) : null
   if (user) await throttle(db, 'agent-board:' + user.id, CLAIM_WRITES_PER_HOUR)
   const row = await liveThread(db, id, nowMs)
   if (!row) throw new HttpError(404, 'No open board thread has that id.')
   const body = await jsonBody(request), pr = pullRequest(body.pullRequest)
-  // The thread's author, or whoever it is to (a question's addressee, a wanted task's taker), links the pull request that ends it.
+  // The thread's author, or whoever it is to (a question's addressee), links the pull request that ends it.
   const linker = !user || row.user_id === user.id || row.to_login === user.github_login
   if (action === 'replies') {
     if (pr && !linker) throw new HttpError(403, 'Only the thread\'s author, or the one it is to, links its pull request.')
     return response({ message: await boardReply(db, user!.id, id, body.body, pr, nowMs, body.outcome, body.evidence) }, 201)
   }
-  if (action === 'take') {
-    // A wanted task has one holder at a time, named in to_login; taking it again renews it, and --pr links its pull request.
-    if (row.kind !== 'wanted') throw new HttpError(400, 'Only a wanted task is taken; answer a question with reply.')
-    if (row.user_id === 'tars' && row.topic_key?.startsWith('eval-pilot-')) {
-      const source = await db.prepare("SELECT json_extract(value,'$.authorId') AS author FROM maintenance_bot_state WHERE key GLOB 'eval-pilot/*' AND json_extract(value,'$.task')=?").bind(id).first<{ author: number }>()
-      if (!source || String(source.author) === String(user!.github_id)) throw new HttpError(403, 'A different developer verifies this fix.')
-    }
-    await db.prepare('UPDATE agent_messages SET to_login=?,active_at=?,pull_request=COALESCE(?,pull_request),checked_at=CASE WHEN ? IS NULL THEN checked_at END WHERE id=? AND (to_login IS NULL OR to_login=?)').bind(user!.github_login, now, pr, pr, id, user!.github_login).run()
-    const taken = (await thread(db, id, nowMs))!
-    if (taken.to !== user!.github_login) throw new HttpError(409, `@${taken.to} has taken this task. Ask them (npm run board -- ask ${row.topic_kind} ${row.topic_key} "…" --to ${taken.to}), or pick another.`)
-    return response({ message: taken })
-  }
   if (action === 'fold' ? !linker : user && row.user_id !== user.id) throw new HttpError(404, 'You wrote no open board thread with that id.')
-  if (action === 'priority') {
-    if (row.kind !== 'wanted') throw new HttpError(400, 'Only a wanted task has a priority.')
-    await db.prepare('UPDATE agent_messages SET priority=? WHERE id=?').bind(priorityOf(body.priority), id).run()
-    return response({ message: await thread(db, id, nowMs) })
-  }
   if (action === 'close') {
     await db.prepare('UPDATE agent_messages SET ended_at=?,ended_reason=? WHERE id=? AND ended_at IS NULL').bind(now, user ? 'author' : 'administrator', id).run()
     return response({ message: await thread(db, id, nowMs) })
   }
-  // Fold (or link): the pull request that carries a finding into a guide, or settles a question or wanted task. The hourly run
+  // Fold (or link): the pull request that carries a finding into a guide, or settles a question. The hourly run
   // ends the thread once that merges.
   if (!pr) throw new HttpError(400, 'Give the pull request number that ends this thread when it merges.')
   await db.prepare('UPDATE agent_messages SET pull_request=?,checked_at=NULL WHERE id=?').bind(pr, id).run()
@@ -384,12 +347,7 @@ async function inbox(db: Database, user: { id: string; github_login: string }, n
   const expiresBy = new Date(nowMs + CLAIM_EXPIRY_NOTICE_DAYS * DAY).toISOString()
   const { results: expiring } = await db.prepare(SELECT + ' WHERE c.user_id=? AND c.released_at IS NULL AND c.pull_request IS NULL AND c.expires_at>? AND c.expires_at<=? ORDER BY c.expires_at, c.id').bind(user.id, now, expiresBy).all<ClaimRow>()
   const drafts = await followups(db, nowMs, user.id)
-  const { results: pilotTasks } = await db.prepare(`SELECT m.id,m.body,json_extract(s.value,'$.number') AS source FROM maintenance_bot_state s
-    JOIN agent_messages m ON m.id=json_extract(s.value,'$.task') JOIN users u ON u.id=?
-    WHERE s.key GLOB 'eval-pilot/*' AND json_extract(s.value,'$.result') IS NULL AND m.ended_at IS NULL
-      AND m.created_at>? AND (m.to_login IS NULL OR m.to_login=u.github_login) AND CAST(json_extract(s.value,'$.authorId') AS TEXT)<>CAST(u.github_id AS TEXT)
-    ORDER BY m.created_at LIMIT 5`).bind(user.id, live[2]).all<{ id: string; source: number; body: string }>()
-  return { login: user.github_login, ...(pilotTasks.length ? { pilotTasks } : {}), waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs), expiring: expiring.map(view), ...(drafts.length ? { followups: drafts } : {}) }
+  return { login: user.github_login, waiting: await threads(db, waiting, nowMs), replies: await threads(db, replies, nowMs), expiring: expiring.map(view), ...(drafts.length ? { followups: drafts } : {}) }
 }
 
 /** How many developers use the board: counts only, no names. */
@@ -437,7 +395,7 @@ async function weeklyActivity(db: Database, nowMs: number, requested: string) {
       COUNT(*) FILTER (WHERE kind='expired') AS expired, COUNT(*) FILTER (WHERE kind='other') AS other,
       COUNT(DISTINCT user_id) AS active, COUNT(*) FILTER (WHERE kind='first') AS firstSeen,
       COUNT(*) FILTER (WHERE kind='question') AS questions, COUNT(*) FILTER (WHERE kind='finding') AS findings,
-      COUNT(*) FILTER (WHERE kind='wanted') AS wanted, COUNT(*) FILTER (WHERE kind='reply') AS replies
+      COUNT(*) FILTER (WHERE kind='reply') AS replies
     FROM events WHERE at>=? AND at<=? GROUP BY week`).bind(asOf, from, from, asOf).all<Record<string, number>>()
   const byWeek = new Map(results.map(row => [row.week, row]))
   return { asOf, weeks: Array.from({ length: weeks }, (_, index) => {
@@ -446,7 +404,7 @@ async function weeklyActivity(db: Database, nowMs: number, requested: string) {
       startsAt: new Date(startsAt).toISOString(), endsAt: new Date(endsAt).toISOString(), complete: endsAt <= nowMs,
       claims: { made: row?.claimsMade ?? 0, ended: { merged: row?.merged ?? 0, releasedByHolder: row?.releasedByHolder ?? 0, expired: row?.expired ?? 0, other: row?.other ?? 0 } },
       developers: { active: row?.active ?? 0, firstSeen: row?.firstSeen ?? 0 },
-      threads: { questions: row?.questions ?? 0, findings: row?.findings ?? 0, wanted: row?.wanted ?? 0 },
+      threads: { questions: row?.questions ?? 0, findings: row?.findings ?? 0 },
       replies: row?.replies ?? 0,
     }
   }) }
@@ -556,7 +514,7 @@ async function pulls(env: Env, path: string): Promise<unknown> {
 /** Hourly: release expired claims and those of suspended accounts, end lapsed questions and findings and delete a suspended
  * account's posts, delete what ended more than 90 days ago (the privacy notice's retention), link claims to their pull
  * request by branch, release claims whose pull request was merged or closed, and end threads whose linked pull request
- * merged (a finding as folded, a question or wanted task as merged). A bounded batch per run, the least recently checked first. */
+ * merged (a finding as folded, a question as merged). A bounded batch per run, the least recently checked first. */
 export async function syncAgentClaims(env: Env, db: Database, batch = 25) {
   const nowMs = Date.now(), now = new Date(nowMs).toISOString(), kept = new Date(nowMs - RELEASED_KEPT_DAYS * DAY).toISOString()
   const suspended = 'SELECT id FROM users WHERE suspended=1'
@@ -569,12 +527,11 @@ export async function syncAgentClaims(env: Env, db: Database, batch = 25) {
     db.prepare(`UPDATE agent_messages AS m SET ended_at=?,ended_reason='expired' WHERE m.parent_id IS NULL AND m.ended_at IS NULL AND ${ENDED}`).bind(now, ...cutoffs(nowMs)),
   ])
   if (!githubConfig(env)) return
-  // Pilot tasks close when their independent case passes the controls and enters the suite.
-  const folds = (await db.prepare("SELECT id,pull_request FROM agent_messages WHERE parent_id IS NULL AND ended_at IS NULL AND pull_request IS NOT NULL AND NOT (user_id='tars' AND kind='wanted' AND topic_key GLOB 'eval-pilot-*') ORDER BY checked_at IS NOT NULL,checked_at LIMIT ?").bind(batch).all<{ id: string; pull_request: number }>()).results
+  const folds = (await db.prepare("SELECT id,pull_request FROM agent_messages WHERE parent_id IS NULL AND ended_at IS NULL AND pull_request IS NOT NULL ORDER BY checked_at IS NOT NULL,checked_at LIMIT ?").bind(batch).all<{ id: string; pull_request: number }>()).results
   for (const row of folds) {
     try {
       const pull = await pulls(env, '/pulls/' + row.pull_request) as PullState
-      // Merged: a guide carries the finding, the question or task is settled. Closed without merging: the thread stays, unlinked.
+      // Merged: a guide carries the finding, the question is settled. Closed without merging: the thread stays, unlinked.
       if (pull.state === 'closed' && pull.merged_at) await db.prepare("UPDATE agent_messages SET ended_at=?,ended_reason=CASE WHEN kind='finding' THEN 'folded' ELSE 'merged' END,checked_at=? WHERE id=? AND ended_at IS NULL").bind(now, now, row.id).run()
       else await db.prepare('UPDATE agent_messages SET pull_request=CASE WHEN ?=1 THEN NULL ELSE pull_request END,checked_at=? WHERE id=?').bind(pull.state === 'closed' ? 1 : 0, now, row.id).run()
     } catch (error) { console.error(`Board thread ${row.id} could not be checked on GitHub: ${error instanceof Error ? error.message : String(error)}`) }
