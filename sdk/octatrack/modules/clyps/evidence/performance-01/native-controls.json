@@ -1,0 +1,179 @@
+{
+  "module": "dea54e4f2ed47c01a8a7e277ceabf80a14b708ed0121c4bccc703094be7461b9",
+  "observations": [
+    [
+      "open row",
+      {
+        "view": 1,
+        "mode": 1,
+        "playing": 0
+      }
+    ],
+    [
+      "cursor row 2 track 2",
+      {
+        "slot": 1,
+        "track": 1,
+        "playing": 0
+      }
+    ],
+    [
+      "capture R02",
+      {
+        "defined": 2,
+        "last_row": 0
+      }
+    ],
+    [
+      "T2 selects A02",
+      {
+        "view": 2,
+        "track": 1,
+        "src_cursor": 1,
+        "playing": 16
+      }
+    ],
+    [
+      "capture R05",
+      {
+        "view": 1,
+        "defined": 18,
+        "slot": 4,
+        "last_row": 0
+      }
+    ],
+    [
+      "advance to R02 independently of cursor",
+      {
+        "playing": 0,
+        "last_row": 2,
+        "slot": 4
+      }
+    ],
+    [
+      "advance to R05",
+      {
+        "playing": 16,
+        "last_row": 5
+      }
+    ],
+    [
+      "end retains R05",
+      {
+        "playing": 16,
+        "last_row": 5
+      }
+    ],
+    [
+      "override T2 retains path",
+      {
+        "playing": 32,
+        "last_row": 5
+      }
+    ],
+    [
+      "direct R02 pending during play",
+      {
+        "playing": 32,
+        "pending_row": 2,
+        "last_row": 5
+      }
+    ],
+    [
+      "STOP cancels pending",
+      {
+        "playing": 32,
+        "requested": 32,
+        "pending_row": 0,
+        "last_row": 5
+      }
+    ],
+    [
+      "exit with foreign edit lock",
+      {
+        "view": 0,
+        "locked": 1
+      }
+    ],
+    [
+      "stopped restore",
+      {
+        "playing": 0,
+        "requested": 0,
+        "last_row": 0,
+        "mode": 0
+      }
+    ],
+    [
+      "Native mode at home",
+      {
+        "mode": 1,
+        "view": 0,
+        "locked": 0
+      }
+    ],
+    [
+      "sound page and stock controls preserve sources",
+      {
+        "playing": 0,
+        "requested": 0
+      }
+    ],
+    [
+      "Native T2 trig launches A02",
+      {
+        "playing": 16,
+        "locked": 1
+      }
+    ]
+  ],
+  "stock_controls": {
+    "amp": [
+      "20f4e86ac989d57c7b4e12ccf4e2c37fb0dbb6663597db63e75991e1bab6f436",
+      "0cf29fa5ce1d1f4179439842a8348ef5a30d2b7bdf1a600b875e3df4cff5a8a0"
+    ],
+    "scene": [
+      "0008",
+      "0308"
+    ],
+    "fader": [
+      0,
+      64,
+      127,
+      0
+    ],
+    "trig_mode": [
+      0,
+      1,
+      0
+    ]
+  },
+  "installed_controls": {
+    "amp": [
+      "20f4e86ac989d57c7b4e12ccf4e2c37fb0dbb6663597db63e75991e1bab6f436",
+      "0cf29fa5ce1d1f4179439842a8348ef5a30d2b7bdf1a600b875e3df4cff5a8a0"
+    ],
+    "scene": [
+      "0008",
+      "0308"
+    ],
+    "fader": [
+      0,
+      64,
+      127,
+      0
+    ],
+    "trig_mode": [
+      0,
+      1,
+      0
+    ]
+  },
+  "free_before_after": 786432,
+  "composed_frames": {
+    "first-arr": "72afe41ff19095776a94a87b60d644e34b89bd521224f75cb2e2bc3c4af83298",
+    "setup": "bfb937b38fec112c1ea24461f3193c233f2291cdecc332d06dce92a54f3ea905",
+    "clip": "bc9ffc11e92e7ec87423ed7bc60aa637b2a5fdf9301982e241cb688b76e6349f",
+    "row": "dc8713ae7fd21afa32b9cfa0f12ef5aeba92e32ed92577585ce92e70939bb1a0"
+  }
+}

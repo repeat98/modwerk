@@ -1,0 +1,17 @@
+
+> octamod@0.1.0 test:procedure
+> node scripts/test-procedure.mjs clyps --plan
+
+The test procedure for clyps (docs/TEST_PROCEDURE.md). Steps 6 to 10 on the unit: no unit session on /tmp/modwerk-share.sock (npm run device -- serve --share /tmp/modwerk-share.sock; on a contributor's unit with their OK).
+ 1. Software checks [host]: npm run module:doctor -- --draft clyps
+ 2. Beside every other module [contract]: not run: a draft is judged beside every other module by module:doctor --draft (its compatibility line, step 1)
+ 3. Name the build [host]: npm run module:dev -- clyps --build-only --out $TMPDIR/modwerk-procedure/clyps-2026-11-23-613db985/clyps.mwrm
+ 4. DSP cost model [contract]: node scripts/cycle-scan.mjs check
+ 5. Emulator rehearsal [emulator]: not run: no emulator session (--emulator-socket SOCK, an ot_emu with --usb-host on a development base)
+ 6. Read the unit [unit]: not run: no unit session on /tmp/modwerk-share.sock (npm run device -- serve --share /tmp/modwerk-share.sock; on a contributor's unit with their OK)
+ 7. Scripted unit pass [unit]: not run: no unit session on /tmp/modwerk-share.sock (npm run device -- serve --share /tmp/modwerk-share.sock; on a contributor's unit with their OK)
+ 8. Soak [unit]: not run: no unit session on /tmp/modwerk-share.sock (npm run device -- serve --share /tmp/modwerk-share.sock; on a contributor's unit with their OK)
+ 9. Cost on the unit [unit]: not run: no unit session on /tmp/modwerk-share.sock (npm run device -- serve --share /tmp/modwerk-share.sock; on a contributor's unit with their OK)
+10. Put back [unit]: not run: no unit session on /tmp/modwerk-share.sock (npm run device -- serve --share /tmp/modwerk-share.sock; on a contributor's unit with their OK)
+11. Agent by hand [unit]: by hand: every control and screen by the README's button steps, a png: screenshot of each, compared with the README and its UI claims; MAIN and CUE recorded over USB (rec) with a sustained sound, checked for dropouts (runs of exact zeros, a block played twice)
+12. Submitter's own stage [unit]: by hand: how it sounds and plays, and timing by ear; MIDI, scenes and recording with it; it beside the other modules installed on their unit; two instances with different settings, on both FX slots and both DSP cores where it can (docs/MODULE_QUALIFICATION.md); Part reload, project save and reload, and a power cycle with it saved: what survives (the Keep and the power cycle are theirs)

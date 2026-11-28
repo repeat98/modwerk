@@ -1,0 +1,17 @@
+{
+  "candidate_runtime": "d9909f52fd84e8af158b0adfb8e6a6ae059cc97f",
+  "official_main": "061fd547c24234ff3561ae0749c4aaf4e0e6b1a7",
+  "private_base": "5c32cbacd2b1efea3d70e9b543a9a43cfe634651",
+  "baseline_module": "6b78afac97b4e836fa804c529765f9bc85829d17",
+  "inputs": {
+    "private_MAIN": "1f8e2e9ffd6919bafd6302fa4d61aeeab32e7349ee49ce159ab6a15d276f69d1",
+    "public_MAIN": "23dd2465f34c0bf00419cc329ef9cee8471229de70efedfcd6799556be4e2022",
+    "private_base_symbols": "7d63c1caf5d5968b373fd872438d5c2547193cc0dabe3946381bb2face5c86b4",
+    "disposable_fixture": "18460f09753bdb91a578de517e39c8e6b00991cc6005b526646d0e9250541332",
+    "baseline_card": "b110845a7a16e8ce0db58f9987249157275bb76fefe733acc82060265c96d0ba",
+    "candidate_card": "36e6739fae8ee9245eeca0bcce24b123a8b68f69187bbce56c37df51801dcbfe",
+    "public_control_card": "a6d4e61ada29d391d4bf052a0cb6090c4c2f34346aa24e29292431f2a3136d0c",
+    "emulator": "a1410ad471be5fbf0fee5e0865dbce9ec1ffcba1d4697aaa6e607943b5614a87",
+    "package": "dea54e4f2ed47c01a8a7e277ceabf80a14b708ed0121c4bccc703094be7461b9"
+  }
+}

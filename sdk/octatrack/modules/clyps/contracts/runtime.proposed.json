@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {
+      "event": "module_key",
+      "fn": "module_key"
+    },
+    {
+      "event": "module_enc",
+      "fn": "module_enc"
+    },
+    {
+      "event": "module_tick",
+      "fn": "module_tick"
+    },
+    {
+      "event": "module_draw",
+      "fn": "module_draw"
+    },
+    {
+      "event": "ev_bank_load",
+      "fn": "clyps_bank_load",
+      "order": 50
+    },
+    {
+      "event": "ev_bank_loaded",
+      "fn": "clyps_bank_loaded",
+      "order": 50
+    },
+    {
+      "event": "ev_project_new",
+      "fn": "clyps_project_init",
+      "order": 50
+    },
+    {
+      "event": "ev_seq_wrap",
+      "fn": "clyps_wrap",
+      "order": 50
+    },
+    {
+      "event": "ev_audio_seq_source",
+      "fn": "clyps_audio_source",
+      "order": 50
+    }
+  ]
+}

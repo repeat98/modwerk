@@ -1,0 +1,54 @@
+{
+  "row": {
+    "batch_means_ns": [
+      323,
+      322,
+      310,
+      312,
+      317,
+      318,
+      319
+    ],
+    "median_ns": 318,
+    "max_batch_mean_ns": 323
+  },
+  "clip": {
+    "batch_means_ns": [
+      131,
+      126,
+      128,
+      125,
+      128,
+      126,
+      129
+    ],
+    "median_ns": 128,
+    "max_batch_mean_ns": 131
+  },
+  "setup": {
+    "batch_means_ns": [
+      151,
+      153,
+      155,
+      157,
+      159,
+      155,
+      151
+    ],
+    "median_ns": 155,
+    "max_batch_mean_ns": 159
+  },
+  "legacy-row": {
+    "batch_means_ns": [
+      354,
+      356,
+      372,
+      361,
+      367,
+      359,
+      360
+    ],
+    "median_ns": 360,
+    "max_batch_mean_ns": 372
+  }
+}

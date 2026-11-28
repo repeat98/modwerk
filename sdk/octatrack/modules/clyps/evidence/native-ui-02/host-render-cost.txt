@@ -1,0 +1,1 @@
+Host only (cc -O2, seven batches of 20000 frames, same run): D32 f85393656 clip=1273 row=2113 setup=154; this candidate clip=1281 row=2124 setup=3370 (SETUP now draws the Panorama under its popup). Not a device measurement.

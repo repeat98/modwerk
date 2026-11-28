@@ -1,0 +1,66 @@
+{
+  "source": "Official host-only procedure, overlay staged into export of upstream main 061fd547c24234ff3561ae0749c4aaf4e0e6b1a7",
+  "module": "d9909f52fd84e8af158b0adfb8e6a6ae059cc97f",
+  "steps": [
+    {
+      "id": "software",
+      "status": "passed"
+    },
+    {
+      "id": "compat",
+      "status": "not run",
+      "reason": "a draft is judged beside every other module by module:doctor --draft (its compatibility line, step 1)"
+    },
+    {
+      "id": "build",
+      "status": "failed",
+      "reason": "exit 1: npm run module:dev -- clyps --build-only --out <local build output>/clyps.mwrm"
+    },
+    {
+      "id": "cost-model",
+      "status": "not run",
+      "reason": "stopped: step 3 (Name the build) failed"
+    },
+    {
+      "id": "emulator",
+      "status": "not run",
+      "reason": "stopped: step 3 (Name the build) failed"
+    },
+    {
+      "id": "unit-read",
+      "status": "not run",
+      "reason": "stopped: step 3 (Name the build) failed"
+    },
+    {
+      "id": "unit-pass",
+      "status": "not run",
+      "reason": "stopped: step 3 (Name the build) failed"
+    },
+    {
+      "id": "soak",
+      "status": "not run",
+      "reason": "stopped: step 3 (Name the build) failed"
+    },
+    {
+      "id": "cost-unit",
+      "status": "not run",
+      "reason": "stopped: step 3 (Name the build) failed"
+    },
+    {
+      "id": "restore",
+      "status": "not run",
+      "reason": "stopped: step 3 (Name the build) failed"
+    },
+    {
+      "id": "by-hand",
+      "status": "not run",
+      "reason": "stopped: step 3 (Name the build) failed"
+    },
+    {
+      "id": "developer",
+      "status": "not run",
+      "reason": "stopped: step 3 (Name the build) failed"
+    }
+  ],
+  "public_builder": "Unknown registered event ev_seq_wrap at package construction. No official package produced."
+}

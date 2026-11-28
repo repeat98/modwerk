@@ -1,0 +1,115 @@
+{
+  "module": "65eefdf479eb5fadc645c28a475ed9f871e61b693f24a99e87894a2cc4296d56",
+  "observations": [
+    [
+      "open row",
+      {
+        "view": 1,
+        "mode": 1,
+        "playing": 0
+      }
+    ],
+    [
+      "cursor row 2 track 2",
+      {
+        "slot": 1,
+        "track": 1,
+        "playing": 0
+      }
+    ],
+    [
+      "capture R02",
+      {
+        "defined": 2,
+        "last_row": 0
+      }
+    ],
+    [
+      "T2 selects A02",
+      {
+        "view": 2,
+        "track": 1,
+        "src_cursor": 1,
+        "playing": 16
+      }
+    ],
+    [
+      "capture R05",
+      {
+        "view": 1,
+        "defined": 18,
+        "slot": 4,
+        "last_row": 0
+      }
+    ],
+    [
+      "advance to R02 independently of cursor",
+      {
+        "playing": 0,
+        "last_row": 2,
+        "slot": 4
+      }
+    ],
+    [
+      "advance to R05",
+      {
+        "playing": 16,
+        "last_row": 5
+      }
+    ],
+    [
+      "end retains R05",
+      {
+        "playing": 16,
+        "last_row": 5
+      }
+    ],
+    [
+      "override T2 retains path",
+      {
+        "playing": 32,
+        "last_row": 5
+      }
+    ],
+    [
+      "direct R02 pending during play",
+      {
+        "playing": 32,
+        "pending_row": 2,
+        "last_row": 5
+      }
+    ],
+    [
+      "STOP cancels pending",
+      {
+        "playing": 32,
+        "requested": 32,
+        "pending_row": 0,
+        "last_row": 5
+      }
+    ],
+    [
+      "exit with foreign edit lock",
+      {
+        "view": 0,
+        "locked": 1
+      }
+    ],
+    [
+      "stopped restore",
+      {
+        "playing": 0,
+        "requested": 0,
+        "last_row": 0,
+        "mode": 0
+      }
+    ]
+  ],
+  "free_before_after": 786432,
+  "composed_frames": {
+    "first-arr": "4f84fa29137bad50811114450e9d6c08aff1d914c28c30dec7a428d29afdde43",
+    "setup": "bfb937b38fec112c1ea24461f3193c233f2291cdecc332d06dce92a54f3ea905",
+    "clip": "41aea567fc856698dd405de02aa8168f9db72c83fc40c159d11c57f1f6231f1f",
+    "row": "94354e45a1568b5e009b22e2dbfdf29d6734b8998470be81f13a92c9658228aa"
+  }
+}

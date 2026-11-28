@@ -1,0 +1,487 @@
+{
+  "cumulative": "23f41e720e6f3d90ecf44f66780fa76324a5ff9f",
+  "baseCommit": "b3184dd5e19caaae8c88e2e002c6ab5204ac27d6",
+  "moduleTestCommit": "3478465af605575964c215dfef9e6b6fca8c27f3",
+  "configuration": "59596991c4ce348b795fc4cdc375723b02ee32c6014c0f5bf35d95c776aed1a7",
+  "linkedMain": "6a9d7518ba7707e3763215ecc50be1c7eec09628b1bdf45b86b3f207a02b434b",
+  "equalWidthNegativeMain": "4d2573b85d19806535556c1fdfb40917ff343a30828696e1c5ecbff4ce0e74ac",
+  "module": "8aa6ccef2afd7db7874de28e8f6948f948e70f1e8b94a2f023d22452e4e90423",
+  "preparedCard": "486a7937319e2a8f6747fc3e4fe1ca63137a1587888c65af37a009cd8ab500e1",
+  "emulator": "a1410ad471be5fbf0fee5e0865dbce9ec1ffcba1d4697aaa6e607943b5614a87",
+  "nativeSlice": {
+    "wrap": 90,
+    "events": 384,
+    "writes": 400,
+    "poolAfterOff": 786432
+  },
+  "negativeControl": {
+    "refusal": 259,
+    "before": {
+      "callbacks": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "active": 0,
+      "pool": 786432,
+      "owners": 0
+    },
+    "after": {
+      "callbacks": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "active": 0,
+      "pool": 786432,
+      "owners": 0
+    }
+  },
+  "wide": {
+    "events": 624,
+    "relativeTimestampWrites": 608,
+    "sampledStates": 219,
+    "defaultCaptureMismatchTicks": [
+      193
+    ],
+    "oneMsObserverPass": true,
+    "truncationControlsRejected": 3
+  },
+  "matrix": {
+    "rows": 16,
+    "sourcesPerTrack": 16,
+    "tracks": 8,
+    "poolAfterOff": 786432,
+    "ownersAfterOff": 0
+  },
+  "early": {
+    "strictPass": true,
+    "events": 576,
+    "writes": 560,
+    "ticks": 202
+  },
+  "late": {
+    "strictPass": false,
+    "events": 848,
+    "writes": 816,
+    "ticks": 298,
+    "press": 187,
+    "requestAcceptedMs": 1,
+    "pendingSeenMs": 5,
+    "pendingSeenTick": 187,
+    "expectedDiagnosticTick": 188,
+    "firstT2HomeBuilderTick": 282
+  },
+  "arrangerAfterOff": {
+    "events": 336,
+    "writes": 336,
+    "row": 1,
+    "pool": 786432,
+    "sha256": "2db4fed437f3f9095af9d085e956054a9538384b612b30a5433b01a34a70dbac"
+  },
+  "profile": {
+    "empty-master": [
+      [
+        64,
+        64
+      ],
+      [
+        56,
+        64
+      ],
+      [
+        64,
+        64
+      ]
+    ],
+    "empty-stopped": {
+      "mw_frame_skips": 0,
+      "mw_frame_sheds": 0,
+      "mw_frame_busy": 444814,
+      "mw_frame_count": 8357,
+      "instruction_spans": {
+        "boundary": {
+          "count": 0,
+          "minimum": null,
+          "maximum": null
+        },
+        "source": {
+          "count": 0,
+          "minimum": null,
+          "maximum": null
+        }
+      },
+      "frame_peak_timer_counts_since_boot": 21183,
+      "audio_lane_sources": []
+    },
+    "empty-light": {
+      "mw_frame_skips": 0,
+      "mw_frame_sheds": 0,
+      "mw_frame_busy": 481024,
+      "mw_frame_count": 8352,
+      "instruction_spans": {
+        "boundary": {
+          "count": 1,
+          "minimum": 12,
+          "maximum": 12
+        },
+        "source": {
+          "count": 192,
+          "minimum": 16,
+          "maximum": 16
+        }
+      },
+      "frame_peak_timer_counts_since_boot": 21183,
+      "audio_lane_sources": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          7,
+          0
+        ]
+      ]
+    },
+    "installed-master": [
+      [
+        64,
+        64
+      ],
+      [
+        56,
+        64
+      ],
+      [
+        64,
+        64
+      ]
+    ],
+    "installed-stopped": {
+      "mw_frame_skips": 0,
+      "mw_frame_sheds": 0,
+      "mw_frame_busy": 482518,
+      "mw_frame_count": 8351,
+      "instruction_spans": {
+        "boundary": {
+          "count": 0,
+          "minimum": null,
+          "maximum": null
+        },
+        "source": {
+          "count": 0,
+          "minimum": null,
+          "maximum": null
+        }
+      },
+      "frame_peak_timer_counts_since_boot": 21183,
+      "audio_lane_sources": []
+    },
+    "installed-light": {
+      "mw_frame_skips": 0,
+      "mw_frame_sheds": 0,
+      "mw_frame_busy": 481269,
+      "mw_frame_count": 8348,
+      "instruction_spans": {
+        "boundary": {
+          "count": 1,
+          "minimum": 28,
+          "maximum": 28
+        },
+        "source": {
+          "count": 192,
+          "minimum": 31,
+          "maximum": 31
+        }
+      },
+      "frame_peak_timer_counts_since_boot": 21183,
+      "audio_lane_sources": [
+        [
+          0,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          7,
+          0
+        ]
+      ]
+    },
+    "installed-dense": {
+      "mw_frame_skips": 0,
+      "mw_frame_sheds": 0,
+      "mw_frame_busy": 524537,
+      "mw_frame_count": 8333,
+      "instruction_spans": {
+        "boundary": {
+          "count": 1,
+          "minimum": 540,
+          "maximum": 540
+        },
+        "source": {
+          "count": 192,
+          "minimum": 160,
+          "maximum": 160
+        }
+      },
+      "frame_peak_timer_counts_since_boot": 27822,
+      "audio_lane_sources": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          7,
+          1
+        ]
+      ]
+    },
+    "empty-dense": {
+      "mw_frame_skips": 0,
+      "mw_frame_sheds": 0,
+      "mw_frame_busy": 526237,
+      "mw_frame_count": 8345,
+      "instruction_spans": {
+        "boundary": {
+          "count": 1,
+          "minimum": 12,
+          "maximum": 12
+        },
+        "source": {
+          "count": 200,
+          "minimum": 16,
+          "maximum": 16
+        }
+      },
+      "frame_peak_timer_counts_since_boot": 27822,
+      "audio_lane_sources": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          7,
+          1
+        ]
+      ]
+    }
+  },
+  "receiptSha256": {
+    "arranger.json": "4f11f7019655baf3998789acb6d409a603e72d88199ec0747763caf0e4c77725",
+    "candidate.json": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "early-stock.json": "dfa714ba81a449202f0674673981cdb7c249e15f8678d4846f42f09d19d55ee0",
+    "early.json": "f8d1e984ceb87edb65412da6098780cc9b282c7cdcc8600aa89c397b67e8cc15",
+    "early.phase-185.json": "54a61db958e986ca923ea521e3e7e350c625a412724e8a9ac775ec9dd82b5aab",
+    "early.phase-89.json": "dfbfa770a5b6f2fd90611e11396859895445347da8a1df7c7a5c1c64648b3f46",
+    "late-stock.json": "50f9181c4e0dcc41a6a87df19ccd55dd1b3237505a12ccb481ad37d1d0677148",
+    "late.json": "ddc07415a019a3105f1e6ea9f9b5d692f1ce0be9dc45638f1618490600acab1d",
+    "late.phase-187.json": "f17ccd3ba061e0084f9de68449f34d3ceb8764e89eca5a86cff31341a996c581",
+    "late.phase-91.json": "db727c4dd2ae8d9b562dbbd3013a693cfb88d83c21049e4c4c7589ba74e227c4",
+    "matrix.json": "82f68f39fdf73bb1a57d56d4558e9008dd59b734968e4941e215a8a5493eb9cc",
+    "module-symbols.json": "f1b8bf951be28b619f70fd24b7ab05cd499eed8360bcbc04cf8c816053112a5c",
+    "observe-candidate.flags.json": "baf12ccf240d079732883337d27a16b490a722aa7130aeb56240f8de9be89c3b",
+    "observe-candidate.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "observe-stock.flags.json": "e00041445960b6c6f3cba52ca81a73f76f736ff9d9422cf148b7e44a4b09a11a",
+    "observe-stock.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "profile.json": "8d0d8e992a4574236113962fd85a3f6eb658d1a5d4ae492f62199a2f52b8f53e",
+    "refusal.json": "acf2ba583a6b4261c3cd3db7727341681288220cfad279d6b9156e1143f6b9d6",
+    "stock.json": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "wide-stock.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "wide.json": "ea5bb7b2f1337d5553dfb63d71e685d54f0e7b4edfdb81b1e9cf4c16c88d05a0",
+    "grain/result.json": "e3c71ee17fa3e179f23d7fd9a3d72747779d1bd30bf06005c887b3675e7d1ad6",
+    "poly8/result.json": "93739f0fc0f432b57e1413997d9e2a578c13e27fa69962d528ae53af3065d78d",
+    "vector/result.json": "03ab940d1051410a2f5ada7c4bdd54606bb777054f8da1c324477be541910e2f",
+    "track-solo/result.json": "bfefe3f48b2818cc6b401685634083bdccee9f4c5b2e2a0310424850ec5cad83",
+    "panel/result.json": "7dada3fbddef99ad1fb473f65349a3e60c4caa26d3fa9f03319d2c7a9f6fa9c0",
+    "popup/result.json": "b556f0e8d873ef406750a1e3961352db7245f89d2076c9d9c9025fe906c50406",
+    "pcm-flex/result.json": "09a2d1e7be3f290255fdb8a8ccfe132ff450eb91efd901dc2203076cd10caa15",
+    "pcm-static/result.json": "70234dfc827e2c6b5a4662d134091e01c7bc75bd8128886bab7844d33deb3de1",
+    "clyps-edit/result.json": "7e9781b155dc306459adc31cf7cd2d878a83035808d63cdc44bd9dacac183a4a",
+    "stock-edit/result.json": "7e9781b155dc306459adc31cf7cd2d878a83035808d63cdc44bd9dacac183a4a",
+    "static-stock/result.json": "70234dfc827e2c6b5a4662d134091e01c7bc75bd8128886bab7844d33deb3de1",
+    "scenes.json": "51a91cbf7d260dde580252030b048523f9c315272813b5535a15fff4068c3446"
+  },
+  "replayBuildCommit": "18e28a172b7836199e17d6da987649eda1710be2",
+  "replayCumulative": "0c8e39558b20ba4bc6d8e096f4c0ac7fb5b8cf08",
+  "tipRebuild": {
+    "mainAndSymbolsByteIdentical": true,
+    "sameConfigurationHash": true
+  },
+  "peerChecks": {
+    "grain": "passed",
+    "poly8": "passed",
+    "vector": "passed",
+    "track-solo": "passed",
+    "panel": "passed",
+    "popup": "passed",
+    "pcm-flex": "passed",
+    "pcm-static": "failed prelaunch silence",
+    "clyps-edit": "passed",
+    "stock-edit": "passed"
+  },
+  "sceneSelection": {
+    "stock": [
+      [
+        0,
+        8
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        5,
+        15
+      ],
+      [
+        0,
+        15
+      ],
+      [
+        0,
+        8
+      ]
+    ],
+    "installed": [
+      [
+        0,
+        8
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        5,
+        15
+      ],
+      [
+        0,
+        15
+      ],
+      [
+        0,
+        8
+      ]
+    ]
+  },
+  "staticStockControl": {
+    "home": [
+      1930,
+      2117,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "launched": [
+      1930,
+      2337,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}

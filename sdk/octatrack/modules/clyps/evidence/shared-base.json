@@ -1,0 +1,283 @@
+{
+  "baseCommit": "7419b7598006646dd2bbbd3f09af6f352b95ff9b",
+  "donor": "a9674ed846ebe75d2bcbced307922fe9c4cb63f1",
+  "module": "c3c516e8a13511899a6c8ff8c5140d918051b728",
+  "main": "3db3ece713e65048102c442cd341d6d587b38d6638006eabc772d71c711b4cbd",
+  "configuration": "08f12c2ebe9f0df093ea09f9d150ffa885d2b2082438836b666e083fa863e63c",
+  "mwrm": "8aa6ccef2afd7db7874de28e8f6948f948e70f1e8b94a2f023d22452e4e90423",
+  "emulator": "a1410ad471be5fbf0fee5e0865dbce9ec1ffcba1d4697aaa6e607943b5614a87",
+  "sourceCardSha256": "0e69834f607f27e090b34a7c6204dffbb90baf34bbcdebc3fbbf5a01eed996d2",
+  "receiptSha256": {
+    "candidate.json": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "stock.json": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "refusal.json": "acf2ba583a6b4261c3cd3db7727341681288220cfad279d6b9156e1143f6b9d6",
+    "wide.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "wide-stock.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "matrix.json": "82f68f39fdf73bb1a57d56d4558e9008dd59b734968e4941e215a8a5493eb9cc",
+    "late.json": "1e35e4af3ff3ed9277ec9081358be7807a3c100a708b32001591bd154cd7a10a",
+    "late-stock.json": "a91038a3534b05f7db95a0764b7ccedaf9c6edbf3cd7b37f7c3917cfca7085d7",
+    "late.phase-187.json": "14337517e4d5b4b679415a6b2bd2574e8e2410bee215ca773290b544ed8699b9",
+    "profile.json": "8a719f620aef8be4ccae79e6023b3801e11a7872a76cea3093629b7f79797b32",
+    "early.json": "5ccee6c95d1ef428e1b7f07a3982e27b8b3d9db0d710163c614d2156c00b8d3c",
+    "early-stock.json": "b079b4e7ad88700dc8a6f8d377d6e45cc8d96750ccfd12a58492b7a89a089388",
+    "early.phase-185.json": "d52cf6e97a855530985a65c0a48b0b4d9a2ff3e889e406d9100a77820ef16634",
+    "arranger.json": "4f11f7019655baf3998789acb6d409a603e72d88199ec0747763caf0e4c77725",
+    "profile-with-sources.json": "598dbf8ac74dc335115fbb06dc2e184ebb8c6aa790aa8afea9f3847328fef002",
+    "static-stock.json": "70234dfc827e2c6b5a4662d134091e01c7bc75bd8128886bab7844d33deb3de1",
+    "pcm-static/result.json": "70234dfc827e2c6b5a4662d134091e01c7bc75bd8128886bab7844d33deb3de1",
+    "pcm-flex/result.json": "09a2d1e7be3f290255fdb8a8ccfe132ff450eb91efd901dc2203076cd10caa15",
+    "panel/result.json": "7dada3fbddef99ad1fb473f65349a3e60c4caa26d3fa9f03319d2c7a9f6fa9c0",
+    "track-solo/result.json": "bfefe3f48b2818cc6b401685634083bdccee9f4c5b2e2a0310424850ec5cad83",
+    "grain/result.json": "e3c71ee17fa3e179f23d7fd9a3d72747779d1bd30bf06005c887b3675e7d1ad6",
+    "poly8/result.json": "93739f0fc0f432b57e1413997d9e2a578c13e27fa69962d528ae53af3065d78d",
+    "vector/result.json": "03ab940d1051410a2f5ada7c4bdd54606bb777054f8da1c324477be541910e2f",
+    "stock-edit/result.json": "7e9781b155dc306459adc31cf7cd2d878a83035808d63cdc44bd9dacac183a4a",
+    "clyps-edit/result.json": "7e9781b155dc306459adc31cf7cd2d878a83035808d63cdc44bd9dacac183a4a",
+    "popup/result.json": "b556f0e8d873ef406750a1e3961352db7245f89d2076c9d9c9025fe906c50406",
+    "scenes.json": "51a91cbf7d260dde580252030b048523f9c315272813b5535a15fff4068c3446"
+  },
+  "slice": {
+    "wraps": [
+      90
+    ],
+    "orderedAudioAndMidiCalls": 384,
+    "relativeTimestampWrites": 400,
+    "initialPool": 786432,
+    "finalPool": 786432,
+    "track": 2,
+    "queuedSource": "A02",
+    "globalPattern": "A01",
+    "stopCancellation": true,
+    "srcLabels": true,
+    "arrSourceDigits": true,
+    "patternAndPartIntegrity": true
+  },
+  "featureMissingControl": {
+    "refusal": 259,
+    "before": {
+      "callbacks": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "active": 0,
+      "pool": 786432,
+      "owners": 0
+    },
+    "after": {
+      "callbacks": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "active": 0,
+      "pool": 786432,
+      "owners": 0
+    }
+  },
+  "controlBase": "8aeb9c3d0239eedb0f091273dfe860006152b3c8cb35f7d9ada0b8289a591c63",
+  "moduleResources": {
+    "codeDataBytes": 5456,
+    "bssBytes": 164,
+    "relocations": 238
+  },
+  "reconstructedInputs": {
+    "preparedCardSha256": "2e204ad956098649f6c04feedc6d8fc8608d12b1b7f29c2d3b45db4ce1881465",
+    "emulatorSource": "sambanks/octabam@f7d7290663135ff8bc4ea18aa45d2854a7b332c1",
+    "emulatorRebuiltByteIdentical": true,
+    "preparedCardRebuiltByteIdentical": true
+  },
+  "wide": {
+    "orderedCalls": 624,
+    "timestampWrites": 608,
+    "states": 219,
+    "mutatedStreamsRejected": 3
+  },
+  "matrix": {
+    "rows": 16,
+    "tracks": 8,
+    "sourcesPerTrack": 16,
+    "poolAfterOff": 786432,
+    "ownersAfterOff": 0
+  },
+  "late": {
+    "orderedCalls": 848,
+    "timestampWrites": 816,
+    "ticks": 298,
+    "restorePressTick": 187,
+    "requestedAfterMs": 1,
+    "pendingPublicationTick": 188,
+    "publishedAfterMs": 16,
+    "restoreWrap": 282
+  },
+  "mainLevelOutsideMeta": {
+    "empty": [
+      [
+        64,
+        64
+      ],
+      [
+        56,
+        64
+      ],
+      [
+        64,
+        64
+      ]
+    ],
+    "installed": [
+      [
+        64,
+        64
+      ],
+      [
+        56,
+        64
+      ],
+      [
+        64,
+        64
+      ]
+    ],
+    "fields": [
+      "MAIN",
+      "CUE"
+    ]
+  },
+  "early": {
+    "orderedCalls": 576,
+    "timestampWrites": 560,
+    "ticks": 202,
+    "pendingObservedAt": [
+      89,
+      185
+    ]
+  },
+  "arrangerAfterOff": {
+    "events": 336,
+    "writes": 336,
+    "row": 1,
+    "pool": 786432,
+    "sha256": "2db4fed437f3f9095af9d085e956054a9538384b612b30a5433b01a34a70dbac"
+  },
+  "profile": {
+    "empty-stopped": {
+      "boundaryMaxInstructions": null,
+      "sourceMaxInstructions": null,
+      "frames": 8364,
+      "skips": 0,
+      "sheds": 0,
+      "busyCounterDelta": 443904
+    },
+    "empty-light": {
+      "boundaryMaxInstructions": 12,
+      "sourceMaxInstructions": 16,
+      "frames": 8353,
+      "skips": 0,
+      "sheds": 0,
+      "busyCounterDelta": 480894
+    },
+    "installed-stopped": {
+      "boundaryMaxInstructions": null,
+      "sourceMaxInstructions": null,
+      "frames": 8354,
+      "skips": 0,
+      "sheds": 0,
+      "busyCounterDelta": 481832
+    },
+    "installed-light": {
+      "boundaryMaxInstructions": 28,
+      "sourceMaxInstructions": 31,
+      "frames": 8360,
+      "skips": 0,
+      "sheds": 0,
+      "busyCounterDelta": 480562
+    },
+    "installed-dense": {
+      "boundaryMaxInstructions": 540,
+      "sourceMaxInstructions": 160,
+      "frames": 8340,
+      "skips": 0,
+      "sheds": 0,
+      "busyCounterDelta": 524684
+    },
+    "empty-dense": {
+      "boundaryMaxInstructions": 12,
+      "sourceMaxInstructions": 16,
+      "frames": 8356,
+      "skips": 0,
+      "sheds": 0,
+      "busyCounterDelta": 526805
+    }
+  },
+  "compatibility": {
+    "trackSoloBothOrders": true,
+    "crossfaderNativePosition": 47,
+    "grainControlPages": true,
+    "poly8NativeSrcRecovery": true,
+    "vectorNativeSrcRecovery": true,
+    "flexT1Peak": [
+      0,
+      1930
+    ],
+    "staticT2Peak": [
+      2117,
+      2337
+    ],
+    "stockStaticT2Peak": [
+      2117,
+      2337
+    ],
+    "staticPrelaunchSilence": false,
+    "homeTrigAndAmpLockSameAsStock": true,
+    "popupStockPriority": true,
+    "nativeSceneSelect": {
+      "stock": [
+        [
+          0,
+          8
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          5,
+          15
+        ],
+        [
+          0,
+          15
+        ],
+        [
+          0,
+          8
+        ]
+      ],
+      "installed": [
+        [
+          0,
+          8
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          5,
+          15
+        ],
+        [
+          0,
+          15
+        ],
+        [
+          0,
+          8
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,367 @@
+{
+  "moduleSource": "8e19ccd65cccb4e7f7718ae80bf1637b9a797e02",
+  "cumulative": "c3706472be93ff0d02a7293412ab3992b3b60be7",
+  "previous": "b3184dd5e19caaae8c88e2e002c6ab5204ac27d6",
+  "candidate": "5c32cbacd2b1efea3d70e9b543a9a43cfe634651",
+  "configuration": "d7e727cd84cf2d99baf656acfc291db2912a756ae8a3857af89db2a5b658e6f0",
+  "module": "32ebca98345840f4e107550683f4fd14f2be35e5355df3d8933b7132f324aea9",
+  "main": "1f8e2e9ffd6919bafd6302fa4d61aeeab32e7349ee49ce159ab6a15d276f69d1",
+  "symbols": "7d63c1caf5d5968b373fd872438d5c2547193cc0dabe3946381bb2face5c86b4",
+  "buildProof": "34058e0462bde3ed4ae745b05b035d66877c5246262094a39e6334408ed740dd",
+  "card": "b110845a7a16e8ce0db58f9987249157275bb76fefe733acc82060265c96d0ba",
+  "negativeMain": "319e782c5a48430a656b9189f320a68933423098825a1f821af0fa10b4b2056e",
+  "emulator": "a1410ad471be5fbf0fee5e0865dbce9ec1ffcba1d4697aaa6e607943b5614a87",
+  "seed": "b29909a9bd931d4741f60d2ad33b94a0f514a0d35a49a9c2f7cda0d3ad8e88d7",
+  "identicalBuildOutputs": [
+    "MAIN.raw",
+    "symbols.json",
+    "proofs.json",
+    "base.elemod"
+  ],
+  "nativeFixtureExitCodes": {
+    "arr": 0,
+    "change": 0,
+    "clock-stock": 0,
+    "clock": 0,
+    "default-stock": 0,
+    "default": 0,
+    "early-stock": 0,
+    "early": 1,
+    "fader": 0,
+    "home-stock": 0,
+    "home": 0,
+    "late-stock": 0,
+    "late": 1,
+    "midi-stock": 0,
+    "midi": 0,
+    "missing": 0,
+    "obs-stock": 0,
+    "obs": 0,
+    "original-stock": 0,
+    "original": 0,
+    "popup": 0,
+    "profile": 0,
+    "refusal": 0,
+    "scenes": 0,
+    "slice": 0,
+    "stock": 0,
+    "stop-stock": 0,
+    "stop": 0,
+    "stored-repeat": 0,
+    "voices-home": 0,
+    "voices-stock": 0,
+    "voices": 0
+  },
+  "matchedSlice": "Wrap 90, 384 ordered calls, 400 relative timestamp writes, pool 786432.",
+  "popup": {
+    "reopened": true,
+    "r04": 0,
+    "pool": 786432
+  },
+  "arranger": {
+    "events": 336,
+    "writes": 336,
+    "row": 1,
+    "pool": 786432,
+    "sha256": "2db4fed437f3f9095af9d085e956054a9538384b612b30a5433b01a34a70dbac"
+  },
+  "comparisons": {
+    "obs": {
+      "events": {
+        "candidate": 624,
+        "stock": 624,
+        "mismatches": 0
+      },
+      "writes": {
+        "candidate": 608,
+        "stock": 608,
+        "mismatches": 0
+      },
+      "states": {
+        "candidate": 219,
+        "stock": 219,
+        "mismatches": 0,
+        "differingTicks": []
+      }
+    },
+    "clock": {
+      "events": {
+        "candidate": 624,
+        "stock": 624,
+        "mismatches": 0
+      },
+      "writes": {
+        "candidate": 608,
+        "stock": 608,
+        "mismatches": 0
+      },
+      "states": {
+        "candidate": 219,
+        "stock": 219,
+        "mismatches": 0,
+        "differingTicks": []
+      }
+    },
+    "original": {
+      "events": {
+        "candidate": 624,
+        "stock": 624,
+        "mismatches": 0
+      },
+      "writes": {
+        "candidate": 608,
+        "stock": 608,
+        "mismatches": 0
+      },
+      "states": {
+        "candidate": 219,
+        "stock": 219,
+        "mismatches": 1,
+        "differingTicks": [
+          193
+        ]
+      }
+    },
+    "default": {
+      "events": {
+        "candidate": 624,
+        "stock": 624,
+        "mismatches": 0
+      },
+      "writes": {
+        "candidate": 608,
+        "stock": 608,
+        "mismatches": 0
+      },
+      "states": {
+        "candidate": 219,
+        "stock": 219,
+        "mismatches": 0,
+        "differingTicks": []
+      }
+    },
+    "home": {
+      "events": {
+        "candidate": 624,
+        "stock": 624,
+        "mismatches": 0
+      },
+      "states": {
+        "candidate": 219,
+        "stock": 219,
+        "mismatches": 0,
+        "differingTicks": []
+      }
+    },
+    "stop": {
+      "events": {
+        "candidate": 544,
+        "stock": 544,
+        "mismatches": 0
+      },
+      "states": {
+        "candidate": 190,
+        "stock": 190,
+        "mismatches": 0,
+        "differingTicks": []
+      }
+    }
+  },
+  "traceDigests": {
+    "arr.json": "4f11f7019655baf3998789acb6d409a603e72d88199ec0747763caf0e4c77725",
+    "change.json": "2d813c4a03f03e2dfc525bd99fcecc1d03dc15619c62288ccdfe9a0835a3ef24",
+    "clock-report.json": "8389188a09f647edf7af85465fa889cf147cab9aec67296ee60ad98007eafa79",
+    "clock-stock.flags.json": "40d39b4a40773946ce0bc65701bc4b9f3f8f086192f48823dccec6cb73a4c6a5",
+    "clock-stock.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "clock.flags.json": "a5f84c953dc1266d939d6e7de2ea2b7620959124e12112a81f13f808d10268d2",
+    "clock.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "current-clock-report.json": "84802da7020eded23c28789088bdba0e30484a30738190b55a80c1df0472eeb0",
+    "default-stock.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "default.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "early-stock.json": "c5bda1d6b8832bdcc3b52586d33f0f5e4f43196f73c019a1835ee042b0295f85",
+    "early.phase-89.json": "a4764efaf7a34cd54e5a7a74aa7edbe308f150b6b67313fd5d9b4f98a15d8658",
+    "fader.json": "61341521d475e09d6692e6fe321900d5404d33e9fad9ca6123629bcbdfd826bb",
+    "home-stock.json": "8708d5a52fb5523a9f876d73a8902838f5f08ab8c1d9ae49e9bbdadf1d15ee89",
+    "home.json": "8708d5a52fb5523a9f876d73a8902838f5f08ab8c1d9ae49e9bbdadf1d15ee89",
+    "late-stock.json": "b51cc639a607a6ab9e4e26809623e3bb6a12bd96d0d8ef6da67c65be669c654a",
+    "late.json": "4d3f4326cd585236bf84fb38643f9e1799364b0e4b706345a1cf66c65c6aaf02",
+    "late.phase-187.json": "e8e1884197305e4833bdaa62ff6bd8f54050efb32f3790ea2dec45c707094a2b",
+    "late.phase-91.json": "377d36e48fefe56ec5ebd7bb0c71865297f80c4ce5b1c379dd1e1ea0c4ea1fd3",
+    "midi-stock-wire.json": "f92a56d068a450a3b7abb6dfbff1a8a4dabe325d2c1305b7ce1fb0eca0e95684",
+    "midi-stock.json": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "midi-wire.json": "763282c322a79d1d8ce66915c284d0e5c22cdea4b02c4adfe27f060e7a633184",
+    "midi.json": "a44351ebcfc11dfd1ea1b5eec2acf64f404b7425cbd054a9737b7a27ab0e2eb5",
+    "missing.json": "570ad0762506540bfa23b3210518b391e5fccd1b1757f9dfdff8ca9b9f3d87d3",
+    "obs-stock.flags.json": "40d39b4a40773946ce0bc65701bc4b9f3f8f086192f48823dccec6cb73a4c6a5",
+    "obs-stock.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "obs.flags.json": "a5f84c953dc1266d939d6e7de2ea2b7620959124e12112a81f13f808d10268d2",
+    "obs.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "original-report.json": "9e69b0daabc6e1f1271cd17cce815426c05ad5f4ca0933671d8cf00ee739a8b6",
+    "original-stock.flags.json": "133be976428da4181d91f7da400f0345ef21fb65fe3a153eb057c995b81febd9",
+    "original-stock.json": "ea5bb7b2f1337d5553dfb63d71e685d54f0e7b4edfdb81b1e9cf4c16c88d05a0",
+    "original.flags.json": "6d32487f7f1b0fc18885ef7965f8a74d1913995738d158d4c9c61f75d1c4b0fd",
+    "original.json": "a1cef1580ff0597ecf540d28e2004abe79a8d9654c346eed4febb2b7e325fba6",
+    "popup.json": "4a6fee10669880b179edcab30a17cdde3d8beb6df82ab4a7bffa980f7fe3e6e4",
+    "profile.json": "344aabd817ec27cbc6a57bbd54125a8086f19baeeb04831d3f4bf5d9f9659611",
+    "refusal.json": "07afe51209ef57fbb09247fe258240eb5cfbeaa9439aaaa23ba9155eebc2cc9e",
+    "scenes.json": "51a91cbf7d260dde580252030b048523f9c315272813b5535a15fff4068c3446",
+    "slice.json": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "stock.json": "c585aeb5c8e20940d98c930475a207e0d218e9e1a92ffdc33ef528be0e789587",
+    "stop-stock.json": "06019d95188c764f0c876e8c464432d4c0662b962ed9aebb7796327b2c24ed74",
+    "stop.json": "06019d95188c764f0c876e8c464432d4c0662b962ed9aebb7796327b2c24ed74",
+    "stored-repeat.json": "7abb52946765eae9c7e72f0a3cb81e0cfdb5ed5204304215731362850277ec33",
+    "stored.json": "7abb52946765eae9c7e72f0a3cb81e0cfdb5ed5204304215731362850277ec33",
+    "voices-home-wire.json": "a60a681f5f96df9cbb8ccc95418180ed42ed3ad32ed42fe924bd88e25f95fb05",
+    "voices-home-wire.off.json": "d663557b89306c9366710a33f7a62961ce497b2ce335d7234dd0b003eaa32648",
+    "voices-home.json": "8395cc1c362f3796babc00f0a05c0b44588b3b2573ed5f119d3351ed0c7c20a2",
+    "voices-stock-wire.json": "b874573e2d0a821d665cf7ad9b6f726addb72cfa65896dee0f022b7f78050928",
+    "voices-stock-wire.off.json": "721131f6535c3ebf9003a24742d1aafa51cd668e1bf95545888f8e3a1caeb3bc",
+    "voices-stock.json": "8395cc1c362f3796babc00f0a05c0b44588b3b2573ed5f119d3351ed0c7c20a2",
+    "voices-wire.json": "9d50cbde83c4ac45271fd81aab9b091bee975df684ca3deb160e2bc803bd4f71",
+    "voices-wire.off.json": "a2dec5b1c9a765c15d8704a9a037350dcfbab1e1fbea0657703397cce7e0600b",
+    "voices.json": "8395cc1c362f3796babc00f0a05c0b44588b3b2573ed5f119d3351ed0c7c20a2"
+  },
+  "hostChecks": {
+    "draftDiscovery": 10,
+    "machineEvents": 20,
+    "compatibility": {
+      "catalogueModules": 44,
+      "pairs": 946,
+      "problems": 0,
+      "includesDraft": false
+    },
+    "runtimeLoader": {
+      "run": 23,
+      "skipped": 2,
+      "failed": [
+        "test_published_module_packages_rebuild_byte_for_byte: USB Audio event-header source hash"
+      ]
+    },
+    "doctor": "ENOENT octamod.module.json"
+  },
+  "negativeAdmission": {
+    "refusal": 259,
+    "before": {
+      "callbacks": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "active": 0,
+      "pool": 786432,
+      "owners": 0
+    },
+    "after": {
+      "callbacks": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "active": 0,
+      "pool": 786432,
+      "owners": 0
+    }
+  },
+  "peerExitCodes": {
+    "grain": 0,
+    "poly8": 0,
+    "vector": 0,
+    "pcm-flex": 0,
+    "pcm-static": 1,
+    "track-solo": 0,
+    "panel": 0,
+    "clyps-edit": 0
+  },
+  "peerReceiptSHA256": {
+    "peer-pcm-static": "70234dfc827e2c6b5a4662d134091e01c7bc75bd8128886bab7844d33deb3de1",
+    "peer-clyps-edit": "7e9781b155dc306459adc31cf7cd2d878a83035808d63cdc44bd9dacac183a4a",
+    "peer-grain": "e3c71ee17fa3e179f23d7fd9a3d72747779d1bd30bf06005c887b3675e7d1ad6",
+    "peer-track-solo": "bfefe3f48b2818cc6b401685634083bdccee9f4c5b2e2a0310424850ec5cad83",
+    "peer-poly8": "93739f0fc0f432b57e1413997d9e2a578c13e27fa69962d528ae53af3065d78d",
+    "peer-panel": "7dada3fbddef99ad1fb473f65349a3e60c4caa26d3fa9f03319d2c7a9f6fa9c0",
+    "peer-vector": "03ab940d1051410a2f5ada7c4bdd54606bb777054f8da1c324477be541910e2f",
+    "peer-pcm-flex": "09a2d1e7be3f290255fdb8a8ccfe132ff450eb91efd901dc2203076cd10caa15"
+  },
+  "physicalHardware": "NOT TESTED",
+  "midi": {
+    "fixtureSHA256": "29c115b04bafd9cad7cb12becc3c896b0509dd179eae01df2d818c6f9772afac",
+    "scope": "Two FLEX voices and two stock MIDI tracks. Timestamp unit is emulator samples at 44.1 kHz.",
+    "active": {
+      "candidateBytes": 69,
+      "stockBytes": 70,
+      "additionalStockStatus": 144,
+      "additionalStockStatusIndex": 38,
+      "identicalDecodedMessages": 27,
+      "noteOnOffPairs": [
+        6,
+        4
+      ],
+      "cc1Locks": [
+        34,
+        42
+      ],
+      "maxRelativeMessageEndDeviationSamples": {
+        "stockGlobal": 48.1,
+        "stockHome": 64.1
+      },
+      "strict": "FAILED"
+    },
+    "off": {
+      "identicalBytes": 69,
+      "identicalDecodedMessages": 26,
+      "maxRelativeMessageEndDeviationSamples": {
+        "stockGlobal": 7.3,
+        "stockHome": 8.7
+      },
+      "strict": "FAILED"
+    },
+    "externalClock": "NOT TESTED",
+    "independentMIDILaunch": "NOT TESTED"
+  },
+  "project": {
+    "change": {
+      "bank": 1,
+      "defined": 0,
+      "active": 1,
+      "observed": [
+        true,
+        true,
+        true
+      ],
+      "off_pool": 786432
+    },
+    "stored": {
+      "bank": 1,
+      "defined": 0,
+      "active": 1,
+      "observed": [
+        true,
+        true,
+        false
+      ],
+      "off_pool": 786432
+    },
+    "missing": {
+      "bank": 0,
+      "defined": 8,
+      "active": 1,
+      "observed": [
+        false,
+        false,
+        false
+      ],
+      "off_pool": 786432
+    },
+    "lateFailure": "Production-callback host reproduction; proposed rollback host tested only."
+  },
+  "boundaryDiagnostics": {
+    "early": "FAILED: RAM requested=273 by tick 89 +1 ms, diag=0 until wrap at +16 ms; fixture stopped at assertion",
+    "late": "FAILED: observed tick 187, expected 188; all 848 events, 816 writes and 298 states matched"
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 2,
+  "id": "clyps",
+  "key": "CLYPS",
+  "name": "CLYPS",
+  "version": "0.2.0-experimental",
+  "category": "system",
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [
+      "track-solo"
+    ],
+    "uiClaims": [
+      "key:ARR",
+      "key:TRIG@CLYPS",
+      "key:TRACK@CLYPS",
+      "key:YES@CLYPS",
+      "key:NO@CLYPS",
+      "key:PAGE@CLYPS ROW",
+      "key:LEVEL@CLYPS",
+      "key:A@CLYPS SETUP",
+      "key:LEFT@CLYPS",
+      "key:RIGHT@CLYPS",
+      "key:UP@CLYPS",
+      "key:DOWN@CLYPS",
+      "screen:CLYPS ROW",
+      "screen:CLYPS CLIP",
+      "screen:CLYPS SETUP"
+    ],
+    "limitations": [
+      "Experimental MKII, Bank A, home A01 and compatible sixteen-step pattern grids. Rows are volatile.",
+      "Needs the contributor development base 5c32cbacd and ABI 9 sequencer/panel capability; public integration is pending.",
+      "TRACK input is owned inside the overlay. Track Solo and Play Modes coexistence on this revision is unqualified.",
+      "Early modal edit interlock limits stock sound pages with foreign sources."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "author": {
+    "github": "btzz5w8w5d-star",
+    "credits": [
+      "Zac Kyoti and the OT Kyoti FW contributors, original CLYPS sequencing work",
+      "Endrew, Modwerk adaptation"
+    ]
+  },
+  "presentation": {
+    "label": "CLYPS",
+    "family": "Sequence performance",
+    "summary": "Launch local track sequences and recall combinations across eight audio tracks.",
+    "overview": "Private MKII performance overlay in development. The official public build is pending shared sequencer and panel services.",
+    "highlights": [
+      "Row and Clip views",
+      "Quantized row advance through defined slots"
+    ],
+    "usage": [
+      "ARR opens Row. ARR again opens Clip.",
+      "In Row use PAGE then YES to capture the playing tracks. YES in Row advances to the next defined row."
+    ]
+  },
+  "controls": [],
+  "resources": {
+    "recorded": "2026-11-25",
+    "storage": {
+      "label": "Linked image",
+      "display": "6464 bytes image, 192 bytes BSS",
+      "value": 6464,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Private candidate, m68k-elf GCC, build_candidate.py --performance",
+      "source": "PERFORMANCE_SPRINT01.md"
+    },
+    "processing": {
+      "label": "Frame cost",
+      "display": "Unmeasured on MKII",
+      "value": null,
+      "unit": "percent-of-frame",
+      "method": "unmeasured",
+      "conditions": "No physical trial of this candidate",
+      "source": "PERFORMANCE_SPRINT01.md"
+    }
+  },
+  "tests": {
+    "report": "PERFORMANCE_SPRINT01.md",
+    "summary": "Scoped host and ColdFire build checks. See dated evidence and limitations.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "d9909f52fd84e8af158b0adfb8e6a6ae059cc97f",
+    "gates": [
+      "Official native build pending upstream services",
+      "Physical performance and coexistence unqualified"
+    ]
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Modwerk adaptation under GPL-3.0-or-later. Kyoti attribution, MIT notice and exclusions in LICENSE.kyoti and PROVENANCE.md."
+  },
+  "media": [
+    {
+      "path": "media/first-arr.png",
+      "captureType": "emulator",
+      "caption": "Row on entry",
+      "alt": "Row on entry",
+      "credit": "Endrew, private MKII emulator session",
+      "license": "GPL-3.0-or-later",
+      "source": "original",
+      "otUi": {
+        "page": "Row on entry",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "1f8e2e9ffd6919bafd6302fa4d61aeeab32e7349ee49ce159ab6a15d276f69d1",
+        "setup": "MKII on contributor base 5c32cbacd, composed display after module draw, synthetic GATE3 test card."
+      }
+    },
+    {
+      "path": "media/row.png",
+      "captureType": "emulator",
+      "caption": "Row after the final advance",
+      "alt": "Row after the final advance",
+      "credit": "Endrew, private MKII emulator session",
+      "license": "GPL-3.0-or-later",
+      "source": "original",
+      "otUi": {
+        "page": "Row after the final advance",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "1f8e2e9ffd6919bafd6302fa4d61aeeab32e7349ee49ce159ab6a15d276f69d1",
+        "setup": "MKII on contributor base 5c32cbacd, composed display after module draw, synthetic GATE3 test card."
+      }
+    },
+    {
+      "path": "media/clip.png",
+      "captureType": "emulator",
+      "caption": "Clip with T2 playing A02",
+      "alt": "Clip with T2 playing A02",
+      "credit": "Endrew, private MKII emulator session",
+      "license": "GPL-3.0-or-later",
+      "source": "original",
+      "otUi": {
+        "page": "Clip with T2 playing A02",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "1f8e2e9ffd6919bafd6302fa4d61aeeab32e7349ee49ce159ab6a15d276f69d1",
+        "setup": "MKII on contributor base 5c32cbacd, composed display after module draw, synthetic GATE3 test card."
+      }
+    },
+    {
+      "path": "media/setup.png",
+      "captureType": "emulator",
+      "caption": "Row setup with Capture selected",
+      "alt": "Row setup with Capture selected",
+      "credit": "Endrew, private MKII emulator session",
+      "license": "GPL-3.0-or-later",
+      "source": "original",
+      "otUi": {
+        "page": "Row setup with Capture selected",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "1f8e2e9ffd6919bafd6302fa4d61aeeab32e7349ee49ce159ab6a15d276f69d1",
+        "setup": "MKII on contributor base 5c32cbacd, composed display after module draw, synthetic GATE3 test card."
+      }
+    }
+  ],
+  "access": {
+    "location": "Private contributor MKII development base, audio mode, Bank A / A01",
+    "steps": [
+      "ARR opens Row. ARR again opens Clip.",
+      "In Row use PAGE then YES to capture the playing tracks. YES in Row advances to the next defined row."
+    ],
+    "screenshots": [
+      "media/first-arr.png",
+      "media/row.png",
+      "media/clip.png",
+      "media/setup.png"
+    ]
+  }
+}

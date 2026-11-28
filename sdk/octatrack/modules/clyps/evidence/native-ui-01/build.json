@@ -1,0 +1,17 @@
+{
+  "sha256": "65eefdf479eb5fadc645c28a475ed9f871e61b693f24a99e87894a2cc4296d56",
+  "offsets": {
+    "clyps_project_init": 3330,
+    "playing": 13226,
+    "requested": 13222,
+    "defined": 13156,
+    "last_row": 13104,
+    "pending_row": 13100,
+    "view": 13096,
+    "slot": 13128,
+    "track": 13148,
+    "src_cursor": 13108,
+    "mode": 13092,
+    "locked": 13116
+  }
+}

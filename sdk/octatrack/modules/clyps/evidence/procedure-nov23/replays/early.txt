@@ -1,0 +1,21 @@
+write16@100: write16 addr=000ffa04, val=3f00
+updateClock@207: Fsys=8388608Hz / 8.38861MHz, Fext=32768Hz, SYNCR=$3f00, W=0, X=0, Y=3f
+read16@29: read16 addr=000ffa22
+read16@29: read16 addr=000ffa24
+write16@100: write16 addr=000ffa22, val=000f
+read16@29: read16 addr=000ffa22
+read16@29: read16 addr=000ffa24
+write16@91: Set SCSR to 0180
+boot active 0 shelved 1
+clean start 0x0 0x0
+stock Arranger before 336 calls
+Traceback (most recent call last):
+  File "sdk/drafts/clyps/tests/native_rows.py", line 460, in <module>
+    request(4, 1, 0, 0x111, first)
+  File "sdk/drafts/clyps/tests/native_rows.py", line 452, in request
+    expect(committed, pending)
+  File "sdk/drafts/clyps/tests/native_rows.py", line 406, in expect
+    assert diag() & 0xffffff == queued << 12 | active
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+exit 1

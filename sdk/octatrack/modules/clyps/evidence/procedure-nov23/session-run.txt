@@ -1,0 +1,57 @@
+
+> octamod@0.1.0 device:emulator
+> node scripts/octatrack-emulator/session.mjs --image /tmp/clyps-reliability23/base1/MAIN.raw --emulator /tmp/clyps-shared-run/portable-emu/ot_emu --dir /tmp/clyps-1997-review-23/session -- npm run test:procedure -- clyps --target emulator --package /tmp/clyps-1997-review-23/clyps.mwrm --out sdk/drafts/clyps/evidence/procedure-nov23/session
+
+write16@100: write16 addr=000ffa04, val=3f00
+updateClock@207: Fsys=8388608Hz / 8.38861MHz, Fext=32768Hz, SYNCR=$3f00, W=0, X=0, Y=3f
+read16@29: read16 addr=000ffa22
+read16@29: read16 addr=000ffa24
+write16@100: write16 addr=000ffa22, val=000f
+read16@29: read16 addr=000ffa22
+read16@29: read16 addr=000ffa24
+write16@91: Set SCSR to 0180
+OCTATRACK 1.40C, base d7e727cd84cf2d99…
+serving on /tmp/clyps-1997-review-23/session/dev.sock
+sharing the unit on /tmp/clyps-1997-review-23/session/share.sock
+Emulator session: MODWERK_UNIT=emulator MODWERK_SHARE_SOCKET=/tmp/clyps-1997-review-23/session/share.sock MODWERK_DEV_SOCKET=/tmp/clyps-1997-review-23/session/dev.sock
+
+> octamod@0.1.0 test:procedure
+> node scripts/test-procedure.mjs clyps --target emulator --package /tmp/clyps-1997-review-23/clyps.mwrm --out sdk/drafts/clyps/evidence/procedure-nov23/session
+
+
+$ npm run module:doctor -- --draft clyps
+
+> octamod@0.1.0 module:doctor
+> node scripts/module-doctor.mjs --draft clyps
+
+node:fs:483
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open 'sdk/octatrack/modules/clyps/octamod.module.json'
+    at readFileSync (node:fs:483:20)
+    at json (file://$HOME/Documents/ChatGPT/Modwerk%20&%20OT/CLYPS-community/scripts/module-doctor.mjs:47:33)
+    at file://$HOME/Documents/ChatGPT/Modwerk%20&%20OT/CLYPS-community/scripts/module-doctor.mjs:336:40
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'sdk/octatrack/modules/clyps/octamod.module.json'
+}
+
+Node.js v24.22.3
+
+ 1. Software checks: failed (exit 1: npm run module:doctor -- --draft clyps)
+ 2. Beside every other module: not run (stopped: step 1 (Software checks) failed)
+ 3. Name the build: not run (stopped: step 1 (Software checks) failed)
+ 4. DSP cost model: not run (stopped: step 1 (Software checks) failed)
+ 5. Emulator rehearsal: not run (stopped: step 1 (Software checks) failed)
+ 6. Read the unit: not run (stopped: step 1 (Software checks) failed)
+ 7. Scripted unit pass: not run (stopped: step 1 (Software checks) failed)
+ 8. Soak: not run (stopped: step 1 (Software checks) failed)
+ 9. Cost on the unit: not run (stopped: step 1 (Software checks) failed)
+10. Put back: not run (stopped: step 1 (Software checks) failed)
+11. Agent by hand: not run (stopped: step 1 (Software checks) failed)
+12. Submitter's own stage: not run (stopped: step 1 (Software checks) failed)
+
+Record: sdk/drafts/clyps/evidence/procedure-nov23/session/procedure.md and procedure.json, 2 s. Fill in its edge-case table, run each case, then copy the entry to the module's TESTING.md and its last two lines to the pull request.

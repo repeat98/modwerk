@@ -1,0 +1,48 @@
+[
+  {
+    "version": "0.5.1-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "If a bank or project load cannot be confirmed, your Rows are kept and the Octatrack plays its own patterns; CLYPS stays closed until the next power cycle (protection, not the final behaviour).",
+      "The waiting line under the playing source stays an outline; on the beat a second outline appears instead of filling it."
+    ]
+  },
+  {
+    "version": "0.5.0-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "CLYPS opens in Clip View; the big plate shows the source that plays, the line below the one waiting for the bar (pulsing) or the home pattern.",
+      "Empty slots show a dot instead of a number in Clip View and in the Panorama; they stay reachable.",
+      "FUNC, FUNC + TRACK mutes and TEMPO reach the Octatrack without leaving CLYPS; a stock popup pauses CLYPS and it comes back.",
+      "In the Panorama, FUNC + LEVEL moves the column and the footer names the focused Row, its TRIG or its state."
+    ]
+  },
+  {
+    "version": "0.4.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "The Octatrack's track tab now follows CLYPS: TRACK keys select the same track in both.",
+      "Sound stays playable over CLYPS sources: pages, encoders, Scenes and the crossfader work; trig edits stay locked to protect the home pattern.",
+      "Hold TRACK and press TRIG in Row to launch one cell; ARR returns to the view you left."
+    ]
+  },
+  {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "Row is now a full grid: eight tracks, five rows, playing cells filled, waiting cells outlined, the cursor shown as open corners.",
+      "Clip keeps the Octatrack's own frame: track tabs, Scene A/B and crossfader stay visible beside the tempo, transport and focused source.",
+      "Pause now shows as pause instead of play."
+    ]
+  },
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-25",
+    "changes": [
+      "In the private MKII overlay, ARR alternates Row and Clip.",
+      "In Row, YES advances through captured rows at the next supported boundary.",
+      "Capture and edit a volatile row through PAGE.",
+      "A stock popup no longer throws you out of Row edit, and your rows survive ordinary bank reads."
+    ]
+  }
+]

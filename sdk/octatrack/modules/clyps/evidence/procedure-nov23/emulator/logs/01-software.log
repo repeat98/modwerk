@@ -1,0 +1,21 @@
+$ npm run module:doctor -- --draft clyps
+
+> octamod@0.1.0 module:doctor
+> node scripts/module-doctor.mjs --draft clyps
+
+node:fs:483
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open 'sdk/octatrack/modules/clyps/octamod.module.json'
+    at readFileSync (node:fs:483:20)
+    at json (file://$HOME/Documents/ChatGPT/Modwerk%20&%20OT/CLYPS-community/scripts/module-doctor.mjs:47:33)
+    at file://$HOME/Documents/ChatGPT/Modwerk%20&%20OT/CLYPS-community/scripts/module-doctor.mjs:336:40
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'sdk/octatrack/modules/clyps/octamod.module.json'
+}
+
+Node.js v24.22.3

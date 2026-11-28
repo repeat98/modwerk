@@ -1,0 +1,278 @@
+{
+  "module": "190ec4db032ab9a70f26c704af89cce142d239f5ebb80c660a89c4b84d57a67d",
+  "observations": [
+    [
+      "open row",
+      {
+        "view": 1,
+        "mode": 1,
+        "playing": 0
+      }
+    ],
+    [
+      "cursor row 2, T2 through the stock tab",
+      {
+        "slot": 1,
+        "track": 1,
+        "playing": 0
+      }
+    ],
+    [
+      "capture R02",
+      {
+        "defined": 2,
+        "last_row": 0
+      }
+    ],
+    [
+      "T2 selects A02",
+      {
+        "view": 2,
+        "track": 1,
+        "src_cursor": 1,
+        "playing": 16
+      }
+    ],
+    [
+      "capture R05",
+      {
+        "view": 1,
+        "defined": 18,
+        "slot": 4,
+        "last_row": 0
+      }
+    ],
+    [
+      "advance to R02 independently of cursor",
+      {
+        "playing": 0,
+        "last_row": 2,
+        "slot": 4
+      }
+    ],
+    [
+      "advance to R05",
+      {
+        "playing": 16,
+        "last_row": 5
+      }
+    ],
+    [
+      "end retains R05",
+      {
+        "playing": 16,
+        "last_row": 5
+      }
+    ],
+    [
+      "override T2 retains path",
+      {
+        "playing": 32,
+        "last_row": 5
+      }
+    ],
+    [
+      "direct R02 pending during play",
+      {
+        "playing": 32,
+        "pending_row": 2,
+        "last_row": 5
+      }
+    ],
+    [
+      "STOP cancels pending",
+      {
+        "playing": 32,
+        "requested": 32,
+        "pending_row": 0,
+        "last_row": 5
+      }
+    ],
+    [
+      "exit with foreign edit lock",
+      {
+        "view": 0,
+        "locked": 1
+      }
+    ],
+    [
+      "stopped restore",
+      {
+        "playing": 0,
+        "requested": 0,
+        "last_row": 0,
+        "mode": 0
+      }
+    ],
+    [
+      "S03 ARR returns to the remembered Panorama",
+      {
+        "view": 1,
+        "mode": 1,
+        "locked": 0
+      }
+    ],
+    [
+      "S03 crossfader under Panorama",
+      {
+        "view": 1
+      }
+    ],
+    [
+      "S03 Scene A under Panorama, no launch",
+      {
+        "view": 1,
+        "playing": 0,
+        "requested": 0
+      }
+    ],
+    [
+      "S03 Clip",
+      {
+        "view": 2
+      }
+    ],
+    [
+      "S03 pause keeps the pending Row",
+      {
+        "view": 1,
+        "pending_row": 5,
+        "playing": 0,
+        "last_row": 0
+      }
+    ],
+    [
+      "S03 resume commits at the next boundary",
+      {
+        "pending_row": 0,
+        "last_row": 5,
+        "playing": 16
+      }
+    ],
+    [
+      "S03 T3 + TRIG 2: cell from R02",
+      {
+        "requested": 16,
+        "org_req": 84018437,
+        "pending_row": 0,
+        "last_row": 5
+      }
+    ],
+    [
+      "S03 T2 + TRIG 2: second cell pending",
+      {
+        "requested": 0,
+        "playing": 16,
+        "org_req": 84017669,
+        "org_play": 84215045,
+        "last_row": 5
+      }
+    ],
+    [
+      "S03 cells commit, path unchanged",
+      {
+        "playing": 0,
+        "org_play": 84017669,
+        "last_row": 5,
+        "pending_row": 0
+      }
+    ],
+    [
+      "S03 Row Advance ends after R05",
+      {
+        "last_row": 5,
+        "pending_row": 0
+      }
+    ],
+    [
+      "S03 T2 A02 from R05",
+      {
+        "playing": 16
+      }
+    ],
+    [
+      "S03 native with foreign sources",
+      {
+        "view": 0,
+        "locked": 1
+      }
+    ],
+    [
+      "S03 AMP page passes",
+      {
+        "locked": 1,
+        "lock_note": 0
+      }
+    ],
+    [
+      "S03 trig edit held under the lock",
+      {
+        "lock_note": 1,
+        "playing": 16
+      }
+    ],
+    [
+      "S03 Clip remembered",
+      {
+        "view": 2
+      }
+    ],
+    [
+      "S03 AMP page from Clip",
+      {
+        "view": 0,
+        "locked": 1
+      }
+    ],
+    [
+      "S03 ARR back to Clip",
+      {
+        "view": 2
+      }
+    ],
+    [
+      "S03 stop and restore home",
+      {
+        "playing": 0,
+        "requested": 0,
+        "last_row": 0,
+        "mode": 0
+      }
+    ]
+  ],
+  "sprint03": {
+    "crossfader": [
+      0,
+      64,
+      127,
+      0
+    ],
+    "scene": [
+      "0008",
+      "0308"
+    ],
+    "beats": [
+      "0c0c0c0c0c0f0d0d0d0d0d0f0d0d0d0d0d0f0d0d0d0d0d0f",
+      "0d0d0d0d0d0f0c0c0c0c0c0f0d0d0d0d0d0f0d0d0d0d0d0f"
+    ],
+    "lock": {
+      "part": [
+        "20f4e86ac989d57c7b4e12ccf4e2c37fb0dbb6663597db63e75991e1bab6f436",
+        "e81d8c06f44cc028ddc5a5be10a4b4b4ec2f3d8699612dbf321aa4219117a3fd"
+      ],
+      "pattern": "5e5298575f9f75623d99981391b4b722cc16cee4fc72e1aae5fcb9ad2bef7070"
+    }
+  },
+  "free_before_after": 786432,
+  "composed_frames": {
+    "first-arr": "0dcc1372cf4e2a807a1b2e6f055e9f922ea1633d61774bba8c1c8f41030b154e",
+    "setup": "b79b41530148e5bfe0e445877c2680956bb8b69a4e6b114d94eba3ecf67d44eb",
+    "clip": "3ddcfd6ee9070f7bca1d69e364fb06e4ab03cd717b38b3e322665bc576704bb9",
+    "row": "94354e45a1568b5e009b22e2dbfdf29d6734b8998470be81f13a92c9658228aa",
+    "s03-scene": "92e1f9609e6727a92a0383843f87a44594db4d2c4fa330305aac59ba8c294ed2",
+    "s03-clip-playing": "298d0fd5e4e93bd3cd86fe4e791d59d4118701cb2c4393797389aed3d26a9179",
+    "s03-pause": "7801cd4d1dcd45d34d855bc8eff149e14f7b0050196608c80162e7355d81fe4a",
+    "s03-cell-pending": "1e2f3756bccc05f6a8adc0ae4745b8fabdfbfd151bf352b174952c82b88d9eaf",
+    "s03-lock-note": "be75ea37b88d64bf47ffa65b97a3373480ecb23a32838a1c6d38b587abe9401b"
+  }
+}

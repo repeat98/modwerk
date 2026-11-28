@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "id": "clyps",
+  "key": "CLYPS",
+  "name": "CLYPS",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Project sequencer",
+    "uiClaims": [
+      "key:ARR",
+      "key:SRC@CLYPS META",
+      "key:LEVEL@CLYPS",
+      "key:YES@CLYPS",
+      "key:NO@CLYPS",
+      "key:TRIG@CLYPS META",
+      "key:PAGE@CLYPS META",
+      "screen:CLYPS META",
+      "screen:CLYPS SRC"
+    ]
+  },
+  "target": "Octatrack MKII",
+  "nativeKind": "CF_PATCH",
+  "scope": "Review metadata excerpt; no installable public package.",
+  "hardwareStatus": "untested"
+}

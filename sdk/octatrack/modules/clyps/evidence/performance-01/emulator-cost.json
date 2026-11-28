@@ -1,0 +1,282 @@
+{
+  "empty-master": [
+    [
+      64,
+      64
+    ],
+    [
+      56,
+      64
+    ],
+    [
+      64,
+      64
+    ]
+  ],
+  "empty-stopped": {
+    "mw_frame_skips": 0,
+    "mw_frame_sheds": 0,
+    "mw_frame_busy": 444778,
+    "mw_frame_count": 8356,
+    "instruction_spans": {
+      "boundary": {
+        "count": 0,
+        "minimum": null,
+        "maximum": null
+      },
+      "source": {
+        "count": 0,
+        "minimum": null,
+        "maximum": null
+      }
+    },
+    "frame_peak_timer_counts_since_boot": 21180,
+    "audio_lane_sources": []
+  },
+  "empty-light": {
+    "mw_frame_skips": 0,
+    "mw_frame_sheds": 0,
+    "mw_frame_busy": 480842,
+    "mw_frame_count": 8349,
+    "instruction_spans": {
+      "boundary": {
+        "count": 1,
+        "minimum": 12,
+        "maximum": 12
+      },
+      "source": {
+        "count": 192,
+        "minimum": 16,
+        "maximum": 16
+      }
+    },
+    "frame_peak_timer_counts_since_boot": 21180,
+    "audio_lane_sources": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        4,
+        0
+      ],
+      [
+        5,
+        0
+      ],
+      [
+        6,
+        0
+      ],
+      [
+        7,
+        0
+      ]
+    ]
+  },
+  "installed-master": [
+    [
+      64,
+      64
+    ],
+    [
+      56,
+      64
+    ],
+    [
+      64,
+      64
+    ]
+  ],
+  "installed-stopped": {
+    "mw_frame_skips": 0,
+    "mw_frame_sheds": 0,
+    "mw_frame_busy": 482505,
+    "mw_frame_count": 8352,
+    "instruction_spans": {
+      "boundary": {
+        "count": 0,
+        "minimum": null,
+        "maximum": null
+      },
+      "source": {
+        "count": 0,
+        "minimum": null,
+        "maximum": null
+      }
+    },
+    "frame_peak_timer_counts_since_boot": 21180,
+    "audio_lane_sources": []
+  },
+  "installed-light": {
+    "mw_frame_skips": 0,
+    "mw_frame_sheds": 0,
+    "mw_frame_busy": 481188,
+    "mw_frame_count": 8347,
+    "instruction_spans": {
+      "boundary": {
+        "count": 1,
+        "minimum": 30,
+        "maximum": 30
+      },
+      "source": {
+        "count": 192,
+        "minimum": 31,
+        "maximum": 31
+      }
+    },
+    "frame_peak_timer_counts_since_boot": 21180,
+    "audio_lane_sources": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        0
+      ],
+      [
+        3,
+        0
+      ],
+      [
+        4,
+        0
+      ],
+      [
+        5,
+        0
+      ],
+      [
+        6,
+        0
+      ],
+      [
+        7,
+        0
+      ]
+    ]
+  },
+  "installed-dense": {
+    "mw_frame_skips": 0,
+    "mw_frame_sheds": 0,
+    "mw_frame_busy": 524483,
+    "mw_frame_count": 8332,
+    "instruction_spans": {
+      "boundary": {
+        "count": 1,
+        "minimum": 544,
+        "maximum": 544
+      },
+      "source": {
+        "count": 192,
+        "minimum": 162,
+        "maximum": 162
+      }
+    },
+    "frame_peak_timer_counts_since_boot": 27822,
+    "audio_lane_sources": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        4,
+        1
+      ],
+      [
+        5,
+        1
+      ],
+      [
+        6,
+        1
+      ],
+      [
+        7,
+        1
+      ]
+    ]
+  },
+  "empty-dense": {
+    "mw_frame_skips": 0,
+    "mw_frame_sheds": 0,
+    "mw_frame_busy": 526239,
+    "mw_frame_count": 8345,
+    "instruction_spans": {
+      "boundary": {
+        "count": 1,
+        "minimum": 12,
+        "maximum": 12
+      },
+      "source": {
+        "count": 200,
+        "minimum": 16,
+        "maximum": 16
+      }
+    },
+    "frame_peak_timer_counts_since_boot": 27822,
+    "audio_lane_sources": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        4,
+        1
+      ],
+      [
+        5,
+        1
+      ],
+      [
+        6,
+        1
+      ],
+      [
+        7,
+        1
+      ]
+    ]
+  }
+}

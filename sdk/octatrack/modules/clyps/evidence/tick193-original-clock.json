@@ -1,0 +1,134 @@
+{
+  "events": {
+    "candidate": 624,
+    "stock": 624,
+    "differentIndices": [],
+    "overlapCompared": 624
+  },
+  "writes": {
+    "candidate": 608,
+    "stock": 608,
+    "differentIndices": [],
+    "overlapCompared": 608
+  },
+  "states": {
+    "candidate": 219,
+    "stock": 219,
+    "differentIndices": [
+      192
+    ],
+    "overlapCompared": 219
+  },
+  "tick193": [
+    {
+      "firstSample": 1609994.045,
+      "firstMask": "0000010000000000",
+      "nextSample": 1610038.145,
+      "nextMask": "0000010000000000",
+      "selectorReturnsAndBuilders": {
+        "400a2d60": 8,
+        "4009d1e8": 8,
+        "4009cf4c": 8
+      },
+      "mutations": [
+        {
+          "lane": 1,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": -23.745
+        },
+        {
+          "lane": 3,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": -23.345
+        },
+        {
+          "lane": 4,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": -23.045
+        },
+        {
+          "lane": 5,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": -21.645
+        },
+        {
+          "lane": 6,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": -21.345
+        },
+        {
+          "lane": 2,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": 1735.055
+        }
+      ]
+    },
+    {
+      "firstSample": 1489692.492,
+      "firstMask": "0001010101010100",
+      "nextSample": 1489738.933,
+      "nextMask": "0000010000000000",
+      "selectorReturnsAndBuilders": {
+        "400a2d60": 8,
+        "4009d1e8": 8,
+        "4009cf4c": 8
+      },
+      "mutations": [
+        {
+          "lane": 1,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": 0.408
+        },
+        {
+          "lane": 3,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": 0.808
+        },
+        {
+          "lane": 4,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": 1.108
+        },
+        {
+          "lane": 5,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": 2.408
+        },
+        {
+          "lane": 6,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": 2.708
+        },
+        {
+          "lane": 2,
+          "pc": "4000bc22",
+          "value": 0,
+          "width": 1,
+          "deltaSamples": 1758.108
+        }
+      ]
+    }
+  ]
+}
