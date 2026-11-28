@@ -145,7 +145,7 @@ async function readLog() {
 // Development bases (build_core.py --dev, dev.c): keys as the panel reports them, and the composed screen.
 const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x25, FX2: 0x26, STOP: 0x27, PLAY: 0x28,
   REC: 0x29, CUE: 0x2a, FUNC: 0x2d, PATTERN: 0x2e, BANK: 0x2f, YES: 0x31, NO: 0x32, UP: 0x33, LEFT: 0x34, MIDI: 0x35,
-  PAGE: 0x1b, PROJ: 0x1c, PART: 0x1d, AED: 0x1e, ARR: 0x1f, SCENEA: 0x19, SCENEB: 0x1a, LEVEL: 0x3e,
+  TEMPO: 0x18, PAGE: 0x1b, PROJ: 0x1c, PART: 0x1d, AED: 0x1e, ARR: 0x1f, SCENEA: 0x19, SCENEB: 0x1a, LEVEL: 0x3e,
   ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => ['TRIG' + (i + 1), i])),
   ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => ['T' + (i + 1), 0x10 + i])),
   ...Object.fromEntries(['A', 'B', 'C', 'D', 'E', 'F'].map((e, i) => ['PUSH' + e, 0x38 + i])) }

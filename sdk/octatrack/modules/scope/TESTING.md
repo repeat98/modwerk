@@ -66,8 +66,8 @@ Release-base window proof for **0.2.0** is the 28 November row above.
 
 | State | How | Frame interrupt add | Record |
 | --- | --- | --- | --- |
-| Window **closed**, installed | `npm run device:price -- scope --write` (default path) | **+0.2** % | `evidence/cpu-price.json` (catalog `resources.cpuPrice`) |
-| Window **open** (DOWN+0x18 TEMPO held through readings) | same command; open by hand or `device do keys DOWN+24` while readings run | **+1.1** % | `evidence/cpu-price-open.json` |
+| Window **open** (DOWN+0x18 TEMPO held through readings) | `npm run device:price -- scope --write`; open by hand or `device do keys DOWN+TEMPO` while readings run | **+1.1** % | `evidence/cpu-price-open.json` (catalog `resources.cpuPrice`) |
+| Window **closed**, installed | same command default path (window closed) | **+0.2** % | `evidence/cpu-price.json` |
 
 `device:price` needs a `--dev` twin (`guard` / `stats`). Release base
 `eb667962` on USB does not answer those requests; the open-window row was taken

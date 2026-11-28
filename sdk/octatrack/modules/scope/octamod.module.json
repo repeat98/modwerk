@@ -82,7 +82,7 @@
       "Hold DOWN before TEMPO. Pressing TEMPO alone opens the stock tempo window.",
       "XY uses a hotter vertical scale than OSC. Clip ! appears only when the recent peak reaches 0 dBFS.",
       "DRAM unit: on a card build without another DRAM module, choosing SCOPE creates the platform DRAM reserve from Flex sample RAM (same class of cost as Tuner).",
-      "Catalog CPU price +0.2 % frame at rest (window closed, pattern playing). With the window open, +1.1 % on twin 4c7eb79b (evidence/cpu-price-open.json)."
+      "Catalog CPU price +1.1 % of a frame with the SCOPE window open and a pattern playing (dev twin 4c7eb79b; +0.2 % installed with the window closed in evidence/cpu-price.json)."
     ]
   },
   "resources": {
@@ -127,13 +127,13 @@
       }
     },
     "cpuPrice": {
-      "value": 0.2,
+      "value": 1.1,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
       "date": "2026-11-28",
-      "conditions": "MKII, dev twin 4c7eb79b, pattern playing, SCOPE installed, window closed (device:price at-rest path); base 4c7eb79b844c8139; 3 readings of 8 s a state. Frame interrupt 29.1 % before, 29.3 % installed and used nowhere; CPU meter 43.9 % before, 44.2 % at rest.",
-      "source": "evidence/cpu-price.json"
+      "conditions": "MKII, dev twin 4c7eb79b (0.8.1 beta --dev), pattern playing, SCOPE window open (DOWN+0x18 TEMPO); base 4c7eb79b844c8139; 3 readings of 8 s a state. Frame interrupt 29.1 % before, 30.2 % at rest with window open; CPU meter 44.0 % before, 46.7 % at rest.",
+      "source": "evidence/cpu-price-open.json"
     }
   },
   "tests": {
