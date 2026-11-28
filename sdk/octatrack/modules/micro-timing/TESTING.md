@@ -63,6 +63,9 @@ trial of `8958a66f…`:
   (`evidence/media/hw-catalog-track-level-plus23-mop246.png`).
 - LEVEL on MIDI: from +23, LEVEL −23 → `MT1:ON GRID`
   (`evidence/media/hw-catalog-midi-level-ongrid-mop246.png`).
+  **MIDI negative offsets:** same signed range as audio. The −23 step was
+  returning from `+23/384` to 0 (`ON GRID`), not a MIDI-only clamp. A
+  negative absolute micro-timing value works on MIDI tracks the same way.
 - Rolled back; inventory empty. No Accept.
 
 **Root cause of the earlier FAIL:** not a package or site defect — sites
@@ -73,11 +76,11 @@ page (wrong open / timing). No source fix required.
 
 | Case | Why this change makes it a risk | How run | Result |
 |---|---|---|---|
-| LEVEL while playing | LEVEL rewrites every step through the stock writer while transport runs | Keep-safe trial; LEVEL with transport not required for owner row | **not run** this pass (LEVEL at rest **PASS**) |
+| LEVEL while playing | LEVEL rewrites every step through the stock writer while transport runs | Keep-safe trial; LEVEL with transport not required for owner row | **not run: transport playing not required for owner LEVEL row; at-rest LEVEL PASS** |
 | Part change | remembered row is module bss; Part change must not leave a stale row or hang | `device:test` Part switches inside step 7 | **PASS** (scripted; no hang) |
 | MIDI button | MIDI on/off selects which track LEVEL writes | Keep-safe trial; MIDI toggle between TRACK and MIDI TRIG EDIT | **PASS** (both pages show MICRO T; LEVEL moves shared footer) |
-| USB removal while TRACK TRIG EDIT open | earlier Keep remove was refused (RUNTIME_UI_OPEN) with that key layer up | not this pass | **not run** |
-| Power cycle | remembered row must clear; trig offsets must stay | not this pass (no Accept) | **not run** |
+| USB removal while TRACK TRIG EDIT open | earlier Keep remove was refused (RUNTIME_UI_OPEN) with that key layer up | not this pass | **not run: USB remove with TRIG EDIT open not exercised** |
+| Power cycle | remembered row must clear; trig offsets must stay | not this pass (no Accept) | **not run: no Accept / power cycle this pass** |
 | Beside other TRACK TRIG EDIT / key-layer modules | shared gesture and screen claim | compat step 2 | **PASS** (0 conflicts); hardware beside others not run |
 | LEVEL audio track | owner-required: confirm LEVEL on audio with this package | Keep-safe trial on `dce64a78…`; TRACK TRIG EDIT · MICRO T; LEVEL | **PASS** — MICRO T present; footer `MT1:ON GRID` → `MT1:+23/384` |
 | LEVEL MIDI track | owner-required: confirm LEVEL on MIDI with this package | same trial; MIDI TRIG EDIT · MICRO T; LEVEL −23 | **PASS** — MICRO T present; footer returns `MT1:ON GRID` |

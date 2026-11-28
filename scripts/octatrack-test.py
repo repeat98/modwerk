@@ -24,7 +24,7 @@ stopped, on a bank and Part whose working copy equals its saved one (docs/OCTATR
 with trigs on T1 and T5, since it renders only on trigs. --testing-entry FILE
 writes what the run saw, and what it leaves to the developer at the unit, as a TESTING.md entry. Prints one JSON
 summary; exit status 1 on a failure. If this process dies mid-trial, unplug USB: the base rolls back what was not kept."""
-import argparse, importlib.util, os, pathlib, shutil, signal, subprocess, sys, threading
+import argparse, importlib.util, os, pathlib, shutil, signal, subprocess, threading
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location('octatrack_qualify', ROOT / 'scripts/octatrack-qualify.py')
@@ -39,14 +39,13 @@ NOTE = 'Installed as a trial in RAM and rolled back at the end: nothing was kept
 
 def trial_command(path, seconds, share):
     """`npm run device -- try` without --accept: rolled back when its time ends or on SIGINT (scripts/device.mjs)."""
-    return [shutil.which('node') or 'node', 'scripts/device.mjs', 'try', path, '--seconds', str(seconds), '--socket', share], share
+    return [shutil.which('node') or 'node', 'scripts/device.mjs', 'try', path, '--seconds', str(seconds), '--socket', share]
 
 
 class Trial:
     """The trial process, its output collected as it comes."""
 
-    def __init__(self, command, share=SHARE):
-        self.share = share
+    def __init__(self, command):
         self.lines, self.started = [], threading.Event()
         self.proc = subprocess.Popen(command, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         self.reader = threading.Thread(target=self._read, daemon=True)
@@ -79,13 +78,7 @@ class Trial:
 
     def end(self, failures):
         """Roll the trial back (SIGINT, as Ctrl-C does) and check that it says so."""
-        # Windows cannot SIGINT a child (ValueError). Terminate it, then recover rolls
-        # the trial back — same pattern as scripts/octatrack-price.mjs on win32.
-        if self.proc.poll() is None:
-            if sys.platform == 'win32':
-                self.proc.terminate()
-            else:
-                self.proc.send_signal(signal.SIGINT)
+        if self.proc.poll() is None: self.proc.send_signal(signal.SIGINT)
         try:
             self.proc.wait(60)
         except subprocess.TimeoutExpired:
@@ -94,20 +87,8 @@ class Trial:
             return
         self.reader.join(5)
         self.proc.stdout.close()
-        rolled = any(l.startswith('rolled back') for l in self.lines) or any(
-            l.startswith('recovered from ') for l in self.lines)
-        if sys.platform == 'win32' and self.running() and not rolled:
-            recover = subprocess.run(
-                [shutil.which('node') or 'node', 'scripts/device.mjs', 'recover', '--socket', self.share],
-                cwd=ROOT, capture_output=True, text=True, timeout=120)
-            for line in (recover.stdout or '').splitlines():
-                self.lines.append(line)
-                qualify.log('  recover |', line)
-            rolled = any(l.startswith('rolled back') for l in self.lines) or any(
-                'recovered from' in l for l in self.lines) or any(
-                l.startswith('now normal') for l in self.lines)
         if 'accepted' in self.lines: failures.append('the trial process says accepted: the package was kept')
-        elif self.running() and not rolled:
+        elif self.running() and not any(l.startswith('rolled back') for l in self.lines):
             failures.append('the trial did not report its rollback: ' + ' / '.join(self.lines[-3:]))
         failures.extend('the unit logged during the trial: ' + fault for fault in self.faults())
 
@@ -144,8 +125,7 @@ def main():
 
     def install(pkgs):
         card.append(card_set())
-        cmd, share = trial_command(os.path.abspath(pkgs[0]['path']), hold, args.share)
-        trials.append(Trial(cmd, share))
+        trials.append(Trial(trial_command(os.path.abspath(pkgs[0]['path']), hold, args.share)))
         trials[0].wait_started()
 
     def uninstall(pkgs, failures):
