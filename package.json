@@ -42,6 +42,7 @@
     "zdl:vendor": "node scripts/zdl-vendor.ts",
     "machines:check": "node scripts/machines.mjs",
     "elekloader:check": "node scripts/elekloader-vendor.ts",
+    "digi:link-all": "node scripts/digi-link-all.ts",
     "elekloader:update": "node scripts/elekloader-update.ts",
     "octatrack:elekloader:verify": "node scripts/verify-octatrack-elemods.mjs",
     "octatrack:base": "node scripts/octatrack-base.mjs",
