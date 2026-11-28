@@ -37,6 +37,11 @@ const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
     { title: 'Hear a variation.', text: 'Press PLAY. Press YES on the generator for a new seed; STOP/PLAY keeps the populated phrase.' },
     { title: 'Return to sample playback.', text: 'Stop playback and select normal FLEX or STATIC. The generated pattern stays in place. Expand the full instructions below for sample editing and the second SRC page.' },
   ] },
+  seq: { version: '0.1.0-experimental', steps: [
+    { title: 'Open SEQ.', text: 'Hold a [TRACK] key and press [PAGE] on an audio or MIDI track.' },
+    { title: 'Write a rhythm.', text: 'With LANE on TRIG, set PULS and ROT, then press [YES] to place sample or note trigs.' },
+    { title: 'Add locks.', text: 'Turn LANE to PLCK, pick a parameter with D, set PULS / ROT and DPTH, then press [YES] again.' },
+  ] },
   synth: { version: '0.1.5-experimental', steps: [
     { title: 'Choose FM SYNTH.', text: 'In a fresh project, select an audio track. Hold FUNC + SRC, choose FM SYNTH with UP/DOWN and press YES. No sample is needed.' },
     { title: 'Add harmonics.', text: 'Press SRC, set RATO to 1 and raise INDX from 0. The sine tone gains FM harmonics; PTCH changes pitch.' },

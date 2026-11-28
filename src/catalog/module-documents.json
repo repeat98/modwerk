@@ -15353,7 +15353,11 @@
           "Press [YES] to write the rhythm and locks into the pattern, or [NO] to close SEQ."
         ],
         "screenshots": [
-          "media/seq-rhythm-open.png"
+          "media/seq-rhythm-open.png",
+          "media/seq-rhythm-audio-emulator.png",
+          "media/seq-harmony-audio-emulator.png",
+          "media/seq-harmony-midi-emulator.png",
+          "media/seq-clear-menu-emulator.png"
         ]
       },
       "author": {
@@ -15377,8 +15381,10 @@
         ],
         "usage": [
           "Hold [TRACK] and press [PAGE]: SEQ opens on that track. Press another [TRACK] to switch, [MIDI] to move between the audio and MIDI track.",
-          "Turn A (PULS) and B (ROT) to shape the rhythm in the step grid, then press [YES] to write it into the pattern.",
-          "Turn C to PLCK, pick a parameter with D and a depth with E, then [YES]: that parameter gets locks on its own rhythm. [NO] closes SEQ."
+          "With LANE on TRIG, set PULS and ROT, then press [YES]: sample trigs or note trigs land with locks for the parameter on D.",
+          "Turn LANE to PLCK, pick another parameter with D, set its own PULS and ROT, then [YES]: that parameter gets locks on its own rhythm.",
+          "On PTCH or NOTE, press [RIGHT] for Harmony: scale, root, phrase and jump shape pitch locks; on MIDI tracks, add voices and chords.",
+          "Press [FUNC] + [BANK] to clear locks or trigs on the track. [NO] closes SEQ."
         ]
       },
       "controls": [],
@@ -15459,7 +15465,7 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "MKII over USB, 27-28 November 2026: twin 43ac24652a89f28b (release base eb667962), package 5c88a76b, test:procedure steps 1-10, CUE Undo, save and power-cycle persistence, CPU price 0.0 at rest, LCD capture; MKI, KITS and Track Solo beside SEQ not tested.",
+        "summary": "MKII over USB, 27-28 November 2026: twin 43ac24652a89f28b (release base eb667962), package 5c88a76b, test:procedure steps 1-10, CUE Undo, save and power-cycle persistence, CPU price 0.0 at rest, one MKII LCD capture plus emulator rhythm, Harmony and clear-menu shots; MKI, KITS and Track Solo beside SEQ not tested.",
         "hardwareStatus": "reported",
         "evidenceRevision": "faff374b9d136f48d4e0159fe480f8f65d27cacc",
         "gates": [
@@ -15478,12 +15484,16 @@
               ]
             },
             "screenshots": [
-              "media/seq-rhythm-open.png"
+              "media/seq-rhythm-open.png",
+              "media/seq-rhythm-audio-emulator.png",
+              "media/seq-harmony-audio-emulator.png",
+              "media/seq-harmony-midi-emulator.png",
+              "media/seq-clear-menu-emulator.png"
             ],
             "screenshotStyle": "black-and-white"
           },
           "moduleVersion": "0.1.0-experimental",
-          "sourceSha256": "cfbc5ab76c211cdd585fea80f6e0b286c5bb36d51c2614c3b0599becc534c2bc",
+          "sourceSha256": "55bb554360ad6898da9870ecef7255db7446d3542f6b58efdcd3200835cf6c46",
           "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
           "cycles": [
             {
@@ -15561,6 +15571,74 @@
             "moduleVersion": "0.1.0-experimental",
             "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
             "setup": "MKII over USB, 27 November 2026: development twin 43ac24652a89f28b RAM-booted, SEQ package 5c88a76b accepted, pattern A02. LCD read at integer scale 2, greyscale, not edited."
+          }
+        },
+        {
+          "path": "media/seq-rhythm-audio-emulator.png",
+          "captureType": "emulator",
+          "caption": "Rhythm page on an audio track: LANE TRIG, set PULS and ROT, pick SRC / PTCH on D and DPTH on E, then press [YES].",
+          "alt": "SEQ Rhythm on an audio track.",
+          "credit": "ilia-murzinov (ot_emu panel capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SEQ rhythm",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "c8425f3eb5aced0a64ca29594049a64f03922e2ca5a4835a4001057d964c275b",
+            "setup": "remix test/seq on ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 2, greyscale."
+          }
+        },
+        {
+          "path": "media/seq-harmony-audio-emulator.png",
+          "captureType": "emulator",
+          "caption": "Press [RIGHT] when D is SRC / PTCH: set SCAL, ROOT, PHRS and JUMP; RAND is the default phrase.",
+          "alt": "SEQ Harmony on an audio track with RAND selected.",
+          "credit": "ilia-murzinov (ot_emu panel capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SEQ Harmony",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "c8425f3eb5aced0a64ca29594049a64f03922e2ca5a4835a4001057d964c275b",
+            "setup": "remix test/seq on ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 2, greyscale."
+          }
+        },
+        {
+          "path": "media/seq-harmony-midi-emulator.png",
+          "captureType": "emulator",
+          "caption": "On a MIDI track with NOTE on D, Harmony adds VOIC, PHRS, JUMP and CHRD for note trigs and chords.",
+          "alt": "SEQ Harmony on a MIDI track with RAND selected.",
+          "credit": "ilia-murzinov (ot_emu panel capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SEQ Harmony",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "c8425f3eb5aced0a64ca29594049a64f03922e2ca5a4835a4001057d964c275b",
+            "setup": "remix test/seq on ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 2, greyscale."
+          }
+        },
+        {
+          "path": "media/seq-clear-menu-emulator.png",
+          "captureType": "emulator",
+          "caption": "Press [FUNC] + [BANK]: choose CLEAR DEST, CLEAR ALL DEST or CLEAR ALL+TRIGS, then press [YES] once to apply.",
+          "alt": "SEQ clear menu.",
+          "credit": "ilia-murzinov (ot_emu panel capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SEQ clear",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "c8425f3eb5aced0a64ca29594049a64f03922e2ca5a4835a4001057d964c275b",
+            "setup": "remix test/seq on ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 2, greyscale."
           }
         }
       ]

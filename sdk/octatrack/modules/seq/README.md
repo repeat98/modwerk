@@ -68,6 +68,22 @@ Bare **`[PAGE]`** keeps its stock function while SEQ is open.
 Settings are kept per track and per project in `seq.work`, beside the bank
 files, and saved with the project.
 
+## Mental model
+
+Each track has one **TRIG** rhythm and a separate **PLCK** rhythm for each
+destination. **TRIG** fills sample trigs (audio) or note trigs (MIDI). **PLCK**
+fills one parameter's locks on its own steps. The grid previews SEQ's settings;
+press **`[YES]`** to write the preview to the pattern.
+
+| **LANE** | What you edit | What **`[YES]`** does |
+|---|---|---|
+| **TRIG** | Sample-trig or note-trig rhythm | Rewrites track trigs and writes locks for the current destination on those steps. |
+| **PLCK** | That destination's lock rhythm | Leaves track trigs alone. Clears that destination on every miss, then writes on PLCK hits. |
+
+On audio tracks, a PLCK hit without a sample trig creates a **trigless trig**.
+**`[CUE]`** released alone keeps **PULS** as the hit count and randomizes which
+steps are on for the focused lane.
+
 ## Quick tutorial
 
 1. Hold a [TRACK] key and press [PAGE]: the SEQ window opens on that track.
@@ -132,4 +148,12 @@ SEQ is by [ilia-murzinov](https://github.com/ilia-murzinov), MIT
 
 ## Screens and audio
 
-![SEQ rhythm page on track 1, stopped, with PULS and ROT knobs and the step grid.](media/seq-rhythm-open.png)
+![SEQ rhythm page on track 1 (MKII hardware capture).](media/seq-rhythm-open.png)
+
+![SEQ Rhythm on an audio track (emulator).](media/seq-rhythm-audio-emulator.png)
+
+![SEQ Harmony on an audio track with RAND selected (emulator).](media/seq-harmony-audio-emulator.png)
+
+![SEQ Harmony on a MIDI track with RAND selected (emulator).](media/seq-harmony-midi-emulator.png)
+
+![SEQ clear menu (emulator).](media/seq-clear-menu-emulator.png)
