@@ -118,7 +118,7 @@ runs, once 2.9. Records scanned 23 November 2026:
 | lofi2 0.1.1 | 10.3 = 467 (T1 FX2) | – | RING/def | 425 | 654 | 1.10 | – | within 10 % |
 | miniverb 0.2.3 | 14.1 = 639 (T1 FX2) | – | RATE=1.01/def | 641 | 699 | 1.00 | – | within 10 % |
 | ring-sc 0.2.1 | 7.5 = 340 (T1 FX2) | – | DUCK/def | 5 + 43 keybus | 122 + 43 keybus | – | – | not comparable: the reading does not say what its key bus carried, the scan's was silent; the unit read on d3d71297, the keybus charge (43) was timed on 856cbbcf |
-| sidechain-compressor 0.2.2 | 5.5 = 249 (T5 FX1) | – | MON=OFF/def | 107 | 107 | – | – | not comparable: the unit measured package 9f22861f, not the published 0.2.2-experimental (f403fd92); the reading does not say what its key bus carried, the scan's was silent |
+| sidechain-compressor 0.2.2 | 5.5 = 249 (T5 FX1) | – | MON=OFF/def | 107 | 107 | – | – | not comparable: the unit measured package 9f22861f, not the published 0.2.2-experimental (9fcc3e9c) |
 | tapehead 0.1.2 | 9.3 = 421 (T1 FX2) | – | COLOR=NORM/def | 425 | 426 | 0.99 | – | within 10 % |
 | vibrato 0.1.0 | – | – | SHP=SINE/def | 204 | 207 | – | – | no in-use reading on the unit |
 <!-- end of the generated table -->
