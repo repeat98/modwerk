@@ -62,6 +62,19 @@
       ]
     },
     {
+      "to": "core_page_fns",
+      "order": 14,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:sample_layer_engine_fn",
+          0
+        ]
+      ]
+    },
+    {
       "to": "core_params",
       "order": 14,
       "data": "00000000",
@@ -73,14 +86,27 @@
           0
         ]
       ]
+    },
+    {
+      "to": "core_view_pages",
+      "order": 30,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:sample_layer_engine_view",
+          0
+        ]
+      ]
     }
   ],
   "collections": {},
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:FUNC + SMPL: SAMPLE ENGINE list (stock: sample list, still on knob D)",
-    "ui:UP, DOWN, YES, NO and knobs A-H while the SAMPLE ENGINE list is open",
+    "ui:SMPL page key third press (ENGINE page, core_view_pages)",
+    "ui:UP, DOWN, YES, NO and knobs A-H on the ENGINE page",
     "ui:SAMPLE page for TRANSIENT (one page)",
     "param:hidden ids 447-456 and 458",
     "audio:sample stream before the voice mixer"

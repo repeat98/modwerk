@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Sample Layer: sample engines for the SMPL key. FUNC + SMPL opens a list of engines for the
-// selected track's sample, a small window in the style of the machine list SRC opens:
+// Sample Layer: sample engines for the SMPL key. SMPL's ENGINE page (after stock's two pages)
+// lists the engines for the selected track's sample, in the style of the machine list SRC opens:
 //
 //   SAMPLER      stock's sample playback, bit for bit
 //   TRANSIENT   a drum processor of the sample's own: PUNCH (a snap with a pitch blip to the
@@ -11,7 +11,7 @@
 //
 // The analog machine, the analog filter and the AMP envelope are left as they are: the sample is
 // shaped before its DAC, so AMP still shapes the whole sound. While the track's engine is
-// TRANSIENT, SMPL shows one page (core_page_fns, pages 4 and 5) and stays there:
+// TRANSIENT, SMPL shows its one page (core_page_fns, pages 4 and 5), then ENGINE:
 //
 //   A PUNCH   B DEC   C BR (stock's)  D SMP (stock's)
 //   E BAS     F WID   G SHF   H LEV (stock's)
@@ -102,6 +102,7 @@
 
 #define PAGE_SAMPLE 4                   // stock's SMPL page
 #define PAGE_WAVE 5                     // stock's second SMPL page, with the waveform
+#define PAGE_ENGINE 16                  // ENGINE: SMPL's page after stock's two (core_view_pages)
 #define ID_PUNCH 447                    // hidden TEST ids, renamed in build.json
 #define ID_DEC 448
 #define ID_BAS 449
@@ -302,6 +303,7 @@ volatile uint8_t sample_layer_trig;     // a bit a voice: an AMP attack this blo
 // the engine list
 static uint8_t list_open, list_cursor, list_track, list_redraw, swallow_key;
 static int list_counts;
+static void list_reset(void);
 static uint8_t page_seen;       // TRANSIENT's values were drawn in this compose
 static uint8_t page_live;       // and in the last one: the band may be drawn
 static uint8_t page_any;        // an engine's page was drawn in this compose
@@ -543,10 +545,36 @@ static char *sample_view(void)
     return 0;
 }
 
-// TRANSIENT has one page: when the selected track plays it, the SAMPLE view goes back from
-// the waveform (its second page) to the first, whichever way it got there (the engine list,
-// another track). The view holds its pages' ids at +124 (begin, end) and the page shown at +140;
-// a view that lists other than stock's two pages (another module's) is left alone.
+// The SAMPLE view holds its pages' ids at +124 (begin, end) and the page shown at +140: stock's
+// two (PAGE_SAMPLE, PAGE_WAVE), then what modules add through core_view_pages (ENGINE's).
+static int view_find(char *view, int page)
+{
+    int *pages = *(int **)(view + 124), n = (int)(*(int **)(view + 128) - pages), i;
+
+    for (i = 0; i < n && i < 16; i++)
+        if (pages[i] == page)
+            return i;
+    return -1;
+}
+
+static int view_shown(char *view)
+{
+    int *pages = *(int **)(view + 124), n = (int)(*(int **)(view + 128) - pages);
+    int i = *(int *)(view + 140);
+
+    return i >= 0 && i < n ? pages[i] : -1;
+}
+
+static void view_go(char *view, int i)
+{
+    *(int *)(view + 140) = i;
+    ((void (*)(void *))VIEW_INVALIDATE_AT)(view);
+}
+
+// TRANSIENT has one page of its own: when the selected track plays it, the SAMPLE view goes back
+// from the waveform (stock's second page) to the first, whichever way it got there (another
+// track, a kit load). SMPL steps from it to ENGINE (sample_layer_key). A view whose first two
+// pages are not stock's is left alone.
 static void transients_first_page(void)
 {
     char *view;
@@ -555,12 +583,10 @@ static void transients_first_page(void)
     if (selected_track() >= TRACKS || engine() != ENG_TRANSIENTS || !(view = sample_view()))
         return;
     pages = *(int **)(view + 124);
-    if (*(int **)(view + 128) != pages + 2 || pages[0] != PAGE_SAMPLE || pages[1] != PAGE_WAVE)
+    if (*(int **)(view + 128) < pages + 2 || pages[0] != PAGE_SAMPLE || pages[1] != PAGE_WAVE)
         return;
-    if (*(int *)(view + 140) != 1)
-        return;
-    *(int *)(view + 140) = 0;
-    ((void (*)(void *))VIEW_INVALIDATE_AT)(view);
+    if (*(int *)(view + 140) == 1)
+        view_go(view, 0);
 }
 
 // ---- SLICER's slices ----
@@ -743,10 +769,8 @@ void sample_layer_tick(void *ctrl)
         refresh(t);
     transients_first_page();
     slicer_tick();
-    if (list_open && selected_track() != list_track) {
-        list_open = 0;
-        list_redraw = 1;
-    }
+    if (list_open && selected_track() != list_track)
+        list_reset();                   // another track on ENGINE: the cursor on its engine
     if (++load_ticks >= 20) {                   // about a second
         load_ticks = 0;
         load_shown = load_peak;
@@ -1127,9 +1151,46 @@ static void slicer_labels(int set)
     }
 }
 
-// ---- the engine list (FUNC + SMPL) ----
+// ---- the ENGINE page: the engine list ----
+//
+// SMPL's third page on a sound track (core_view_pages, after stock's knobs and waveform; on
+// TRANSIENT the second, after its own page). The page is the list: it shows while the page is
+// up, with the cursor on the track's engine. UP and DOWN or any knob move the cursor, YES sets
+// the engine and goes back to SMPL's first page, NO puts the cursor back on it. Every other key is stock's: SMPL steps on to the
+// next page, FUNC + SMPL opens stock's sample list.
+
+static uint8_t eng_seen;        // ENGINE's page_info was asked in this compose
 
 static unsigned key_held(int key) { return ((is_key_held_t)IS_KEY_HELD_AT)(key); }
+
+static const char engine_page_name[] = "ENGINE";
+static const struct core_page engine_page = { PAGE_ENGINE, engine_page_name, { 0 } };
+
+static const struct core_page *engine_info(int32_t page)
+{
+    (void)page;
+    eng_seen = 1;
+    return &engine_page;
+}
+
+const struct core_page_fn sample_layer_engine_fn = { PAGE_ENGINE, engine_info };
+
+static int32_t engine_shown(void *view)
+{
+    (void)view;
+    return selected_track() < TRACKS;
+}
+
+const struct core_view_page sample_layer_engine_view = { CORE_VIEW_SAMPLE, PAGE_ENGINE, engine_shown };
+
+// Whether ENGINE is the page on screen: its page_info was asked in the last compose, and the
+// SAMPLE view has it selected (another view's compose never asks it).
+static int engine_page_up(void)
+{
+    char *view = sample_view();
+
+    return list_open && view && view_shown(view) == PAGE_ENGINE && selected_track() < TRACKS;
+}
 
 static void list_close(void)
 {
@@ -1137,14 +1198,25 @@ static void list_close(void)
     list_redraw = 1;
 }
 
-// ev_key. FUNC + SMPL on a sound track opens the list with the cursor on the track's engine.
-// While it is open: UP and DOWN move the cursor, YES sets the engine and closes, NO closes with
-// nothing changed, FUNC passes, and any other key closes the list and goes on to stock. SMPL
-// alone on TRANSIENT's page is taken, so the page stays: it is that engine's only page.
+// The cursor back on the selected track's engine.
+static void list_reset(void)
+{
+    struct sl_set s;
+
+    list_track = (uint8_t)selected_track();
+    read_set(list_track, &s);
+    list_cursor = (uint8_t)(s.eng < LIST_ENGINES ? s.eng : 0);
+    list_counts = 0;
+    list_redraw = 1;
+}
+
+// ev_key: the ENGINE page's keys while it is up, and SMPL on TRANSIENT's page, which steps to
+// ENGINE over the waveform page TRANSIENT does not have.
 int sample_layer_key(void *brain, char *ev)
 {
     int key = *(int *)(ev + EV_KEY), flags = *(int *)(ev + EV_FLAGS);
-    int down = flags & FLAG_DOWN, t;
+    int down = flags & FLAG_DOWN, i;
+    char *view;
     struct sl_set s;
 
     (void)brain;
@@ -1153,24 +1225,12 @@ int sample_layer_key(void *brain, char *ev)
             swallow_key = 0;            // its release: the last of it
         return 1;
     }
-    if (!list_open) {
-        if (key != KEY_SMPL || !down)
+    if (!engine_page_up()) {
+        if (key != KEY_SMPL || !down || key_held(KEY_FUNC) || !page_any_live
+            || selected_track() >= TRACKS || engine() != ENG_TRANSIENTS || !(view = sample_view())
+            || view_shown(view) != PAGE_SAMPLE || (i = view_find(view, PAGE_ENGINE)) < 0)
             return 0;
-        t = selected_track();
-        if (t >= TRACKS)
-            return 0;                   // the FX track: stock's
-        if (!key_held(KEY_FUNC)) {
-            if (!page_any_live || engine() != ENG_TRANSIENTS)
-                return 0;               // GRANULAR keeps the waveform page, SMPL's second press
-            swallow_key = KEY_SMPL;
-            return 1;
-        }
-        read_set(t, &s);
-        list_open = 1;
-        list_track = (uint8_t)t;
-        list_cursor = (uint8_t)(s.eng < LIST_ENGINES ? s.eng : 0);
-        list_counts = 0;
-        list_redraw = 1;
+        view_go(view, i);
         swallow_key = KEY_SMPL;
         return 1;
     }
@@ -1186,41 +1246,34 @@ int sample_layer_key(void *brain, char *ev)
         }
         return 1;
     case KEY_YES:
-    case KEY_NO:
-        if (!down || (flags & FLAG_REPEAT))
-            return 1;
-        if (key == KEY_YES) {
+        if (down && !(flags & FLAG_REPEAT)) {
             read_set(list_track, &s);
             if (s.eng != list_cursor) {
                 defaults(&s, list_cursor);  // the new engine starts from its own defaults
                 write_set(list_track, &s);
             }
-        }
-        list_close();
-        swallow_key = (uint8_t)key;
-        return 1;
-    case KEY_FUNC:
-        return 0;
-    case KEY_SMPL:                      // FUNC + SMPL again, or SMPL: closes the list, and only that
-        if (down) {
+            if ((view = sample_view()))
+                view_go(view, 0);           // and back to SMPL's first page: the engine's
             list_close();
-            swallow_key = KEY_SMPL;
+            swallow_key = KEY_YES;
         }
+        return 1;
+    case KEY_NO:
+        if (down && !(flags & FLAG_REPEAT))
+            list_reset();
         return 1;
     default:
-        if (down)
-            list_close();
         return 0;
     }
 }
 
-// ev_enc: while the list is open any knob A-H moves the cursor, a step every KNOB_COUNTS.
+// ev_enc: while ENGINE is up any knob A-H moves the cursor, a step every KNOB_COUNTS.
 int sample_layer_enc(void *brain, char *ev)
 {
     int enc = *(int *)(ev + EV_ENCODER), n = *(int *)(ev + EV_COUNT);
 
     (void)brain;
-    if (!list_open || enc < 0 || enc >= KNOBS)
+    if (!engine_page_up() || enc < 0 || enc >= KNOBS)
         return 0;
     list_counts += n;
     while (list_counts >= KNOB_COUNTS) {
@@ -1382,13 +1435,14 @@ static void draw_band(void)
 static void draw_grains(void);
 static void draw_slices(void *bmp);
 
-// The list as stock's machine list (FUNC + SRC) draws it: a panel down the right from row 12,
-// a line at its left; each engine a group, its icon at the left and its name at x 77, a dotted
-// line between groups; the cursor a lit box over the name; the cursor's name in the title bar.
-#define LIST_X 54
-#define LIST_Y 12
-#define GROUP_H 13
-#define NAME_X 77
+// The list as a window centred over the ENGINE page: a frame, a title bar and a row an engine,
+// its icon at the left, the cursor a lit box over the name.
+#define ROW_H 11
+#define HEAD_H 9
+#define BOX_X0 24
+#define BOX_X1 103
+#define BOX_Y0 13
+#define BOX_Y1 (BOX_Y0 + HEAD_H + 2 + LIST_ENGINES * ROW_H + 1)
 
 static const uint16_t ENGINE_ICON[ENGINES][9] = {     // 9 x 9, bit 8 the left column
     { 0x004, 0x014, 0x015, 0x055, 0x1ff, 0x055, 0x015, 0x014, 0x004 },   // a waveform
@@ -1412,13 +1466,21 @@ void sample_layer_draw(void *bmp, void *ctrl)
         return;
     }
     if (screen_dark()) {                // the screen saver: stock drew nothing, so draw nothing
-        page_seen = page_any = wave_seen = gran_seen = 0;
+        page_seen = page_any = wave_seen = gran_seen = eng_seen = 0;
         wave_hold = 0;
         return;
     }
     page_live = page_seen;
     page_any_live = page_any;
     page_any = 0;
+    if (eng_seen && selected_track() < TRACKS) {    // ENGINE's page: the list shows
+        if (!list_open) {
+            list_open = 1;
+            list_reset();
+        }
+    } else if (list_open)
+        list_close();
+    eng_seen = 0;
     // The waveform page: page_info and the values' text need not both come every compose, so
     // either one keeps the grains for a few composes. The window test is skipped there: stock's
     // waveform and its frame hold long horizontal runs of their own.
@@ -1464,23 +1526,23 @@ void sample_layer_draw(void *bmp, void *ctrl)
     if (list_open) {
         int r, x;
 
-        bm_fill(0, 0, 69, 8, 0);                // the title bar: the cursor's engine
-        label(bmp, 2, 6, 0, ENGINE_NAME[list_cursor]);
-        bm_flip(0, 0, 69, 8);
-        bm_fill(LIST_X, LIST_Y, 127, 63, 0);
-        bm_fill(LIST_X, LIST_Y, LIST_X, 63, 1);
+        bm_fill(0, 9, 127, 54, 0);              // the page under it: stock's waveform frame,
+                                                // which SMPL's view draws on every page but its first
+        bm_fill(BOX_X0 - 1, BOX_Y0 - 1, BOX_X1 + 1, BOX_Y1 + 1, 0);  // a clear margin
+        bm_fill(BOX_X0, BOX_Y0, BOX_X1, BOX_Y1, 1);                  // the frame
+        bm_fill(BOX_X0 + 1, BOX_Y0 + HEAD_H, BOX_X1 - 1, BOX_Y1 - 1, 0);
+        bm_fill(BOX_X0 + 1, BOX_Y0 + 1, BOX_X1 - 1, BOX_Y0 + HEAD_H - 1, 0);
+        label(bmp, (BOX_X0 + BOX_X1 + 1) / 2, BOX_Y0 + HEAD_H - 2, 1, "SAMPLE ENGINE");
+        bm_flip(BOX_X0 + 1, BOX_Y0 + 1, BOX_X1 - 1, BOX_Y0 + HEAD_H - 1); // the title, light on dark
         for (i = 0; i < LIST_ENGINES; i++) {
-            top = LIST_Y + i * GROUP_H;
-            if (i)
-                for (x = LIST_X + 4; x <= 121; x += 2)
-                    bm_put(x, top - 1, 1);
-            for (r = 0; r < 9; r++)
+            top = BOX_Y0 + HEAD_H + 2 + i * ROW_H;
+            for (r = 0; r < 9; r++)             // the engine's icon, then its name
                 for (x = 0; x < 9; x++)
                     if (ENGINE_ICON[i][r] >> (8 - x) & 1)
-                        bm_put(LIST_X + 6 + x, top + 2 + r, 1);
-            label(bmp, NAME_X, top + 7, 0, ENGINE_NAME[i]);
+                        bm_put(BOX_X0 + 4 + x, top + r, 1);
+            label(bmp, BOX_X0 + 17, top + 7, 0, ENGINE_NAME[i]);
             if (i == list_cursor)
-                bm_flip(NAME_X - 2, top + 2, 118, top + 8);
+                bm_flip(BOX_X0 + 15, top + 1, BOX_X1 - 3, top + 8);
         }
     }
 }

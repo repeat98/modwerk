@@ -15,8 +15,8 @@ The engine and its settings are saved with the sound.
 
 | Control | Action |
 | --- | --- |
-| FUNC + SMPL | Opens the engine list, a panel like SRC's machine list, with the cursor on the sound's engine. UP/DOWN or any knob moves the cursor, YES picks, NO or SMPL closes it and changes nothing. |
-| SMPL (TRANSIENT) | Shows TRANSIENT's page. It is the engine's only page: SMPL stays on it. |
+| SMPL | Steps through the SAMPLE pages as stock does, then the ENGINE page: stock's knobs, stock's waveform, ENGINE. On TRANSIENT: TRANSIENT's page, then ENGINE. |
+| ENGINE page | The engine list, a panel like SRC's machine list, with the cursor on the sound's engine. UP/DOWN or any knob moves the cursor, YES picks it, NO puts the cursor back. SMPL goes on to the first page. FUNC + SMPL is stock's sample list, as always. |
 
 TRANSIENT's page:
 
@@ -36,17 +36,17 @@ Choose the engine per sound, then shape the sample on TRANSIENT's page while a p
 
 ### Quick tutorial
 
-1. Put a sample on a BD track with an analog machine. Hold FUNC and press SMPL, pick TRANSIENT and press YES.
+1. Put a sample on a BD track with an analog machine. Press SMPL until the ENGINE page (the third), pick TRANSIENT and press YES.
 2. Turn PCH to the right while a pattern plays: the sample gets a sharper click on top of the analog body. Turn it to the left: the sample swells in softly.
 3. Turn DEC down: the sample is only the attack of the hit while the analog part rings on.
 4. Raise BAS and lower WID: the sample thins to a narrow band. Turn SHF up: the sample lands a little after the analog hit.
-5. Pick SAMPLER in the list: the sound plays as stock's again.
+5. On the ENGINE page pick SAMPLER and press YES: the sound plays as stock's again.
 
 ## Compatibility and limitations
 
 - OS 1.74 on Modwerk's base only: it follows the base's AMP record (`ev_amp_record`) to restart DEC at each trig.
 - It patches stock's call of the voice mixer (0x4012129a), which no other module or the base patches, takes hidden parameter ids 447 to 456 and 458, and answers SMPL's pages 4 and 5 while TRANSIENT is chosen.
-- It takes FUNC + SMPL for its list, and draws TRANSIENT's band over knobs E and F. Every drawing goes dark with the screen saver.
+- It adds a third SAMPLE page (ENGINE) through the core's page list, leaving every stock gesture as it is, and draws TRANSIENT's band over knobs E and F. On TRANSIENT, SMPL steps from its page straight to ENGINE: TRANSIENT has no waveform page. Every drawing goes dark with the screen saver.
 - The settings cannot be p-locked or reached over MIDI: they live outside the sound's parameters.
 - A change reaches a voice that is playing within about 50 ms.
 - TRANSIENT runs in the audio interrupt for each voice whose track uses it, about 1.6 % of the audio block a voice at peak; SAMPLER, or TRANSIENT with every control neutral, costs nothing. With TRANSIENT on 7 tracks of a busy pattern the load reached 93 % and the Rytm's screen and keys grew slow: keep it to the tracks that need it.
@@ -71,7 +71,7 @@ Original work by @chevyone, with Claude Code: no code, samples or tables from an
 
 ## Screens and audio
 
-- [The engine list](media/engine-list.png): FUNC + SMPL, SAMPLER and TRANSIENT, the cursor's engine in the title bar.
+- [The engine list](media/engine-list.png): the ENGINE page, SAMPLER and TRANSIENT, the cursor's engine in the title bar.
 - [TRANSIENT's page](media/transient-page.png): PCH, DEC, BR, SMP above the BAS/WID band, SHF and LEV.
 
 No audio recordings yet.
