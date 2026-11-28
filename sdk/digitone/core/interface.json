@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "digitone",
   "interface": "2.2",
-  "status": "The Modwerk core implementing this interface is in development. Mods written for this interface link with it unchanged.",
+  "status": "Provided by Modwerk's Digitone mk1 base (sdk/machines/digitone/base, version 3.0) for OS 1.43 and 1.44, which builds and links every shipped mod unchanged; until a tester has run it on a unit, site builds keep linking the catalogue's core. Mods written for this interface link with either.",
   "events": [
     {
       "name": "ev_tick",

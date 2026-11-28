@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "version": "3.0",
+  "identities": {
+    "1.43": "a06626e4de3193d442251a20362ef82799618765be48ac2c3ce3017d09c24c7f",
+    "1.44": "532ae3d0cc2111cf0dadc2f9a87211578205417e0a6ee33842ab5e8c63c7822b"
+  },
+  "packages": {
+    "modwerk-base-digitone-a06626e4.elemod": "a06626e4de3193d442251a20362ef82799618765be48ac2c3ce3017d09c24c7f",
+    "modwerk-base-digitone-532ae3d0.elemod": "532ae3d0cc2111cf0dadc2f9a87211578205417e0a6ee33842ab5e8c63c7822b"
+  },
+  "sections": {
+    "1.43": {
+      ".boot": 156,
+      ".run": 6035,
+      ".bss": 1664
+    },
+    "1.44": {
+      ".boot": 156,
+      ".run": 6035,
+      ".bss": 1664
+    }
+  },
+  "sites": 90,
+  "built": {
+    "toolchain": {
+      "gcc": "16.2.0",
+      "binutils": "GNU assembler (GNU Binutils) 2.47.20260726"
+    }
+  }
+}

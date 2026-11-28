@@ -70,7 +70,7 @@ export function buildBase(machine, scratch) {
     const defsym = Object.entries(config.defsym).map(([name, value]) => [name, forOs(value, os)])
     const objects = config.sources.map((path, index) => {
       const object = resolve(work, index + '.o')
-      if (path.endsWith('.c')) tool('gcc', [...CFLAGS, '-I', resolve(root, 'sdk/elemod/core'), '-I', folder, '-c', source(path), '-o', object])
+      if (path.endsWith('.c')) tool('gcc', [...CFLAGS, ...(config.cflags ?? []), '-I', resolve(root, 'sdk/elemod/core'), '-I', folder, '-c', source(path), '-o', object])
       else tool('as', ['-mcpu=54455', ...config.asflags, ...defsym.flatMap(([n, v]) => ['--defsym', `${n}=${v}`]), '-o', object, source(path)])
       return object
     })

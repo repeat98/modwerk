@@ -1,0 +1,845 @@
+{
+ "schema": 1,
+ "device": "digitone-mk1",
+ "os": [
+  "1.43",
+  "1.44"
+ ],
+ "about": "The stock sites Modwerk's Digitone mk1 base owns as hooks (sdk/machines/digitone/base), in the Octatrack registry's format; a value given per OS ({\"1.43\": ..., \"1.44\": ...}) differs between them. Modules subscribe in build.json and never patch these sites. Addresses, lengths and SHA-256 guards only, no stock bytes. Adding a hook is one reviewed entry at the end; released indices are never renumbered.",
+ "events": [
+  {
+   "event": "ev_tick",
+   "index": 0,
+   "kind": "call",
+   "site": "0x4001900c",
+   "length": 6,
+   "guard": {
+    "1.43": "ba1d84f999fa9b3fe2573a5dd1b9a7335c77b3b2471e8c0087c8d9ee6ebad228",
+    "1.44": "9dfc92cb5a363e44f4e6c2a0bf3f7efc43c0ddb0f3f39a6f8c6103b06d88c7f0"
+   },
+   "prototype": "void f(void *ctrl)",
+   "when": "the UI compose check, before stock's own",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Set *((unsigned char *)ctrl + 0x20) = 1 to ask for a redraw. Not a clock. While the Mod Menu is open the base asks every tick.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_draw",
+   "index": 1,
+   "kind": "call",
+   "site": "0x40019072",
+   "length": 6,
+   "guard": {
+    "1.43": "e583b1199a8611e8ff96cbac3f3d64c4582d4be94bcecacae9b347d9d4c024da",
+    "1.44": "14aa0e387240cdb206ff1fe606eab98a344c56be1e3cf88acd6450697427ed83"
+   },
+   "prototype": "void f(void *bmp, void *ctrl)",
+   "when": "after the OS has drawn the frame, before it is shown",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Draw over the frame. Stock's outputs are kept; an open Mod Menu draws over everything after the handlers.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_key",
+   "index": 2,
+   "kind": "call",
+   "site": "0x40019d9c",
+   "length": 6,
+   "guard": "f843f21e82e85ccebf4b10e6fefcf0fbed20d26e4e90be57665d00fdb205cabc",
+   "prototype": "int f(void *brain, void *event)",
+   "when": "a key event, before stock handles it, after the base's Mod Menu and hold logic",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Nonzero takes the event: later handlers and stock do not see it. KeyEvent: key code at +12, action at +16 (1 press, 9 hold, 16 release).",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_enc",
+   "index": 3,
+   "kind": "call",
+   "site": "0x40019de4",
+   "length": 6,
+   "guard": "811b03528bc4894bd476324fc868e2caabd1a729b8680003e2c8003d7fd80c8f",
+   "prototype": "int f(void *brain, void *event)",
+   "when": "an encoder event, before stock handles it, after the Mod Menu",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Nonzero takes the event. EncoderEvent: signed delta at +16.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_settings",
+   "index": 4,
+   "kind": "call",
+   "site": {
+    "1.43": "0x40072a34",
+    "1.44": "0x40072a54"
+   },
+   "length": 6,
+   "guard": "c7589861366d298dd3e07f1f5ebce25db0435f9cad638eae321d68e7542f6c74",
+   "prototype": "void f(void *menu)",
+   "when": "at the end of building the SETTINGS menu",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Add rows with core_additem(menu, row): label, select, draw, change.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_render_in",
+   "index": 5,
+   "kind": "call",
+   "site": {
+    "1.43": "0x4009d108",
+    "1.44": "0x4009d128"
+   },
+   "length": 6,
+   "guard": "0682088f8b8f8b0760d2f195d03bf17728bc872575efaf90dff0ac96d30db5ba",
+   "prototype": "void f(void)",
+   "when": "entry of the audio render",
+   "context": "the audio render interrupt, every 32-sample block: short, no OS calls, no blocking",
+   "contract": "EMAC is saved and restored around the handlers.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_render_out",
+   "index": 6,
+   "kind": "call",
+   "site": {
+    "1.43": "0x4009e51c",
+    "1.44": "0x4009e53c"
+   },
+   "length": 6,
+   "guard": "1a3720366a34a6a62aee2a716d0b4371a746b47c59b75e724778ba4fe73c4fb2",
+   "prototype": "void f(void)",
+   "when": "exit of the audio render, after the stock restores the interrupted EMAC state",
+   "context": "the audio render interrupt, every 32-sample block: short, no OS calls, no blocking",
+   "contract": "EMAC is saved and restored around the handlers.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_voice_on",
+   "index": 7,
+   "kind": "call",
+   "site": {
+    "1.43": "0x4009e928",
+    "1.44": "0x4009e948"
+   },
+   "length": 6,
+   "guard": {
+    "1.43": "3f4e00b143ab8d4c14ee97ee70a845b2b4315a51b9cc2784cbe0fedcb39d8bed",
+    "1.44": "fabeca84cf84f4cb5c1dba11a57aaf21ac9efa6163e55aa1b93357455e5f4508"
+   },
+   "prototype": "void f(int voice, int track, void *event)",
+   "when": "a voice's note-on in the render, after its pitch word is stored",
+   "context": "the audio render interrupt, every 32-sample block: short, no OS calls, no blocking",
+   "contract": "Change the pitch by writing the voice's pitch word (note << 16). EMAC is not saved here.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_hold",
+   "index": 8,
+   "kind": "call",
+   "site": "0x40019d9c",
+   "length": 6,
+   "guard": "f843f21e82e85ccebf4b10e6fefcf0fbed20d26e4e90be57665d00fdb205cabc",
+   "prototype": "int f(void *brain, void *event, int track)",
+   "when": "a track key held on its own (its hold notification, with no turn while held)",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "Nonzero takes the hold. None taken, with core_menu entries, opens the Mod Menu.",
+   "order": "lower first, then module id",
+   "rides": "ev_key",
+   "subscribers": []
+  },
+  {
+   "event": "ev_midi_cc",
+   "index": 9,
+   "kind": "call",
+   "site": {
+    "1.43": "0x400ed96e",
+    "1.44": "0x400edbe2"
+   },
+   "length": 6,
+   "guard": "cf2194835e387838c47b9d3be14e79471766ae2b6f7b4b9dc62c8e7aa5d9d868",
+   "prototype": "int f(int track, int cc, int value, int flags)",
+   "when": "each MIDI CC on a track's channel (0-8) or the auto channel, before the stock applies it",
+   "context": "the MIDI task, not an interrupt",
+   "contract": "Nonzero takes the CC: later handlers and stock do not see it. flags bit 0: the auto channel.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_note_queue",
+   "index": 10,
+   "kind": "call",
+   "site": {
+    "1.43": "0x400fff04",
+    "1.44": "0x40100178"
+   },
+   "length": 8,
+   "guard": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
+   "prototype": "void f(void *event, int time)",
+   "when": "each event a note source queues for the render, at the queue's entry",
+   "context": "the sequencer and the render, with interrupts masked: brief, no OS calls",
+   "contract": "Inspect the event; +0 kind, +8 track, +0x28 the step word, +0x38 the p-lock list.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "ev_key_leds",
+   "index": 11,
+   "kind": "call",
+   "site": "0x40018332",
+   "length": 6,
+   "guard": {
+    "1.43": "7e19c657d3bfa26ed50edc886ce714635c80ea2af86109dde03c7c7033779465",
+    "1.44": "611ae3b7f8f65607526dca73405f5e0fe38b80e316fddd81aad9fe60f7ccb144"
+   },
+   "prototype": "void f(void *mgr)",
+   "when": "the key-LED frame, after the LEDs are cleared and before the stock views set theirs",
+   "context": "UI task, about 30 times a second: no audio-rate work",
+   "contract": "mgr is the LED manager; the first setter of an LED wins.",
+   "order": "lower first, then module id",
+   "subscribers": []
+  },
+  {
+   "event": "core_params",
+   "index": 12,
+   "kind": "table",
+   "record": "pointer to struct mw_parameter (68 bytes: id, a stock 60-byte parameter record, look)",
+   "context": "installed at boot; the UI record built on first display",
+   "contract": "ids 182-184, claimed as param:<id>; look 0 borrows id 24's knob",
+   "order": "a later record of an id replaces an earlier one",
+   "sites": [
+    {
+     "site": "0x4000b154",
+     "length": 6,
+     "guard": {
+      "1.43": "b9d9897583877a68bcacf8bb3e04b39a3e8a334f4beacbb81dfd84acf77e15b8",
+      "1.44": "8b42b27a370b31fffcc34a47940a972a7435cc696b3431c80a8671a3782f719c"
+     },
+     "entry": "mw_slot_table"
+    },
+    {
+     "site": "0x4000820a",
+     "length": 6,
+     "guard": {
+      "1.43": "e091c25ba98fecfd5745dab3026cde512eae406b901531611acc562bccb4fedc",
+      "1.44": "0f78a7e063cf53311b07cd02eb0389e8e17d171765cd7e2af2271664ce727365"
+     },
+     "entry": "mw_slot_table_64"
+    },
+    {
+     "site": "0x4000821a",
+     "length": 6,
+     "guard": {
+      "1.43": "871879def1135754912b813b82b770aa6397209ae67719681c8c85b664f4f18f",
+      "1.44": "fe8e81215ac728b831f9f22cc7739512d37ac67cd33132be9fe9860b3e814fe7"
+     },
+     "entry": "mw_slot_table_end"
+    },
+    {
+     "site": {
+      "1.43": "0x400899c8",
+      "1.44": "0x400899e8"
+     },
+     "length": 24,
+     "guard": {
+      "1.43": "773b2fb7803637945c7640ca834237d11bbb3d3a1eb5f28c28a6bbf9321aeb02",
+      "1.44": "597141450b7516adf8e40aef7a02446df3585bb4527968b7f9c5c0d743791e89"
+     },
+     "entry": "mw_uirec_d1"
+    },
+    {
+     "site": {
+      "1.43": "0x400899e6",
+      "1.44": "0x40089a06"
+     },
+     "length": 24,
+     "guard": {
+      "1.43": "773b2fb7803637945c7640ca834237d11bbb3d3a1eb5f28c28a6bbf9321aeb02",
+      "1.44": "597141450b7516adf8e40aef7a02446df3585bb4527968b7f9c5c0d743791e89"
+     },
+     "entry": "mw_uirec_d1"
+    },
+    {
+     "site": "0x400078e4",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40007908",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x4000792c",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40007958",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40007998",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x400079c8",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x400079f4",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40007a28",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40007b3a",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40007b5e",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40007b82",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40007ba6",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40007bca",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40020a06",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40020a8c",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40020b20",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40020b98",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x400218b0",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40021936",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x400219c2",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40021a3a",
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x40081bd0",
+      "1.44": "0x40081bf0"
+     },
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x40086a52",
+      "1.44": "0x40086a72"
+     },
+     "length": 6,
+     "guard": "92af5c347bec88e1aa8891650761c6413b573eafb3410ea303a11a617d923c09",
+     "entry": "0c80000000b9"
+    },
+    {
+     "site": "0x40007a56",
+     "length": 6,
+     "guard": "9f95993fc8b712e4c3d3ea9ee67a0df3bdd1ccbcc64412f0a9b1aa2516821d38",
+     "entry": "0c81000000b9"
+    },
+    {
+     "site": "0x4001fb9a",
+     "length": 6,
+     "guard": "9f95993fc8b712e4c3d3ea9ee67a0df3bdd1ccbcc64412f0a9b1aa2516821d38",
+     "entry": "0c81000000b9"
+    },
+    {
+     "site": "0x400207c0",
+     "length": 6,
+     "guard": "9f95993fc8b712e4c3d3ea9ee67a0df3bdd1ccbcc64412f0a9b1aa2516821d38",
+     "entry": "0c81000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x40081bb2",
+      "1.44": "0x40081bd2"
+     },
+     "length": 6,
+     "guard": "9f95993fc8b712e4c3d3ea9ee67a0df3bdd1ccbcc64412f0a9b1aa2516821d38",
+     "entry": "0c81000000b9"
+    },
+    {
+     "site": "0x40042f1c",
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": "0x40045396",
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": "0x40046438",
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x4004a60e",
+      "1.44": "0x4004a62e"
+     },
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x4004abf0",
+      "1.44": "0x4004ac10"
+     },
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x4004c450",
+      "1.44": "0x4004c470"
+     },
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x40050242",
+      "1.44": "0x40050262"
+     },
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x40082292",
+      "1.44": "0x400822b2"
+     },
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x40089b96",
+      "1.44": "0x40089bb6"
+     },
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x40091bd4",
+      "1.44": "0x40091bf4"
+     },
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x400c6862",
+      "1.44": "0x400c6a0a"
+     },
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x400ca25c",
+      "1.44": "0x400ca404"
+     },
+     "length": 6,
+     "guard": "3189b391d062a0ec9fb2f5fa6933d3923d2c8decb4986af4e3eb727081f37b31",
+     "entry": "0c82000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x4004d98a",
+      "1.44": "0x4004d9aa"
+     },
+     "length": 6,
+     "guard": "7b9b9fd269db32ccc8ea5e37f851be0d83a282be8ea4c98ca55eadb664fbc504",
+     "entry": "0c83000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x4004db98",
+      "1.44": "0x4004dbb8"
+     },
+     "length": 6,
+     "guard": "7b9b9fd269db32ccc8ea5e37f851be0d83a282be8ea4c98ca55eadb664fbc504",
+     "entry": "0c83000000b9"
+    },
+    {
+     "site": {
+      "1.43": "0x40050bee",
+      "1.44": "0x40050c0e"
+     },
+     "length": 6,
+     "guard": "7b9b9fd269db32ccc8ea5e37f851be0d83a282be8ea4c98ca55eadb664fbc504",
+     "entry": "0c83000000b9"
+    },
+    {
+     "site": "0x40007b12",
+     "length": 6,
+     "guard": "dc6526fa1b711e1f38b72dcec5e558c48f74061c5ce0898f943facc477350559",
+     "entry": "0c80000000b8"
+    },
+    {
+     "site": "0x4004634a",
+     "length": 6,
+     "guard": "dc6526fa1b711e1f38b72dcec5e558c48f74061c5ce0898f943facc477350559",
+     "entry": "0c80000000b8"
+    },
+    {
+     "site": "0x4001fe20",
+     "length": 6,
+     "guard": "2abad63a99f6b11030be9f5dd761c5c03edfbd53081475da561adde29f0abd27",
+     "entry": "0c84000000b8"
+    },
+    {
+     "site": "0x4001fee8",
+     "length": 6,
+     "guard": "12e36c3a81accf7c489914107e798250b3b5cf66011aaa1a9522d9ad6f236fa3",
+     "entry": "0c82000000b8"
+    },
+    {
+     "site": "0x40020e10",
+     "length": 6,
+     "guard": "12e36c3a81accf7c489914107e798250b3b5cf66011aaa1a9522d9ad6f236fa3",
+     "entry": "0c82000000b8"
+    },
+    {
+     "site": "0x40021df2",
+     "length": 6,
+     "guard": "12e36c3a81accf7c489914107e798250b3b5cf66011aaa1a9522d9ad6f236fa3",
+     "entry": "0c82000000b8"
+    },
+    {
+     "site": "0x400253e0",
+     "length": 6,
+     "guard": "12e36c3a81accf7c489914107e798250b3b5cf66011aaa1a9522d9ad6f236fa3",
+     "entry": "0c82000000b8"
+    },
+    {
+     "site": "0x400453ee",
+     "length": 6,
+     "guard": "12e36c3a81accf7c489914107e798250b3b5cf66011aaa1a9522d9ad6f236fa3",
+     "entry": "0c82000000b8"
+    },
+    {
+     "site": "0x4004557a",
+     "length": 6,
+     "guard": "12e36c3a81accf7c489914107e798250b3b5cf66011aaa1a9522d9ad6f236fa3",
+     "entry": "0c82000000b8"
+    },
+    {
+     "site": {
+      "1.43": "0x40089af8",
+      "1.44": "0x40089b18"
+     },
+     "length": 6,
+     "guard": "12e36c3a81accf7c489914107e798250b3b5cf66011aaa1a9522d9ad6f236fa3",
+     "entry": "0c82000000b8"
+    },
+    {
+     "site": {
+      "1.43": "0x400c67d2",
+      "1.44": "0x400c697a"
+     },
+     "length": 6,
+     "guard": "12e36c3a81accf7c489914107e798250b3b5cf66011aaa1a9522d9ad6f236fa3",
+     "entry": "0c82000000b8"
+    },
+    {
+     "site": "0x40029c4a",
+     "length": 6,
+     "guard": "8d66f9b418566cbb275a0ef10d278b476c3cd2857c7bc2ecbe68ea5890565b19",
+     "entry": "bbfc000000b8"
+    },
+    {
+     "site": {
+      "1.43": "0x400c7ace",
+      "1.44": "0x400c7c76"
+     },
+     "length": 6,
+     "guard": "8d66f9b418566cbb275a0ef10d278b476c3cd2857c7bc2ecbe68ea5890565b19",
+     "entry": "bbfc000000b8"
+    },
+    {
+     "site": "0x40045110",
+     "length": 6,
+     "guard": "8a7f88cca72d64a2e581a6d7ef6645f59ae6d489bc5d42c995d9ea2ed9448918",
+     "entry": "0c83000000b8"
+    },
+    {
+     "site": "0x40045c38",
+     "length": 6,
+     "guard": "d7cfd28f89c7bb0bed684021b87db050e5132863d772b232ecdef5997b6bb141",
+     "entry": "0c85000000b8"
+    },
+    {
+     "site": {
+      "1.43": "0x4004aa0e",
+      "1.44": "0x4004aa2e"
+     },
+     "length": 6,
+     "guard": "68e98a244cdfba6c2d212214e6737d7ccb3c2f55aeb4febdbc4bcd8d1986c20e",
+     "entry": "bdfc000000b9"
+    }
+   ],
+   "subscribers": []
+  },
+  {
+   "event": "core_pages",
+   "index": 13,
+   "kind": "table",
+   "record": "pointer to struct mw_page (60 bytes: index, after, a stock 44-byte page record, view, position)",
+   "context": "UI task: page lookups and each key's page list",
+   "contract": "pages 27-30, claimed as page:<index>; each follows the stock page `after` names; open one with core_page_open",
+   "order": "table order after the same stock page",
+   "sites": [
+    {
+     "site": {
+      "1.43": "0x40089a2c",
+      "1.44": "0x40089a4c"
+     },
+     "length": 6,
+     "guard": "ad4ba010564361a3bb2e4099d57782975f2db08ea2336ab10d6542060b7af022",
+     "entry": "mw_page_rec"
+    },
+    {
+     "site": "0x40044490",
+     "length": 8,
+     "guard": "1a241bd7b3090391ae8bfc0352ae22425a70817ccd477fa5d7aba231b95b8bc9",
+     "entry": "mw_view_init"
+    }
+   ],
+   "subscribers": []
+  },
+  {
+   "event": "core_projdata",
+   "index": 14,
+   "kind": "table",
+   "record": "pointer to struct mw_project_data (16 bytes: tag, size, data, loaded)",
+   "context": "UI task: project save, load and new",
+   "contract": "claimed as projdata:<tag>; one list in the project header (ELKP at 0x1c) shared with every writer, other records kept; nothing written while the table is empty",
+   "order": "table order",
+   "sites": [
+    {
+     "site": {
+      "1.43": "0x400acc40",
+      "1.44": "0x400accd0"
+     },
+     "length": 6,
+     "guard": "355d72e39777219857cacd901120108d55af0bc8551de33afda38154906f9778",
+     "entry": "mw_pd_load_call"
+    },
+    {
+     "site": "0x40010cfa",
+     "length": 6,
+     "guard": "a47cc2f0fee9724765b0d54190ff67b75dac278c0d3a8707f9aeac0da4d9f74a",
+     "entry": "mw_pd_load_file"
+    },
+    {
+     "site": {
+      "1.43": "0x400acbf4",
+      "1.44": "0x400acc84"
+     },
+     "length": 6,
+     "guard": {
+      "1.43": "6df050edb8aa64024f8a2cbdb437dbe769951e9db21fb3b117cc879a6b24731d",
+      "1.44": "d957a21035720ffcaf9af72e3e6a6f54e5724c7283054e9529be599bc7ed9542"
+     },
+     "entry": "mw_pd_new_copy"
+    },
+    {
+     "site": "0x40017204",
+     "length": 6,
+     "guard": "fe0420bb26404d2dfa0aa6997310e3b2a8ec0161da2f4b8f6ce9bbf59d9395b3",
+     "entry": "mw_pd_save_call"
+    },
+    {
+     "site": "0x40024ede",
+     "length": 6,
+     "guard": "fe0420bb26404d2dfa0aa6997310e3b2a8ec0161da2f4b8f6ce9bbf59d9395b3",
+     "entry": "mw_pd_save_call"
+    },
+    {
+     "site": "0x400277b2",
+     "length": 6,
+     "guard": "fe0420bb26404d2dfa0aa6997310e3b2a8ec0161da2f4b8f6ce9bbf59d9395b3",
+     "entry": "mw_pd_save_call"
+    },
+    {
+     "site": {
+      "1.43": "0x40084f4c",
+      "1.44": "0x40084f6c"
+     },
+     "length": 6,
+     "guard": "fe0420bb26404d2dfa0aa6997310e3b2a8ec0161da2f4b8f6ce9bbf59d9395b3",
+     "entry": "mw_pd_save_call"
+    },
+    {
+     "site": {
+      "1.43": "0x40084f9e",
+      "1.44": "0x40084fbe"
+     },
+     "length": 6,
+     "guard": "fe0420bb26404d2dfa0aa6997310e3b2a8ec0161da2f4b8f6ce9bbf59d9395b3",
+     "entry": "mw_pd_save_call"
+    },
+    {
+     "site": "0x400256e2",
+     "length": 6,
+     "guard": "982bdfdcde992cc739c781e3fe4fee57af012a830581e3f583d55557d66c97d9",
+     "entry": "mw_pd_init_call"
+    },
+    {
+     "site": "0x40028a34",
+     "length": 6,
+     "guard": "982bdfdcde992cc739c781e3fe4fee57af012a830581e3f583d55557d66c97d9",
+     "entry": "mw_pd_init_call"
+    },
+    {
+     "site": {
+      "1.43": "0x40084f66",
+      "1.44": "0x40084f86"
+     },
+     "length": 6,
+     "guard": "982bdfdcde992cc739c781e3fe4fee57af012a830581e3f583d55557d66c97d9",
+     "entry": "mw_pd_init_call"
+    }
+   ],
+   "subscribers": []
+  },
+  {
+   "event": "core_menu",
+   "index": 15,
+   "kind": "table",
+   "record": "pointer to struct mw_menu_entry (8 bytes: name, open(brain, event, track))",
+   "context": "UI task, through ev_key, ev_enc, ev_tick and ev_draw",
+   "contract": "the Mod Menu lists every entry; a pick calls open with the held track (0-3)",
+   "order": "table order",
+   "sites": [],
+   "subscribers": []
+  },
+  {
+   "event": "core_audio",
+   "index": 16,
+   "kind": "table",
+   "record": "pointer to struct mw_audio (12 bytes: on, render(out, in), flags)",
+   "context": "the audio render interrupt, every 32-sample block: short, no OS calls, no blocking",
+   "contract": "the first record with on set owns the output each block; flags bit 0 mutes the voices' filter loop (exclusive owners only), bit 1 inserts after the master stage",
+   "order": "the first record that is on",
+   "sites": [
+    {
+     "site": {
+      "1.43": "0x4009e07e",
+      "1.44": "0x4009e09e"
+     },
+     "length": 14,
+     "guard": "bd5f4d13a69054466c4d90c7f7916afd8955cd3b142ff4fee7ba5027200c52cd",
+     "entry": "mw_audio_gate"
+    },
+    {
+     "site": {
+      "1.43": "0x4009e146",
+      "1.44": "0x4009e166"
+     },
+     "length": 6,
+     "guard": {
+      "1.43": "bd5d01456f954c7f47e0976ceb3d70712f0ec690267b088104dfb5f6bcde2b3e",
+      "1.44": "518a5492f58cb3388a41f9598e416c61313593c60f696d84e301cbddfe7de69b"
+     },
+     "entry": "mw_audio_master"
+    }
+   ],
+   "subscribers": []
+  }
+ ]
+}

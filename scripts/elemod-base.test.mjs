@@ -67,3 +67,63 @@ describe('Digitakt mk1 base', () => {
     } finally { rmSync(work, { recursive: true, force: true }) }
   }, 60_000)
 })
+
+describe('Digitone mk1 base', () => {
+  const dn = JSON.parse(readFileSync(at('sdk/machines/digitone/base-binding.json'), 'utf8'))
+  const dnConfig = JSON.parse(readFileSync(at('sdk/machines/digitone/base/base.json'), 'utf8'))
+  const dnFile = name => at(`sdk/imports/packages/modwerk-base-digitone/${name}`)
+  const dnRecorded = () => { try { return execFileSync('m68k-elf-gcc', ['-dumpfullversion'], { encoding: 'utf8' }).trim() === dn.built.toolchain.gcc && execFileSync('m68k-elf-as', ['--version'], { encoding: 'utf8' }).split('\n')[0] === dn.built.toolchain.binutils } catch { return false } }
+
+  it('keeps the packages its binding names, each a base for interface 2.2 in the 128 KiB area', () => {
+    const iface = JSON.parse(readFileSync(at(dnConfig.interface), 'utf8')), reference = JSON.parse(readFileSync(at(dnConfig.reference.file), 'utf8'))
+    expect(Object.keys(dn.packages)).toHaveLength(2)
+    for (const [name, sha256] of Object.entries(dn.packages)) {
+      const bytes = readFileSync(dnFile(name)), module = JSON.parse(bytes.toString('utf8'))
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(sha256)
+      expect(packageText(module)).toBe(bytes.toString('utf8'))
+      parseElemod(module)
+      expect(dn.identities[module.target.os]).toBe(sha256)
+      expect(module.version).toBe('3.0')   // below 4.0: the 128 KiB area interface.json names
+      expect(baseProblems(module, iface, reference, dnConfig.reference.keeps)).toEqual([])
+      expect(module.sites).toHaveLength(90)
+      // project save and new hook the routines' calls; their entries stay free for modules (KitBank)
+      expect(module.sites.map(s => s.addr)).not.toContain('0x4000eb10')
+      expect(module.sites.map(s => s.addr)).not.toContain('0x4001570e')
+    }
+    expect(iface.memory.area).toBe('0x47be0000-0x47c00000')
+  })
+
+  it('lists every site in its hook registry', () => {
+    const events = JSON.parse(readFileSync(at('sdk/machines/digitone/events.json'), 'utf8')).events
+    const iface = JSON.parse(readFileSync(at(dnConfig.interface), 'utf8'))
+    expect(events.map(e => e.event)).toEqual([...iface.events.map(e => e.name), ...iface.tables.map(t => t.name)])
+    const listed = events.flatMap(e => e.kind === 'table' ? e.sites.map(s => s.site) : e.rides ? [] : [e.site])
+    expect(new Set(listed).size).toBe(listed.length)
+    expect([...listed, '0x40000538'].map(String).sort()).toEqual(dnConfig.sites.map(s => String(s.addr)).sort())
+  })
+
+  it('links KitBank on OS 1.44 and the base alone on OS 1.43', () => {
+    for (const [os, singles] of [['1.43', 0], ['1.44', 1]]) {
+      const core = Object.keys(dn.packages).find(n => dn.packages[n] === dn.identities[os])
+      const o = linkAll({ machine: 'digitone', pairs: true, core: dnFile(core) }).oses[0]
+      expect([o.os, o.singles.ok, o.singles.failed, Object.values(o.cores)]).toEqual([os, singles, [], [1]])
+    }
+  }, 60_000)
+
+  it.skipIf(!has('cc'))('runs the C parts on the host', () => {
+    const work = mkdtempSync(resolve(tmpdir(), 'modwerk-base-test-'))
+    try {
+      execFileSync('cc', ['-std=c11', '-Wall', '-Wextra', '-Werror', '-DMODWERK_DIGITONE', '-I', at('sdk/elemod/core'), '-I', at('sdk/machines/digitone/base'), at('sdk/machines/digitone/base/tests/base-test.c'), '-o', resolve(work, 'base-test')])
+      execFileSync(resolve(work, 'base-test'), [], { timeout: 10_000 })
+    } finally { rmSync(work, { recursive: true, force: true }) }
+  })
+
+  it.skipIf(!dnRecorded())('rebuilds the recorded packages from source', () => {
+    const work = mkdtempSync(resolve(tmpdir(), 'modwerk-base-build-'))
+    try {
+      const { packages } = buildBase('digitone', work)
+      const sha = text => createHash('sha256').update(text).digest('hex')
+      expect(packages.map(p => sha(p.text)).sort()).toEqual(Object.values(dn.packages).sort())
+    } finally { rmSync(work, { recursive: true, force: true }) }
+  }, 60_000)
+})
