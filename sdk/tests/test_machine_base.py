@@ -46,10 +46,16 @@ HOOK_BUS = {
     "sdk/machines/analog-rytm-mkii/elekloader/core/render.s",
     "sdk/machines/model-cycles/elekloader/core/core.s",
 }
+# Modwerk's own Digitakt II core (28 November 2026) took the place of the rest of the imported core-dt2, at the same
+# paths, written from a behavioural specification of core-dt2 1.1's interface and saved formats.
+OWN_CORE = {
+    "sdk/machines/digitakt-ii/elekloader/core-dt2/" + name
+    for name in ("mod.json", "fw.s", "personalize.s", "frame.s", "leds.s", "rows.s", "rows.c", "store.s", "store.c")
+} | {"sdk/machines/digitakt-ii/include/digitakt-mk2/core.h"}
 
 
 def still_imported(record):
-    return [item for item in record["files"] if item["to"] not in HOOK_BUS]
+    return [item for item in record["files"] if item["to"] not in HOOK_BUS | OWN_CORE]
 
 
 def release_sources(release, record):
@@ -78,18 +84,36 @@ class MachineBases(unittest.TestCase):
         self.assertEqual(len(sources), 7)
         self.assertEqual({name: imported[name] for name in sources}, sources)
 
-    def test_digitakt_ii_base_source_is_core_dt2_1_1_unchanged(self):
+    def test_digitakt_ii_core_is_modwerk_s_own_source(self):
+        # Nothing of the imported core-dt2 is left: every source mod.json builds, and its header, is Modwerk's.
         record = json.loads((APP / "sdk/imports/core-dt2-source-0df8409.json").read_text())
         self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
-        for item in still_imported(record):
-            self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
-        # Every source mod.json builds, and its header, is in the record or is Modwerk's hook bus.
-        imported = {item["to"] for item in record["files"]} | HOOK_BUS
+        self.assertEqual(still_imported(record), [])
         folder = APP / "sdk/machines/digitakt-ii/elekloader/core-dt2"
         mod = json.loads((folder / "mod.json").read_text())
         for source in mod["sources"]:
-            self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
-        self.assertIn("sdk/machines/digitakt-ii/include/digitakt-mk2/core.h", imported)
+            self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), HOOK_BUS | OWN_CORE, source)
+        self.assertEqual((mod["author"], mod["license"]), ("Modwerk", "GPL-2.0-or-later"))
+        for path in OWN_CORE - {"sdk/machines/digitakt-ii/elekloader/core-dt2/mod.json"}:
+            first = (APP / path).read_text().splitlines()[0]
+            self.assertIn(first, ("| SPDX-License-Identifier: GPL-2.0-or-later",
+                                  "/* SPDX-License-Identifier: GPL-2.0-or-later */"), path)
+
+    def test_digitakt_ii_kit_and_project_data_on_the_host(self):
+        """The store's saved format with its byte vectors (layout 0xA2BD for {EUS2, 64}, CRC check 0x29B1, kit area
+        4B A2 BD + 64 + 79 zeros) and its kit copies, foreign bytes and ELKP records, compiled for the host."""
+        import shutil, subprocess
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        here = APP / "sdk/machines/digitakt-ii/elekloader/core-dt2"
+        for table in (0, 1, 2):
+            with tempfile.TemporaryDirectory() as temp:
+                subprocess.run([cc, "-std=c99", "-Wall", "-Wextra", "-Werror", "-pedantic", "-DMODWERK_HOST",
+                                "-DTABLE=%d" % table, "-I", APP / "sdk/machines/digitakt-ii/include",
+                                here / "tests/store-test.c", "-o", temp + "/t"], check=True, capture_output=True)
+                result = subprocess.run([temp + "/t"], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, "table %d: %s" % (table, result.stderr))
 
     def test_model_cycles_base_source_is_core_mc_0_3_unchanged(self):
         record = json.loads((APP / "sdk/imports/core-mc-source-f20ffda.json").read_text())
@@ -357,6 +381,7 @@ class MachineBases(unittest.TestCase):
             core = machine_base.stage("digitakt-ii", config, pathlib.Path(work))
             defsym = json.loads((core / "mod.json").read_text())["defsym"]
             store = (core / "store.c").read_text()
+            assembly = (core / "store.s").read_text()
         archive = (APP / "sdk/machines/digitakt-ii/elekloader/modwerk/project-archive.c").read_text()
         constant = lambda name: int(re.search(r"\b%s = (0x[0-9a-fA-F]+|\d+)" % name, archive).group(1), 0)
         stride = int(defsym["FW_STARTUP_KIT_STRIDE"], 0)
@@ -365,12 +390,10 @@ class MachineBases(unittest.TestCase):
         kit_end = int(defsym["KIT_PAD"], 0) + int(defsym["KIT_ROOM"], 0)
         archive_start = stride - (constant("CHUNK_BYTES") + 4)
         self.assertLessEqual(kit_end, archive_start, "core's kit data runs into the project archive")
-        self.assertLessEqual(int(defsym["KIT_ROOM"], 0), int(re.search(r"#define ROOM_MAX (\d+)", store).group(1)))
-        # The copy differs from the imported recipe in the kit-data room alone.
-        imported = json.loads(imported_recipe("digitakt-ii", config).read_text())
-        copied = json.loads((APP / "sdk/machines/digitakt-ii/elekloader/copies/core-dt2/mod.json").read_text())
-        self.assertEqual(dict(copied, defsym=dict(copied["defsym"], KIT_ROOM=None)),
-                         dict(imported, defsym=dict(imported["defsym"], KIT_ROOM=None)))
+        # The room is 146 bytes, the size of store.c's area, its shadows and its scratch; store.s refuses another.
+        self.assertEqual(int(defsym["KIT_ROOM"], 0), 146)
+        self.assertEqual(int(re.search(r"#define AREA (\d+)", store).group(1)), 146)
+        self.assertIn(".ifne KIT_ROOM - 146", assembly)
 
     def test_retarget_replaces_the_recipe_and_refuses_anything_else(self):
         mod = {"device": "a", "defsym": {"X": "1"}, "sites": [{"a": 1}], "sources": ["a.s"]}

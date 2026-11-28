@@ -1,13 +1,14 @@
 # Digitakt II base source
 
-Modwerk's base for Digitakt II OS 1.17 starts from core-dt2 1.1 at `0df8409`, the reviewed head of
-[Elekloader PR #221](https://github.com/elekloader/elekloader/pull/221). Modwerk pins the reviewed commit
-directly. The imported `core-dt2/` and `../include/digitakt-mk2/core.h` are byte-for-byte copies. `core/` (`core.s`,
-`settings.s`, `fast.s`) is Modwerk's own hook bus (GPL-2.0-or-later, 28 November 2026): the boot copier, `ev_tick`, `ev_draw`,
-`ev_key`, `ev_enc`, `ev_settings` with `core_additem`, and the `.fast` copy, with the same symbols, sites and tables as
-the core it replaced. The same `core.s` builds the Rytm MKII and Model:Cycles bases; each recipe's defsyms set its
-addresses and switches. The core is irpina's and the 1.1 additions are toonst's. The
-[import record](../../../imports/core-dt2-source-0df8409.json) lists each file and its SHA-256.
+Modwerk's base for Digitakt II OS 1.17 runs on Modwerk's own core, written to the interface and saved formats of
+core-dt2 1.1 ([Elekloader PR #221](https://github.com/elekloader/elekloader/pull/221) at `0df8409`), so every mod built
+for that core links unchanged. `core/` (`core.s`, `settings.s`, `fast.s`, GPL-2.0-or-later) is the hook bus: the boot
+copier, `ev_tick`, `ev_draw`, `ev_key`, `ev_enc`, `ev_settings` with `core_additem`, and the `.fast` copy; the same
+`core.s` builds the Rytm MKII and Model:Cycles bases, each recipe's defsyms setting its addresses and switches.
+`core-dt2/` and `../include/digitakt-mk2/core.h` (GPL-2.0-or-later, 28 November 2026) hold the rest of the core: the
+PERSONALIZE, frame and key-LED events, the value rows and the kit and project data store. The package keeps every
+site, export, import and table of the base it replaced (`371564c4`); only internal symbols differ. The
+[import record](../../../imports/core-dt2-source-0df8409.json) stays as history.
 Modwerk's additional firmware bindings and hooks live under `modwerk/`.
 
 Core 1.1 keeps the six events and every site of core 1.0 and adds, in new code after the old:
@@ -24,8 +25,9 @@ The entries are proposed in [core-profile/interface.json](../../../digitakt-ii/c
 
 ## Local base candidate
 
-[base.json](base.json) stages the imported sources and adds Modwerk's [sequencer and project hooks](modwerk/README.md).
-The recipe checks that the candidate retains the stock sites and interface entries of the released `core-1.0.elemod`.
+[base.json](base.json) stages the core and adds Modwerk's [sequencer and project hooks](modwerk/README.md).
+The recipe checks that the candidate keeps the id, version, target, sites, exports, imports, tables and contributions of
+the base `371564c4`, which also holds every item of the released `core-1.0.elemod`.
 It pins the same compiler and assembler as `sdk/build/Dockerfile`. To reproduce the local candidate, build with
 that toolchain, the kit-pinned Elekloader SDK and your local copy of the exact stock OS:
 
@@ -33,7 +35,7 @@ that toolchain, the kit-pinned Elekloader SDK and your local copy of the exact s
 npm run machine:base -- digitakt-ii --stock /private/Digitakt_II_OS1.17.syx --out /private/dt2-base
 ```
 
-The base builds from a copy of core's `mod.json` ([copies](copies/core-dt2/mod.json)) that differs in one value: `KIT_ROOM` is 146, not 194, so core's kit data ends where the [project archive](modwerk/README.md#phrase-continuation-and-project-archives) starts, 48 bytes before the end of each kit record. `sdk/tests/test_machine_base.py` refuses an overlap.
+Core's kit data takes `KIT_ROOM` = 146 bytes after each kit record's end mark, so it ends where the [project archive](modwerk/README.md#phrase-continuation-and-project-archives) starts, 48 bytes before the end of each kit record. `sdk/tests/test_machine_base.py` refuses an overlap, and `store.s` refuses another room than the 146 bytes `store.c` is built for. The same test file runs the store on the host with the saved format's byte vectors (`core-dt2/tests/store-test.c`).
 
 ## Results
 
@@ -53,3 +55,5 @@ On QK17 with the same base and Euclidean Scale, Claptom-music verified that Save
 On a base `e88273ed` image with Chord Arp, Euclidean Scale and Track Names, Claptom-music reported that Euclidean Scale kept its settings but Chord Arp's ARP came back OFF after Save Project and a power cycle. Core's kit data overlapped the project archive. Base `8650bb8a` differs from `e88273ed` in that one value (`KIT_ROOM`, one byte of the package); two isolated builds reproduced it.
 
 On KR17 with base `8650bb8a`, Chord Arp, Euclidean Scale and Track Names, Claptom-music reported that after Save Project and a power cycle Euclidean Scale kept its settings on a stock Euclidean track where Chord Arp ran with ROOT=TRIG, Chord Arp stayed on with its lock on a track of ordinary trigs, and official OS 1.17 opened the project. Image SHA-256 `3cbe6f35ae3ad4aa76a005837c89cf29f59b238bc8f91ae047c12191ff3f6d19`.
+
+Base `e02f3f96` (28 November 2026) is the first on Modwerk's own core. It keeps every site, export, import and table of `371564c4`, and its kit and project data keep the saved format byte for byte (host test). The site's builder and preflight under Node built it alone and with each released module; it is not yet tested on a unit.

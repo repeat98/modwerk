@@ -1,32 +1,71 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-/* core-dt2 1.1: the mods' project data and kit data (store.s calls these from
- * the firmware's saves, loads and kit copies; the format: docs/ADAPTING.md,
- * "Project data, kit data and value rows (core-dt2 1.1, Digitakt II)").
+/* Modwerk's Digitakt II core: the modules' kit data (core_kitdata) and project data (core_projdata).
  *
- * Both live in bytes of the saved project the stock OS writes as zeros and
- * never reads, so a project saved with mods loads on the stock OS, which
- * keeps them when it saves a project it loaded. Core writes them only where
- * they hold zeros or its own data, and takes only its own: anything else
- * (another tool's, a later OS's) is left as it is and counted. */
+ * Kit data: KIT_ROOM (146) bytes after each serialized kit record's end mark, at record + KIT_PAD. The area is the
+ * mark 'K', a big-endian layout id (CRC-16/CCITT-FALSE over each descriptor's tag and big-endian size, in table
+ * order; 0 becomes 1), then every descriptor's block back to back, stopping at the first that does not fit; the
+ * rest is zero. Kits copied in RAM carry their blocks: into a project kit directly, into any other buffer through a
+ * shadow kept by its address, which a later save of that buffer writes.
+ *
+ * Project data: the project file's header gap (+0x1c .. +0x200): 'ELKP', then records {tag, size, data}, then a
+ * zero tag. Bytes in either place that are not the core's are never written, and are counted in
+ * core_store_conflicts. */
+#include <stdint.h>
 #include "digitakt-mk2/core.h"
 
-extern const uint32_t core_store_layout[]; /* store.s: kits, kit size, pad, room, pattern object */
-extern const core_projdata_t *const core_projdata[];
+#define AREA 146 /* = KIT_ROOM; store.s refuses another value */
+#define MARK 0x4b
+#define HEAD 3
+#define SHADOWS 8
+#define GAP_AT 0x1c
+#define GAP 484
+#define ELKP 0x454c4b50u
+#define KIT_TAIL 0x138 /* the pattern object's word naming the kit on */
+
+#ifdef MODWERK_HOST
+extern uintptr_t core_store_host[5]; /* the host test's kits and pattern object, in core_store_layout's order */
+#define LAYOUT(i) core_store_host[i]
+#else
+extern const uint32_t core_store_layout[5];
+#define LAYOUT(i) ((uintptr_t)core_store_layout[i])
+#endif
+#define FW_KITS LAYOUT(0)
+#define KIT_SIZE LAYOUT(1)
+#define KIT_PAD LAYOUT(2)
+#define PATTERN_OBJ LAYOUT(4)
+
 extern const core_kitdata_t *const core_kitdata[];
+extern const core_projdata_t *const core_projdata[];
 
 volatile uint32_t core_store_conflicts;
 
-#define KITS (core_store_layout[0])
-#define KIT_STRIDE (core_store_layout[1])
-#define KIT_PAD (core_store_layout[2])
-#define KIT_ROOM (core_store_layout[3])
-#define PATTERN_OBJ (core_store_layout[4])
+static struct {
+    uintptr_t addr; /* 0: free */
+    uint8_t bytes[AREA];
+} shadows[SHADOWS];
+static unsigned int next_shadow;
+static uint8_t scratch[AREA]; /* not on the stack: memcpy runs on small task stacks */
+static uint16_t layout_id;    /* 0 until computed */
 
-/* ---- project data: the header's gap, as on core-dn1: 'ELKP', then per block its
- * tag, its size and its bytes, then a zero tag ---- */
-#define GAP 0x1c
-#define GAP_END 0x200
-#define PROJ_MAGIC 0x454c4b50u /* 'ELKP' */
+static void zero(uint8_t *p, uint32_t n)
+{
+    for (uint32_t i = 0; i < n; ++i)
+        p[i] = 0;
+}
+
+static void copy(uint8_t *dst, const uint8_t *src, uint32_t n)
+{
+    for (uint32_t i = 0; i < n; ++i)
+        dst[i] = src[i];
+}
+
+static int blank(const uint8_t *p, uint32_t n)
+{
+    for (uint32_t i = 0; i < n; ++i)
+        if (p[i])
+            return 0;
+    return 1;
+}
 
 static uint32_t get32(const uint8_t *p)
 {
@@ -35,261 +74,226 @@ static uint32_t get32(const uint8_t *p)
 
 static void put32(uint8_t *p, uint32_t v)
 {
-    p[0] = (uint8_t)(v >> 24), p[1] = (uint8_t)(v >> 16), p[2] = (uint8_t)(v >> 8), p[3] = (uint8_t)v;
+    p[0] = (uint8_t)(v >> 24);
+    p[1] = (uint8_t)(v >> 16);
+    p[2] = (uint8_t)(v >> 8);
+    p[3] = (uint8_t)v;
 }
 
-static int blank(const uint8_t *p, uint32_t n)
+static uint16_t crc16(uint16_t crc, const uint8_t *p, uint32_t n)
 {
-    while (n--)
-        if (*p++)
-            return 0;
-    return 1;
+    for (uint32_t i = 0; i < n; ++i) {
+        crc ^= (uint16_t)(p[i] << 8);
+        for (int bit = 0; bit < 8; ++bit)
+            crc = crc & 0x8000 ? (uint16_t)(crc << 1 ^ 0x1021) : (uint16_t)(crc << 1);
+    }
+    return crc;
 }
 
-static void copy(uint8_t *to, const uint8_t *from, uint32_t n)
+static uint16_t layout(void)
 {
-    while (n--)
-        *to++ = *from++;
+    if (!layout_id) {
+        uint16_t crc = 0xffff;
+        for (const core_kitdata_t *const *d = core_kitdata; *d; ++d) {
+            uint8_t size[4];
+            put32(size, (*d)->size);
+            crc = crc16(crc16(crc, (const uint8_t *)(*d)->tag, 4), size, 4);
+        }
+        layout_id = crc ? crc : 1;
+    }
+    return layout_id;
 }
 
-static void zero(uint8_t *to, uint32_t n)
+/* Project kit n for a RAM address, or -1 for any other buffer. */
+static int kit_index(const void *addr)
 {
-    while (n--)
-        *to++ = 0;
+    const uintptr_t a = (uintptr_t)addr;
+    if (a < FW_KITS || (a - FW_KITS) % KIT_SIZE)
+        return -1;
+    const uintptr_t n = (a - FW_KITS) / KIT_SIZE;
+    return n < CORE_KITS ? (int)n : -1;
+}
+
+static void pack(int kit, uint8_t *area)
+{
+    zero(area, AREA);
+    area[0] = MARK;
+    area[1] = (uint8_t)(layout() >> 8);
+    area[2] = (uint8_t)layout();
+    uint32_t at = HEAD;
+    for (const core_kitdata_t *const *d = core_kitdata; *d; ++d) {
+        const uint32_t size = (*d)->size;
+        if (size > AREA - at)
+            break;
+        copy(area + at, (const uint8_t *)(*d)->data + (uint32_t)kit * size, size);
+        at += size;
+    }
+}
+
+static void unpack(int kit, const uint8_t *area)
+{
+    int fits = area[0] == MARK && (uint16_t)(area[1] << 8 | area[2]) == layout();
+    uint32_t at = HEAD;
+    for (const core_kitdata_t *const *d = core_kitdata; *d; ++d) {
+        const core_kitdata_t *const data = *d;
+        uint8_t *const block = (uint8_t *)data->data + (uint32_t)kit * data->size;
+        fits = fits && data->size <= AREA - at;
+        if (fits) {
+            copy(block, area + at, data->size);
+            at += data->size;
+        } else {
+            zero(block, data->size);
+        }
+        if (data->changed)
+            data->changed(kit, fits);
+    }
+}
+
+static uint8_t *shadow_of(const void *addr)
+{
+    for (unsigned int i = 0; i < SHADOWS; ++i)
+        if (shadows[i].addr == (uintptr_t)addr)
+            return shadows[i].bytes;
+    return 0;
+}
+
+static void shadow_set(const void *addr, const uint8_t *bytes)
+{
+    uint8_t *slot = shadow_of(addr);
+    if (!slot) {
+        shadows[next_shadow].addr = (uintptr_t)addr;
+        slot = shadows[next_shadow].bytes;
+        next_shadow = (next_shadow + 1) % SHADOWS;
+    }
+    copy(slot, bytes, AREA);
+}
+
+static void shadow_drop(const void *addr)
+{
+    for (unsigned int i = 0; i < SHADOWS; ++i)
+        if (shadows[i].addr == (uintptr_t)addr)
+            shadows[i].addr = 0;
+}
+
+int core_kit_on(void)
+{
+    const uint8_t *const pattern = *(const uint8_t *const *)PATTERN_OBJ;
+    if (!pattern)
+        return -1;
+    const uint32_t kit = *(const uint32_t *)(pattern + KIT_TAIL);
+    return kit < CORE_KITS ? (int)kit : -1;
+}
+
+uint32_t core_kitdata_room(void)
+{
+    return AREA - HEAD;
+}
+
+void core_kitdata_save(uint8_t *record, const uint8_t *kit)
+{
+    if (!core_kitdata[0])
+        return;
+    uint8_t *const area = record + KIT_PAD;
+    if (area[0] != MARK && !blank(area, AREA)) {
+        ++core_store_conflicts;
+        return;
+    }
+    const int n = kit_index(kit);
+    const uint8_t *shadow;
+    if (n >= 0)
+        pack(n, area);
+    else if ((shadow = shadow_of(kit)))
+        copy(area, shadow, AREA);
+    else
+        zero(area, AREA);
+}
+
+void core_kitdata_load(uint8_t *kit, const uint8_t *record)
+{
+    if (!core_kitdata[0])
+        return;
+    const uint8_t *const area = record + KIT_PAD;
+    const int ours = area[0] == MARK;
+    if (!ours && !blank(area, AREA))
+        ++core_store_conflicts;
+    const int n = kit_index(kit);
+    if (n >= 0)
+        unpack(n, area);
+    else if (ours)
+        shadow_set(kit, area);
+    else
+        shadow_drop(kit);
+}
+
+void core_kit_copied(void *dst, const void *src)
+{
+    if (!core_kitdata[0] || dst == src)
+        return;
+    const int s = kit_index(src);
+    const uint8_t *shadow;
+    int have = 1;
+    if (s >= 0)
+        pack(s, scratch);
+    else if ((shadow = shadow_of(src)))
+        copy(scratch, shadow, AREA);
+    else
+        have = 0;
+    const int d = kit_index(dst);
+    if (d >= 0) {
+        if (have)
+            unpack(d, scratch);
+    } else if (have) {
+        shadow_set(dst, scratch);
+    } else {
+        shadow_drop(dst);
+    }
 }
 
 void core_projdata_save(uint8_t *file)
 {
-    uint8_t *p = file + GAP, *end = file + GAP_END;
     if (!core_projdata[0])
-        return;                     /* no mod keeps project data: the bytes as the OS left them */
-    if (!blank(p, GAP_END - GAP) && get32(p) != PROJ_MAGIC) {
-        core_store_conflicts++;
+        return;
+    uint8_t *const gap = file + GAP_AT;
+    if (get32(gap) != ELKP && !blank(gap, GAP)) {
+        ++core_store_conflicts;
         return;
     }
-    zero(p, GAP_END - GAP);
-    put32(p, PROJ_MAGIC);
-    p += 4;
-    for (const core_projdata_t *const *d = core_projdata; *d; d++) {
-        uint32_t n = (*d)->size;
-        if ((uint32_t)(end - p) < n + 12) /* tag, size, bytes and the zero tag after */
-            continue;               /* does not fit: left out */
-        copy(p, (const uint8_t *)(*d)->tag, 4);
-        put32(p + 4, n);
-        copy(p + 8, (*d)->data, n);
-        p += 8 + n;
+    zero(gap, GAP);
+    put32(gap, ELKP);
+    uint32_t at = 4;
+    for (const core_projdata_t *const *d = core_projdata; *d; ++d) {
+        const core_projdata_t *const data = *d;
+        if (GAP - at < 12 || data->size > GAP - at - 12)
+            continue; /* a later, smaller block may still fit */
+        copy(gap + at, (const uint8_t *)data->tag, 4);
+        put32(gap + at + 4, data->size);
+        copy(gap + at + 8, data->data, data->size);
+        at += 8 + data->size;
     }
 }
 
 void core_projdata_load(const uint8_t *file)
 {
-    const uint8_t *gap = file + GAP, *end = file + GAP_END;
-    int ours = get32(gap) == PROJ_MAGIC;
-    if (!ours && !blank(gap, GAP_END - GAP))
-        core_store_conflicts++;
-    for (const core_projdata_t *const *d = core_projdata; *d; d++) {
-        const uint8_t *p = gap + 4;
+    const uint8_t *const gap = file + GAP_AT;
+    const int ours = get32(gap) == ELKP;
+    if (!ours && !blank(gap, GAP))
+        ++core_store_conflicts;
+    for (const core_projdata_t *const *d = core_projdata; *d; ++d) {
+        const core_projdata_t *const data = *d;
         int found = 0;
-        zero((*d)->data, (*d)->size);
-        while (ours && end - p >= 8 && get32(p)) {
-            uint32_t n = get32(p + 4);
-            if ((uint32_t)(end - p - 8) < n)
-                break;              /* runs past the gap: corrupt, stop */
-            if (get32(p) == get32((const uint8_t *)(*d)->tag)) {
-                copy((*d)->data, p + 8, n < (*d)->size ? n : (*d)->size);
+        zero(data->data, data->size);
+        for (uint32_t at = 4; ours && GAP - at >= 8;) {
+            const uint32_t tag = get32(gap + at), size = get32(gap + at + 4);
+            if (!tag || size > GAP - at - 8)
+                break; /* the end, or a corrupt record */
+            if (tag == get32((const uint8_t *)data->tag)) {
+                copy(data->data, gap + at + 8, size < data->size ? size : data->size);
                 found = 1;
                 break;
             }
-            p += 8 + n;
+            at += 8 + size;
         }
-        if ((*d)->loaded)
-            (*d)->loaded(found);
+        if (data->loaded)
+            data->loaded(found);
     }
-}
-
-/* ---- kit data: after each kit record's end mark, a mark, the layout's id and the
- * blocks in the table's order; a block that does not fit is left out ---- */
-#define KIT_MARK 0x4b /* 'K' */
-#define KIT_HEAD 3
-#define SHADOWS 8
-#define ROOM_MAX 194 /* KIT_ROOM: the bytes after a kit record's end mark */
-
-static uint16_t layout_id;
-static uint8_t layout_known;
-
-/* A CRC-16 of each block's tag and size, in the table's order: kit data saved by
- * another set of kit-data mods is not taken for this one's. Never 0. */
-static uint16_t layout(void)
-{
-    if (!layout_known) {
-        uint16_t c = 0xffff;
-        for (const core_kitdata_t *const *d = core_kitdata; *d; d++) {
-            uint8_t b[8];
-            copy(b, (const uint8_t *)(*d)->tag, 4);
-            put32(b + 4, (*d)->size);
-            for (int i = 0; i < 8; i++) {
-                c ^= (uint16_t)(b[i] << 8);
-                for (int k = 0; k < 8; k++)
-                    c = (uint16_t)(c & 0x8000 ? (c << 1) ^ 0x1021 : c << 1);
-            }
-        }
-        layout_id = c ? c : 1;
-        layout_known = 1;
-    }
-    return layout_id;
-}
-
-uint32_t core_kitdata_room(void)
-{
-    return KIT_ROOM - KIT_HEAD;
-}
-
-static int core_kit_index(const void *kit)
-{
-    uint32_t off = (uint32_t)kit - KITS;
-    if ((uint32_t)kit < KITS || off % KIT_STRIDE || off / KIT_STRIDE >= CORE_KITS)
-        return -1;
-    return (int)(off / KIT_STRIDE);
-}
-
-int core_kit_on(void)
-{
-    uint32_t o = *(volatile uint32_t *)PATTERN_OBJ, n;
-    if (!o)
-        return -1;
-    n = *(volatile uint32_t *)(o + 0x138);
-    return n < CORE_KITS ? (int)n : -1;
-}
-
-/* kit's blocks into out (KIT_ROOM bytes), or from in; in 0: zeros, found 0 */
-static void pack(int kit, uint8_t *out)
-{
-    uint8_t *p = out + KIT_HEAD, *end = out + KIT_ROOM;
-    zero(out, KIT_ROOM);
-    out[0] = KIT_MARK;
-    out[1] = (uint8_t)(layout() >> 8), out[2] = (uint8_t)layout();
-    for (const core_kitdata_t *const *d = core_kitdata; *d; d++) {
-        uint32_t n = (*d)->size;
-        if ((uint32_t)(end - p) < n)
-            break;
-        copy(p, (const uint8_t *)(*d)->data + (uint32_t)kit * n, n);
-        p += n;
-    }
-}
-
-static void unpack(int kit, const uint8_t *in)
-{
-    int ok = in && in[0] == KIT_MARK && (uint16_t)(in[1] << 8 | in[2]) == layout();
-    const uint8_t *p = in ? in + KIT_HEAD : 0, *end = in ? in + KIT_ROOM : 0;
-    for (const core_kitdata_t *const *d = core_kitdata; *d; d++) {
-        uint32_t n = (*d)->size;
-        uint8_t *to = (uint8_t *)(*d)->data + (uint32_t)kit * n;
-        int found = ok && (uint32_t)(end - p) >= n;
-        if (found) {
-            copy(to, p, n);
-            p += n;
-        } else {
-            zero(to, n);
-        }
-        if ((*d)->changed)
-            (*d)->changed(kit, found);
-    }
-}
-
-static int ours(const uint8_t *area)
-{
-    return area[0] == KIT_MARK;
-}
-
-/* Buffers outside the project's kits that hold a kit (the clipboard, the undo copy,
- * a kit loaded from the +Drive before it is copied in): their blocks, packed. */
-static struct {
-    uint32_t addr;
-    uint8_t bytes[ROOM_MAX];
-} shadow[SHADOWS];
-static uint8_t shadow_next;
-
-static uint8_t *shadow_of(uint32_t addr)
-{
-    for (int i = 0; i < SHADOWS; i++)
-        if (shadow[i].addr == addr)
-            return shadow[i].bytes;
-    return 0;
-}
-
-static uint8_t *shadow_new(uint32_t addr)
-{
-    uint8_t *s = shadow_of(addr);
-    if (!s) {
-        shadow[shadow_next].addr = addr;
-        s = shadow[shadow_next].bytes;
-        shadow_next = (uint8_t)((shadow_next + 1) % SHADOWS);
-    }
-    return s;
-}
-
-static void shadow_drop(uint32_t addr)
-{
-    for (int i = 0; i < SHADOWS; i++)
-        if (shadow[i].addr == addr)
-            shadow[i].addr = 0;
-}
-
-void core_kitdata_save(uint8_t *record, const uint8_t *kit)
-{
-    uint8_t *area = record + KIT_PAD;
-    int n = core_kit_index(kit);
-    const uint8_t *s;
-    if (!core_kitdata[0])
-        return;
-    if (!blank(area, KIT_ROOM) && !ours(area)) {
-        core_store_conflicts++;
-        return;
-    }
-    if (n >= 0)
-        pack(n, area);
-    else if ((s = shadow_of((uint32_t)kit)) != 0)
-        copy(area, s, KIT_ROOM);
-    else
-        zero(area, KIT_ROOM);       /* a kit core knows nothing of */
-}
-
-void core_kitdata_load(const uint8_t *kit, const uint8_t *record)
-{
-    const uint8_t *area = record + KIT_PAD;
-    int n = core_kit_index(kit);
-    if (!core_kitdata[0])
-        return;
-    if (!blank(area, KIT_ROOM) && !ours(area))
-        core_store_conflicts++;
-    if (n >= 0)
-        unpack(n, ours(area) ? area : 0);
-    else if (ours(area))
-        copy(shadow_new((uint32_t)kit), area, KIT_ROOM);
-    else
-        shadow_drop((uint32_t)kit);
-}
-
-void core_kit_copied(uint8_t *dst, const uint8_t *src)
-{
-    static uint8_t tmp[ROOM_MAX];   /* not on the stack: memcpy runs on small task stacks too */
-    int d = core_kit_index(dst), s = core_kit_index(src);
-    const uint8_t *from = 0;
-    if (!core_kitdata[0] || dst == src)
-        return;
-    if (s >= 0) {
-        pack(s, tmp);
-        from = tmp;
-    } else {
-        from = shadow_of((uint32_t)src);
-    }
-    if (d >= 0) {
-        if (from)
-            unpack(d, from);
-        return;                     /* from a buffer core never saw filled: the kit's blocks stay */
-    }
-    if (from)
-        copy(shadow_new((uint32_t)dst), from, KIT_ROOM);
-    else
-        shadow_drop((uint32_t)dst);
 }

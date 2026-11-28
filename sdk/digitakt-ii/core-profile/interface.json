@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "digitakt-ii",
   "interface": "1.1",
-  "status": "Modwerk's Digitakt II base for OS 1.17, built from the pinned core-dt2 1.1 source and selected by the SHA-256 in sdk/machines/digitakt-ii/base-binding.json.",
+  "status": "Modwerk's Digitakt II base for OS 1.17, built on Modwerk's own core with the core-dt2 1.1 interface and selected by the SHA-256 in sdk/machines/digitakt-ii/base-binding.json.",
   "events": [
     {
       "name": "ev_tick",

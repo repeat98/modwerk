@@ -320,9 +320,9 @@
         "note": "Released core, perform-direct and perform-levels packages for OS 1.17. The author reports individual hardware results, including an earlier perform-direct version; the combined build is not hardware-tested. Modwerk listings remain to be added."
       },
       {
-        "label": "core-dt2 1.1 source (Elekloader PR #221)",
+        "label": "core-dt2 1.1 interface (Elekloader PR #221)",
         "url": "https://github.com/elekloader/elekloader/tree/0df84098c8e29472208c9629e70d24012fe82555/mods/core-dt2",
-        "note": "Adds frame values, key LEDs and project and kit data to core 1.0's events. Modwerk's base uses this reviewed source and adds its own sequencer and project hooks."
+        "note": "Adds frame values, key LEDs and project and kit data to core 1.0's events. Modwerk's own core keeps this interface and its saved formats, so mods built for it link unchanged, and the base adds its own sequencer and project hooks."
       }
     ],
     "sdk": {
@@ -345,8 +345,8 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 28302,
-          "note": "Pinned Modwerk base: 15,638 bytes .run plus 12,664 bytes .bss. The linker measures each selected set."
+          "value": 27810,
+          "note": "Pinned Modwerk base: 15,574 bytes .run plus 12,236 bytes .bss. The linker measures each selected set."
         },
         {
           "name": "Fast SRAM for code",
