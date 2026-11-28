@@ -19,7 +19,7 @@
     "vibrato": "0.1.0-experimental",
     "resonator": "0.1.0-experimental",
     "mackity": "0.1.0-experimental",
-    "midiverb": "0.1.0-experimental",
+    "midiverb": "0.2.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.4.2-experimental",
     "quantizer": "0.1.5-experimental",
@@ -47,8 +47,8 @@
   },
   "files": {
     "dsp-packages.json": {
-      "bytes": 93512,
-      "sha256": "4eb8d65bfd303b63c490f33b719127fc9d1429c696027c876bbcb51a085eaab0"
+      "bytes": 95255,
+      "sha256": "8fd4344aa9db214bc7c7e599a02aeaca12ed5ba5c02037e4905643e6f1b1625e"
     },
     "resident-dsp.json": {
       "bytes": 6981,
@@ -67,12 +67,12 @@
       "sha256": "f4b17e0eb4e297e6dbfc61781fe5aed41262c1e7263e42579184c7cc15fa843e"
     },
     "menu-recipes.json": {
-      "bytes": 32016,
-      "sha256": "96ca9f4ddac0fe38905c2c530d70e08600b19a175f8b0feb289d03b095352d9e"
+      "bytes": 32622,
+      "sha256": "3971e8a73a45acd8310b6dcbedeffce27188d2a785c156c14cecc8c817ca9517"
     },
     "descriptor-recipes.json": {
-      "bytes": 87819,
-      "sha256": "91f797592fe15e07794f26d5083148af88644a55b4a69fbf177d8b52d8e20636"
+      "bytes": 87820,
+      "sha256": "58a7d2a92df55234aa145b572f3ed785dc298ab6dadfc1ec16520d69f8f9a15b"
     },
     "platform-writes.json": {
       "bytes": 15585,

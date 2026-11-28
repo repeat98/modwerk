@@ -11,9 +11,9 @@ import { LINK_DEVICES, parseElemod, type ParsedMod } from '../elektron/elemod.ts
 import { unpackDt2SharcSection, verifyDt2RenderSection, type Dt2RenderPlan } from '../elektron/dt2-sharc.ts'
 import { sha256Hex } from '../elektron/hash.ts'
 import { StockWriteError, checkStockWrites, type DeclaredSite, type StockMap } from '../elektron/stock-writes.ts'
-import { TRAILER } from '../../../vendor/elekloader/kit/src/store.ts'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
-import type { Catalog } from '../../../vendor/elekloader/kit/src/kit/catalog.ts'
+import { TRAILER } from '../elektron/store.ts'
+import { sha } from '../elektron/bytes.ts'
+import type { Catalog } from '../elektron/builder-catalog.ts'
 import { BUILDER_CATALOG } from './machine-build.ts'
 /** Machines whose builds pass the preflight before the page offers them. */
 export const PREFLIGHT_MACHINES: readonly ElemodMachine[] = ['digitakt-ii']

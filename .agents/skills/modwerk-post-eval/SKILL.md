@@ -7,7 +7,7 @@ description: Look back at an agent session for what slowed the developer down - 
 
 Follow `docs/AGENT_SESSIONS.md#review-the-session-first`. The aim is a quicker next session for every developer, not a verdict on this one.
 
-1. **Measure.** Run `npm run session -- review` (this session; `--file <transcript>` for an earlier one in `~/.claude/projects/` or `~/.codex/sessions/`). Nothing is sent. It prints:
+1. **Measure.** Run `npm run session -- review` (this session; `--file <transcript>` for an earlier one, or let it pick the newest for this checkout from Claude Code, Codex or Cursor). Nothing is sent. It prints:
    - wall time per tool, the slowest calls, failed calls and what ran three times or more;
    - the times the developer stopped the agent or refused a tool call, and their prompts that read like a correction or frustration;
    - the development processes on this computer that used the most processor time: an editor indexing worktrees, Spotlight, an emulator or check left running.

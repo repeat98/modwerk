@@ -324,6 +324,13 @@ describe('every machine', () => {
     expect(recordMarkdown(record(noCases, read, { started: 0, finished: 1000, command: 'x' }))).toMatch(/^Not tested on a unit:/m)
   })
 
+  it('runs step 1 of a listed module update with --procedure, since this run writes its new qualification record', () => {
+    const manifest = (version, tested) => ({ version, tests: { qualification: { moduleVersion: tested } } })
+    expect(plan(STEPS[0], moduleCtx({ manifest: manifest('0.2.0', '0.1.0') })).commands).toEqual([['npm', 'run', 'module:doctor', '--', '--procedure', 'vibrato']])
+    expect(plan(STEPS[0], moduleCtx({ manifest: manifest('0.2.0', '0.2.0') })).commands).toEqual([['npm', 'run', 'module:doctor', '--', 'vibrato']])
+    expect(plan(STEPS[0], moduleCtx({ draft: true, manifest: manifest('0.2.0', '0.1.0') })).commands).toEqual([['npm', 'run', 'module:doctor', '--', '--draft', 'vibrato']])
+  })
+
   it('names what a machine still lacks for each step it has no tool for, and what to pass for the build', () => {
     const ctx = moduleCtx({ id: 'track-names', machine: 'digitakt-ii', machineName: 'Digitakt II', platform: 'elemod', cases: [] })
     expect(plan(STEPS[0], ctx).commands).toEqual([['npm', 'run', 'module:doctor', '--', 'track-names']])

@@ -137,7 +137,7 @@ Every module fix includes its changelog entry in the same PR, never after it. Be
 }
 ```
 
-Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`). An optional `sourceCommit` is a full 40-character repository commit SHA; omit it until the referenced commit exists. Write for the people who play the module: they read these notes on the module page and in the update email. Use at most five lines, each one plain sentence of at most 200 characters about what changed for them: a new feature, a fixed bug with its issue number, a changed control, something to redo after updating. “Updated module” is not enough. A first release lists the version it ships, not the versions players never had; a port keeps upstream's history. Leave out how it was done, measurements, addresses, internal names, test evidence and owner waivers; they belong in the pull request and the verification record. When players need to know a limit, add one line that starts with `Known issue:` in plain words, for example `Known issue: not yet tested on the MKI.` Never imply hardware or audio testing that did not happen. For an imported release, say in a few words whether upstream changed the module or Modwerk only repackaged it.
+Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`). An optional `sourceCommit` is a full 40-character repository commit SHA; omit it until the referenced commit exists. Write for the people who play the module: they read these notes on the module page and in the update email. Use at most five lines, each one plain sentence of at most 200 characters about what changed for them: a new feature, a fixed bug with its issue number, a changed control, something to redo after updating. “Updated module” is not enough. A first release lists the version it ships, not the versions players never had; a port keeps upstream's history. Leave out how it was done, measurements, addresses, internal names, test evidence or status and owner waivers; they belong in the pull request and the verification record (`npm run check` refuses test status). When players need to know a limit, add one line that starts with `Known issue:` in plain words, for example `Known issue: three heavy tracks can crackle.` For an imported release, say in a few words whether upstream changed the module or Modwerk only repackaged it.
 
 ```json
 {
@@ -146,7 +146,7 @@ Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`)
   "changes": [
     "Fixes the Octatrack freezing while POLY8 plays (#646). When the CPU runs short, POLY8 now drops voices: release tails first, then the oldest notes.",
     "Uses much less CPU on the beta base. The sound is unchanged.",
-    "Known issue: not yet tested on the MKI or after reloading a project."
+    "Known issue: how many voices play at once depends on your base."
   ]
 }
 ```
@@ -319,7 +319,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 
 1. **Create the folder.**
    - *Porting:* copy the module's folder from octabam at an exact commit into `sdk/octatrack/modules/<id>/`, and put the author's original files it depends on under `upstream/`. Record every copied file with its source path and SHA-256 in `sdk/imports/<id>-<short-commit>.json`; `sidechain-compressor-f80ecfe.json` is an example. Add the licence to `sdk/octabam/licenses/manifest.json`, then run `npm run licenses:generate`.
-   - *New:* `npm run module:new` creates the draft in `sdk/drafts/<id>/`. Pick a free effect ID, and replace `verify.py`, which fails on purpose until you do.
+   - *New:* `npm run module:new` creates the draft in `sdk/drafts/<id>/`. Keep its effect ID (the base assigns one), and replace `verify.py`, which fails on purpose until you do.
    - Either way, read the traps in [octabam's AGENTS.md](../sdk/octabam/AGENTS.md) before writing DSP or ColdFire code. The DSP assembler silently mis-encodes some instructions, and several of these traps assemble cleanly into the wrong machine code.
 2. **Fill in the manifest** from [the template](../public/module-repository.example.json): every control, the access steps, compatibility and conflicts. The [gauges](MODULE_RESOURCE_GAUGES.md) and [`tests.qualification`](MODULE_QUALIFICATION.md) come from the evidence (step 3).
 3. **Measure and test.**
@@ -354,7 +354,7 @@ Every new library version passes the publication gate: at least `author-hardware
 **Porting an elekloader mod:**
 
 1. Take `elekloader-catalog.json` (and the kit zip when the kit changes) from an elekloader release, then run `npm run elekloader:update -- [elekloader-kit-<version>.zip --sha256 <hash>] elekloader-catalog.json [--library]`. It downloads each mod from its author's release, checks every hash, writes `vendor/elekloader/catalog/` and the lock, and prints what is left by hand. Details: [vendor/elekloader/README.md](../vendor/elekloader/README.md#updating). A module's id is its catalog id.
-2. Create `sdk/<machine>/modules/<id>/` with the same layout as [digihealth](../sdk/digitakt/modules/digihealth/):
+2. Create `sdk/<machine>/modules/<id>/` with the same layout as [CC Recall](../sdk/digitakt/modules/cc-recall/):
    - `modwerk.module.json`, with `source` pinned to the author's commit;
    - the author's source under `src/`, and `build.json`;
    - README, TESTING, and LICENSE with the author's own licence text;

@@ -69,7 +69,7 @@
     },
     {
       "id": "midiverb",
-      "version": "0.1.0-experimental",
+      "version": "0.2.0-experimental",
       "addedAt": "2026-11-25T20:15:00Z"
     },
     {
@@ -236,6 +236,11 @@
       "id": "screen-off",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-19T14:20:00Z"
+    },
+    {
+      "id": "seq",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-27T20:30:00Z"
     },
     {
       "id": "grain",

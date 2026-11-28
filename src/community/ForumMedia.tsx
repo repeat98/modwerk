@@ -41,8 +41,8 @@ export function MediaPicker({items,setItems}:{items:PendingMedia[];setItems:Disp
       <button type="button" className="text-button" onClick={()=>remove(item)} disabled={item.status==='preparing'}><Icon name="close" size={13}/>Remove</button>
     </li>)}</ul>}
     <input ref={input} type="file" hidden multiple accept="image/png,image/jpeg,image/webp,audio/*,.wav,.aif,.aiff,.flac,.mp3,.ogg,.opus,.m4a" onChange={event=>{for(const file of [...event.target.files??[]].slice(0,Math.max(room,0)))void add(file);event.target.value=''}}/>
-    <button type="button" className="button button-quiet" disabled={room<=0} onClick={()=>input.current?.click()}><Icon name="plus" size={14}/>Add image or sound</button>
-    <span className="forum-field-hint">Up to {FORUM_MEDIA.perPost} files. Images become WebP and sound becomes Opus in your browser; photo location data is removed.</span>
+    <button type="button" className="button button-quiet" disabled={room<=0} onClick={()=>input.current?.click()}><Icon name="image" size={15}/>Add image or sound</button>
+    <span className="forum-field-hint">Up to {FORUM_MEDIA.perPost} images or sound clips. Photo location data is removed.</span>
   </div>
 }
 // Hidden posts are visible only to the administrator, whose session is a header, so those files are fetched instead of linked.

@@ -179,6 +179,8 @@ function machinePlan(step, ctx) {
   return { skip: (GAP[step.id] ?? GAP.unit)(name) }
 }
 
+const updateOf = ctx => !!ctx.manifest?.tests?.qualification && ctx.manifest.tests.qualification.moduleVersion !== ctx.manifest.version
+
 /** The commands each step runs for this target, or why it is not run. Pure: everything it reads is in ctx. */
 export function plan(step, ctx) {
   const module = ctx.kind === 'module', pkg = ctx.pkg ?? builtPackage(ctx)
@@ -188,7 +190,8 @@ export function plan(step, ctx) {
     case 'software':
       if (!module) return { commands: [npmRun('sdk:check')] }
       if (!ctx.source) return { skip: 'no module source for ' + ctx.id + ' in this checkout' }
-      return { commands: [npmRun('module:doctor', ...(ctx.draft ? ['--draft'] : []), ctx.id)] }
+      // A listed module's update: its qualification record names the version before it until this run's evidence is written in.
+      return { commands: [npmRun('module:doctor', ...(ctx.draft ? ['--draft'] : updateOf(ctx) ? ['--procedure'] : []), ctx.id)] }
     case 'compat':
       if (!module) return { commands: [npmRun('modules:compat')] }
       if (!ctx.source) return { skip: 'no module source for ' + ctx.id + ' in this checkout' }
@@ -631,10 +634,25 @@ function realDeps(root) {
           throw new Error('the trial did not start: ' + state.output.trim().split('\n').slice(-3).join(' / '))
         },
         async stop() {
+          // Windows: child.kill('SIGINT') ends the process without its handler rolling back
+          // (octatrack-price.mjs). Recover afterwards so soak / unit trials leave an empty inventory.
           if (!ended) child.kill('SIGINT')
-          const code = await Promise.race([state.done, new Promise(r => setTimeout(() => r('timeout'), 60000))])
+          let code = await Promise.race([state.done, new Promise(r => setTimeout(() => r('timeout'), 60000))])
           if (code === 'timeout') { child.kill('SIGKILL'); return { code: 1, output: state.output + '\nthe trial did not end within 60 s: unplug USB, the base rolls back what was not kept' } }
-          return { code, output: state.output }
+          let output = state.output
+          if (process.platform === 'win32' && !/^rolled back/m.test(output) && !/^recovered from /m.test(output)) {
+            const share = env?.MODWERK_SHARE_SOCKET ?? process.env.MODWERK_SHARE_SOCKET ?? '47813'
+            const recover = await new Promise(resolve => {
+              const r = spawn(process.execPath, ['scripts/device.mjs', 'recover', '--socket', share], { cwd: root, env: { ...process.env, ...env } })
+              let text = ''
+              r.stdout?.on('data', c => { text += c }); r.stderr?.on('data', c => { text += c })
+              r.on('exit', c => resolve({ code: c ?? 1, output: text }))
+            })
+            output += recover.output
+            appendFileSync(log, recover.output)
+            if (/recovered from |now normal,/m.test(recover.output)) output += '\nrolled back (Windows recover after SIGINT kill)\n'
+          }
+          return { code, output }
         },
       }
     },

@@ -41,9 +41,9 @@ const OCTATRACK: Starter[] = [
 ]
 
 const DIGI: Starter[] = [
-  { id: 'machine', title: 'A new machine', summary: 'A new SRC machine under a free machine id.', guides: ['machines.md'], example: 'Digitakt: Digi Poly, Digi Mono, SOPHIE',
+  { id: 'machine', title: 'A new machine', summary: 'A new SRC machine under a free machine id.', guides: ['machines.md'], example: 'Digitakt: STRING, RAM Machines',
     task: 'Build a new SRC machine under a free machine id (core_machines, ids 4–127): {idea}\nClaim the id in platform.claims and keep the stock machines untouched.' },
-  { id: 'effect', title: 'An effect', summary: 'Process the audio at the render hooks, such as an EQ or a saturator.', guides: ['effects.md'], example: 'Digitakt: Digi EQ',
+  { id: 'effect', title: 'An effect', summary: 'Process the audio at the render hooks, such as an EQ or a saturator.', guides: ['effects.md'], example: '',
     task: 'Build an audio effect on the render hooks (ev_render_in / ev_render_out): {idea}\nStay inside the shared memory and fast SRAM budgets and say how much of each it uses.' },
   { id: 'sequencer', title: 'A sequencer tool', summary: 'Ratchets, generative steps or anything else that acts in time.', guides: ['sequencing.md'], example: '',
     task: 'Build a module that acts on the sequencer: {idea}\nFollow the instrument\'s own transport, tempo, track speed and swing. Never keep a clock of your own.' },
@@ -51,7 +51,7 @@ const DIGI: Starter[] = [
     task: 'Build a MIDI generator or MIDI effect: {idea}\nClaim any SysEx id in platform.claims. Agree the design with me first.' },
   { id: 'midi', title: 'MIDI & USB', summary: 'Map or filter MIDI.', guides: ['midi-usb.md'], example: '',
     task: 'Build a MIDI module: {idea}\nSay exactly which messages it consumes, passes through, maps or sends, and claim any SysEx id it uses.' },
-  { id: 'workflow', title: 'A workflow tweak', summary: 'Playback, screens, keys and SETTINGS rows that make the unit nicer to use.', guides: ['playback.md', 'system.md'], example: 'Digitakt: Digi Utils, Digi Matrix; Digitone: digitables',
+  { id: 'workflow', title: 'A workflow tweak', summary: 'Playback, screens, keys and SETTINGS rows that make the unit nicer to use.', guides: ['playback.md', 'system.md'], example: 'Digitakt: Sample Snap and Crossfade, Input Pre-Fader Sends',
     task: 'Build a workflow module using the key, encoder, draw or SETTINGS events: {idea}\nPick the category (playback or system) whose guide fits best and tell me which. Only take the key or encoder events it needs and leave everything else to the OS.' },
   { id: 'port', title: 'Port an elekloader mod', summary: 'Bring a released .elemod mod to Modwerk with its author\'s credit.', guides: [], port: true, example: '',
     task: 'Port this elekloader mod to Modwerk: {idea}\nImport it with `npm run elekloader:update`, pin `source` to the author\'s commit, keep their credit, licence and README under upstream/, and record the import in sdk/imports/.' },

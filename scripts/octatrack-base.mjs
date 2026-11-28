@@ -24,12 +24,12 @@
 // (module-adapters/machine-recipes.json) against the new base's symbols first (docs/OCTATRACK_BETA_TEST_PLAN.md, finding 17).
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
-import * as formats from '../vendor/elekloader/kit/src/formats.ts'
+import { sha } from '../src/engine/elektron/bytes.ts'
+import * as formats from '../src/engine/elektron/firmware-formats.ts'
 import { buildBase } from '../src/engine/elekloader/octatrack-base.ts'
 import { applyVariantPatch } from '../src/engine/elekloader/base-variants.ts'
 import { USB_AUDIO_LAYOUTS } from '../src/config/usb-audio.ts'
@@ -87,6 +87,7 @@ const same = (fresh, path) => {
 if (args['resident-on-demand'] && !args['resident-stock-hooks']) throw new Error('--resident-on-demand needs --resident-stock-hooks.')
 if (args['resident-stock-hooks'] && !args['resident-on-demand']) throw new Error('--resident-stock-hooks needs --resident-on-demand: Analog BD’s engine is its package’s.')
 const work = mkdtempSync(join(tmpdir(), 'modwerk-base-')), core = join(work, 'core')
+process.on('exit', () => rmSync(work, { recursive: true, force: true })) // ~60 MB of firmware build per run; --out keeps what a person needs
 const buildLayout = (layout, output, ...rest) => python('build_core.py', '--stock', args.stock, '--upstream', args.upstream, '--output', output, '--dsp-loader',
   ...(args['usb-input'] ? ['--usb-input'] : []), ...(args['usb-midi'] ? ['--usb-midi'] : []), ...(args['packaged-usb-audio'] ? ['--packaged-usb-audio'] : []), ...(layout ? ['--usb-audio', layout] : []),
   ...(args['site-events'] ? ['--site-events'] : []), ...(args['cached-modules'] ? ['--cached-modules'] : []),

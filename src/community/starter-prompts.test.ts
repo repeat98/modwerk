@@ -307,7 +307,7 @@ describe('start developing page', () => {
     expect(html).not.toContain('Build, test, release')
   })
 
-  it.each(['miniverb', 'digitakt-digihealth', 'digitone-digihealth'])('prefills the correct update path for %s', moduleId => {
+  it.each(['miniverb', 'digitakt-digiperform', 'digitone-kitbank'])('prefills the correct update path for %s', moduleId => {
     const html = renderToStaticMarkup(createElement(SubmissionPage, { moduleId }))
     expect(html).toContain('Describe the change')
     expect(html).toContain('Fix, test, release')

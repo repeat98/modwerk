@@ -4420,7 +4420,7 @@
       "id": "midiverb",
       "key": "MIDIVERB",
       "name": "Midiverb I/II",
-      "version": "0.1.0-experimental",
+      "version": "0.2.0-experimental",
       "category": "effects",
       "access": {
         "location": "Audio track FX2 SETUP: MIDIVRB I/II in the effect chooser.",
@@ -4456,10 +4456,10 @@
       "presentation": {
         "label": "1986 DIGITAL REVERB",
         "family": "Reverb",
-        "summary": "All 174 programs of the Alesis Midiverb, Midiverb II and Midifex (59, 56 and 59), run at their original arithmetic.",
-        "overview": "Each program is the original unit's, played step for step: the same delay lines, the same 12-bit input, the same 16-bit memory and rounding, at half rate like the original. 174 programs in three banks; the name of each shows while you turn.",
+        "summary": "All 225 programs of the Alesis Midiverb, Midiverb II and Midifex (63, 99 and 63), run at their original arithmetic.",
+        "overview": "Each program is the original unit's, played step for step: the same delay lines, the same 12-bit input, the same 16-bit memory and rounding, at half rate like the original. All 225 programs of the three units, the Midiverb II's chorus and flange programs with their LFOs; the name of each shows while you turn.",
         "highlights": [
-          "174 original programs: 59 Midiverb, 56 Midiverb II, 59 Midifex",
+          "225 original programs: 63 Midiverb, 99 Midiverb II with its swept choruses and flanges, 63 Midifex",
           "The original's grain: 12-bit input, 16-bit memory, its own rounding",
           "Program and bank names in a message box as you turn",
           "STOP, STOP, STOP cuts the tail; MIX 0 is exact dry"
@@ -4475,8 +4475,8 @@
         {
           "name": "PROG",
           "default": 0,
-          "count": 59,
-          "doc": "the bank's program; its name shows in a message box while it turns",
+          "count": 102,
+          "doc": "the bank's program; its number and name show in a message box while it turns. 0.1.0's programs keep their places, the ones added in 0.2.0 follow",
           "labels": [
             "1",
             "2",
@@ -4536,7 +4536,50 @@
             "56",
             "57",
             "58",
-            "59"
+            "59",
+            "60",
+            "61",
+            "62",
+            "63",
+            "64",
+            "65",
+            "66",
+            "67",
+            "68",
+            "69",
+            "70",
+            "71",
+            "72",
+            "73",
+            "74",
+            "75",
+            "76",
+            "77",
+            "78",
+            "79",
+            "80",
+            "81",
+            "82",
+            "83",
+            "84",
+            "85",
+            "86",
+            "87",
+            "88",
+            "89",
+            "90",
+            "91",
+            "92",
+            "93",
+            "94",
+            "95",
+            "96",
+            "97",
+            "98",
+            "99",
+            "100",
+            "101",
+            "102"
           ]
         },
         {
@@ -4574,17 +4617,17 @@
         "limitations": [
           "FX2 only: each instance uses the first 15,870 words of its track's 16K-word FX2 buffer and leaves the last 514 to Sidechain Compressor's key window on T3 and T7.",
           "Patches one stock site of its own (0x4000d568), where each frame's parameters are final; Euclid's patch six bytes before returns into it, so both install together.",
-          "Up to 398 executed DSP instructions a sample in the emulator (declared 398), about 1.26 times stock SPRING REV at its worst (314). The 31 original programs that need more, and the Midiverb II's chorus and flange programs, are not in this release.",
-          "Unlike the original: 22.05 kHz instead of about 23.4 kHz (reverb times and delays about 6 % longer), no model of its analog filters and noise, some long delays up to 4.5 % shorter, and a mono input from the average of left and right.",
+          "Up to 331 executed DSP instructions a sample in the emulator, about 1.05 times stock SPRING REV at its worst (314); the Midiverb II's chorus and flange programs, with their LFOs, are the dearest.",
+          "Unlike the original: 22.05 kHz instead of about 23.4 kHz (reverb times and delays about 6 % longer), no model of its analog filters and noise, some long delays up to 4.5 % shorter, and a mono input from the average of left and right. The Midiverb II's chorus and flange LFOs step once every 8 samples, a pace not read from the original, and its three triggered flanges (50, 53, 57) sweep on their own, with no trigger.",
           "On base 0.8.1, the first NO after picking it on FX2 SETUP only closes the memory box: press FX2 for its page instead. Base 0.8.2 fixes it.",
           "With Scale Quantizer or FM Synth installed, the program and bank names do not show and, on base 0.8.1, slow PROG and BANK turns after a pick need an FX2 re-entry: their adapters take the knob store first."
         ]
       },
       "resources": {
-        "recorded": "2026-11-25",
+        "recorded": "2026-11-27",
         "storage": {
           "label": "DSP program / state",
-          "display": "645 words / 32-word state",
+          "display": "929 words / 32-word state",
           "value": null,
           "unit": "see display",
           "method": "static",
@@ -4593,7 +4636,7 @@
         },
         "processing": {
           "label": "DSP instruction peak",
-          "display": "397 instructions/sample per instance",
+          "display": "330 instructions/sample per instance",
           "value": null,
           "unit": "see display",
           "method": "emulator",
@@ -4622,12 +4665,12 @@
           }
         },
         "cpuPrice": {
-          "value": 1.1,
+          "value": 2.3,
           "unit": "percent-of-frame",
           "measure": "frame-interrupt",
           "tool": "npm run device:price -- --write",
-          "date": "2026-11-25",
-          "conditions": "Dev17 bank C, Part 1 reloaded to its saved copy, stopped; picks on the empty C02, readings on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7); owner's MKII, OS 1.40C; base 0.8.1 (development twin 4c7eb79b of eb667962), MKII; 3 readings of 8 s a state. Frame interrupt 34.9 % before, 35.7 % installed and used nowhere, 36 % on T1 FX2; CPU meter 57 % before, 57.8 % at rest, 54.8 % in use.",
+          "date": "2026-11-27",
+          "conditions": "Dev17 bank C: C04 Part 2 (working = saved), picks on the empty C02, the curve on C04 (trigs on steps 1/5/9/13 of T1-T4, T6, T7), transport stopped; twin ed5474c6 of base 0.8.3 (main 80ea1e584); base development twin ed5474c6 of base 0.8.3 (main 80ea1e584), the owner's MKII, OS 1.40C; 3 readings of 8 s a state. Frame interrupt 36.6 % before, 36.6 % installed and used nowhere, 38.9 % on T1 FX2; CPU meter 56.7 % before, 56.7 % at rest, 58.7 % in use.",
           "source": "evidence/cpu-price.json"
         }
       },
@@ -4635,7 +4678,7 @@
         "report": "TESTING.md",
         "summary": "npm run test:procedure on the owner's MKII (2026-11-25, base 0.8.1 twin): every unit step passed; perf:audit worst 397.1 instructions a sample, the stress run four a core with no clobber; the owner tried it and approved it.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "461f05d21983d1bc436dbeb6b79c0e9feb5cdc51",
+        "evidenceRevision": "8bfd17721bd568f30d07003d208abfa71772dc0d",
         "gates": [
           "Worst-case cycles under parameter modulation and maximum load",
           "Exact memory region and maximum-instance totals",
@@ -4647,7 +4690,7 @@
               "title": "Quick tutorial",
               "steps": [
                 "Load a drum loop on track 1, press FX2, then FUNC + FX2, scroll to MIDIVRB I/II with LEVEL, press YES, then FX2: the page shows PROG, LEVL, BANK and MIX.",
-                "Play the pattern and turn A slowly: the message box names each program, from short bright rooms to 20-second halls. Turn D to MV2 for the Midiverb II's programs, or FEX for the Midifex's.",
+                "Play the pattern and turn A slowly: the message box names each program, from short bright rooms to 20-second halls. Turn D to MV2 for the Midiverb II's programs (its flanges and choruses, 50 to 69 on the original, are the last twenty), or FEX for the Midifex's.",
                 "Turn F (MIX) up to hear more of the reverb. Turn it to 0, or press STOP three times, to get the dry loop back."
               ]
             },
@@ -4660,23 +4703,23 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.1.0-experimental",
-          "sourceSha256": "efd3414d7a49dd2ec2b822e21ee073d47ca268c6f68bf01871dc18e1407eb4bd",
-          "imageSha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968",
+          "moduleVersion": "0.2.0-experimental",
+          "sourceSha256": "e99088735178ccf0dda468efbaf31e89b3a8d9f555d7c59e776fdb42863f5ec4",
+          "imageSha256": "d554753cf04faaf5dd3921a1b2c6ec34ed8d75521ae55a78148736ff560bd8f9",
           "cycles": [
             {
               "processor": "dsp",
-              "worstCase": 398,
-              "maxConfiguration": 1592,
+              "worstCase": 326,
+              "maxConfiguration": 1304,
               "maxInstances": 8,
               "budget": 3120,
               "unit": "cycles/sample",
-              "method": "emulator",
+              "method": "static",
               "conditions": {
-                "parameterExtremes": "Every one of the 174 programs streamed by its index at LEVL 127 and MIX 127, unsplit and split at frames 1 and 7, in dsp_host: the worst block 397.1 executed instructions a sample (Midiverb #16), which includes the per-call stream loader and the ring clear; 395.6 while it fades out into another program during a split. static.py's count of the sample loop alone, every conditional add taken: 395.5. Declared 398.",
-                "parameterModulation": "stress.py: three LFOs an instance (LEVL sine, MIX triangle, slot E square) and all twelve slots new every sixteenth; LFOs, locks, scenes and CC reach the engine only as the slot values in its parameter block, which the engine reads each call. Program and bank changes arrive as the ColdFire half's stream and are rendered in every case.",
-                "modeSwitching": "A program change fades the wet out over 16 calls, clears the ring 512 words a call and loads the next program from its stream; STOP's tail kill silences the reverb and clears the ring. verify.py checks both bit for bit; stress.py switches programs every sixteenth and holds the tail kill twice. Part changes reach it as new slot values and a new program on the stream.",
-                "maxLoad": "Four instances a core, eight on both: 4 x 398 = 1,592 of the 3,120 a core can spend a sample. stress.py runs four a core on eight tracks at stock's own FX2 buffers; on the unit the base admitted three on core 1 (peak 88.4 % with the stock effects) and two on core 0.",
+                "parameterExtremes": "Every one of the 225 programs streamed by its index at LEVL 127 and MIX 127, unsplit and split at frames 1 and 7, in dsp_host (verify.py --all): the worst block 330.4 executed instructions a sample (Midiverb II #69, an LFO program), with the per-call stream loader and the ring clear; static.py's longest path over each program's units, every conditional add taken: 325.1. On the owner's MKII (27 November 2026) the dearest program, #69, read 613.3 chip cycles a sample on core 1 and 593.0 on core 0 against a NONE baseline, so the package declares 632 hardware cycles (the highest reading, rounded up; the cap is 726).",
+                "parameterModulation": "stress.py: three LFOs an instance (LEVL sine, MIX triangle, slot E square) and all twelve slots new every sixteenth; LFOs, locks, scenes and CC reach the engine only as the slot values in its parameter block, which the engine reads each call. Program and bank changes arrive as the ColdFire half's stream; the Midiverb II's chorus and flange programs run their own LFO sweeps inside the engine.",
+                "modeSwitching": "A program change fades the wet out, clears the ring and loads the next program from its stream; STOP's tail kill silences the reverb and clears the ring. verify.py checks both bit for bit; stress.py switches programs every sixteenth and holds the tail kill. On the unit device:test switched Parts 12 of 12 with their own effects, and the 120 s soak changed scenes and the crossfader with it installed.",
+                "maxLoad": "Four instances a core, eight on both: 4 x 326 = 1,304 executed instructions of the 3,120 a core can spend a sample (stress.py runs four a core on eight tracks). On the unit, admission charges the declared 632 cycles: device:test placed three on each core at once on Dev17 C04 (core peaks 632 and 714 per mille) and refused the fourth on each.",
                 "inputConditions": "Full-scale noise bursts (0.98) and silence on the left, tones on the right, in stress.py; verify.py adds bursts of 0.45 and 0.3 with silence before and after. The input passes the original's 12-bit converter (LEVL 127 is about +12 dB), so it clips there as the original did."
               },
               "report": "evidence/performance.json"
@@ -4687,9 +4730,9 @@
               {
                 "name": "DSP program, the package's effect on each core it runs on",
                 "space": "dsp-p",
-                "words": 645,
+                "words": 929,
                 "wordBits": 24,
-                "bytes": 1935,
+                "bytes": 2787,
                 "scope": "shared"
               },
               {
@@ -4703,9 +4746,9 @@
               {
                 "name": "ColdFire code and data of the USB package",
                 "space": "cpu-ram",
-                "words": 49188,
+                "words": 59656,
                 "wordBits": 8,
-                "bytes": 49188,
+                "bytes": 59656,
                 "scope": "shared"
               },
               {
@@ -4718,25 +4761,28 @@
               }
             ],
             "perInstanceBytes": 47706,
-            "sharedBytes": 51123,
+            "sharedBytes": 62443,
             "maxInstances": 8,
-            "totalBytes": 432771,
-            "conditions": "From the USB package's header, plus the FX2 buffer it reads: stock's own 16K Y buffer for the slot (Y:$4000 and $8000, and $30000/$34000 on core 0, $38000/$3c000 on core 1, as stock's allocator gives them), of which it uses 15,870 words. No stock block is reused beyond that buffer; no scratch outside its state and buffer (dsp_host's guard counted no stray write).",
+            "totalBytes": 444091,
+            "conditions": "From the header of the USB package d554753c (ABI 8), plus the FX2 buffer it reads: stock's own 16K Y buffer for the slot (Y:$4000 and $8000, and $30000/$34000 on core 0, $38000/$3c000 on core 1, as stock's allocator gives them), of which it uses 15,870 words. No stock block is reused beyond that buffer; no scratch outside its state and buffer (dsp_host's guard counted no stray write).",
             "report": "TESTING.md"
           },
           "hardware": {
             "kind": "functional",
             "status": "reported",
             "model": "MKII",
-            "testedOn": "2026-11-25",
+            "testedOn": "2026-11-27",
             "tester": "repeat98",
-            "sourceRevision": "461f05d21983d1bc436dbeb6b79c0e9feb5cdc51",
-            "imageSha256": "36a276bfbb32067f6abc12c728f2a69a8075bd8c9c0f0979f9cd5c9d3a7d2968",
-            "summary": "On the owner's Octatrack MKII (OS 1.40C, development twin 4c7eb79b of base 0.8.1), 25 November 2026: npm run test:procedure ran on this source's package and passed the software checks, the DSP cost model, the scripted unit pass (picks on T1 and T5, five instances at once, peaks 88.4 % and 78.6 % of the cores), the soak and the cost on the unit (1.1 % of a frame, curve first 0.5, each 0). By hand: every screen by the README's steps (the captures in media/), a 10 s USB recording of MAIN with it on T2 (no dropout), slow PROG and BANK turns right after a pick. The owner tried it and approved it for release.",
+            "sourceRevision": "8bfd17721bd568f30d07003d208abfa71772dc0d",
+            "imageSha256": "d554753cf04faaf5dd3921a1b2c6ec34ed8d75521ae55a78148736ff560bd8f9",
+            "summary": "On the owner's Octatrack MKII, 27 November 2026, development twin ed5474c6 of base 0.8.3: npm run test:procedure ran on package d554753c (the shipped package, built from source by the isolated build): software checks, compatibility beside 48 modules, the DSP cost model, device:test (self-test; T1 and T5 admitted in about 116 ms; three a core at once; Part switches 12 of 12), the 120 s soak and the put-back passed. The CPU price is 2.3 % of a frame in use and 0 at rest; the instance curve on Dev17 C04 reads first 2, each 2, admitted alone on the empty and the medium pattern with nothing dropped. By hand, 32 of 32 PROG and BANK cases passed: 0.1.0's PROG values keep their programs on all three banks, MV2 PROG 83-102 play the Midiverb II's 50-69, and PROG stops at each bank's last program (63, 102, 63). The owner played it in a trial of this exact package and called the PROG knob great (reported).",
             "limitations": [
-              "Not run: an emulator rehearsal; it beside the other modules of a large set on a unit (modules:compat checks the declarations).",
-              "Not run: a Keep and a power cycle with it kept; project save and reload were not checked by the agent.",
-              "The owner's own hands-on test was reported as a whole, not item by item.",
+              "Not run: an emulator rehearsal (the adapted ot_emu runs no DSP with a USB package).",
+              "Screens by hand: PROG and BANK message boxes only; the other pages are 0.1.0's captures, unchanged in 0.2.0.",
+              "Not done: MAIN and CUE recorded over USB and checked for dropouts.",
+              "How it sounds: the owner listened in a RAM trial of d554753c (reported, not item by item); the chorus and flange speeds follow an assumed pace.",
+              "Not done: MIDI and recording with it, beside the other modules of a large set on a unit (modules:compat checks the declarations), project save and reload, a Keep and a power cycle.",
+              "The procedure ran from a checkout whose only uncommitted changes were the two test-procedure scripts of the step-1 Fix (module source committed as 8bfd1772).",
               "MKI not tested."
             ],
             "report": "TESTING.md"
@@ -4761,9 +4807,9 @@
             "page": "FX2 SETUP (effect chooser)",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
-            "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+            "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
           }
         },
         {
@@ -4778,16 +4824,16 @@
             "page": "FX2",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
-            "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+            "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
           }
         },
         {
           "path": "media/midiverb-prog.png",
-          "captureType": "hardware",
-          "caption": "Turn PROG: a message box names each program as you go, here .25 MEDIUM BRIGHT. Try the long halls near the end of the Midiverb bank, or the gated and reverse programs.",
-          "alt": "The FX2 page with a message box reading .25 MEDIUM BRIGHT.",
+          "captureType": "emulator",
+          "caption": "Turn PROG: a message box names each program as you go, its number on the original first, here 3 .2S MEDIUM BRIGHT. Try the long halls near the end of the Midiverb bank, the gated and reverse programs, or the Midiverb II's flanges and choruses.",
+          "alt": "The FX2 page with a message box reading 3 .2S MEDIUM BRIGHT.",
           "credit": "Modwerk documentation capture; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -4795,9 +4841,9 @@
             "page": "FX2",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
-            "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+            "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
           }
         },
         {
@@ -4812,9 +4858,9 @@
             "page": "FX2",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
-            "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+            "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
           }
         },
         {
@@ -4829,9 +4875,9 @@
             "page": "FX2",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "ace30d0ffa6b1ee4e52537b20266a93c9133abc62274eaf31f28bf30b27f2caf",
-            "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin 4c7eb79b of Modwerk base 0.8.1 (imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, built by npm run module:dev -- midiverb --build-only from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the scrap project's bank C pattern 4 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "358d5e161e63614e655fdfc525a74f27cae4921e12df121664cb33533133dae5",
+            "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin ed5474c6 of Modwerk base 0.8.3 (main 80ea1e584; imageSha256 is that twin's MAIN image). The module ran as a RAM trial of the package named here, the shipped USB package built from the source revision named here, the build the test procedure ran. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps were sent by the session in the owner's Dev17 bank C pattern 4, Part 2 (pick:T2:FX2:DELAY; FUNC+FX2; LEVEL to MIDIVRB I/II; YES; FX2; then A, D and F turned)."
           }
         }
       ]
@@ -15291,6 +15337,311 @@
         "declaration": "Original module by jonathanwardle1992-beep, MIT. No firmware, extracted stock code or built images are included."
       },
       "media": []
+    },
+    {
+      "schemaVersion": 2,
+      "id": "seq",
+      "key": "SEQ",
+      "name": "SEQ",
+      "version": "0.1.0-experimental",
+      "category": "machines",
+      "access": {
+        "location": "Any track page: hold [TRACK] and press [PAGE]",
+        "steps": [
+          "Hold a [TRACK] key and press [PAGE]: the SEQ window opens on that track.",
+          "Turn A to D to set the rhythm, the lane and the parameter; [LEFT] and [RIGHT] switch between the rhythm and Harmony pages.",
+          "Press [YES] to write the rhythm and locks into the pattern, or [NO] to close SEQ."
+        ],
+        "screenshots": [
+          "media/seq-rhythm-open.png",
+          "media/seq-rhythm-audio-emulator.png",
+          "media/seq-harmony-audio-emulator.png",
+          "media/seq-harmony-midi-emulator.png",
+          "media/seq-clear-menu-emulator.png"
+        ]
+      },
+      "author": {
+        "github": "ilia-murzinov",
+        "credits": [
+          "ilia-murzinov: SEQ and its octabam module",
+          "repeat98: the Euclidean rhythm math SEQ shares with the EUCLID filter"
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "Euclidean SEQ",
+        "family": "Sequencer",
+        "summary": "A track window that writes Euclidean rhythms, parameter lock rhythms and in-scale melodies into the pattern, for audio and MIDI tracks.",
+        "overview": "Hold [TRACK] and press [PAGE] to open SEQ on that track. The rhythm page spreads PULS hits over the track length and turns them with ROT. LANE chooses whether A, B and the step grid edit the TRIG rhythm (sample trigs or note trigs) or the PLCK rhythm (parameter locks on their own steps). D picks the page and parameter to lock, E (DPTH) how far the locks move around the Part's value. [RIGHT] opens Harmony for PTCH or NOTE: a scale, a root, a phrase shape and a jump size, plus voices and chords on MIDI tracks. [YES] writes the result into the pattern as ordinary trigs and locks, so it plays, saves and copies like anything you program by hand.",
+        "highlights": [
+          "Euclidean TRIG and PLCK rhythms up to 64 steps, drawn as a 4 x 16 step grid.",
+          "Parameter lock rhythms for any page-1 parameter the LFO can reach on audio tracks, and every page-1 parameter on MIDI tracks.",
+          "Harmony page for PTCH and NOTE: scale, root, phrase (RAND, UP, DOWN, ALT, TRI) and jump size; voices and chords on MIDI tracks.",
+          "[CUE] released alone places random hits on the focused lane; [FUNC] + [BANK] clears SEQ's locks or trigs on the track."
+        ],
+        "usage": [
+          "Hold [TRACK] and press [PAGE]: SEQ opens on that track. Press another [TRACK] to switch, [MIDI] to move between the audio and MIDI track.",
+          "With LANE on TRIG, set PULS and ROT, then press [YES]: sample trigs or note trigs land with locks for the parameter on D.",
+          "Turn LANE to PLCK, pick another parameter with D, set its own PULS and ROT, then [YES]: that parameter gets locks on its own rhythm.",
+          "On PTCH or NOTE, press [RIGHT] for Harmony: scale, root, phrase and jump shape pitch locks; on MIDI tracks, add voices and chords.",
+          "Press [FUNC] + [BANK] to clear locks or trigs on the track. [NO] closes SEQ."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Project sequencer",
+        "conflicts": [],
+        "uiClaims": [
+          "key:TRACK+PAGE",
+          "key:FUNC+BANK@SEQ",
+          "key:CUE@SEQ",
+          "key:MIDI@SEQ",
+          "key:LEFT@SEQ",
+          "key:RIGHT@SEQ",
+          "key:YES@SEQ",
+          "key:NO@SEQ",
+          "key:LEVEL@SEQ",
+          "screen:SEQ"
+        ],
+        "limitations": [
+          "OS 1.40C on the Modwerk base, over USB. Tested on the author's MKII with RAM-booted twin 43ac24652a89f28b (release base eb667962); emulator rollback cases are recorded in TESTING.md.",
+          "The octabam module's FX page-2 destinations and CX OSC SETUP destinations are left out: D offers page-1 parameters only. A seq.work from octabam keeps them and loads here unchanged.",
+          "Keep SEQ installed while you save, reload or copy a project that uses it: without it, seq.work is not saved or reloaded with the project.",
+          "A seq.work SEQ cannot read is left as it is and SEQ starts from its defaults; the next save copies it to seq.bak before writing a new one."
+        ]
+      },
+      "resources": {
+        "recorded": "2026-11-27",
+        "storage": {
+          "label": "ColdFire code",
+          "display": "38,356 bytes",
+          "value": 38356,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "USB package from module:dev --build-only on this source; about 9 KB per project for seq.work on the card.",
+          "source": "evidence/memory.md"
+        },
+        "processing": {
+          "label": "ColdFire worst event",
+          "display": "13799 cycles/event",
+          "value": null,
+          "unit": "see display",
+          "method": "static",
+          "conditions": "[YES] after rhythm edits (ef_yes plus ef_draw); static instruction model in evidence/performance.json.",
+          "source": "evidence/performance.json"
+        },
+        "impact": {
+          "conditions": "SEQ open on one track; worst UI event is a [YES] write.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "measured-comparison",
+            "rationale": "Installed and used nowhere: 0.0 points of the frame interrupt on the development twin (evidence/cpu-price.json). Work happens in the UI task when the window is open.",
+            "source": "evidence/cpu-price.json"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP program or effect slot.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "low",
+            "basis": "measured-comparison",
+            "rationale": "About 38 KB in the loader pool plus seq.work on the card.",
+            "source": "evidence/memory.md"
+          }
+        },
+        "cpuPrice": {
+          "value": 0,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-27",
+          "conditions": "author's project, bank A pattern 2, Part 1, stopped (release base eb667962 via RAM twin); base Octatrack release base eb6679620d0c9ed7, RAM-booted twin 43ac24652a89f28b, MKII, OS 1.40C; 3 readings of 8 s a state. Frame interrupt 29.4 % before, 29.4 % installed and used nowhere; CPU meter 44.1 % before, 44.1 % at rest.",
+          "source": "evidence/cpu-price.json"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "MKII over USB, 27-28 November 2026: twin 43ac24652a89f28b (release base eb667962), package 5c88a76b, test:procedure steps 1-10, CUE Undo, save and power-cycle persistence, CPU price 0.0 at rest, one MKII LCD capture plus emulator rhythm, Harmony and clear-menu shots; MKI, KITS and Track Solo beside SEQ not tested.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "faff374b9d136f48d4e0159fe480f8f65d27cacc",
+        "gates": [
+          "modules/seq/verify.py",
+          "python3 sdk/octatrack/modules/seq/perf.py static",
+          "npm run perf:audit -- check evidence/performance.json"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "Hold a [TRACK] key and press [PAGE]: the SEQ window opens on that track.",
+                "Turn A (PULS) and B (ROT) to shape the rhythm in the step grid, then press [YES] to write it into the pattern.",
+                "Turn C to PLCK, pick a parameter with D and a depth with E, then press [YES]. Press [NO] to close SEQ."
+              ]
+            },
+            "screenshots": [
+              "media/seq-rhythm-open.png",
+              "media/seq-rhythm-audio-emulator.png",
+              "media/seq-harmony-audio-emulator.png",
+              "media/seq-harmony-midi-emulator.png",
+              "media/seq-clear-menu-emulator.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "55bb554360ad6898da9870ecef7255db7446d3542f6b58efdcd3200835cf6c46",
+          "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 13799,
+              "maxConfiguration": 13799,
+              "maxInstances": 1,
+              "budget": 26600000,
+              "unit": "cycles/event",
+              "method": "static",
+              "conditions": {
+                "parameterExtremes": "PULS and ROT at their limits, PLCK on page-1 parameters, Harmony on MIDI with VOIC and CHRD.",
+                "parameterModulation": "Encoder turns while the window is open; the dearest count is [YES] writing trigs and locks.",
+                "modeSwitching": "TRACK+PAGE open and close, LEFT and RIGHT between rhythm and Harmony, FUNC+BANK clear lists.",
+                "maxLoad": "One open window on one track; no frame-interrupt hook.",
+                "inputConditions": "Static disassembly bound for ef_yes plus ef_draw; not wall-clock hardware timing."
+              },
+              "report": "evidence/performance.json"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "Runtime package code and data",
+                "space": "cpu-ram",
+                "words": 38356,
+                "wordBits": 8,
+                "bytes": 38356,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 38356,
+            "maxInstances": 1,
+            "totalBytes": 38356,
+            "conditions": "Package header from module:dev; seq.work on the card is about 9 KB a project (test_seq_port.py), not loader pool RAM.",
+            "report": "evidence/memory.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-27",
+            "tester": "ilia-murzinov",
+            "sourceRevision": "faff374b9d136f48d4e0159fe480f8f65d27cacc",
+            "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
+            "summary": "MKII, twin 43ac24652a89f28b RAM-booted from release base eb6679620d0c9ed7: catalog test:procedure steps 1-10, CUE tap Undo and project save with power-cycle reload on package 5c88a76b; earlier 4c7eb79b rows in TESTING.md.",
+            "limitations": [
+              "USB development work RAM-booted a twin of eb667962; the flashed release image itself does not serve development USB.",
+              "MKI, KITS beside SEQ on MKI, and Track Solo beside SEQ are not tested on hardware.",
+              "Static cycle count is disassembly only, not ot_emu executed instructions on [YES]."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "SEQ is ilia-murzinov's original work, ported from his octabam module (MIT). No Elektron firmware, extracted routines or tables: stock sites are named by address, length and SHA-256."
+      },
+      "media": [
+        {
+          "path": "media/seq-rhythm-open.png",
+          "captureType": "hardware",
+          "caption": "Hold [TRACK 1] and press [PAGE]: SEQ opens on track 1 with the rhythm page, PULS/ROT and the step grid.",
+          "alt": "Octatrack SEQ window: PULS 5, ROT 0, TRIG lane, SRC/PTCH, the Euclidean grid and LEN 16.",
+          "credit": "SEQ by Ilia Murzinov; underlying Octatrack interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SEQ rhythm",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
+            "setup": "MKII over USB, 27 November 2026: development twin 43ac24652a89f28b RAM-booted, SEQ package 5c88a76b accepted, pattern A02. LCD read at integer scale 2, greyscale, not edited."
+          }
+        },
+        {
+          "path": "media/seq-rhythm-audio-emulator.png",
+          "captureType": "emulator",
+          "caption": "Rhythm page on an audio track: LANE TRIG, set PULS and ROT, pick SRC / PTCH on D and DPTH on E, then press [YES].",
+          "alt": "SEQ Rhythm on an audio track.",
+          "credit": "ilia-murzinov (ot_emu panel capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SEQ rhythm",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "c8425f3eb5aced0a64ca29594049a64f03922e2ca5a4835a4001057d964c275b",
+            "setup": "remix test/seq on ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 2, greyscale."
+          }
+        },
+        {
+          "path": "media/seq-harmony-audio-emulator.png",
+          "captureType": "emulator",
+          "caption": "Press [RIGHT] when D is SRC / PTCH: set SCAL, ROOT, PHRS and JUMP; RAND is the default phrase.",
+          "alt": "SEQ Harmony on an audio track with RAND selected.",
+          "credit": "ilia-murzinov (ot_emu panel capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SEQ Harmony",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "c8425f3eb5aced0a64ca29594049a64f03922e2ca5a4835a4001057d964c275b",
+            "setup": "remix test/seq on ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 2, greyscale."
+          }
+        },
+        {
+          "path": "media/seq-harmony-midi-emulator.png",
+          "captureType": "emulator",
+          "caption": "On a MIDI track with NOTE on D, Harmony adds VOIC, PHRS, JUMP and CHRD for note trigs and chords.",
+          "alt": "SEQ Harmony on a MIDI track with RAND selected.",
+          "credit": "ilia-murzinov (ot_emu panel capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SEQ Harmony",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "c8425f3eb5aced0a64ca29594049a64f03922e2ca5a4835a4001057d964c275b",
+            "setup": "remix test/seq on ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 2, greyscale."
+          }
+        },
+        {
+          "path": "media/seq-clear-menu-emulator.png",
+          "captureType": "emulator",
+          "caption": "Press [FUNC] + [BANK]: choose CLEAR DEST, CLEAR ALL DEST or CLEAR ALL+TRIGS, then press [YES] once to apply.",
+          "alt": "SEQ clear menu.",
+          "credit": "ilia-murzinov (ot_emu panel capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SEQ clear",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "c8425f3eb5aced0a64ca29594049a64f03922e2ca5a4835a4001057d964c275b",
+            "setup": "remix test/seq on ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 2, greyscale."
+          }
+        }
+      ]
     },
     {
       "schemaVersion": 2,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from './bytes.ts'
 import { UploadSession } from '../elekloader/upload-session'
 import { UploadCommand, UploadPhase, UploadResult } from '../elekloader/upload-wire'
 import { ask, frameRows, get32, ident, LINK_HEADER, linkRequest, LinkError, mem, pack7 as linkPack7, parseLinkReply, readLog, screen, u32, unpack7, uploadTransport, UPLOAD_BASE, UPLOAD_BASE_TEXT, type LinkLine } from './dn2-link'

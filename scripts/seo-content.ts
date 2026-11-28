@@ -6,6 +6,7 @@ import { DIGI_DEVICES, DIGI_MODS, digiModuleDocument, type DigiMod } from '../sr
 import { DEVICES_BY_ID } from '../src/devices/registry.ts'
 import { RELEASE_STEPS } from '../src/community/developer-guidance.ts'
 import { INDEPENDENCE_NOTICE } from '../src/firmware-notices.ts'
+import { modulePageGuideHtml } from '../src/catalog/module-page-guides.ts'
 import { escapeHtml, link, list, paragraph } from './page-html.ts'
 import { EXTERNAL_PROJECTS, PROJECT_DESCRIPTION, PROJECT_MACHINES, PROJECT_TITLE, PROJECT_TYPES, filterProjects } from '../src/projects/projects.ts'
 
@@ -42,6 +43,7 @@ function moduleContent(module: ModuleContent, appUrl: URL) {
 export function octatrackContent(module: FirmwareModule, appUrl: URL) {
   const document = MODULE_DOCUMENTS_BY_ID[module.id]
   return moduleContent({ ...document.presentation, name: module.name, version: module.version, machine: 'Octatrack', controls: document.controls, releases: [document.compatibility.firmware], limitations: document.compatibility.limitations, tests: document.tests.summary, source: getModuleSource(module), paused: isModulePaused(module.id), pausedNote: PAUSED_MODULE_NOTICES[module.id]?.detail }, appUrl)
+    + modulePageGuideHtml(module, document, appUrl)
 }
 
 export function digiContent(mod: DigiMod, appUrl: URL) {

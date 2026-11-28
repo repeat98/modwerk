@@ -12,6 +12,8 @@ export type ChangelogModules = Record<string, ReleaseNotes[]>
 type CatalogModule = { id: string; version: string }
 /** Players read these notes on the module page and in update emails; evidence and waivers belong in the pull request. */
 export const MAX_CHANGES = 5, MAX_CHANGE_LENGTH = 200
+/** Test status ("not yet tested on a unit") is written before the unit run and never removed, so players saw it on tested releases. */
+const TEST_STATUS = /\b(?:un)?tested\b|\b(?:run|ran|heard|checked|measured|tried) (?:\w+ )?(?:on|in) (?:a|an|one|the|his) (?:unit|MKI|MKII|emulator)\b|\bon a unit only\b/i
 function object(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -35,6 +37,8 @@ export function parseModuleChangelogs(value: unknown, catalog?: readonly Catalog
     for (const id of Object.keys(modules)) if (!ids.has(id)) throw new Error('Unknown changelog module: ' + id)
     for (const [id, entries] of Object.entries(modules)) for (const entry of entries) {
       if (entry.changes.length > MAX_CHANGES || entry.changes.some(change => change.length > MAX_CHANGE_LENGTH)) throw new Error('Keep the release notes for ' + id + ' v' + entry.version + ' short: at most ' + MAX_CHANGES + ' lines of at most ' + MAX_CHANGE_LENGTH + ' characters, each on what changed for players. Test evidence, measurements and waivers go in the pull request (docs/ADD_A_MODULE.md#release-notes-required-for-every-fix-and-module-version).')
+      const status = entry.changes.find(change => TEST_STATUS.test(change))
+      if (status) throw new Error('Leave test status out of the release notes for ' + id + ' v' + entry.version + ': "' + status + '". What ran on a unit goes in the pull request and TESTING.md; a Known issue line names a limit players hit (docs/ADD_A_MODULE.md#release-notes-required-for-every-fix-and-module-version).')
     }
     for (const module of catalog) {
       const entries = modules[module.id] ?? []

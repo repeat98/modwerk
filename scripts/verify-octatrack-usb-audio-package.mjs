@@ -19,7 +19,7 @@
 // Emulator evidence of the package's and the base's code only: no host driver, no audio content check, no hardware.
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../src/engine/elektron/bytes.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { diagnostics } from '../src/dev/octatrack-usb-lifecycle.ts'

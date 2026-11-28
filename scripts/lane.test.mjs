@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -44,5 +44,29 @@ describe('lanes', () => {
     run('prune', '--yes')
     expect(existsSync(at('pushed'))).toBe(false)
     expect(existsSync(at('dirty')) && existsSync(at('local'))).toBe(true)
+    rmSync(top, { recursive: true, force: true })
+  })
+
+  it('tidies a low disk of only the pushed worktrees nobody used for a day', () => {
+    const top = mkdtempSync(join(tmpdir(), 'lanes-')), remote = join(top, 'remote.git'), clone = join(top, 'clone')
+    git(top, 'init', '--quiet', '--bare', '-b', 'main', remote)
+    git(top, 'clone', '--quiet', remote, clone)
+    writeFileSync(join(clone, 'a'), '1'); git(clone, 'add', 'a'); git(clone, 'commit', '--quiet', '-m', 'one'); git(clone, 'push', '--quiet', 'origin', 'main')
+    const at = name => join(clone, '.claude', 'worktrees', name)
+    const old = ['old', 'old-dirty', 'squashed', 'unpushed']
+    for (const name of ['fresh', ...old]) git(clone, 'worktree', 'add', '--quiet', '--detach', at(name), 'origin/main')
+    writeFileSync(join(at('old-dirty'), 'b'), 'uncommitted')
+    // squashed: its commit is on no remote, but main got the same change as another commit (a squash merge, branch deleted)
+    for (const [name, file] of [['squashed', 'c'], ['unpushed', 'd']]) { writeFileSync(join(at(name), file), name); git(at(name), 'add', file); git(at(name), 'commit', '--quiet', '-m', name) }
+    writeFileSync(join(clone, 'c'), 'squashed'); git(clone, 'add', 'c'); git(clone, 'commit', '--quiet', '-m', 'Squash (#1)'); git(clone, 'push', '--quiet', 'origin', 'main')
+    const dayAgo = new Date(Date.now() - 25 * 3600e3)
+    for (const name of old) for (const file of ['HEAD', 'index', 'logs/HEAD']) utimesSync(join(clone, '.git', 'worktrees', name, file), dayAgo, dayAgo)
+    const tidy = below => spawnSync(process.execPath, [lane, 'tidy'], { cwd: clone, encoding: 'utf8', env: { ...process.env, MODWERK_TIDY_BELOW_GB: below } }).stdout
+    expect(tidy('0')).toBe('') // enough space: nothing to do
+    expect(existsSync(at('old'))).toBe(true)
+    expect(tidy('1000000')).toMatch(/removed .*old\b[\s\S]*Still only/)
+    expect(existsSync(at('old')) || existsSync(at('squashed'))).toBe(false)
+    expect(existsSync(at('fresh')) && existsSync(at('old-dirty')) && existsSync(at('unpushed'))).toBe(true)
+    rmSync(top, { recursive: true, force: true })
   })
 })
