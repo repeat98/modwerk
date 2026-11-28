@@ -1,16 +1,19 @@
 # Analog Rytm MKII base
 
-Modwerk's own base for the Analog Rytm MKII on OS 1.74 ([recipe](../../../../docs/MACHINE_RECIPE.md)). Today it is the
-source of elekloader's core-ar2 0.7, copied unchanged: `core-ar2/` (its `mod.json` and seven sources). Their
-provenance and hashes are in
-[sdk/imports/core-ar2-source-fb58292.json](../../../imports/core-ar2-source-fb58292.json). They are
-GPL-2.0-or-later, by irpina and Iced-Cream, and keep their SPDX lines. `core/` (`core.s`, `settings.s`, `render.s`) is
-Modwerk's own hook bus (GPL-2.0-or-later, 28 November 2026), which `mod.json` builds with the Rytm's addresses: the same
-`core.s` and `settings.s` as the Digitakt II's, with the same symbols, sites and tables as the files it replaced. The
-bus does not save EMAC around `ev_render_in` and `ev_render_out` handlers: a handler that uses it saves its own.
+Modwerk's own base for the Analog Rytm MKII on OS 1.74 ([recipe](../../../../docs/MACHINE_RECIPE.md)). Its core is
+Modwerk's own (GPL-2.0-or-later, 28 November 2026): `core-ar2/` (`mod.json`, `store.c` and `store.s` for mod
+storage, `route.s` for the velocity routes' field bytes, `pages.s` for pages and page-key lists, `machines.c`, `load.s`
+and `finish.s`) and the headers in [`../include/analog-rytm-mk2/`](../include/analog-rytm-mk2/). It keeps the folder
+name and the interface of elekloader's core-ar2 0.7, which the build checks it against (`reference.keeps`): id `core`
+0.7, every site, export, import and table, and the saved-data format, so modules and saved projects move between the
+two. The core's stock addresses are `mod.json`'s defsyms (assembly) and `base.json`'s `common.cflags` (C), so the MKI
+builds the same sources with its own. `core-ar2/test_store.c` pins the saved-data format on the host
+(`sdk/tests/test_machine_base.py`). `core/` (`core.s`, `settings.s`, `render.s`) is Modwerk's own hook bus
+(GPL-2.0-or-later), the same `core.s` and `settings.s` as the Digitakt II's. The bus does not save EMAC around
+`ev_render_in` and `ev_render_out` handlers: a handler that uses it saves its own.
 
-Modwerk's own sources sit beside them in `base/`, and `base.json`'s `common` and `add` merge them into the imported
-recipe when the build stages it, so the imported files stay exact. `common` goes into every variant: the machine list's
+Modwerk's base sources sit beside them in `base/`, and `base.json`'s `common` and `add` merge them into the core's
+recipe when the build stages it. `common` goes into every variant: the machine list's
 sections (`sections.c`; [machine list sections](../README.md#machine-list-sections)) and the amp envelope's record
 (`amp.s`; [amp envelope record](../README.md#amp-envelope-record)). `add` holds the FX track's lock
 words (`locks.c`, `locks.s`) and the send bus (`sendbus.c`, `sendbus.s`, `fx-tables.h`;
@@ -25,7 +28,7 @@ subscriptions, pages and storage, all `mw_send_*`, and the FX list `mw_fx`), so 
 send bus writes the lock words, so on voices a pattern's send-FX locks are not kept: one saved with them on send-bus plays
 without them, and stock's next save of all its locks frees their lanes. Word 0 keeps marking those controls locked, so
 back on send-bus such a step plays the kit's stored words 38-41 for them (and shows 127), as after a trip through plain;
-and **plain**, the imported recipe with `common` alone. The site builds a set
+and **plain**, the core's recipe with `common` alone. The site builds a set
 with a send effect on send-bus, one with a digital voice machine and no send effect on voices, and any other set on
 plain, so each pays only for what it uses (below). A `leave` entry is a shell pattern over a source or cflag itself, a
 site's `addr` or `target`, a subscription's `fn`, a contribution's symbols, a storage field's `sym`, or a `defsym` or
@@ -36,7 +39,7 @@ send effect needs it, or that module would not link on plain; a voice machine us
 ## Beside elekloader's core-ar2
 
 This base is Modwerk's, not elekloader's core-ar2, and its core work happens here
-([contributing](../../../../CONTRIBUTING.md#contributions-stay-here)). It stays on 0.7's source:
+([contributing](../../../../CONTRIBUTING.md#contributions-stay-here)). It keeps core-ar2 0.7's interface:
 
 - **No core-ar2 0.8 or later.** core-ar2 0.8 (elekloader v0.9.0) jumps from the same two lock sites the lock words
   use, `0x40008f98` (row load) and `0x40009216` (lock rebuild). This base cannot take it, an elekloader mod that needs
@@ -47,7 +50,7 @@ This base is Modwerk's, not elekloader's core-ar2, and its core work happens her
 
 ## Build it
 
-`base.json` names the core folder, the SDK headers (`../include`, the same bytes as elekloader's), the OS and the
+`base.json` names the core folder, the SDK headers (`../include`, the same API as elekloader's), the OS and the
 reviewed toolchain. The SDK is the kit-pinned Elekloader checkout. The build needs your own original
 `Analog-Rytm_MKII_OS1.74.syx`, which stays outside the repository:
 
@@ -82,25 +85,16 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 
 ## What the build shows
 
-| Compiler | `.run` bytes | Relocations | Same as the release |
-|---|---|---|---|
-| irpina's release `core-ar2-0.7.elemod` | 10,692 | 103 | — |
-| m68k-elf GCC 16.2.0, binutils 2.47 (reviewed; this base's plain variant, `1c14b6b0`) | 10,792 | 102 | sources, sites, interface |
-| Debian 12 m68k-linux-gnu GCC 12.2.0 | 10,248 | 94 | sources, sites, interface |
-| Ubuntu 24.04 m68k-linux-gnu GCC 13.3.0 | 10,320 | 94 | sources, sites, interface |
-| Debian 13 m68k-linux-gnu GCC 14.2.0 | 10,168 | 93 | sources, sites, interface |
+| Variant | Identity | `.run` | `.bss` | Relocations |
+|---|---|---|---|---|
+| irpina's release `core-ar2-0.7.elemod` (the reference) | — | 10,692 | 1,368 | 103 |
+| plain | `bd31e2a6` | 10,772 | 1,368 | 150 |
+| voices | `2569452d` | 14,900 | 2,832 | 227 |
+| send-bus | `2350612c` | 33,022 | 4,172 | 645 |
 
-The send-bus variant (`3ece243b`) has 33,006 bytes of `.run` and 4,172 of `.bss` (4,140 and 1,464 more since
-the digital voices), 62 of the kit's 64 storage bits and 3 bits of each sound (a voice machine's type): about 92 KiB of the
-128 KiB mod area stays for modules and the effect that runs, whose work area is the RAM they leave free (`sendbus.c`),
-against about 116 KiB on plain. The voices variant (`dd771eae`) has 14,876 bytes of `.run` and 2,832 of `.bss`
-(1,240 and 512 less since the lock words left it): with Analog BD 0.2.1 linked, `ramSpare` is 95,792 B on voices
-against 76,272 B on send-bus, 19,520 B more for modules.
-
-The release records its sources but not its compiler, and none of these reproduces its compiled code byte for byte.
-The 22 functions that change size are all compiled C: 21 from `store.c`, 1 from `machines.c`. The sites, the
-exports, the imports and the tables are the same. This base is therefore identified by its own hash, built with the reviewed toolchain. With
-the lock words and the send bus it ran on a unit in test build MB02, as the author reported (29 October 2026).
-
-The kit-pinned SDK (3b31ef3) and the SDK at the release's commit (fb58292) give the same package from these sources
-and headers.
+Every variant has a 110-byte `.boot`. Each keeps the exports, imports, tables, contributions and sites of the variant
+it follows (plain `6dce8111`, voices `187b5126`, send-bus `9dc04c4c`, built from core-ar2 0.7's source with the same
+hook bus), and its `.bss` is the same. The send-bus variant uses 62 of the kit's 64 storage bits and 3 bits of each
+sound (a voice machine's type). Each of the 38 catalogue modules builds alone on its variant through the site's build
+path with the same lockfile as before; `ramSpare` moves by at most 32 bytes (Analog BD 0.2.2 on voices: 95,784 B).
+Not yet run on a unit.

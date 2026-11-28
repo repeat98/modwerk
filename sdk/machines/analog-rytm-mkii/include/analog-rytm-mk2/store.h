@@ -1,39 +1,31 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-/* core-ar2 0.2 and 0.3: mod storage (docs/ADAPTING.md, "Mod storage
- * (core-ar2 0.2, Analog Rytm MKII)"). Declare each field in mod.json:
+/* Analog Rytm MKII core (Modwerk): fields modules keep with the unit's own data.
  *
- *     "storage": [{"sym": "my_accent", "scope": "track", "bits": 4}]
+ * A module declares each field in build.json (name, scope, bits). The site's linker places it from the build's
+ * lockfile and defines the field's symbol as an absolute value, its descriptor: the scope in bits 28..31, the width
+ * (1..32) in bits 22..27 and the first bit in bits 0..21, bits counted from the most significant one. A field reads
+ * 0 until it is set, and also when the stored data was written by a different layout.
  *
- * and in C:
+ *   scope    item              index          room per item
+ *   sound    the live sound    unused         56 bits
+ *   kit      the live kit      unused         64 bits
+ *   global   unused            slot 0..3      40 bits
+ *   track    the live pattern  track 0..12    as the build's split gives
+ *   pattern  the live pattern  unused         as the build's split gives
+ *   project  unused            unused         what the split leaves
  *
- *     STORE_FIELD(my_accent);
- *     unsigned v = core_store_get(STORE(my_accent), live_pattern, track);
- *     core_store_set(STORE(my_accent), live_pattern, track, v + 1);
- *
- * Zero is always the default: a field reads 0 in a new project, in one saved
- * by another layout, and after its scope was reset. Both calls mask
- * interrupts while they read or write the field: use them from any context,
- * the audio interrupt too.
- *
- * item and index, by scope (room per item: sound 56 bits with core 0.3, 24
- * with 0.2; kit 64; global 40; track and pattern the store's split):
- *   sound    the live sound (a kit's or the pool's)     index unused
- *   kit      the live kit                               index unused
- *   global   unused (0)                                 the slot, 0..3
- *   track    the live pattern                           the track, 0..12
- *   pattern  the live pattern                           index unused
- *   project  unused (0)                                 index unused
- */
+ * Both calls mask interrupts for the whole access, so the UI, an event handler and the audio interrupt may all use
+ * them. An ev_project handler, void f(int how, unsigned dropped), runs after a project is created (how
+ * CORE_PROJECT_NEW, dropped 0) or loaded, at boot too (how CORE_PROJECT_LOADED): dropped has STORE_DROPPED(scope)
+ * set for each of the global, track, pattern and project scopes that came in as zeros. */
 #ifndef ELEKLOADER_AR2_STORE_H
 #define ELEKLOADER_AR2_STORE_H
 
-/* a field's descriptor: elekloader defines the field's symbol as its value */
 #define STORE_FIELD(sym) extern char sym[]
 #define STORE(sym) ((unsigned)(sym))
-
-#define STORE_SCOPE(f) ((f) >> 28)            /* 1 sound .. 6 project */
-#define STORE_BITS(f) ((f) >> 22 & 63)        /* 1..32 */
-#define STORE_OFFSET(f) ((f) & 0x3fffff)      /* the first bit, most significant first */
+#define STORE_SCOPE(f) ((f) >> 28)
+#define STORE_BITS(f) (((f) >> 22) & 63)
+#define STORE_OFFSET(f) ((f) & 0x3fffff)
 
 #define STORE_SOUND 1
 #define STORE_KIT 2
@@ -42,12 +34,6 @@
 #define STORE_PATTERN 5
 #define STORE_PROJECT 6
 
-/* ev_project handlers: void f(int how, unsigned dropped), subscribed in
- * mod.json ({"event": "ev_project", "fn": ...}). how is CORE_PROJECT_NEW after
- * CREATE NEW or the project reset, CORE_PROJECT_LOADED after any project load
- * (at boot too); dropped has STORE_DROPPED(scope) set for each of
- * STORE_GLOBAL, STORE_TRACK, STORE_PATTERN and STORE_PROJECT that came in as
- * zeros (saved by another layout, or with no mods). */
 #define CORE_PROJECT_NEW 0
 #define CORE_PROJECT_LOADED 1
 #define STORE_DROPPED(scope) (1u << (scope))

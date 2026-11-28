@@ -47,6 +47,12 @@ HOOK_BUS = {
     "sdk/machines/model-cycles/elekloader/core/core.s",
 }
 
+# Modwerk's own Rytm core (28 November 2026) took the place of the rest of core-ar2 and its four headers, at the
+# same paths; their import records stay as history. This changes the premise of the source test, which pinned them.
+RYTM_CORE = {"sdk/machines/analog-rytm-mkii/elekloader/core-ar2/" + name for name in (
+    "mod.json", "store.c", "store.s", "route.s", "pages.s", "load.s", "machines.c", "finish.s")} | {
+    "sdk/machines/analog-rytm-mkii/include/analog-rytm-mk2/" + name for name in ("load.h", "machines.h", "pages.h", "store.h")}
+
 
 def still_imported(record):
     return [item for item in record["files"] if item["to"] not in HOOK_BUS]
@@ -67,16 +73,36 @@ class MachineBases(unittest.TestCase):
         for path in HOOK_BUS:
             self.assertTrue((APP / path).read_text().startswith("| SPDX-License-Identifier: GPL-2.0-or-later\n"), path)
 
-    def test_rytm_base_is_core_ar2_0_7_source_unchanged(self):
-        record = json.loads((APP / "sdk/imports/core-ar2-source-fb58292.json").read_text())
-        for item in still_imported(record):
-            self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
-        # The sources the release was built from, by its own build record, but for the hook bus.
-        release = json.loads((APP / "vendor/elekloader/catalog/core-ar2-0.7.elemod").read_text())
-        imported = {pathlib.Path(item["from"]).name: item["sha256"] for item in still_imported(record)}
-        sources = release_sources(release, record)
-        self.assertEqual(len(sources), 7)
-        self.assertEqual({name: imported[name] for name in sources}, sources)
+    def test_rytm_core_is_modwerk_s_own(self):
+        # Modwerk's own Rytm core took the place of every imported core-ar2 file: what mod.json builds and the four
+        # headers are Modwerk's, at the same paths, and none still holds the imported bytes its record names.
+        folder = APP / "sdk/machines/analog-rytm-mkii/elekloader/core-ar2"
+        mod = json.loads((folder / "mod.json").read_text())
+        self.assertEqual((mod["id"], mod["version"], mod["license"]), ("core", "0.7", "GPL-2.0-or-later"))
+        for source in mod["sources"]:
+            path = (folder / source).resolve().relative_to(APP).as_posix()
+            self.assertIn(path, RYTM_CORE | HOOK_BUS, source)
+        for path in RYTM_CORE - {"sdk/machines/analog-rytm-mkii/elekloader/core-ar2/mod.json"}:
+            self.assertRegex((APP / path).read_text().splitlines()[0], r"^(\||//|/\*) SPDX-License-Identifier: GPL-2\.0-or-later\b", path)
+        for name in ("core-ar2-source-fb58292", "core-ar2-headers-fb58292", "core-ar2-store-header-769d9aa"):
+            for item in json.loads((APP / "sdk/imports" / (name + ".json")).read_text())["files"]:
+                self.assertIn(item["to"], RYTM_CORE | HOOK_BUS, item["to"])
+                self.assertNotEqual(sha(APP / item["to"]), item["sha256"], item["to"])
+
+    def test_rytm_core_stored_data_on_the_host(self):
+        """The Rytm core's stored-data format (store.c) on the host: the tagged store's header and formula, the
+        stored sound's, kit's and global slot's core bytes, which data loads as zeros, and save/load both ways."""
+        import shutil, subprocess
+        cc = shutil.which("cc")
+        if not cc:
+            self.skipTest("no host C compiler")
+        here = APP / "sdk/machines/analog-rytm-mkii/elekloader/core-ar2"
+        with tempfile.TemporaryDirectory() as temp:
+            subprocess.run([cc, "-std=c99", "-Wall", "-Wextra", "-Werror", "-pedantic", "-DMODWERK_HOST", "-I",
+                            APP / "sdk/machines/analog-rytm-mkii/include", here / "test_store.c", "-o", temp + "/t"],
+                           check=True, capture_output=True)
+            result = subprocess.run([temp + "/t"], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_digitakt_ii_base_source_is_core_dt2_1_1_unchanged(self):
         record = json.loads((APP / "sdk/imports/core-dt2-source-0df8409.json").read_text())

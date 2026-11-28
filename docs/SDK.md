@@ -77,7 +77,7 @@ The elemod build spec (`build.json`) is what Modwerk's toolchain compiles and li
 - contributions to core tables;
 - reserved memory regions and copied blocks;
 - the claimed resources;
-- mod storage fields (`storage`: `sym`, `scope`, `bits`), for a core that keeps them (core-ar2 from 0.2): the linker places them from the build's lockfile as elekloader does ([Analog Rytm MKII](../sdk/machines/analog-rytm-mkii/README.md#mod-storage-core-03));
+- mod storage fields (`storage`: `sym`, `scope`, `bits`), for a core that keeps them (core-ar2 from 0.2, and Modwerk's Rytm core): the linker places them from the build's lockfile as elekloader does ([Analog Rytm MKII](../sdk/machines/analog-rytm-mkii/README.md#mod-storage-core-03));
 - for each supported OS release, the patch sites.
 
 A patch site names its address, its length and the SHA-256 of the stock bytes it expects in the owner's own file. Stock bytes never appear in the repository. Steps that need the stock OS itself (`derive`) run only during the owner's local build, never in CI. The spec must agree with the manifest.

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mki",
   "interface": "0.7",
-  "status": "Modwerk's Analog Rytm MKI base for OS 1.74 (sdk/machines/analog-rytm-mki/elekloader/base.json): the MKII base's plain variant, core-ar2 0.7's source and the machine list's sections, at the MKI's addresses, with MKI copies of four core-ar2 files (pages.s, store.c, store.s, machines.c). It passed on a unit (MW06, 8 November 2026). It has no base-binding.json until an Elekloader kit knows the MKI (elekloader/elekloader#351); no send bus yet.",
+  "status": "Modwerk's Analog Rytm MKI base for OS 1.74 (sdk/machines/analog-rytm-mki/elekloader/base.json): the MKII base's plain variant, Modwerk's own core and the machine list's sections, built at the MKI's addresses (recipe defsyms and common.cflags). Its predecessor from core-ar2 0.7's source passed on a unit (MW06, 8 November 2026); the own core has not run on an MKI yet. It has no base-binding.json until an Elekloader kit knows the MKI (elekloader/elekloader#351); no send bus yet.",
   "events": [
     {
       "name": "ev_tick",
