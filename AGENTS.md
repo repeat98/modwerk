@@ -25,7 +25,7 @@ Skills load on clone: Claude Code reads `.claude/skills/`, Codex the identical `
 - Run `npm run pr:ready` last, before marking a PR ready or pushing to it; between fixes, `npm run check -- --rerun-failed`. Complete its [assigned replay](docs/AGENT_EVALS.md) and watch CI until green. [Registered authors](docs/DEVELOPER_WORKFLOW.md#make-it-mergeable) add `--author <login>`. Never edit a check, gate, test or workflow to pass it. Fix a wrong check in its own `Fix:` PR outside module releases.
 - Never edit generated files by hand (`src/catalog/module-documents.json`, licence notices, the machine registry): `npm run modules:generate`, `licenses:generate` and `machines:generate` write them.
 - Every fix ships with its changelog entry in the same pull request: a file `changelog/<YYYY-MM-DD>-<topic>.md` for the site, app, Worker, SDK or base (never edit `CHANGELOG.md`), or a version-matched entry in the module's own file in `src/community/module-changelogs/`, at most five short lines for the people who play it ([release notes](docs/ADD_A_MODULE.md#release-notes-required-for-every-fix-and-module-version)). Test evidence and waivers go in the pull request; `npm run check` enforces it.
-- Never commit firmware, extracted stock code or tables, memory dumps or built images. Firmware stays on the developer's computer and never enters CI.
+- Never commit firmware, extracted stock code or tables, memory dumps or built images. Firmware stays on the developer's computer and never enters CI. The one exception: the owner uploads [hosted base images](docs/HOSTED_BASES.md) from his computer.
 
 ## Modules
 

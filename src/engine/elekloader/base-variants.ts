@@ -7,7 +7,7 @@
 import { publishedBinding as baseBinding } from './octatrack-publication.ts'
 import baseVersions from '../../../sdk/machines/octatrack/base-versions.json' with { type: 'json' }
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
-import { USB_AUDIO_LAYOUTS, type UsbAudioLayout } from '../../config/usb-audio.ts'
+import { USB_AUDIO_LAYOUTS, USB_AUDIO_PACKAGED, type UsbAudioLayout } from '../../config/usb-audio.ts'
 import type { BaseFill } from './octatrack-base.ts'
 
 export type BaseLayout = UsbAudioLayout | 'off'
@@ -22,6 +22,9 @@ export const DEFAULT_LAYOUT: BaseLayout = (Object.entries(VARIANTS).find(([, ide
  * A set with the USB Audio module asks for its layout (module-set.ts setLayout). DEFAULT_LAYOUT stays the committed
  * package's, which every other layout is a patch against. */
 export const MEMBER_LAYOUT: BaseLayout = 'off'
+/** The layout a base build takes: without a layout from a module set a member gets MEMBER_LAYOUT (USB MIDI alone), and
+ * with USB Audio packaged the base is always that one; only the step base (base-step.ts) is built per layout. */
+export const buildLayout = (layout?: BaseLayout, step = false): BaseLayout => !step && USB_AUDIO_PACKAGED ? MEMBER_LAYOUT : layout ?? MEMBER_LAYOUT
 const IDENTITIES = new Map<string, BaseLayout>([[baseBinding.identity, DEFAULT_LAYOUT], ...Object.entries(VARIANTS).map(([layout, identity]) => [identity, layout as BaseLayout] as const)])
 
 /** A base's version, as its status page shows it (PROJ > MODWERK > STATUS: "MODWERK BASE 0.7"), by the identity a unit

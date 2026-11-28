@@ -124,10 +124,12 @@ function keepStage(stage: CardStage | null) {
  * holding up the install. `gate` is the firmware build gate (MemberGate.tsx useBuildGate) for whoever has not passed
  * it: Download base .bin and Update over USB then open the card build's sign-in prompt first, which a guest may skip.
  */
-export function BaseInstallDialog({ link, launch = false, layout, set, firmwareReady, firmwareError, onChooseFirmware, buildBase, returnSetId, account, gate, onAccount, diagnosticsStep, onStage, onStep, onClose, onReady }: {
+export function BaseInstallDialog({ link, launch = false, layout, set, firmwareReady, hostedBase, firmwareError, onChooseFirmware, buildBase: ownBuild, returnSetId, account, gate, onAccount, diagnosticsStep, onStage, onStep, onClose, onReady }: {
   link: OctatrackLink
   launch?: boolean
   firmwareReady: boolean
+  /** Present while the base comes from Modwerk's hosted image (docs/HOSTED_BASES.md), not the musician's own OS file. */
+  hostedBase?: (layout?: BaseLayout, step?: boolean) => Promise<BaseImage>
   /** Why the chosen OS file was refused (not the original 1.40C). */
   firmwareError?: string
   onChooseFirmware: (file: File) => void
@@ -159,6 +161,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   onClose: (done: boolean) => void
   onReady: () => void
 }) {
+  const hosted = !!hostedBase, buildBase = hostedBase ?? ownBuild
   const fileRef = useRef<HTMLInputElement>(null), finished = useRef(false), reported = useRef(new Set<BaseGuideStage>()), stepsSeen = useRef(new Set<BaseGuideStep>())
   const state = useOctatrackLink(link), noUsb = state.status === 'unsupported'
   const [accepted, setAccepted] = useState(false), [signIn, setSignIn] = useState(false)
@@ -339,7 +342,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
         {!usb && <>
           {/* Three short lines to read, not a paragraph (owner, 13 November 2026). */}
           <ul className="base-update-checklist" aria-label="Before you start">
-            <li className={firmwareReady ? 'is-ready' : undefined}><Icon name={firmwareReady ? 'check' : 'file'} size={16}/><span>{firmwareReady ? 'Your OS 1.40C file is ready.' : <>Choose your original OS 1.40C file. <a className="text-button" href="#faq/base-firmware" target="_blank" rel="noreferrer">Where do I get it?</a></>}</span></li>
+            <li className={firmwareReady ? 'is-ready' : undefined}><Icon name={firmwareReady ? 'check' : 'file'} size={16}/><span>{hosted ? <>Modwerk’s prebuilt base is ready. No OS file needed. <button type="button" className="text-button" onClick={() => fileRef.current?.click()}>Use my own OS 1.40C file</button></> : firmwareReady ? 'Your OS 1.40C file is ready.' : <>Choose your original OS 1.40C file. <a className="text-button" href="#faq/base-firmware" target="_blank" rel="noreferrer">Where do I get it?</a></>}</span></li>
             <li><Icon name="warn" size={16}/><span><strong>Save your project and stop playback first.</strong></span></li>
             <li><Icon name="warn" size={16}/><span><strong>Then hands off</strong> until this window says Done: no keys, no power switch, no cable.</span></li>
             {turnsAudioOff && <li><Icon name="warn" size={16}/><span><strong>{AUDIO_OFF_LEAD}</strong> <span className="base-update-aside">{AUDIO_OFF_REST}</span></span></li>}
@@ -353,11 +356,12 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     })()}
     {cardDownload && <>
       <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Download the base</h3>
-      <p>Modwerk builds the base in your browser; your OS file never leaves this device.</p>
+      <p>{hosted ? 'Modwerk downloads its prebuilt base for you. No OS file needed.' : 'Modwerk builds the base in your browser; your OS file never leaves this device.'}</p>
       <div className="base-download-file">
         <span className="base-download-file-icon"><Icon name="file" size={20}/></span>
         <div>
-          <strong>Original OS 1.40C</strong>
+          <strong>{hosted ? 'Modwerk base' : 'Original OS 1.40C'}</strong>
+          {hosted && <button type="button" className="text-button" onClick={() => fileRef.current?.click()}>Use my own OS 1.40C file</button>}
           {!firmwareReady && <a className="text-button" href="#faq/base-firmware" target="_blank" rel="noreferrer">Where do I get it?</a>}
         </div>
         <span className="base-download-file-status" role="status">{firmwareReady && <><Icon name="check" size={16}/>Verified</>}</span>

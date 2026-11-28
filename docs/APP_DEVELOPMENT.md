@@ -8,7 +8,7 @@ Existing published module authors may use the [automatic author-update workflow]
 
 For module development, start with the [repository quickstart](../README.md) and [SDK guide](../sdk/README.md). Run commands below from the repository root.
 
-A React / TypeScript web configurator for octabam, with a GitHub Pages frontend and a separate Cloudflare community API. Firmware stays on the user's device.
+A React site with a GitHub Pages frontend and a separate Cloudflare community API. Firmware stays on the user's device, except [hosted bases](HOSTED_BASES.md).
 
 The frontend, backend and octabam-derived developer SDK belong in one repository. The owner may self-host the backend later; storage adapters for that option remain pending. See [architecture decisions](DECISIONS.md).
 

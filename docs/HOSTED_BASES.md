@@ -3,17 +3,18 @@
 Modwerk serves prebuilt base images for the machines whose maker agreed to it, so a musician can install the base
 without their own OS file. Everything else is unchanged: module sets on a machine whose modules link into the OS image
 still build in the browser from the musician's own file, the own-file route stays open on every machine, and other
-makers' devices (Zoom and the rest) build only from the owner's own file in the browser. The owner keeps the maker's
+makers' devices (Zoom and the rest) build only from the musician's own file in the browser. The owner keeps the maker's
 agreement privately; it is not recorded in the repository.
 
 | What | Where |
 | --- | --- |
-| Machines | Every Elektron machine with a Modwerk base (`sdk/machines/*/base-binding.json`): Octatrack, Digitakt II, Analog Rytm MKII (each variant), Model:Cycles |
+| Machines | Every Elektron machine with a Modwerk base (`sdk/machines/*/base-binding.json`). Live for the Octatrack; Digitakt II, Analog Rytm MKII and Model:Cycles follow once their build runs on Modwerk's own builder (`src/engine/elektron`), which the storage and route already serve |
 | Images | The base alone, one image per published base identity (the Octatrack's step bases included). No module sets |
 | Built | Only on the owner's computer, from the owner's own OS file, with the same builder the site uses: `npm run base:publish` |
 | Stored | The private R2 bucket `modwerk-base-images` (binding `BASES`), never in Git, GitHub Actions or the site's assets |
-| Served | `GET /api/bases` (the manifest: machine, identity, SHA-256, size) and `GET /api/bases/<machine>/<identity>` (the image) |
-| Checked | The site refuses an image whose identity is not the published one for its layout or whose SHA-256 differs from the manifest; the Octatrack's IDENTIFY then confirms the identity on the unit |
+| Served | `GET /api/bases` (the manifest: machine, identity, layout, SHA-256, size; public) and `GET /api/bases/<machine>/<identity>` (the image; verified members), `server/base-images.ts` |
+| Checked | The site (`src/config/hosted-bases.ts`) refuses an image whose identity is not the published one for its layout or whose bytes differ from the manifest; the Octatrack's IDENTIFY then confirms the identity on the unit |
+| Site | The Octatrack install guide offers the hosted base while no OS file is chosen, and keeps "Use my own OS 1.40C file" |
 
 ## Publish
 
@@ -21,10 +22,11 @@ agreement privately; it is not recorded in the repository.
 npm run base:publish -- --stock /path/to/OCTATRACK_OS1.40C.bin
 ```
 
-It builds every image the deployed revision publishes for that machine from the stock file, checks each identity
-against the committed pins, and uploads image and manifest entry with the owner's `wrangler` login (`--dry-run` builds
-and checks without uploading). Run it after a base release is live, from a checkout of the deployed revision. An image
-already in the bucket with the same identity and SHA-256 is skipped. Contributors never run it and CI has no access to
+It builds every image the site asks for (the base and the step base for each layout) with the browser's own path
+(`published-base.ts`), checks each identity against the committed pins, and uploads image and manifest entry with the
+owner's `wrangler` login (`--dry-run` builds and checks without uploading). Create the bucket once with
+`npx wrangler r2 bucket create modwerk-base-images`. Run it after a base release is live, from a checkout of the deployed revision. An image
+already in the bucket with the same identity and SHA-256 is skipped; the same identity with another SHA-256 stops it. Contributors never run it and CI has no access to
 the bucket.
 
 ## Rules this changes

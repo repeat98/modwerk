@@ -88,6 +88,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [STATISTICS.md](STATISTICS.md): the admin statistics.
 - [WEB_PUSH.md](WEB_PUSH.md): device push notifications.
 - [FIRMWARE_DOWNLOAD_API.md](FIRMWARE_DOWNLOAD_API.md): building and saving firmware without a browser.
+- [HOSTED_BASES.md](HOSTED_BASES.md): the prebuilt base images the owner hosts, for makers who agreed, and how he publishes them.
 - [EXTERNAL_PROJECTS.md](EXTERNAL_PROJECTS.md): the Other projects directory.
 - [SOCIAL-PREVIEW.md](SOCIAL-PREVIEW.md): sharing preview artwork.
 - [COMMUNITY_OPERATIONS.md](COMMUNITY_OPERATIONS.md): running the community: registrations, moderation, [email sendouts](COMMUNITY_OPERATIONS.md#preparing-an-email-sendout).
