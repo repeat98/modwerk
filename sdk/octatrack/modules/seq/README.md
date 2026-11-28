@@ -14,6 +14,9 @@ locks. What it writes plays, saves and copies like anything programmed by hand.
 SEQ takes its name from the SEQ submenu on Digitakt II and Digitone II. Its
 rhythm names, ranges and the **PULS** default match the EUCLID filter.
 
+For the full guide (mental model, phrase types, examples and diagrams), see
+the [octabam SEQ manual](https://ilia-murzinov.github.io/octabam/reference/modules/seq.html).
+
 ## Controls
 
 Rhythm page (**`1>`** at top right when Harmony is available):

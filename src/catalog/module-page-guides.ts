@@ -1,6 +1,8 @@
 import type { ModuleDocument } from './module-contract.ts'
 import type { FirmwareModule } from './modules.ts'
-import { escapeHtml, paragraph } from '../../scripts/page-html.ts'
+import { escapeHtml, link, paragraph } from '../../scripts/page-html.ts'
+
+export const OCTABAM_SEQ_USAGE_URL = 'https://ilia-murzinov.github.io/octabam/reference/modules/seq.html'
 
 /** Extra static-page copy and screenshots for modules whose README is longer than the SEO summary. */
 export function modulePageGuideHtml(module: FirmwareModule, document: ModuleDocument, appUrl: URL): string {
@@ -15,6 +17,8 @@ export function modulePageGuideHtml(module: FirmwareModule, document: ModuleDocu
   ]
 
   return ''
+    + '<p>' + link(OCTABAM_SEQ_USAGE_URL, 'Full SEQ usage guide on octabam')
+    + ' covers lanes, Harmony, phrase types, worked examples and diagrams. This Modwerk build lists page-1 lock destinations only.</p>'
     + '<h2>Find it on your Octatrack</h2>'
     + paragraph(document.access?.location ?? 'Hold [TRACK] and press [PAGE] on any track.')
   + (document.access?.steps?.length ? '<ol>' + document.access.steps.map(step => `<li>${escapeHtml(step)}</li>`).join('') + '</ol>' : '')
