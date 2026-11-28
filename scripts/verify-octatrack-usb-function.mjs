@@ -17,7 +17,7 @@
 // unit off the bus when the controller stops.
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../src/engine/elektron/bytes.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { diagnostics, removal } from '../src/dev/octatrack-usb-lifecycle.ts'

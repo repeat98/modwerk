@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import { STEP_ASSETS, STEP_DEFAULT_LAYOUT, STEP_IDENTITIES } from './base-step'
 import { variantPackage, type BaseLayout, type BaseVariants } from './base-variants'
 

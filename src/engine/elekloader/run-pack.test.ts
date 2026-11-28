@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import { packSection } from '../elektron/codec/pack.ts'
 import { depackSection } from '../elektron/codec/depack.ts'
 import { packRun } from './run-pack.ts'

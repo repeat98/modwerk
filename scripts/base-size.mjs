@@ -71,7 +71,7 @@ export const withRecord = (sizes, record) => ({ schema: 1, bases: [...sizes.base
 /** A base package's MAIN and container bytes in each layout, built from `stock` as the site builds it. */
 export async function measureBase({ stock, text, fills, variants, binding }) {
   const [{ buildBase }, { applyVariantPatch }, formats] = await Promise.all([import('../src/engine/elekloader/octatrack-base.ts'),
-    import('../src/engine/elekloader/base-variants.ts'), import('../vendor/elekloader/kit/src/formats.ts')])
+    import('../src/engine/elekloader/base-variants.ts'), import('../src/engine/elektron/firmware-formats.ts')])
   const [, device] = await formats.load(stock)
   const size = async (packageText, packageFills, identity, layout) => {
     const built = await buildBase(stock, packageText, packageFills)

@@ -55,8 +55,8 @@ export async function writeStepBase(stockPath, out) {
   try { execFileSync('git', ['-C', dirname(resolve(out)), 'rev-parse', '--show-toplevel'], { stdio: 'pipe' }) } catch { tracked = false }
   if (tracked) throw new Error('Save firmware outside every Git checkout.')
   // The builder only here: device.mjs imports stageRefusal on every command.
-  const formats = await import('../vendor/elekloader/kit/src/formats.ts')
-  const { sha } = await import('../vendor/elekloader/kit/src/bytes.ts')
+  const formats = await import('../src/engine/elektron/firmware-formats.ts')
+  const { sha } = await import('../src/engine/elektron/bytes.ts')
   const { buildBase } = await import('../src/engine/elekloader/octatrack-base.ts')
   const text = readFileSync(join(assets, 'octatrack-base-step.elemod'), 'utf8')
   const fills = readFileSync(join(assets, 'octatrack-base-step-fills.json'), 'utf8')

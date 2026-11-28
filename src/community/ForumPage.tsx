@@ -36,6 +36,7 @@ import { mediaBusy, readyAttachments, type PendingMedia } from './forum-media-cl
 import { ModuleIssueNotice } from './ModuleIssueNotice'
 import { ModuleDiscussionDialog } from './ModuleDiscussionDialog'
 import { moveDiscussionIssueDraft, saveDiscussionIssueDraft } from './discussion-issue-draft'
+import { readForumThreadDraft, saveForumThreadDraft } from './forum-thread-draft'
 import { profileHref } from '../routing'
 import { GetStarted } from './GetStarted'
 /** A view name with a shorter form that phones show, so the strip fits more views. */
@@ -143,7 +144,7 @@ function ForumList({query,profile,machineHint}:{query:URLSearchParams;profile?:s
       {listReady&&!error&&<SinceVisit visit={visit} onReadAll={()=>{setVisit(current=>current&&{...current,newThreads:0,newReplies:0,unreadFollowed:0});setRevision(value=>value+1)}}/>}
       {error?<div className="forum-empty" role="alert"><Icon name="message" size={26}/><h2>Discussions could not load</h2><p>{error}</p><button className="button button-quiet" onClick={()=>{setError('');setRevision(value=>value+1)}}>Try again</button></div>:!data||!listReady?<ForumThreadListSkeleton/>:data.threads.length?<ForumThreadList threads={data.threads} context={{category:moduleView?'modules':category,machine:machine?.id,author:profile}}/>:<div className="forum-empty" data-invite={invite||undefined}><Icon name={saved?'bookmark':'message'} size={28}/><h2>{unreadOnly?'Nothing unread':filtered?'No matching discussions':profile?'No public threads yet':saved?'No bookmarks yet':following?'No followed discussions yet':'Be the first to start a conversation'}</h2><p>{unreadOnly?'You have read everything here. New replies will show up as they arrive.':filtered?(askInstead?'Try other words or fewer filters, or ask in a new thread.':'Try another search or clear your filters.'):saved?'Bookmark a thread to keep it close for later.':following?'Follow a thread to find it here. Threads you start or reply to are followed automatically.':profile?'Threads this member starts will appear here.':'Ask a question, share a discovery, or post a configuration you enjoy.'}</p><div className="forum-empty-actions"><a className={'button button-quiet' + (invite&&category==='issues'?' module-issue-action':'')} href={unreadOnly?link({unread:''}):filtered?link({q:'',module:'',status:''}):saved||following||profile?'#forum':startHref}>{invite&&category==='issues'&&<Icon name="message" size={16}/>} {unreadOnly?'Show all':filtered?'Clear filters':saved||following||profile?'Browse discussions':category==='issues'?'Report an issue':'Start a thread'}</a>{askInstead&&<a className="button button-quiet" href={startHref}><Icon name="plus" size={16}/>Start a thread</a>}</div></div>}
       {(page>0||data?.hasMore)&&<nav className="forum-pagination" aria-label="Discussion pages">{page>0?<a className="button button-quiet" href={link({page:String(page-1)})}><Icon name="back" size={14}/>Previous</a>:<span/>}<span>Page {page+1}</span>{data?.hasMore&&<a className="button button-quiet" href={link({page:String(page+1)})}>Next<Icon name="arrow" size={14}/></a>}</nav>}
-    </section>{showcase}{!profile&&<div className="forum-overview-sidebar">{join}{home&&<ForumOnlineNow/>}<ForumDirectory machine={machine?.id} href={category=>link({category,saved:'',following:'',view:'',status:''})}/>{overview&&<ForumShowcase layout="invite" machine={machine?.id} shareHref={shareHref}/>}{home&&<ForumHighlights/>}<ForumRecentPosts machine={machine?.id}/></div>}{profile&&!profileFailed&&<div className="forum-overview-sidebar">{join}<ForumProfileReplies items={member?.recentReplies}/></div>}</div>
+    </section>{showcase}{!profile&&<div className="forum-overview-sidebar">{join}{home&&<ForumOnlineNow/>}<ForumDirectory machine={machine?.id} current={category} href={category=>link({category,saved:'',following:'',view:'',status:''})}/>{overview&&<ForumShowcase layout="invite" machine={machine?.id} shareHref={shareHref}/>}{home&&<ForumHighlights/>}<ForumRecentPosts machine={machine?.id}/></div>}{profile&&!profileFailed&&<div className="forum-overview-sidebar">{join}<ForumProfileReplies items={member?.recentReplies}/></div>}</div>
   </>
 }
 
@@ -163,9 +164,19 @@ function NewThread({configuration:active,configurations,query}:{configuration?:C
   const initialMachine = machineModules(requestedMachine).length ? requestedMachine
     : initialCategory === 'configs' ? fallbackShareMachine : initialCategory === 'issues' ? '' : requestedMachine
   const [machine,setMachine]=useState(initialMachine),[category,setCategory]=useState(initialCategory),[configId,setConfigId]=useState(active?.id??'')
-  const [moduleId,setModuleId]=useState(COMMUNITY_MODULES.some(module=>module.id===query.get('module')&&(!initialMachine||module.machine===initialMachine))?query.get('module')!:'')
-  const [error,setError]=useState(''),[busy,setBusy]=useState(false),[media,setMedia]=useState<PendingMedia[]>([]),[body,setBody]=useState('')
+  const initialModule=COMMUNITY_MODULES.some(module=>module.id===query.get('module')&&(!initialMachine||module.machine===initialMachine))?query.get('module')!:''
+  const [moduleId,setModuleId]=useState(initialModule)
+  const [error,setError]=useState(''),[busy,setBusy]=useState(false),[media,setMedia]=useState<PendingMedia[]>([]),[body,setBody]=useState(''),[title,setTitle]=useState('')
   const composer=useRef<HTMLFormElement>(null),[pendingForm,setPendingForm]=useState<HTMLFormElement|null>(null)
+  // Once the member is known, their unpublished thread in this tab comes back; a topic, machine or module in the address keeps those selects.
+  const memberId=session.user?.id??'',[draftFor,setDraftFor]=useState(''),[restored,setRestored]=useState(false)
+  if(initialCategory!=='issues'&&memberId!==draftFor){
+    const draft=readForumThreadDraft(memberId)
+    setDraftFor(memberId);setTitle(draft?.title??'');setBody(draft?.body??'');setRestored(!!draft)
+    if(draft&&!['category','machine','module'].some(key=>query.has(key))){setCategory(draft.category);setMachine(draft.machine);setModuleId(draft.moduleId)}
+  }
+  useEffect(()=>{if(draftFor&&initialCategory!=='issues')saveForumThreadDraft(draftFor,{title,body,category,machine,moduleId})},[draftFor,initialCategory,title,body,category,machine,moduleId])
+  function discardDraft(){setTitle('');setBody('');setCategory(initialCategory);setMachine(initialMachine);setModuleId(initialModule);setRestored(false)}
   const modules=machine?machineModules(machine):COMMUNITY_MODULES
   const choices=configurations.filter(item=>configurationDevice(item)===machine)
   const chosen = choices.find(item => item.id === configId) ?? choices.find(item => item.id === active?.id)
@@ -187,7 +198,7 @@ function NewThread({configuration:active,configurations,query}:{configuration?:C
         if(!configuration)throw new Error('Create a local configuration for this machine first.')
         payload.configuration={name:configuration.name,...(machine!=='octatrack'?{device:machine}:{}),moduleIds:configuration.moduleIds,moduleVersions:configuration.moduleVersions,keepStockFx2:configuration.keepStockFx2,...(configuration.usbAudio?{usbAudio:configuration.usbAudio}:{})}
       }
-      const result=await post<{id:string}>('/forum/threads',payload);window.location.assign('#forum/thread/'+result.id)
+      const result=await post<{id:string}>('/forum/threads',payload);saveForumThreadDraft(memberId);window.location.assign('#forum/thread/'+result.id)
     }catch(error){setError(errorText(error))}finally{setBusy(false)}
   }
   if(initialCategory==='issues')return <><BackLink href="#forum?category=issues">Bug reports</BackLink><div className="page-heading"><div><h1>Report a module issue</h1><p>Choose the affected module, then use its “Report an issue” form.</p></div></div><p className="service-note">Issue reports include the reproduction steps, configuration and device details developers need.</p><div className="community-form"><label>Machine<select value={machine} onChange={event=>changeMachine(event.target.value)}><option value="">Every machine</option>{DEVICES.filter(device=>machineModules(device.id).length).map(device=><option key={device.id} value={device.id}>{device.name}</option>)}</select></label><label>Affected module<select value={moduleId} onChange={event=>setModuleId(event.target.value)}><option value="">Choose a module</option>{modules.map(module=><option key={module.id} value={module.id}>{module.name}{!machine?' · '+DEVICES_BY_ID[module.machine].name:''}</option>)}</select></label>{moduleId&&<a className="button button-quiet module-issue-action" href={moduleIssueHref(moduleId)} onClick={()=>{if(query.get('draft')==='1')moveDiscussionIssueDraft('',moduleId)}}><Icon name="message" size={16}/>Report an issue</a>}</div></>
@@ -196,7 +207,8 @@ function NewThread({configuration:active,configurations,query}:{configuration?:C
     <MemberInvite id="forum-new-join" title="Sign in to start a thread" text="Everyone can read the forum. A free account lets you post, reply and follow threads." next={'forum/new'+(String(query)?'?'+query:'')}/>
     {session.user?.verified&&<div className="forum-compose-layout"><form ref={composer} className="community-form forum-composer" onSubmit={event=>{event.preventDefault();requestSubmit(event.currentTarget)}}>
     <div className="forum-composer-heading"><Avatar username={session.user.username} avatar={session.user.avatar}/><p>Posting as <strong>@{session.user.username}</strong></p></div>
-    <label className="forum-compose-title">Title<input name="title" aria-label="Title" aria-describedby="forum-title-hint" required maxLength={160} placeholder="What is your thread about?"/><span id="forum-title-hint" className="forum-field-hint">A specific title helps the right people find your thread.</span></label>
+    {restored&&<p className="service-note">Draft restored. <button type="button" className="text-button" onClick={discardDraft}>Discard</button></p>}
+    <label className="forum-compose-title">Title<input name="title" aria-label="Title" aria-describedby="forum-title-hint" required maxLength={160} placeholder="What is your thread about?" value={title} onChange={event=>setTitle(event.target.value)}/><span id="forum-title-hint" className="forum-field-hint">A specific title helps the right people find your thread.</span></label>
     <div className="forum-compose-meta"><label>Topic<select value={category} aria-describedby="forum-topic-hint" onChange={event=>changeCategory(event.target.value as ForumCategory)}>{Object.entries(FORUM_CATEGORIES).filter(([value])=>value!=='issues').map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><span id="forum-topic-hint" className="forum-field-hint">{FORUM_CATEGORY_DESCRIPTIONS[category]}</span></label>
     <label>Machine<select value={machine} onChange={event=>changeMachine(event.target.value)}>{category!=='configs'&&<option value="">General / every machine</option>}{DEVICES.filter(device=>category!=='configs'||machineModules(device.id).length).map(device=><option key={device.id} value={device.id}>{device.name}{device.variants?' '+device.variants.join(' / '):''}</option>)}</select></label>
     {!!modules.length&&<label>Module (optional)<select name="moduleId" value={moduleId} onChange={event=>setModuleId(event.target.value)}><option value="">Choose a module</option>{modules.map(module=><option key={module.id} value={module.id}>{module.name}{!machine?' · '+DEVICES_BY_ID[module.machine].name:''}</option>)}</select></label>}

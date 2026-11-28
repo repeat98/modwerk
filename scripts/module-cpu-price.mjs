@@ -259,6 +259,17 @@ function lazyGlue(root) {
 export const AT_REST_LIMIT = 0.2 // points of the frame interrupt
 export const AT_REST_FROM = '2026-11-20' // the day the check merged
 const AT_REST_TOLERANCE = 1e-9
+// The CPU meter at rest (owner, 28 November 2026): the frame interrupt is not all a module costs the ColdFire. Its tick, draw and
+// edit hooks run on the UI task, which only the CPU meter sees (FM Synth cost 8 meter points installed and used nowhere, 19 October
+// 2026), and resting its frame detours does not stop them. device:price's atRestAdds.cpu above this fails a release from the date.
+export const AT_REST_METER_LIMIT = 2 // points of the CPU meter; single readings scatter about 1.5 points, three readings under 1
+export const AT_REST_METER_FROM = '2026-11-28'
+
+/** The CPU meter a module adds installed and used nowhere, from its device:price record: { value } or null when none was read. */
+export function atRestMeter({ root, document }) {
+  const record = readJson(resolve(root, 'sdk/octatrack/modules', document.id, CPU_PRICE_RECORD))
+  return record?.module === document.id && typeof record.result?.atRestAdds?.cpu === 'number' ? { value: record.result.atRestAdds.cpu } : null
+}
 
 /** Whether the module answers ev_in_use itself: its runtime*.json, its machine port or its USB package row subscribes it. */
 export function answersInUse({ root, id }) {
@@ -323,6 +334,15 @@ export function atRestStatus({ root, document, glue = null }) {
   const unmarked = built ? declaredRests({ root, id }).filter(address => !built.has(Number.parseInt(address, 16))) : []
   if (unmarked.length) return { state: 'fail', detail: 'its USB package ' + document.version + ' does not mark ' + unmarked.join(', ') + ' rests, which runtime.json names',
     fix: 'rebuild it (npm run octatrack:module-packages); a builder route that drops "rests" is a Fix: pull request of its own' }
+  const meter = atRestMeter({ root, document })
+  if (meter && meter.value > AT_REST_METER_LIMIT + AT_REST_TOLERANCE) {
+    const date = releaseDate({ root, document }), refused = !date || date >= AT_REST_METER_FROM
+    const detail = 'installed and used nowhere it adds ' + meter.value + ' points to the CPU meter (' + CPU_PRICE_RECORD + '), more than ' + AT_REST_METER_LIMIT +
+      ': work outside the frame interrupt (tick, draw or edit hooks) that resting does not stop'
+    if (refused) return { state: 'fail', detail, fix: 'find the hook with the development profile (docs/OCTATRACK_HARDWARE_TRAPS.md, "ColdFire and DSP load") and do its work only when ' +
+      'something changed, never on every tick (docs/module-guides/README.md, "Keep the ColdFire cheap"); then measure again with npm run device:price' }
+    return { state: 'warn', detail: detail + '; reported, not refused, for a release dated before ' + AT_REST_METER_FROM }
+  }
   if (answersInUse({ root, id })) return { state: 'ok', detail: 'it answers ev_in_use, so it rests while it acts on no track' + measured }
   if (judged && declaresRests({ root, id })) return { state: 'ok', detail: 'the base rests ' + (machine ? 'a machine no track uses' : 'an effect no slot uses') + ', its detours marked rests with it' + measured }
   if (!figure) return { state: 'info', detail: 'no cost at rest measured yet (test procedure step 9, npm run device:price)' }

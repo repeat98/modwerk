@@ -3,8 +3,8 @@ import { existsSync } from 'node:fs'
 import { readFile, writeFile, mkdir, mkdtemp, rm, stat } from 'node:fs/promises'
 import { basename, resolve, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { Bridge } from '../vendor/elekloader/kit/src/bridge.ts'
-import { parseCatalog, planBuild } from '../vendor/elekloader/kit/src/kit/catalog.ts'
+import { Bridge } from '../src/engine/elektron/builder-bridge.ts'
+import { parseCatalog, planBuild } from '../src/engine/elektron/builder-catalog.ts'
 import { readFirmwareBuildManifest, sha256 } from './firmware-build-manifest.mjs'
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url))

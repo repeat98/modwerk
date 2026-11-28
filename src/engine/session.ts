@@ -16,7 +16,7 @@ import stepPackage from './assets/octatrack-base-step.elemod?url'
 import stepVariants from './assets/octatrack-base-step-variants.json?url'
 import stepFills from './assets/octatrack-base-step-fills.json?url'
 import { STEP_ASSETS, STEP_DEFAULT_LAYOUT, STEP_IDENTITIES } from './elekloader/base-step'
-import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from './elektron/bytes.ts'
 import type { EngineRequest, EngineResponse } from './protocol'
 const basePackage = USB_AUDIO_PACKAGED ? currentPackage : linkedPackage
 const baseVariants = USB_AUDIO_PACKAGED ? currentVariants : linkedVariants

@@ -1,0 +1,1 @@
+Site: a new forum thread keeps its title, text, topic, machine and module in this tab when you leave the page before publishing, and the composer says when it restored a draft, with a button to discard it.
