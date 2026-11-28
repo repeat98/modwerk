@@ -72,7 +72,7 @@ int main(void) {
     assert(!mw_hook_buffer_permitted_held(MW_HOOK_SIDECHAIN,0,1,2,&fx2head)); /* SC's shared Y at 0x33dfe */
     assert(!mw_hook_buffer_permitted_held(MW_HOOK_SIDECHAIN,1,1,2,&fx2head)); /* and its alias seen from core 1 */
     assert(mw_hook_buffer_permitted_held(MW_HOOK_SIDECHAIN,0,1,3,&fx2w)); /* 0x34000 starts where SC's span ends */
-    assert(!mw_hook_buffer_permitted_held(16u,0,0,0,&fx1w)); /* an unknown held bit refuses */
+    assert(!mw_hook_buffer_permitted_held(MW_DSP_FEATURES+1u,0,0,0,&fx1w)); /* an unknown held bit refuses */
     /* The key bus (dsp_ledger.h): the window both cores see, and Y $800..$9ff on each core; Sidechain holds it too. */
     assert(!mw_hook_buffer_permitted_held(MW_DSP_KEYBUS,0,1,2,&fx2head) && !mw_hook_buffer_permitted_held(MW_DSP_KEYBUS,1,1,2,&fx2head));
     assert(mw_hook_buffer_permitted_held(MW_DSP_KEYBUS,0,1,3,&fx2w) && mw_hook_buffer_permitted_held(MW_DSP_KEYBUS,1,0,0,&fx1w));
