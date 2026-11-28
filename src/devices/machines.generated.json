@@ -794,7 +794,7 @@
     "name": "Analog Four",
     "family": "elektron",
     "status": "research",
-    "summary": "OS 1.56 rebuilds byte-identically, modified builds run on hardware and MIDI DIN restores stock. The beta build preview uses Elekloader core-a4 0.5.",
+    "summary": "OS 1.56 rebuilds byte-identically, modified builds run on hardware and MIDI DIN restores stock. The beta build preview uses the Modwerk base built from core-a4 0.5 source.",
     "steps": {
       "format": "done",
       "rebuild": "done",
@@ -865,7 +865,7 @@
         "version": "0.2",
         "path": "sdk/analog-four-mkii/core-profile"
       },
-      "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and Elekloader's builder. The beta preview uses core-a4 0.5 with the owner's exact OS 1.56 .syx.",
+      "toolchain": "m68k-elf GCC 16.2.0 and binutils 2.47. Build the Modwerk base with npm run machine:base and the owner's exact OS 1.56 file.",
       "budgets": [
         {
           "name": "Shared mod memory",
@@ -876,8 +876,8 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 44136,
-          "note": "Core 0.5 linked alone against OS 1.56. The link check measures the core and all selected modules together."
+          "value": 43472,
+          "note": "The Modwerk base built from core-a4 0.5 and linked alone against OS 1.56. The link check measures the core and all selected modules together."
         }
       ]
     }

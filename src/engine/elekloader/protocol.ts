@@ -11,7 +11,7 @@ export type BuilderMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-r
 // Digitakt II (OS 1.17) builds locally with its library modules, but downloads remain disabled pending qualification/review.
 // Model:Cycles (OS 1.13) builds its Modwerk base locally as a research preview; downloads open to beta testers only
 // (DIGI_BETA_DOWNLOADS) until the owner's review releases them.
-export const DIGI_DOWNLOADS_ENABLED: Readonly<Record<BuilderMachine, boolean>> = {
+export const DIGI_DOWNLOADS_ENABLED: Readonly<Partial<Record<BuilderMachine, boolean>>> = {
   digitakt: true,
   'digitakt-ii': false,
   digitone: true,

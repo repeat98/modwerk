@@ -1,1 +1,1 @@
-- Add a beta build preview for Analog Four MKII OS 1.56 with Elekloader core-a4 0.5.
+- Add a beta build preview for Analog Four MKII OS 1.56 using the source-built Modwerk base.
