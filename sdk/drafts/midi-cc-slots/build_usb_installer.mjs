@@ -19,7 +19,7 @@ const server=await createServer({configFile:false,server:{middlewareMode:true,hm
 try{
  const {buildLocalCcInstaller}=await server.ssrLoadModule('/src/dev/local-cc-installer.ts')
  const {decodeFirmware}=await server.ssrLoadModule('/src/engine/elek.ts')
- const {sha}=await server.ssrLoadModule('/vendor/elekloader/kit/src/bytes.ts')
+ const {sha}=await server.ssrLoadModule('/src/engine/elektron/bytes.ts')
  const before=sha(original),ids=['sidechain-compressor','playmodes','mute-modes','midi-cc-slots']
  const result=await buildLocalCcInstaller(original,ids,readFileSync('src/engine/assets/octatrack-base.elemod','utf8'),JSON.parse(readFileSync('src/engine/assets/octatrack-base-fills.json','utf8')))
  for(const [name,bytes] of result.files)writeFileSync(join(out,name),bytes)

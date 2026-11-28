@@ -3,7 +3,7 @@
 // reads the installed layout from the unit, replaces it on a change and keeps the base-variant path while the manifest
 // lists no package. Synthetic package bytes only.
 import { describe, expect, it, vi } from 'vitest'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import manifest from '../assets/octatrack-module-packages.json' with { type: 'json' }
 import { USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, type UsbAudioLayout, type UsbAudioPackageKind } from '../../config/usb-audio'
 import { countsTowardLimit, limitedCount } from '../../catalog/set-limit'

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { readFile, writeFile } from 'node:fs/promises'
 import { basename } from 'node:path'
-import { build } from '../vendor/elekloader/kit/src/patch.ts'
+import { build } from '../src/engine/elektron/firmware-build.ts'
 import { buildDt2RenderFirmware } from '../src/engine/elekloader/dt2-render-build.ts'
 import { parseBuildMods } from '../src/engine/elekloader/digi-preflight.ts'
 import { readEle3Syx } from '../src/engine/elektron/ele3.ts'

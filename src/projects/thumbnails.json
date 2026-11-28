@@ -136,33 +136,6 @@
     "sha256": "cd6649ffb8cb027c211a5c0579e8ddd261236ac4be4d391becf4c57584361d84",
     "fetchedAt": "2026-10-09"
   },
-  "https://github.com/irpina/digicosm": {
-    "src": "project-thumbnails/irpina--digicosm-5b83755b5299.jpg",
-    "source": "https://github.com/irpina/digicosm",
-    "imageUrl": "https://opengraph.githubassets.com/51bc0765ca713629a48b703032fd01eadea9faa9a133be8d29de4a879288cc69/irpina/digicosm",
-    "width": 640,
-    "height": 320,
-    "sha256": "5b83755b5299228b99a4a6bc236cce42599c647b19c556cbe7735f8f3c9fdb84",
-    "fetchedAt": "2026-10-09"
-  },
-  "https://github.com/irpina/digiemu": {
-    "src": "project-thumbnails/irpina--digiemu-4034f8d9783c.jpg",
-    "source": "https://github.com/irpina/digiemu",
-    "imageUrl": "https://opengraph.githubassets.com/7f3b91f294d1d516b2745aa99aa6454576fd62e42feb748e2b543d6a95683de7/irpina/digiemu",
-    "width": 640,
-    "height": 320,
-    "sha256": "4034f8d9783c8eb37c33046730f4eea5788c6821174b7e0c854daedc88773ae9",
-    "fetchedAt": "2026-10-09"
-  },
-  "https://github.com/irpina/elekloader": {
-    "src": "project-thumbnails/irpina--elekloader-06d8c6317978.jpg",
-    "source": "https://github.com/irpina/elekloader",
-    "imageUrl": "https://opengraph.githubassets.com/8d5fe53306b6a99074727017b8e891c61cba76f3bdecfa4cc517c0d358cc25be/irpina/elekloader",
-    "width": 640,
-    "height": 320,
-    "sha256": "06d8c6317978a9ae3e6a2b92286afd49ff191893651e7762d6ce00296312e560",
-    "fetchedAt": "2026-10-09"
-  },
   "https://github.com/jakobbak/screendump": {
     "src": "project-thumbnails/jakobbak--screendump-386442137838.jpg",
     "source": "https://github.com/jakobbak/screendump",

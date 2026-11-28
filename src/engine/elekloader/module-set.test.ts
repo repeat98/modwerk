@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import catalog from '../../../sdk/catalog.json' with { type: 'json' }
 import { publishedManifest as manifest } from './published-octatrack.fixture'
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }

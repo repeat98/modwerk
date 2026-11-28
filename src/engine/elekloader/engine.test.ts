@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import CATALOG from '../../../vendor/elekloader/catalog/catalog.json'
-import { createService } from '../../../vendor/elekloader/kit/src/kit/serve.ts'
-import type { Ready } from '../../../vendor/elekloader/kit/src/kit/protocol.ts'
+import { createService } from '../elektron/builder-service.ts'
+import type { Ready } from '../elektron/builder-protocol.ts'
 
 // The kit's worker logic with the vendored catalog, its cores and mods served as Modwerk serves them under
 // elekloader/. No firmware: the stock-file side is covered by the recorded parity runs (docs/VERIFICATION.md).

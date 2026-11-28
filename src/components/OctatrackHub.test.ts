@@ -13,7 +13,7 @@ import { recordLoad } from '../hooks/useOctatrackLoad'
 import { publishedBinding as baseBinding } from '../engine/elekloader/published-octatrack.fixture'
 import { MODULE_SKIP_HINT } from '../firmware-notices'
 import { MODULES } from '../catalog/modules'
-import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../engine/elektron/bytes.ts'
 
 vi.mock('./OctatrackDiagnostics', () => ({ OctatrackDiagnosticsSettings: () => null }))
 vi.mock('../engine/elekloader/module-set', async original => ({ ...await original<typeof import('../engine/elekloader/module-set')>(), moduleSetReview: vi.fn() }))

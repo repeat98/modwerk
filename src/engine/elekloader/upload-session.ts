@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Unconnected browser client. A real USB adapter and runtime executor are still required.
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import {
   decodeUploadResponse, digestBytes, encodeUploadRequest, UPLOAD_CHUNK, UPLOAD_HEADER, UPLOAD_MAX_BYTES,
   type UploadRequest, type UploadStatus,
