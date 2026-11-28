@@ -292,8 +292,8 @@ class MenuEntry:
         # the first hardware test used them and got correct names with dead
         # knobs and garbage audio. No upper bound here: on the Modwerk base the
         # id is only preferred, and the base gives the effect its own at install
-        # (its count: sdk/machines/octatrack/elekloader/fx-ids.json); a card
-        # remix takes 0x04-0x1f only (registry.remix).
+        # (its count: FX_IDS in sdk/machines/octatrack/elekloader/build_core.py);
+        # a card remix takes 0x04-0x1f only (registry.remix).
         if self.fx2_id < 0x04:
             raise ValueError(f"fx2 id 0x{self.fx2_id:02x} is out of range "
                              f"(0x00-0x03 are stock's 'no effect' synonyms)")

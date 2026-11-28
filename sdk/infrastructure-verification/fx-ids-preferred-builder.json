@@ -6,7 +6,7 @@
  "builderAdaptations": {
   "tools/remix/schema.py": {
    "before": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
-   "after": "bc4214eef886a33b923ec889070d08f28c0be00e7788f488ef73be30ee4faef3"
+   "after": "7a073e736cb9aa0ff35b0dd2b0394db537df9b43a0336faa5f34735e6d08a48c"
   },
   "tools/remix/registry.py": {
    "before": "f3b2fbfb90b97db33e360603ccf3eb0a703913dddaad78c681b9676287ee23e5",
@@ -20,8 +20,8 @@
  "scope": "An effect's fx2_id is the id it prefers; the Modwerk base gives each effect its own at install (owner, 28 November 2026; docs/OCTATRACK_FX_TABLE_HOOK.md, tools). schema.py's MenuEntry drops its 0x1f upper bound (0x00-0x03 stay refused), registry.modules() refuses a shared id only on a stock effect's (two replacements), and registry.remix() refuses a card remix holding an id past 0x1f (registry.card_ids), since a card image writes stock's 32-entry id tables; two modules on one id in one card remix stay refused by ledger.check, unchanged. Validation only: build_bus.py and ledger.py are unchanged, and registry.modules() under the base commit's two files and under these, in one copy of this commit's sdk/octabam, returns the same 67 declarations (repr with object addresses removed, identical SHA-256 below), the highest fx2_id 0x1f, so card_ids refuses none of them. Every card selection therefore composes from identical inputs through an identical builder. No card image was built and no hardware result is inferred.",
  "declarations": {
   "count": 67,
-  "beforeSha256": "0ce9ed55fea21cb2a9a49e1586aabc87bd862646072b5acd56d7b62a15e593c5",
-  "afterSha256": "0ce9ed55fea21cb2a9a49e1586aabc87bd862646072b5acd56d7b62a15e593c5",
+  "beforeSha256": "ca3d5b491eb6bc98571df9a317cd50e05fc4849ab00294f4c57a11b3427feaff",
+  "afterSha256": "ca3d5b491eb6bc98571df9a317cd50e05fc4849ab00294f4c57a11b3427feaff",
   "highestFx2Id": 31,
   "cardRefusals": []
  }
