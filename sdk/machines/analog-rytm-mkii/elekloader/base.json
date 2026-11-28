@@ -514,6 +514,13 @@
         "stockSha256": "8d753c8b075b6816018e083a569be977258c02b63721ca61e82d721ccd63c61b",
         "op": "jsr",
         "target": "mw_voice_applied_gate"
+      },
+      {
+        "addr": "0x400fb274",
+        "len": 6,
+        "stockSha256": "4e50ffb9300c29073bc020ed04b2e5bbb594aaab07d12b696980661fdcfba00b",
+        "op": "jsr",
+        "target": "mw_voice_records"
       }
     ],
     "cflags": [
@@ -562,6 +569,8 @@
       "-DHIT_VELOCITY_AT=0x800067c4",
       "-DSILENCE_AT=0x4011e4c2",
       "-DPARAM_RECORDS_AT=0x401bfbc8",
+      "-DPARAM_MAPS_BUILD_AT=0x40006cd8",
+      "-DMACHINE_PAGES_AT=0x40288028",
       "-DSTRING_FROM_CSTR_AT=0x401bcff0",
       "-DSTRING_DTOR_AT=0x401bb540",
       "-DSHOW_HEADER_AT=0x40035fe8",
