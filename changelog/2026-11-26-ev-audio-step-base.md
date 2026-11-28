@@ -1,0 +1,1 @@
+Base: `ev_audio_step` call hook at `0x400a2d6a` (index 64, after `ot_lfo_pmtr_dest` at 63, the owner's order; room 8, rejoin `0x400a2d74`). Play Modes coexists via machine-ports (order 40, replaces `pm_audio_step`, native sources unchanged). Seq Pos listing tip subscribes order 50. Fork mop101/102 pattern. No USB. Owner base review required.

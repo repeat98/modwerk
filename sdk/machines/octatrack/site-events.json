@@ -343,6 +343,12 @@
    "kind": "table",
    "room": 16,
    "record": 12
+  },
+  {
+   "index": 64,
+   "event": "ev_audio_step",
+   "kind": "call",
+   "room": 8
   }
  ]
 }

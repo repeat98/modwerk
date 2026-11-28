@@ -366,4 +366,8 @@ struct modwerk_lfo_pmtr_dest {
 #define MODWERK_LFO_PMTR_ABI 2u
 #define MODWERK_LFO_PMTR_AUDIO 1u     /* audio LFO page only (MIDI twin later) */
 
+/* ev_audio_step (0x400a2d6a): the tick's audio pass loads step = 0x800064d0[track] (track in d5) just before 0x4009d1e8(track, bank, pattern, step, n); remappers may change the step that plays. The audio tick / frame interrupt: short, no firmware call that can block, the EMAC kept as found. Base loads the stock step into *step. Change *step to change which pattern step plays for this track. Return nonzero to take the track: no later handler runs. The base leaves the final step in d0 and rejoins at 0x400a2d74. The tick's d2-d7/a2-a6 are intact in a handler and must be kept, as C keeps them. PHAS does not subscribe (fire-time 0x400a2e12). */
+#define MODWERK_EV_AUDIO_STEP 64
+typedef int modwerk_ev_audio_step(unsigned *step, unsigned track);
+
 #endif
