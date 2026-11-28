@@ -17,10 +17,11 @@ export function ForumMachineBadge({ machine }: { machine: string | null }) {
 }
 
 // Without a picture a member gets a soft two-colour orb: colours, angle and highlight come from a hash of the username,
-// so the same member always looks the same. A deleted member gets a flat neutral disc.
-function avatarOrb(username: string) {
+// so the same member always looks the same. A deleted member gets a flat neutral disc. Audio-only Showcase covers use the
+// same colours, seeded by the post.
+export function orbStyle(seed: string) {
   let hash = 2166136261
-  for (const character of username) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619)
+  for (const character of seed) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619)
   // Mix the bits once more: plain FNV gives short, similar names the same low bits, and so the same colours.
   hash = Math.imul(hash ^ hash >>> 16, 0x85ebca6b); hash = Math.imul(hash ^ hash >>> 13, 0xc2b2ae35); hash = (hash ^ hash >>> 16) >>> 0
   // The hues sit in wheel order, so index + 3..5 is always a far-away second colour. A light, middle or deep body and the
@@ -33,7 +34,7 @@ function avatarOrb(username: string) {
 export function ForumAvatar({ username, official, avatar }: { username: string | null; official?: unknown; avatar?: string | null }) {
   const tone = official ? 'official' : username ? [...username].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 5 : 'neutral'
   const picture = !official && !!username && !!avatar
-  return <span className="forum-avatar" data-tone={tone} data-picture={picture || undefined} style={!official && !picture && username ? avatarOrb(username) : undefined} aria-hidden="true">{official ? <img src={assetUrl('modwerk-mark.svg')} alt="" /> : picture ? <img src={apiUrl('/forum/avatars/' + avatar)} alt="" loading="lazy" decoding="async" /> : null}</span>
+  return <span className="forum-avatar" data-tone={tone} data-picture={picture || undefined} style={!official && !picture && username ? orbStyle(username) : undefined} aria-hidden="true">{official ? <img src={assetUrl('modwerk-mark.svg')} alt="" /> : picture ? <img src={apiUrl('/forum/avatars/' + avatar)} alt="" loading="lazy" decoding="async" /> : null}</span>
 }
 
 // Official module threads have no public member profile.

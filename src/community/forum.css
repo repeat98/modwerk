@@ -122,7 +122,9 @@
 /* A member without a picture gets an orb: ForumAvatar picks two of these hues (in wheel order: the avatar tones plus the role
    green, amber and blue-grey), an angle, a highlight corner and a depth from the username. The body runs from the second
    hue into its own dark. */
-.forum-avatar { --orb-0: #cec5ef; --orb-1: #b8d6ee; --orb-2: #92bccd; --orb-3: #b3dacf; --orb-4: #9cc6b1; --orb-5: #e3c27c; --orb-6: #eac4af; --orb-7: #e7bbd0; --orb-a: var(--orb-0); --orb-b: var(--orb-4); --orb-angle: 135deg; --orb-x: 28%; --orb-y: 26%; --orb-depth: 55%; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle at var(--orb-x) var(--orb-y), var(--orb-a), color-mix(in srgb, var(--orb-a) 55%, transparent) 28%, transparent 45%), linear-gradient(var(--orb-angle), var(--orb-b), color-mix(in srgb, var(--orb-b), var(--background) var(--orb-depth))); font-size: var(--text-xs); font-weight: 600; letter-spacing: .3px; }
+/* The orb colours: default avatars and audio-only Showcase covers. */
+.forum-avatar, .forum-showcase-card { --orb-0: #cec5ef; --orb-1: #b8d6ee; --orb-2: #92bccd; --orb-3: #b3dacf; --orb-4: #9cc6b1; --orb-5: #e3c27c; --orb-6: #eac4af; --orb-7: #e7bbd0; --orb-a: var(--orb-0); --orb-b: var(--orb-4); --orb-angle: 135deg; --orb-x: 28%; --orb-y: 26%; --orb-depth: 55%; }
+.forum-avatar { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle at var(--orb-x) var(--orb-y), var(--orb-a), color-mix(in srgb, var(--orb-a) 55%, transparent) 28%, transparent 45%), linear-gradient(var(--orb-angle), var(--orb-b), color-mix(in srgb, var(--orb-b), var(--background) var(--orb-depth))); font-size: var(--text-xs); font-weight: 600; letter-spacing: .3px; }
 .forum-avatar:is([data-picture], [data-tone="official"]) { border: 1px solid var(--chrome-edge); }
 .forum-avatar[data-tone="official"] { background: var(--surface); }
 .forum-avatar[data-tone="neutral"] { background: #34343e; }
@@ -1055,11 +1057,19 @@ li[data-status="error"] .forum-media-status { color: var(--danger); }
 .forum-showcase-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .forum-showcase-chips { position: absolute; top: 10px; left: 10px; right: 10px; z-index: 2; display: flex; flex-wrap: wrap; gap: 5px; pointer-events: none; }
 .forum-showcase-chips > * { pointer-events: auto; }
-.forum-showcase-chips .forum-machine-badge, .forum-showcase-more { border-color: var(--line); background: #141418cc; backdrop-filter: blur(6px); color: var(--text-secondary); }
-.forum-showcase-more { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 7px; border: 1px solid; border-radius: var(--radius-xs); font-size: var(--text-xs); }
-.forum-showcase-audio-label { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; color: var(--topic-color); font-size: var(--text-xs); font-weight: 500; }
+.forum-showcase-chips .forum-machine-badge, .forum-showcase-more, .forum-showcase-audio-label { border-color: #ffffff14; background: #141418b3; backdrop-filter: blur(8px); color: var(--text-secondary); }
+.forum-showcase-more { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 7px; border-width: 1px; border-style: solid; border-radius: var(--radius-xs); font-size: var(--text-xs); }
+.forum-showcase-audio-label { display: inline-flex; align-items: center; gap: 5px; min-height: 24px; margin-left: auto; padding: 3px 8px 3px 7px; border-width: 1px; border-style: solid; border-radius: 999px; font-size: var(--text-xs); font-weight: 500; }
 .forum-showcase-sound { --signal: var(--topic-color); position: absolute; inset: 0; }
-.forum-showcase-sound-mark { position: absolute; inset: 36px 0 62px; display: grid; place-items: center; color: color-mix(in srgb, var(--topic-color) 45%, transparent); }
+/* An audio-only share has no picture: its cover is a soft field in the member-orb colours, seeded by the post, and the
+   player sits on it as a pane of glass. */
+.forum-showcase-card[data-kind="audio"] .forum-showcase-cover { background:
+  radial-gradient(70% 120% at var(--orb-x) var(--orb-y), var(--orb-a), color-mix(in srgb, var(--orb-a) 40%, transparent) 45%, transparent 75%),
+  radial-gradient(80% 130% at calc(100% - var(--orb-x)) calc(100% - var(--orb-y)), var(--orb-b), color-mix(in srgb, var(--orb-b) 35%, transparent) 50%, transparent 80%),
+  linear-gradient(var(--orb-angle), color-mix(in srgb, var(--orb-b), var(--background) 45%), color-mix(in srgb, var(--orb-a), var(--background) var(--orb-depth))); }
+.forum-showcase-card[data-kind="audio"] .audio-preview-dock { border-color: #ffffff24; background: #11111499; backdrop-filter: blur(16px) saturate(1.3); }
+.forum-showcase-card[data-kind="audio"] .audio-preview-player .audio-player { --audio-wave: color-mix(in srgb, var(--text) 55%, transparent); --audio-accent: var(--text); }
+.forum-showcase-card[data-kind="audio"] .audio-preview-player .audio-player-duration { color: var(--text-secondary); }
 /* Keep seeking and playback above the card's stretched title link. */
 .forum-showcase-sound .audio-preview-dock { z-index: 2; }
 .forum-showcase-copy { display: flex; flex: 1; flex-direction: column; gap: 6px; padding: 11px 14px 13px; }

@@ -1,0 +1,1 @@
+Site: a sound clip shared in the forum Showcase without a picture now gets a soft colour field of its own instead of a grey box with a wave icon, with the player laid over it like glass. The small "+1 more" and "Audio" labels on Showcase cards read clearly on any cover.
