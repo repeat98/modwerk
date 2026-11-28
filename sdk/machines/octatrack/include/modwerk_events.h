@@ -387,4 +387,88 @@ struct modwerk_dsp_effect {
 #define MODWERK_DSP_SLOT_RECORDS 0x7fb0u    /* X, on the slot's core: 4 words at + 4 * ((r7 >> 8) & 15); word 0 the P address of the area the slot runs, 0 none; word 1 its in-block's offset in the frame's host bank, word 2 its out-block's, 0 none */
 #define MODWERK_DSP_STREAM_LAG 3u          /* fill(slot, f) runs once take() has had every out-block up to frame f - 3 */
 
+/* ev_hook_reserved_66 (raised by a module): Reserved index 66 for CLYPS base hook 3 (#1997).. Reserved hook index; no subscribers on this branch.. Neutral placeholder: replace when the owning pull request lands on base/octatrack-next. */
+#define MODWERK_EV_HOOK_RESERVED_66 66
+typedef void modwerk_ev_hook_reserved_66(void);
+/* Raise it: define `modwerk_ev_hook_reserved_66 *raise_ev_hook_reserved_66` as a zero word in your image (initialized data, not bss), list "ev_hook_reserved_66" under "raise" in runtime.json and call through it; every handler's answer, OR'd. */
+
+/* ev_hook_reserved_67 (raised by a module): Reserved index 67 for owner base hook (#2261), when ready.. Reserved hook index; no subscribers on this branch.. Neutral placeholder: replace when the owning pull request lands on base/octatrack-next. */
+#define MODWERK_EV_HOOK_RESERVED_67 67
+typedef void modwerk_ev_hook_reserved_67(void);
+/* Raise it: define `modwerk_ev_hook_reserved_67 *raise_ev_hook_reserved_67` as a zero word in your image (initialized data, not bss), list "ev_hook_reserved_67" under "raise" in runtime.json and call through it; every handler's answer, OR'd. */
+
+/* ev_hook_reserved_68 (raised by a module): Reserved index 68 for owner base hook (#2271), when ready.. Reserved hook index; no subscribers on this branch.. Neutral placeholder: replace when the owning pull request lands on base/octatrack-next. */
+#define MODWERK_EV_HOOK_RESERVED_68 68
+typedef void modwerk_ev_hook_reserved_68(void);
+/* Raise it: define `modwerk_ev_hook_reserved_68 *raise_ev_hook_reserved_68` as a zero word in your image (initialized data, not bss), list "ev_hook_reserved_68" under "raise" in runtime.json and call through it; every handler's answer, OR'd. */
+
+/* ev_fm_lfo_depth (0x40003ca4, take: subscribe a struct modwerk_take): the LFO routine depth read for FM machines. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_LFO_DEPTH 69
+
+/* ev_fm_lfo_depth_frame (0x4000d03e, take: subscribe a struct modwerk_take): the frame-builder copy of the LFO depth read. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_LFO_DEPTH_FRAME 70
+
+/* ev_fm_lfo_page (0x40031e62, take: subscribe a struct modwerk_take): the LFO page resolver branch for FLEX FM tracks. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_LFO_PAGE 71
+
+/* ev_fm_amp_release (0x4000b51a, take: subscribe a struct modwerk_take): AMP envelope release consumer before stock staging. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_AMP_RELEASE 72
+
+/* ev_fm_transport_stop (0x4000b2c8): STOP ends FM machine voices. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. A notification: every subscribed engine handler runs; each clears or gates only its own machine voices. Stock runs after every handler. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_FM_TRANSPORT_STOP 73
+typedef void modwerk_ev_fm_transport_stop(void);
+
+/* ev_fm_sequencer_retrig (0x4000c634, take: subscribe a struct modwerk_take): sequencer START rewrite for FM machines. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_SEQUENCER_RETRIG 74
+
+/* ev_fm_voice_kill (0x4000685c, take: subscribe a struct modwerk_take): voice kill for FM machines. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_VOICE_KILL 75
+
+/* ev_midi_chromatic_on_gate (0x4000e452): MIDI chromatic note-on octave gate. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. A notification: every subscribed engine handler runs; each clears or gates only its own machine voices. Stock runs after every handler. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_MIDI_CHROMATIC_ON_GATE 76
+typedef void modwerk_ev_midi_chromatic_on_gate(void);
+
+/* ev_midi_chromatic_off_gate (0x4000de10): MIDI chromatic note-off octave gate. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. A notification: every subscribed engine handler runs; each clears or gates only its own machine voices. Stock runs after every handler. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_MIDI_CHROMATIC_OFF_GATE 77
+typedef void modwerk_ev_midi_chromatic_off_gate(void);
+
+/* ev_midi_live_record_event (0x400625e0, take: subscribe a struct modwerk_take): MIDI live recorder on MIDI event 0x41. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_MIDI_LIVE_RECORD_EVENT 78
+
+/* ev_midi_live_record_trig (0x4006262a, take: subscribe a struct modwerk_take): MIDI live recorder with trig held. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_MIDI_LIVE_RECORD_TRIG 79
+
+/* ev_fm_amp_setup_stage (0x40059d56, take: subscribe a struct modwerk_take): AMP SETUP LEG staging on FM tracks. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_AMP_SETUP_STAGE 80
+
+/* ev_fm_amp_draw_names (0x4003685a, take: subscribe a struct modwerk_take): AMP SETUP drawer name pointers. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_AMP_DRAW_NAMES 81
+
+/* ev_fm_amp_draw_nibbles_a (0x400368ac, take: subscribe a struct modwerk_take): AMP SETUP drawer nibbles (first site). A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_AMP_DRAW_NIBBLES_A 82
+
+/* ev_fm_amp_draw_nibbles_b (0x40036946, take: subscribe a struct modwerk_take): AMP SETUP drawer nibbles (second site). A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_AMP_DRAW_NIBBLES_B 83
+
+/* ev_fm_amp_edit (0x4003ae40, take: subscribe a struct modwerk_take): AMP page-2 LEG editor on FM tracks. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_AMP_EDIT 84
+
+/* ev_fm_amp_live_lane (0x4003af0a, take: subscribe a struct modwerk_take): AMP LEG live-lane suppress. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_AMP_LIVE_LANE 85
+
+/* ev_fm_octave_func (0x40051fce, take: subscribe a struct modwerk_take): FUNC+UP/DOWN octave on FM tracks. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_OCTAVE_FUNC 86
+
+/* ev_fm_slot_assign (0x400795ba, take: subscribe a struct modwerk_take): machine slot assign became-FM predicate. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_SLOT_ASSIGN 87
+
+/* ev_fm_load_selector (0x40022686, take: subscribe a struct modwerk_take): file browser load-selector hook. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_LOAD_SELECTOR 88
+
+/* ev_fm_frame_source (0x4000d514, take: subscribe a struct modwerk_take): frame-builder renderer slot copy for FM machines. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_FM_FRAME_SOURCE 89
+
+/* ev_playback_page_resolve (0x40031ece, take: subscribe a struct modwerk_take): PLAYBACK page resolver FLEX seam. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
+#define MODWERK_EV_PLAYBACK_PAGE_RESOLVE 90
+
 #endif

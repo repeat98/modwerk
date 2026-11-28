@@ -357,6 +357,150 @@
    "kind": "table",
    "room": 8,
    "record": 32
+  },
+  {
+   "index": 66,
+   "event": "ev_hook_reserved_66",
+   "kind": "raise"
+  },
+  {
+   "index": 67,
+   "event": "ev_hook_reserved_67",
+   "kind": "raise"
+  },
+  {
+   "index": 68,
+   "event": "ev_hook_reserved_68",
+   "kind": "raise"
+  },
+  {
+   "index": 69,
+   "event": "ev_fm_lfo_depth",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 70,
+   "event": "ev_fm_lfo_depth_frame",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 71,
+   "event": "ev_fm_lfo_page",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 72,
+   "event": "ev_fm_amp_release",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 73,
+   "event": "ev_fm_transport_stop",
+   "kind": "call"
+  },
+  {
+   "index": 74,
+   "event": "ev_fm_sequencer_retrig",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 75,
+   "event": "ev_fm_voice_kill",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 76,
+   "event": "ev_midi_chromatic_on_gate",
+   "kind": "call"
+  },
+  {
+   "index": 77,
+   "event": "ev_midi_chromatic_off_gate",
+   "kind": "call"
+  },
+  {
+   "index": 78,
+   "event": "ev_midi_live_record_event",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 79,
+   "event": "ev_midi_live_record_trig",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 80,
+   "event": "ev_fm_amp_setup_stage",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 81,
+   "event": "ev_fm_amp_draw_names",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 82,
+   "event": "ev_fm_amp_draw_nibbles_a",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 83,
+   "event": "ev_fm_amp_draw_nibbles_b",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 84,
+   "event": "ev_fm_amp_edit",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 85,
+   "event": "ev_fm_amp_live_lane",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 86,
+   "event": "ev_fm_octave_func",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 87,
+   "event": "ev_fm_slot_assign",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 88,
+   "event": "ev_fm_load_selector",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 89,
+   "event": "ev_fm_frame_source",
+   "kind": "take",
+   "room": 8
+  },
+  {
+   "index": 90,
+   "event": "ev_playback_page_resolve",
+   "kind": "take",
+   "room": 8
   }
  ]
 }
