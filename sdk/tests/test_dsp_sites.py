@@ -44,7 +44,7 @@ class DspSites(unittest.TestCase):
 
     def test_malformed_registries_are_refused(self):
         for mutate in (lambda r: r['sites'][1].update(index=7),
-                       lambda r: r['sites'][0].update(kind='chain'),
+                       lambda r: r['sites'][0].update(kind='unknown-kind'),
                        lambda r: r['features'][3].update(bit=16),
                        lambda r: r['regions'][0].update(shared=True),
                        lambda r: r['regions'][1].update(start='0x7f00')):

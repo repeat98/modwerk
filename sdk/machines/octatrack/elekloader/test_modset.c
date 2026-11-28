@@ -43,6 +43,11 @@ static int card_unread[2]; /* the file is there, but reading it fails */
 static int volatile_busy;
 static unsigned writes, write_fail;
 int modwerk_runtime_volatile_busy(void) { return volatile_busy; }
+#ifndef MODWERK_TEST_TRIAL_READY_IMPLEMENTED
+/* Legacy card fixture has no completed whole-set trial. Stay blocked while
+ * volatile work is active; returning-readiness tests supply their own model. */
+int modwerk_runtime_set_trial_ready(void) { return 0; }
+#endif
 int modwerk_test_file(int op, const char *path, uint8_t *data, unsigned n)
 {
     int which = path[8] == '1';

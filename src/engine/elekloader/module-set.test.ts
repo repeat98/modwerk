@@ -207,13 +207,17 @@ describe('ABI 9 packages: base features and DSP claims', () => {
     return { catalogue: createRuntimeCatalogue({ packages: [entry] }), data }
   }
   const target = { name: 'Reader', moduleIds: ['everb'] }
-  it('offers only the key bus, which the base reports through its loader’s ABI 9', () => {
+  it('offers the published Base services and keeps the current provider bound to the registry', () => {
     const sites = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/dsp-sites.json', import.meta.url), 'utf8'))
-    expect(BASE_DSP_FEATURES).toBe(sites.features.find((feature: { name: string }) => feature.name === 'keybus').bit)
-    expect(BASE_DSP_FEATURES).toBe(8)
-    // The Octatrack's on-demand base provides exactly that (resident_engines.c); the loader refuses any other bit.
+    const keybus = sites.features.find((feature: { name: string }) => feature.name === 'keybus').bit
+    expect(BASE_DSP_FEATURES).toBe((baseBinding as { dspFeatures?: number }).dspFeatures ?? keybus)
+    expect(BASE_DSP_FEATURES & ~sites.features.reduce((mask: number, feature: { bit: number }) => mask | feature.bit, 0)).toBe(0)
+    // Published downloads may predate the cumulative draft. Check the current
+    // C provider independently against its own declared services.
     const engines = readFileSync(new URL('../../../sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.c', import.meta.url), 'utf8')
-    expect(engines).toContain('unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS; }')
+    const services = ['keybus', 'track-processor'].filter(name => sites.features.some((feature: { name: string }) => feature.name === name))
+    const expression = services.map(name => 'MW_DSP_' + name.toUpperCase().replaceAll('-', '_')).join(' | ')
+    expect(engines).toContain('unsigned modwerk_machine_dsp_features(void) { return ' + expression + '; }')
     expect(readFileSync(new URL('../../../sdk/runtime/loader/loader.h', import.meta.url), 'utf8')).toMatch(/#define RUNTIME_ABI 10u?\b/)
   })
   it('syncs a reader to a base whose loader reports ABI 9, with its forward and Undo packages checked', async () => {

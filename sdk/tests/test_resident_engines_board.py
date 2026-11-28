@@ -40,6 +40,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from native_processor_support import support_sources
 
 ROOT = Path(__file__).resolve().parents[2]
 ADAPTER = ROOT / 'sdk/machines/octatrack/module-adapters'
@@ -2144,6 +2145,7 @@ def build(work, sets=False):
                ADAPTER / 'machine_lifetime.c', work / 'manager_unit.c', work / 'allocator.c', work / 'buffers.c',
                RUNTIME / 'stock_hooks.c', RUNTIME / 'stock_hook_resources.c', RUNTIME / 'resident_engines.c', RUNTIME / 'project_fx.c',
                work / 'resident-engines-data.c', *([ROOT / 'sdk/runtime/upload/upload.c'] if sets else [])]
+    sources += support_sources(work, ADAPTER)
     return out, subprocess.run(['cc', *flags, *map(str, sources), '-o', str(out)], capture_output=True, text=True)
 
 
