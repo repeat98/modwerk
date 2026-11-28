@@ -1,0 +1,9 @@
+[
+  { "wait": 3000 },
+  { "hold": ["T1"] },
+  { "press": ["PAGE"] },
+  { "wait": 500 },
+  { "capture": "seq-rhythm-open.png" },
+  { "release": ["T1"] },
+  { "wait": 500 }
+]
