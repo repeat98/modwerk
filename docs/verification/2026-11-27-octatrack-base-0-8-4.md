@@ -54,7 +54,11 @@ Owner, 28 November 2026: "merge everything that is still open for the base in th
 
 Re-pinned for the new inputs, each image unchanged: USB Audio's two reconstruction records (`modwerk_events.h`), the candidate recipes (`sdk/runtime/loader/build.py`).
 
-Rebuilt after the revert, a merge of `main` (#2346, Modwerk's own browser builder) and the MW 0.8.4 boot name: base 0.8.4 `40f10d4e5dd40899e98229c351fd96384cc2572d5d5175b67c3d23ca1e7f689a`, package `f23705b8…`, fills `9c79d54b…`. Browser `.bin` = `build_core.py` `.bin`: `4c5ae3caa7d5c0739f7558e44cbebd4b5ae5fe4c3747e53f495f2b60884a7dee` (846,816 bytes, named MW 0.8.4); bootloader copy identical, `.bin` and `.syx` carry the same OS, every change inside a declared site. 846,800 of 851,712 container bytes, 4,912 free (+8,908 since 0.8.3); MAIN 1,361,752 of 1,572,864. (`3a28f754…` with #2271 and `9e2002f1…` before the boot name did not ship.) The base-bound packages (Sidechain, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) and USB Audio 0.4.2 (`c2597a32…`) keep their bytes; only their `requiredBase` moves.
+Rebuilt after the revert, a merge of `main` (#2346, Modwerk's own browser builder), the MW 0.8.4 boot name and Modwerk's own core: base 0.8.4 `d4f4f8a19ba067289d78bc53314483ee6d9d2b9a049c13e51d7153194df182b4`, package `b34ac7bd…`, fills `9c79d54b…`. Browser `.bin` = `build_core.py` `.bin`: `22884562be84baba10bf1f62dbc3e74e7a1af49bba63fed20dde2fe4b8f03141` (846,964 bytes, named MW 0.8.4); bootloader copy identical, `.bin` and `.syx` carry the same OS, every change inside a declared site. 846,948 of 851,712 container bytes, 4,764 free (+9,056 since 0.8.3); MAIN 1,361,779 of 1,572,864. (`3a28f754…`, `9e2002f1…` and `40f10d4e…` on the way did not ship.) The base-bound packages (Sidechain, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) keep `ab3387d60`'s bytes and USB Audio 0.4.2 its `c2597a32…`; only their `requiredBase` moves.
+
+## Modwerk's own core, merged 28 November 2026
+
+`ab3387d60` on `base/octatrack-next` replaces the vendored `elekloader/core-ot/` with Modwerk's own core, `elekloader/core/` (`core.s`, `bus.s`, `drawgate.s`, `mod.json`), whose MW_* switches `build_core.py` sets instead of patching its text; the build's `VERSION` is `1.0.0-modwerk-dev.1`. Merged into the fold, which keeps the stream channel, `fx-ids.json`, the 2 MiB pool and the MW 0.8.4 name. Analog BD's recipe is `ab3387d60`'s (`0b8421fe…`) and applies to the fold's base unchanged.
 
 ## Tests
 
