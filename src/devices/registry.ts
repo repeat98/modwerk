@@ -4,7 +4,6 @@
 // Facts about devices other than the Octatrack come from public research projects and are linked from each profile.
 import MACHINES from './machines.generated.json'
 import MACHINE_MODULES from '../catalog/machine-modules.json'
-import { isCoreBuildPreview } from '../engine/elekloader/protocol'
 import type { MachineFamily, MachineProfile } from './machine-contract'
 import { assetUrl } from '../hosting'
 
@@ -88,7 +87,7 @@ export const needsIntegration = (device: DeviceProfile | undefined) => !device |
 const machinesWithModules = new Set(MACHINE_MODULES.modules.map(module => module.machine))
 const machineProfiles = MACHINES as MachineProfile[]
 export const DEVICES: DeviceProfile[] = machineProfiles.map(machine => {
-  const hasPreviewModule = machine.status === 'research' && isCoreBuildPreview(machine.id) && machinesWithModules.has(machine.id)
+  const hasPreviewModule = machine.status === 'research' && machine.sdk?.platform === 'elemod' && machinesWithModules.has(machine.id)
   return {
     id: machine.id, name: machine.name, family: machine.family, variants: machine.variants,
     status: hasPreviewModule ? 'preview' : machine.status, summary: machine.summary,
