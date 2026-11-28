@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "model-cycles",
   "interface": "0.3",
-  "status": "Modwerk's Model:Cycles base for OS 1.13: the pinned core-mc 0.3 source and Modwerk's ev_key_leds, selected by the SHA-256 in sdk/machines/model-cycles/base-binding.json. In development.",
+  "status": "Modwerk's Model:Cycles base for OS 1.13: Modwerk's own core (the symbols and sites of core-mc 0.3) and ev_key_leds, selected by the SHA-256 in sdk/machines/model-cycles/base-binding.json. In development.",
   "events": [
     {
       "name": "ev_tick",

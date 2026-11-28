@@ -6,7 +6,7 @@
  *   python3 -B sdk/runtime/loader/build.py sdk/machines/model-cycles/elekloader/examples/hello.c -o hello.mwrm
  *   python3 sdk/machines/model-cycles/tools/mc_link.py try hello.mwrm --seconds 20
  *
- * The Model:Cycles' draw hook gets the core's bitmap: fill it with the OS's own fill (core-mc's fw_fill, OS 1.13),
+ * The Model:Cycles' draw hook gets the core's bitmap: fill it with the OS's own fill (the core's fw_fill, OS 1.13),
  * 128 x 64 pixels, y = 0 the bottom row. */
 #include "modwerk_module.h"
 

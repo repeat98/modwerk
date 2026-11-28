@@ -2,7 +2,7 @@
   "schema": 1,
   "device": "model-cycles",
   "os": "1.13",
-  "about": "The stock sites the Modwerk Model:Cycles base owns as hooks, in the Octatrack registry's format (sdk/machines/octatrack/events.json). The base is core-mc 0.3's source, whose core.s and boot.s dispatch hooks 0-4 at the sites below, and Modwerk's key-leds.s, which dispatches hook 5. A call hook has no fixed room: the linker puts every subscriber in its table. Modules subscribe in build.json and never patch these sites. Addresses, lengths and SHA-256 guards only, no stock bytes. Adding a hook is one reviewed entry at the end; released indices are never renumbered.",
+  "about": "The stock sites the Modwerk Model:Cycles base owns as hooks, in the Octatrack registry's format (sdk/machines/octatrack/events.json). The base is Modwerk's own source: its core (core/core.s, core-mc/boot.s) dispatches hooks 0-4 at the sites below, and Modwerk's key-leds.s, which dispatches hook 5. A call hook has no fixed room: the linker puts every subscriber in its table. Modules subscribe in build.json and never patch these sites. Addresses, lengths and SHA-256 guards only, no stock bytes. Adding a hook is one reviewed entry at the end; released indices are never renumbered.",
   "events": [
     {
       "event": "ev_tick",

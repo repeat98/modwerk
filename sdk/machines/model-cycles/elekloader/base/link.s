@@ -87,7 +87,7 @@ mw_link_reset:
 | that was running and of this mod area, which the new image's boot hook rewrites.
 | The three instructions that do it run from the stack, never executed before, so
 | nothing fetched after the invalidate is stale. cacr = the bootstrap's 0x0008c000
-| + ICINVA + BCINVA (core-mc's BOOT_CACR). The entry reads its argument at 4(sp) and sets its own stack.
+| + ICINVA + BCINVA (the core's BOOT_CACR). The entry reads its argument at 4(sp) and sets its own stack.
         .globl  mw_boot_enter
 mw_boot_enter:
         move.l  4(%sp), %d1

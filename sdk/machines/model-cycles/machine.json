@@ -4,7 +4,7 @@
   "order": 150,
   "name": "Model:Cycles",
   "status": "research",
-  "summary": "Six-track FM groovebox. Its OS file is rebuilt byte for byte and modified builds boot on units. A Modwerk base from core-mc 0.3's source, with a key-LED hook, runs on a unit; no modules yet.",
+  "summary": "Six-track FM groovebox. Its OS file is rebuilt byte for byte and modified builds boot on units. Modwerk's own base, with a key-LED hook, runs on a unit; no modules yet.",
   "firmware": {
     "releases": [
       {
@@ -83,8 +83,8 @@
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 154010,
-        "note": "Pinned Modwerk base: 38214 bytes .run plus 115796 bytes .bss (and 76 bytes .boot): the link, the audio load, the log and the runtime loader, whose 64 KiB module pool and 32 KiB staging take most of the .bss. The linker measures each selected set."
+        "value": 154046,
+        "note": "Pinned Modwerk base: 38250 bytes .run plus 115796 bytes .bss (and 94 bytes .boot): the link, the audio load, the log and the runtime loader, whose 64 KiB module pool and 32 KiB staging take most of the .bss. The linker measures each selected set."
       }
     ]
   },

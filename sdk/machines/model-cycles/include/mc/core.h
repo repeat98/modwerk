@@ -4,7 +4,7 @@
 
 #include "../model-cycles/core.h"
 
-/* What Modwerk's Model:Cycles base adds to core-mc 0.3 (OS 1.13).
+/* What Modwerk's Model:Cycles base adds to its core (OS 1.13).
  *
  * ev_key_leds handlers, void f(void *mgr), run every key-LED frame after the LEDs are cleared and before the stock
  * views set theirs. fw_led_set(mgr, led, state) lights an LED with state 2 and turns it off with 1; the first setter
