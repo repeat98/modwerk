@@ -1,36 +1,67 @@
 {
   "module": "bar-led",
-  "version": "0.1.0-experimental",
-  "base": "development twin d3d71297 of base 0.7.8 (main 02dfa20ca)",
-  "scene": "MKII, the owner's project Tresor Prep bank A pattern A01 Part 1 playing at 138 BPM (four-on-the-floor kick on T1, sample tracks sounding on T2, T5 and T6); FX1/FX2: T1 FILTER/NONE, T2 FILTER/DELAY, T3-T4 CHORUS/NONE, T5-T8 FILTER/DELAY; installed and not used by any key press, menu or setting",
+  "version": "0.1.1-experimental",
+  "base": "base 0.8.3 development twin ed5474c6 (main 80ea1e584), MKII",
+  "scene": "MKII, scratch project, bank C pattern C01 Part 1, transport started by the tool",
+  "inputs": {
+    "transport": "playing"
+  },
   "seconds": 8,
-  "measuredAt": "2026-11-18T14:13:51.819Z",
+  "readings": 3,
+  "measuredAt": "2026-11-27T17:15:23.310Z",
   "result": {
     "id": "bar-led",
-    "version": "0.1.0-experimental",
+    "version": "0.1.1-experimental",
+    "packageSha256": "52743aa2dfe2e83b7e9b0291b314d7da969ae4ceec3e1e3009f51f56c41b6885",
     "before": {
-      "frame": 41,
-      "frameMax": 73.7,
-      "frames": 22793,
+      "frame": 26.4,
+      "frameMax": 35.9,
+      "frames": 67221,
       "skipped": 0,
-      "cpu": 60.4,
-      "dsp1to4": 38.9,
-      "dsp5to8": 45
+      "cpu": 38.8,
+      "dsp1to4": 34.8,
+      "dsp5to8": 43.8,
+      "dsp1to4Peak": 35.8,
+      "dsp5to8Peak": 44.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.3,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 0.8,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      }
     },
     "atRest": {
-      "frame": 40.9,
-      "frameMax": 74.2,
-      "frames": 22866,
+      "frame": 26.4,
+      "frameMax": 36,
+      "frames": 67110,
       "skipped": 0,
-      "cpu": 59.6,
-      "dsp1to4": 38.9,
-      "dsp5to8": 45
+      "cpu": 38.6,
+      "dsp1to4": 34.8,
+      "dsp5to8": 43.8,
+      "dsp1to4Peak": 35.8,
+      "dsp5to8Peak": 44.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.3,
+        "dsp1to4": 0.1,
+        "dsp5to8": 0,
+        "frameMax": 0.8,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      }
     },
     "atRestAdds": {
-      "frame": -0.1,
-      "cpu": -0.8,
+      "frame": 0,
+      "cpu": -0.2,
       "dsp1to4": 0,
-      "dsp5to8": 0
+      "dsp5to8": 0,
+      "dsp1to4Peak": 0,
+      "dsp5to8Peak": 0
     },
     "rolledBack": true
   }
