@@ -876,8 +876,8 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 43472,
-          "note": "The Modwerk base built from core-a4 0.5 and linked alone against OS 1.56. The link check measures the core and all selected modules together."
+          "value": 43384,
+          "note": "The base has 43,384 bytes of code and data. A standalone link uses 43,472 bytes including overhead."
         }
       ]
     }
