@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { LINK_BUSY, type LinkState, type OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { baseOutdated } from '../engine/elekloader/module-set'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
-import { DSP_STOPPED, useOctatrackLoad } from '../hooks/useOctatrackLoad'
+import { droppedText, DSP_STOPPED, useOctatrackLoad } from '../hooks/useOctatrackLoad'
 import { percent } from '../config/octatrack-load'
 import { Icon } from './Icon'
 import './octatrack-link.css'
@@ -58,17 +58,17 @@ const LOAD_ITEMS = [{ key: 'cpu', title: 'CPU', label: 'CPU' }, { key: 'tracks1t
  * and it steps aside while a sync or base update has the unit. */
 export function OctatrackLoadWidget({ link }: { link: OctatrackLink }) {
   const { baseUpdate } = useOctatrackLink(link)
-  const { points, now, ready, unsupported, stopped } = useOctatrackLoad(link)
+  const { points, now, ready, unsupported, stopped, dropped } = useOctatrackLoad(link)
   if (!ready || unsupported || baseUpdate) return null
   if (stopped) return <a className="load-widget is-stopped" href="#octatrack" title={DSP_STOPPED}><Icon name="warn" size={14} /><span>DSP stopped · open Status</span><Icon name="arrow" size={12} /></a>
   const last = points.at(-1), latest = last && now - last.at <= 6000 ? last.reading : null
-  const near = (latest?.cpu ?? 0) >= CPU_NEAR_LIMIT
+  const near = (latest?.cpu ?? 0) >= CPU_NEAR_LIMIT || !!dropped
   const summary = LOAD_ITEMS.map(item => `${item.label} ${percent(latest?.[item.key])}`).join(', ')
-  return <a className={'load-widget' + (near ? ' is-near' : '')} href="#octatrack" aria-label={`Octatrack load: ${summary}. Open Status.`}
-    title={near ? 'From 85 % CPU your Octatrack takes no further module machine or effect. Open Status for the last five minutes.' : 'Live load, read every two seconds. Open Status for the last five minutes.'}>
+  return <a className={'load-widget' + (near ? ' is-near' : '')} href="#octatrack" aria-label={`Octatrack load: ${summary}.${dropped ? ' Dropping sound.' : ''} Open Status.`}
+    title={dropped ? droppedText(dropped) : near ? 'From 85 % CPU your Octatrack takes no further module machine or effect. Open Status for the last five minutes.' : 'Live load, read every two seconds. Open Status for the last five minutes.'}>
     {LOAD_ITEMS.map(item => {
       const value = latest?.[item.key]
-      return <span key={item.key} className={'load-widget-item' + (item.key === 'cpu' && near ? ' is-near' : '')} aria-hidden="true">
+      return <span key={item.key} className={'load-widget-item' + (item.key === 'cpu' && (latest?.cpu ?? 0) >= CPU_NEAR_LIMIT ? ' is-near' : '')} aria-hidden="true">
         <span className="load-widget-label">{item.title}</span>
         <span className="load-widget-bar"><span style={{ width: value == null ? 0 : `${value / 10}%` }} /></span>
         <strong>{value == null ? '—' : `${Math.round(value / 10)}%`}</strong>
