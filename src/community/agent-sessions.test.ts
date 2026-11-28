@@ -5,7 +5,7 @@ import { testServer } from './test-server'
 import { handleCommunity } from '../../server/transport'
 import { digest } from '../../server/security'
 import { cleanupAgentSessions, SESSIONS_KEPT } from '../../server/agent-sessions'
-import { claudeProjectFolder, firmwareFindings, firmwareReason, prepareSession, readClaudeTranscript, readCodexRollout, scrubText, SESSION_CONSENT_VERSION, validateSession } from './agent-sessions'
+import { claudeProjectFolder, firmwareFindings, firmwareReason, prepareSession, readClaudeTranscript, readCodexRollout, readCursorTranscript, scrubText, SESSION_CONSENT_VERSION, validateSession } from './agent-sessions'
 
 const databases: DatabaseSync[] = []
 afterEach(() => { databases.splice(0).forEach(db => db.close()); vi.unstubAllGlobals(); vi.useRealTimers() })
@@ -58,6 +58,23 @@ describe('reading a transcript', () => {
       ['agent', 'The test fails on the transfer step.', false],
     ])
     expect(read.removed).toMatchObject({ toolOutputs: 1, thinking: 1, skipped: 1 })
+  })
+
+  it('reads a Cursor agent-transcripts jsonl the same way', () => {
+    const cursor = (row: unknown) => line(row)
+    const read = readCursorTranscript([
+      cursor({ role: 'user', message: { content: [{ type: 'text', text: '<timestamp>2026-11-28T10:00:00.000Z</timestamp>\n<user_query>\nShip SEQ\n</user_query>' }] } }),
+      cursor({ role: 'assistant', message: { content: [{ type: 'text', text: 'Running the doctor.' }, { type: 'tool_use', id: 'u1', name: 'Shell', input: { command: 'npm run module:doctor', description: 'Doctor' } }] } }),
+      cursor({ role: 'user', message: { content: [{ type: 'tool_result', tool_use_id: 'u1', is_error: true, content: 'fail' }] } }),
+      cursor({ role: 'user', message: { content: [{ type: 'text', text: '<timestamp>2026-11-28T10:01:00.000Z</timestamp>\n<user_info>injected</user_info>' }] } }),
+    ])
+    expect(read).toMatchObject({ agent: 'cursor', startedAt: '2026-11-28T10:00:00.000Z' })
+    expect(read.entries.map(entry => [entry.who, entry.text, entry.failed ?? false])).toEqual([
+      ['developer', 'Ship SEQ', false],
+      ['agent', 'Running the doctor.', false],
+      ['tool', 'Bash: Doctor · npm run module:doctor', true],
+    ])
+    expect(read.removed).toMatchObject({ toolOutputs: 1, skipped: 1 })
   })
 
   it('keeps a command the developer ran with ! and drops its output', () => {

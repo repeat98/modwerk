@@ -69,6 +69,16 @@ describe('session review', () => {
     expect(reviewSession(read).repeated).toEqual([{ label: 'Bash: Run pr:ready · npm run pr:ready', times: 3 }])
   })
 
+  it('caps Cursor tool timing when the developer is away for hours', () => {
+    const cursor = row => JSON.stringify(row)
+    const read = readCalls([
+      cursor({ role: 'user', message: { content: [{ type: 'text', text: '<timestamp>Sat, 28 Nov 2026 09:00:00 GMT</timestamp>\n<user_query>\nRun checks\n</user_query>' }] } }),
+      cursor({ role: 'assistant', message: { content: [{ type: 'tool_use', name: 'Shell', input: { command: 'npm run check' } }] } }),
+      cursor({ role: 'user', message: { content: [{ type: 'text', text: '<timestamp>Sat, 28 Nov 2026 19:00:00 GMT</timestamp>\n<user_query>\ndone?\n</user_query>' }] } }),
+    ], 'cursor')
+    expect(read.calls[0].seconds).toBe(15 * 60)
+  })
+
   it('finds what the developer corrected, interrupted and refused', () => {
     const refused = { type: 'user', timestamp: at(30), message: { content: [{ type: 'tool_result', tool_use_id: 'b', content: "The user doesn't want to proceed with this tool use.", is_error: true }] } }
     const review = reviewSession(readCalls(claude([

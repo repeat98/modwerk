@@ -19,6 +19,8 @@ const DENIED = /^\s*The user doesn't want to proceed with this tool use/
 const FRICTION = /^\s*(?:no|nope|nein|stop|wait|halt|wrong|falsch)\b|\b(?:again|I said|I told you|already (?:said|told)|not what I|that's not|doesn't work|does not work|didn't work|still (?:broken|not|doesn't|fails|failing|red|wrong)|why (?:did|do|didn't|don't|are|is) you|you (?:forgot|missed|ignored)|too (?:slow|long)|takes? (?:\w+ )?(?:so|too) long|why (?:\w+ )*so (?:long|slow)|wtf|ffs|nochmal|schon wieder|immer noch|funktioniert nicht|geht nicht|warum (?:hast|machst|ist)|dauert (?:\w+ )?(?:zu|so) lange)\b|\?!/i
 const CURSOR_TIMESTAMP = /<timestamp>([^<]+)<\/timestamp>/
 const CURSOR_SKIP = /^\s*(?:<(?:available_subagent|user_info|system_reminder|open_and_recently_viewed_files|git_status)|# AGENTS\.md instructions)/
+/** Cursor has no tool_result lines: wall time is guessed from the next developer message, which includes time away. */
+const CURSOR_TOOL_GAP_MS = 15 * 60 * 1000
 
 const cursorPrompt = text => {
   const body = (text.match(/<user_query>\s*([\s\S]*?)\s*<\/user_query>/) ?? [])[1] ?? text
@@ -100,7 +102,9 @@ export function readCalls(lines, agent = 'claude-code') {
         if (!uses.length) continue
         const startAt = cursorTime(text) ?? last
         const endAt = nextCursorUserAt(lines, lineIndex) ?? startAt
-        const span = startAt !== null && endAt !== null && endAt > startAt ? (endAt - startAt) / uses.length : 0
+        let gap = startAt !== null && endAt !== null && endAt > startAt ? endAt - startAt : 0
+        if (gap > CURSOR_TOOL_GAP_MS) gap = CURSOR_TOOL_GAP_MS
+        const span = uses.length ? gap / uses.length : 0
         uses.forEach((block, index) => {
           const id = `cursor-${lineIndex}-${index}`
           const toolAt = startAt !== null ? startAt + span * index : null

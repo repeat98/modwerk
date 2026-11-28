@@ -5,7 +5,7 @@
 //   npm run session -- status                 # whether to ask the developer: ask (the default), always or never
 //   npm run session -- prefer ask|always|never
 //   npm run session -- preview [--skip 3,7]   # what would be sent, written to ~/.cache/modwerk/session-preview.json
-//   npm run session -- share --note "…" [--skip 3,7] [--new] [--file <transcript>] [--agent claude-code|codex]
+//   npm run session -- share --note "…" [--skip 3,7] [--new] [--file <transcript>] [--agent claude-code|codex|cursor]
 //                                             # --new: leave out what your earlier shares of this session already hold
 //   npm run session -- list | get <id> | delete <id>
 //   npm run session -- review [--file <transcript>]   # where this session spent its time; printed here, nothing is sent
@@ -22,7 +22,7 @@ import { parseArgs } from 'node:util'
 import { pathToFileURL } from 'node:url'
 import { boardRequest, readToken, BoardError, BoardUnavailable } from './agent-board.mjs'
 import { formatReview, heavyProcesses, readCalls, reviewSession } from './agent-session-review.mjs'
-import { claudeProjectFolder, firmwareFindings, prepareSession, readClaudeTranscript, readCodexRollout, SESSION_CONSENT_VERSION, SESSION_GZIP_LIMIT, SESSION_NOTE_LIMIT } from '../src/community/agent-sessions.ts'
+import { claudeProjectFolder, firmwareFindings, prepareSession, readClaudeTranscript, readCodexRollout, readCursorTranscript, SESSION_CONSENT_VERSION, SESSION_GZIP_LIMIT, SESSION_NOTE_LIMIT } from '../src/community/agent-sessions.ts'
 
 const PREFERENCES = ['ask', 'always', 'never']
 export const preferenceFile = () => process.env.MODWERK_SESSION_FILE ?? join(homedir(), '.config', 'modwerk', 'session-sharing.json')
@@ -82,6 +82,19 @@ async function codexCandidates() {
   }
   return files
 }
+async function cursorCandidates() {
+  const root = join(process.env.CURSOR_HOME ?? join(homedir(), '.cursor'), 'projects'), files = []
+  for (const place of places()) {
+    const transcripts = join(root, claudeProjectFolder(place), 'agent-transcripts')
+    let dirs
+    try { dirs = await readdir(transcripts) } catch { continue }
+    for (const id of dirs) {
+      const file = join(transcripts, id, id + '.jsonl')
+      try { if ((await stat(file)).isFile()) files.push(file) } catch { /* no transcript */ }
+    }
+  }
+  return files
+}
 /** Claude Code names the running session to the commands it starts; its transcript may sit under any project folder. */
 async function claudeSessionFile(id = process.env.CLAUDE_CODE_SESSION_ID) {
   if (!id || !/^[0-9a-f-]{36}$/.test(id)) return null
@@ -102,13 +115,16 @@ export function agentFromTranscriptPath(file) {
 
 export async function findTranscript({ file, agent } = {}) {
   if (file) return { file, agent: agent ?? agentFromTranscriptPath(file) ?? 'claude-code' }
-  const current = agent === 'codex' ? null : await claudeSessionFile()
+  const current = agent === 'codex' || agent === 'cursor' ? null : await claudeSessionFile()
   if (current) return { file: current, agent: 'claude-code' }
-  const claude = agent === 'codex' ? null : await newest(await claudeCandidates())
-  const codex = agent === 'claude-code' ? null : await newest(await codexCandidates())
-  const pick = claude && (!codex || claude.mtimeMs >= codex.mtimeMs) ? { file: claude.file, agent: 'claude-code' } : codex ? { file: codex.file, agent: 'codex' } : null
-  if (!pick) throw new Error('No Claude Code or Codex transcript found for this checkout. Name it with --file <path>.')
-  return pick
+  const claude = agent === 'codex' || agent === 'cursor' ? null : await newest(await claudeCandidates())
+  const codex = agent === 'claude-code' || agent === 'cursor' ? null : await newest(await codexCandidates())
+  const cursor = agent === 'claude-code' || agent === 'codex' ? null : await newest(await cursorCandidates())
+  const pick = [claude && { ...claude, agent: 'claude-code' }, codex && { ...codex, agent: 'codex' }, cursor && { ...cursor, agent: 'cursor' }]
+    .filter(Boolean)
+    .sort((left, right) => right.mtimeMs - left.mtimeMs)[0]
+  if (!pick) throw new Error('No Claude Code, Codex or Cursor transcript found for this checkout. Name it with --file <path>.')
+  return { file: pick.file, agent: pick.agent }
 }
 
 /** The entries the developer's own earlier shares already hold, as "who at" keys. Only shares made since `since` (when
@@ -130,7 +146,9 @@ export async function buildSession({ file, agent, note = '', skip = [], shared }
   const info = await lstat(file)
   if (!info.isFile()) throw new Error(file + ' is not a transcript file.')
   const lines = (await readFile(file, 'utf8')).split('\n').filter(Boolean)
-  const read = agent === 'codex' ? readCodexRollout(lines) : readClaudeTranscript(lines)
+  const read = agent === 'codex' ? readCodexRollout(lines)
+    : agent === 'cursor' ? readCursorTranscript(lines)
+      : readClaudeTranscript(lines)
   // --new: what an earlier share of this session sent stays out, the way --skip leaves entries out.
   if (shared) {
     const { keys, ids } = await shared(read.startedAt ?? '')
