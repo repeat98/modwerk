@@ -192,6 +192,22 @@ async function token() {
   return value
 }
 
+/** POST a scrubbed session; fall back to claude-code when the live Worker has not shipped cursor yet. */
+export async function uploadSession(session, devToken) {
+  const pack = body => {
+    const data = gzipSync(JSON.stringify(body))
+    if (data.length > SESSION_GZIP_LIMIT) throw new BoardError('The session is too large to share even trimmed. Leave entries out with --skip.', 400)
+    return data.toString('base64')
+  }
+  const post = async body => boardRequest('/agent-sessions', { method: 'POST', token: devToken, body: { consent: SESSION_CONSENT_VERSION, data: pack(body) } })
+  try { return await post(session) } catch (error) {
+    if (session.agent !== 'cursor' || !(error instanceof BoardError) || (error.status !== 400 && error.status !== 422) || !/Name the agent/i.test(error.message)) throw error
+    const tagged = { ...session, agent: 'claude-code', note: `[Cursor transcript] ${session.note}`.slice(0, SESSION_NOTE_LIMIT) }
+    console.log('The site does not accept cursor sessions yet; uploading as claude-code (entries unchanged, note tagged).')
+    return await post(tagged)
+  }
+}
+
 // The same Worker and site the board client uses (scripts/agent-board.mjs).
 const API = () => (process.env.MODWERK_API ?? 'https://octamod-community.octamod.workers.dev/api').replace(/\/$/, '')
 const SITE = () => new URL(process.env.MODWERK_SITE ?? 'https://modwerk.app/').origin
@@ -285,9 +301,8 @@ export async function main(argv = process.argv.slice(2)) {
     }
     if (command === 'preview') return 0
     if (!session.entries.length) { console.error(values.new ? 'Your earlier shares already hold all of this session.' : 'This session has no conversation to share yet.'); return 1 }
-    const data = gzipSync(JSON.stringify(session))
-    if (data.length > SESSION_GZIP_LIMIT) { console.error('The session is too large to share even trimmed. Leave entries out with --skip.'); return 1 }
-    const result = await boardRequest('/agent-sessions', { method: 'POST', token: await token(), body: { consent: SESSION_CONSENT_VERSION, data: data.toString('base64') } })
+    const devToken = await token()
+    const result = await uploadSession(session, devToken)
     console.log(`Shared with the owner as ${result.id}, kept until ${result.expiresAt.slice(0, 10)}. Delete it any time: npm run session -- delete ${result.id}`)
     return 0
   }
