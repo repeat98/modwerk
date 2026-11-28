@@ -1,6 +1,6 @@
 # Combo
 
-Version 0.1.0-experimental · by @sebasprosala-sys · an experimental draft: rendered bit for bit in dsp_host; the build before page 2 ran on a unit; COMBO is a USB package only for now (no card id is free).
+Version 0.1.0-experimental · by @sebasprosala-sys · an experimental draft: rendered bit for bit in dsp_host; this build, with both pages, passed device:test on a unit; COMBO is a USB package only for now (no card id is free).
 
 ## Overview
 
@@ -32,7 +32,7 @@ SETUP page (hold FUNC and press FX1 or FX2; knobs A to F):
 
 | Knob | Values | Default | What it does |
 | --- | --- | --- | --- |
-| VOIC | CLEAN, BOOST, ROCK, SOLID, BASS | BOOST | The amp voice. CLEAN: bright, scooped mids, breaks up late. BOOST: chiming upper mids, an early soft break-up with even harmonics. ROCK: tight lows, mids forward, the most drive. SOLID: flat and clean, clipping hard only at the top; put CHORUS on the other FX slot for a wide clean sound. BASS: for bass, the lowest octave kept, a darker top and some growl in the low mids. |
+| VOIC | CLEAN, BOOST, ROCK, SOLID, BASS | BOOST | The amp voice. CLEAN: bright, scooped mids, breaks up late. BOOST: chiming upper mids, an early soft break-up with even harmonics. ROCK: tight lows, mids forward, high gain; its drive is held at half of the first build's, which keeps the aliasing 13 to 20 dB lower on the low and top tones. SOLID: flat and clean, clipping hard only at the top; put CHORUS on the other FX slot for a wide clean sound. BASS: for bass, the lowest octave kept, a darker top and some growl in the low mids. |
 | TGHT | -64 to +63 | 0 | Tightness: the low cut before the drive. 0 is the voice's own (40 to 180 Hz), -64 a fifth of it (loose, boomy drive), +63 about 1.8 times it (tight, for fast palm-muted parts). |
 | PRES | 0 to 127 | 0 | Presence: raises the cabinet's upper-mid bump to about +6 dB around 4 to 5 kHz. With CAB OFF it is a peak of up to +6 dB at 3.5 kHz. |
 | AXIS | 0 to 127 | 0 | The mic's axis on the speaker: 0 on the cone's axis (the brightest), 127 off axis, its top rolled off an octave lower. With CAB OFF it rolls the top off gently, down to 4.5 kHz at 127; DIST works with CAB OFF too. |
@@ -52,7 +52,7 @@ GAIN, BASS, MID, TREB, LEV and MIX glide (about 1.5 ms), so turning them, lockin
 ## Quick tutorial
 
 1. Put a drum loop, a synth line or a guitar on a track and pick COMBO on its FX1. At the defaults you hear BOOST's light crunch through a 1X12 cabinet.
-2. Hold FUNC, press FX1 and turn A through CLEAN, ROCK, SOLID and BASS to hear the five voices.
+2. Hold FUNC, press FX1 and turn A through CLEAN, BOOST, ROCK, SOLID and BASS to hear the five voices.
 3. Turn GAIN up past 90 for a fully driven sound, then turn CAB through 1X10 and 4X12 to hear the speaker change. Lower TREB if it gets fizzy.
 4. On the SETUP page turn D (AXIS) up to move the mic off axis, E (DIST) up to step it back into the room, and F (MIX) to about 60 to blend the dry track back in.
 5. Set CAB to OFF and GAIN to 0 to hear the amp nearly clean, or pick another effect in the list to take COMBO off the track.
