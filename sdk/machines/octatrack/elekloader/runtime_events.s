@@ -8,6 +8,39 @@
         .globl  modwerk_events_code, modwerk_events_code_end
 modwerk_events_code:
 
+| ---- 0x40003ca4: ev_fm_lfo_depth
+        .globl  modwerk_site_40003ca4
+modwerk_site_40003ca4:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_lfo_depth (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+260,%a2
+.L40003ca4_take:
+        move.l  (%a2)+,%d0
+        beq     .L40003ca4_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L40003ca4_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L40003ca4_take
+.L40003ca4_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L40003ca4_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L40003ca4_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_40003ca4_8
+modwerk_stock_40003ca4_8:
+        .space  8 | the site's own stock bytes
+        jmp 0x40003cac
+
 | ---- 0x40004100: ev_play_increment
         .globl  modwerk_site_40004100
 modwerk_site_40004100:
@@ -103,6 +136,128 @@ modwerk_site_40006820:
         lea     20(%sp),%sp
         rts | the call returns as stock's does when it has nothing to do
 
+| ---- 0x4000685c: ev_fm_voice_kill
+        .globl  modwerk_site_4000685c
+modwerk_site_4000685c:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_voice_kill (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+284,%a2
+.L4000685c_take:
+        move.l  (%a2)+,%d0
+        beq     .L4000685c_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L4000685c_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L4000685c_take
+.L4000685c_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L4000685c_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L4000685c_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_4000685c_6
+modwerk_stock_4000685c_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x40006862
+
+| ---- 0x4000b2c8: ev_fm_transport_stop
+        .globl  modwerk_site_4000b2c8
+modwerk_site_4000b2c8:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_transport_stop: void f(void)
+        movea.l modwerk_runtime_event_row+276,%a2
+.L4000b2c8_ev_fm_transport_stop:
+        move.l  (%a2)+,%d0
+        beq     .L4000b2c8_ev_fm_transport_stop_end
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     0(%sp),%sp
+        bra     .L4000b2c8_ev_fm_transport_stop
+.L4000b2c8_ev_fm_transport_stop_end:
+.L4000b2c8_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_4000b2c8_6
+modwerk_stock_4000b2c8_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x4000b2ce
+
+| ---- 0x4000b51a: ev_fm_amp_release
+        .globl  modwerk_site_4000b51a
+modwerk_site_4000b51a:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_amp_release (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+272,%a2
+.L4000b51a_take:
+        move.l  (%a2)+,%d0
+        beq     .L4000b51a_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L4000b51a_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L4000b51a_take
+.L4000b51a_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L4000b51a_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L4000b51a_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_4000b51a_8
+modwerk_stock_4000b51a_8:
+        .space  8 | the site's own stock bytes
+        jmp 0x4000b522
+
+| ---- 0x4000c634: ev_fm_sequencer_retrig
+        .globl  modwerk_site_4000c634
+modwerk_site_4000c634:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_sequencer_retrig (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+280,%a2
+.L4000c634_take:
+        move.l  (%a2)+,%d0
+        beq     .L4000c634_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L4000c634_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L4000c634_take
+.L4000c634_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L4000c634_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L4000c634_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_4000c634_8
+modwerk_stock_4000c634_8:
+        .space  8 | the site's own stock bytes
+        jmp 0x4000c63c
+
 | ---- 0x4000cf4a: ev_audio_frame_prepare
         .globl  modwerk_site_4000cf4a
 modwerk_site_4000cf4a:
@@ -125,6 +280,103 @@ modwerk_site_4000cf4a:
 modwerk_stock_4000cf4a_6:
         .space  6 | the site's own stock bytes
         jmp 0x4000cf50
+
+| ---- 0x4000d03e: ev_fm_lfo_depth_frame
+        .globl  modwerk_site_4000d03e
+modwerk_site_4000d03e:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_lfo_depth_frame (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+264,%a2
+.L4000d03e_take:
+        move.l  (%a2)+,%d0
+        beq     .L4000d03e_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L4000d03e_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L4000d03e_take
+.L4000d03e_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L4000d03e_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L4000d03e_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_4000d03e_8
+modwerk_stock_4000d03e_8:
+        .space  8 | the site's own stock bytes
+        jmp 0x4000d046
+
+| ---- 0x4000d514: ev_fm_frame_source
+        .globl  modwerk_site_4000d514
+modwerk_site_4000d514:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_frame_source (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+340,%a2
+.L4000d514_take:
+        move.l  (%a2)+,%d0
+        beq     .L4000d514_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L4000d514_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L4000d514_take
+.L4000d514_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L4000d514_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L4000d514_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_4000d514_8
+modwerk_stock_4000d514_8:
+        .space  8 | the site's own stock bytes
+        jmp 0x4000d51c
+
+| ---- 0x4000de10: ev_midi_chromatic_off_gate
+        .globl  modwerk_site_4000de10
+modwerk_site_4000de10:
+        lea     -24(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+        clr.l   20(%sp)
+| ev_midi_chromatic_off_gate: void f(uint32_t *wide_mask)
+        movea.l modwerk_runtime_event_row+292,%a2
+.L4000de10_ev_midi_chromatic_off_gate:
+        move.l  (%a2)+,%d0
+        beq     .L4000de10_ev_midi_chromatic_off_gate_end
+        pea     20(%sp)
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     4(%sp),%sp
+        bra     .L4000de10_ev_midi_chromatic_off_gate
+.L4000de10_ev_midi_chromatic_off_gate_end:
+        move.l  20(%sp),%d0
+        beq     .L4000de10_tail
+        move.l  %d0,%d4
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        jmp     0x4000df9e
+.L4000de10_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        .globl  modwerk_stock_4000de10_6
+modwerk_stock_4000de10_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x4000de16
 
 | ---- 0x4000dfd4: ev_midi_note_off
         .globl  modwerk_site_4000dfd4
@@ -162,6 +414,37 @@ modwerk_stock_4000dfd4_6:
         bne.s 1f | stock's bne.s, which cannot be copied
         jmp 0x4000dfdc
         1: jmp 0x4000dff8
+
+| ---- 0x4000e452: ev_midi_chromatic_on_gate
+        .globl  modwerk_site_4000e452
+modwerk_site_4000e452:
+        lea     -24(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+        clr.l   20(%sp)
+| ev_midi_chromatic_on_gate: void f(uint32_t *wide_mask)
+        movea.l modwerk_runtime_event_row+288,%a2
+.L4000e452_ev_midi_chromatic_on_gate:
+        move.l  (%a2)+,%d0
+        beq     .L4000e452_ev_midi_chromatic_on_gate_end
+        pea     20(%sp)
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     4(%sp),%sp
+        bra     .L4000e452_ev_midi_chromatic_on_gate
+.L4000e452_ev_midi_chromatic_on_gate_end:
+        move.l  20(%sp),%d0
+        beq     .L4000e452_tail
+        move.l  %d0,%d3
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        jmp     0x4000e6e2
+.L4000e452_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        .globl  modwerk_stock_4000e452_8
+modwerk_stock_4000e452_8:
+        .space  8 | the site's own stock bytes
+        jmp 0x4000e45a
 
 | ---- 0x4000e746: ev_midi_note_on
         .globl  modwerk_site_4000e746
@@ -233,6 +516,41 @@ modwerk_stock_40010212_6:
         .space  6 | the site's own stock bytes
         jmp 0x40010218 | its flags are the continuation's
 
+| ---- 0x40022686: ev_fm_load_selector
+        .globl  modwerk_site_40022686
+modwerk_site_40022686:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_load_selector (take, jsr entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+336,%a2
+.L40022686_take:
+        move.l  (%a2)+,%d0
+        beq     .L40022686_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L40022686_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L40022686_take
+.L40022686_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L40022686_tail
+        move.l  %d0,20(%sp)
+        lea     0x4002268c,%a0
+        move.l  %a0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        rts
+.L40022686_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_40022686_6
+modwerk_stock_40022686_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x4002268c
+
 | ---- 0x40025ac2: ev_project_defaults
         .globl  modwerk_site_40025ac2
 modwerk_site_40025ac2:
@@ -267,6 +585,237 @@ modwerk_site_40025ac2:
 modwerk_stock_40025ac2_6:
         .space  6 | the site's own stock bytes
         jmp 0x40025ac8
+
+| ---- 0x40031e62: ev_fm_lfo_page
+        .globl  modwerk_site_40031e62
+modwerk_site_40031e62:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_lfo_page (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+268,%a2
+.L40031e62_take:
+        move.l  (%a2)+,%d0
+        beq     .L40031e62_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L40031e62_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L40031e62_take
+.L40031e62_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L40031e62_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L40031e62_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_40031e62_6
+modwerk_stock_40031e62_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x40031ed6
+
+| ---- 0x40031ece: ev_playback_page_resolve
+        .globl  modwerk_site_40031ece
+modwerk_site_40031ece:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_playback_page_resolve (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+344,%a2
+.L40031ece_take:
+        move.l  (%a2)+,%d0
+        beq     .L40031ece_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L40031ece_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L40031ece_take
+.L40031ece_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L40031ece_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L40031ece_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_40031ece_4
+modwerk_stock_40031ece_4:
+        .space  4 | the site's own stock bytes
+        jmp 0x40031ed6
+
+| ---- 0x4003685a: ev_fm_amp_draw_names
+        .globl  modwerk_site_4003685a
+modwerk_site_4003685a:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_amp_draw_names (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+308,%a2
+.L4003685a_take:
+        move.l  (%a2)+,%d0
+        beq     .L4003685a_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L4003685a_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L4003685a_take
+.L4003685a_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L4003685a_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L4003685a_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_4003685a_12
+modwerk_stock_4003685a_12:
+        .space  12 | the site's own stock bytes
+        jmp 0x40036866
+
+| ---- 0x400368ac: ev_fm_amp_draw_nibbles_a
+        .globl  modwerk_site_400368ac
+modwerk_site_400368ac:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_amp_draw_nibbles_a (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+312,%a2
+.L400368ac_take:
+        move.l  (%a2)+,%d0
+        beq     .L400368ac_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L400368ac_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L400368ac_take
+.L400368ac_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L400368ac_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L400368ac_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_400368ac_12
+modwerk_stock_400368ac_12:
+        .space  12 | the site's own stock bytes
+        jmp 0x400368b8
+
+| ---- 0x40036946: ev_fm_amp_draw_nibbles_b
+        .globl  modwerk_site_40036946
+modwerk_site_40036946:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_amp_draw_nibbles_b (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+316,%a2
+.L40036946_take:
+        move.l  (%a2)+,%d0
+        beq     .L40036946_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L40036946_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L40036946_take
+.L40036946_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L40036946_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L40036946_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_40036946_12
+modwerk_stock_40036946_12:
+        .space  12 | the site's own stock bytes
+        jmp 0x40036952
+
+| ---- 0x4003ae40: ev_fm_amp_edit
+        .globl  modwerk_site_4003ae40
+modwerk_site_4003ae40:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_amp_edit (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+320,%a2
+.L4003ae40_take:
+        move.l  (%a2)+,%d0
+        beq     .L4003ae40_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L4003ae40_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L4003ae40_take
+.L4003ae40_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L4003ae40_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L4003ae40_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_4003ae40_12
+modwerk_stock_4003ae40_12:
+        .space  12 | the site's own stock bytes
+        jmp 0x4003ae4c
+
+| ---- 0x4003af0a: ev_fm_amp_live_lane
+        .globl  modwerk_site_4003af0a
+modwerk_site_4003af0a:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_amp_live_lane (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+324,%a2
+.L4003af0a_take:
+        move.l  (%a2)+,%d0
+        beq     .L4003af0a_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L4003af0a_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L4003af0a_take
+.L4003af0a_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L4003af0a_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L4003af0a_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_4003af0a_10
+modwerk_stock_4003af0a_10:
+        .space  10 | the site's own stock bytes
+        jmp 0x4003af14
 
 | ---- 0x40044968: ev_keyboard_draw
         .globl  modwerk_site_40044968
@@ -729,6 +1278,39 @@ modwerk_stock_40050e60_10:
         .space  10 | the site's own stock bytes
         jmp 0x40050e6a
 
+| ---- 0x40051fce: ev_fm_octave_func
+        .globl  modwerk_site_40051fce
+modwerk_site_40051fce:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_octave_func (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+328,%a2
+.L40051fce_take:
+        move.l  (%a2)+,%d0
+        beq     .L40051fce_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L40051fce_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L40051fce_take
+.L40051fce_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L40051fce_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L40051fce_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_40051fce_6
+modwerk_stock_40051fce_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x40051fd4
+
 | ---- 0x40055170: ev_knob_store
         .globl  modwerk_site_40055170
 modwerk_site_40055170:
@@ -763,6 +1345,138 @@ modwerk_site_40055170:
 modwerk_stock_40055170_6:
         .space  6 | the site's own stock bytes
         jmp 0x40055176
+
+| ---- 0x40059d56: ev_fm_amp_setup_stage
+        .globl  modwerk_site_40059d56
+modwerk_site_40059d56:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_amp_setup_stage (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+304,%a2
+.L40059d56_take:
+        move.l  (%a2)+,%d0
+        beq     .L40059d56_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L40059d56_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L40059d56_take
+.L40059d56_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L40059d56_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L40059d56_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_40059d56_6
+modwerk_stock_40059d56_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x40059d5c
+
+| ---- 0x400625e0: ev_midi_live_record_event
+        .globl  modwerk_site_400625e0
+modwerk_site_400625e0:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_midi_live_record_event (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+296,%a2
+.L400625e0_take:
+        move.l  (%a2)+,%d0
+        beq     .L400625e0_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L400625e0_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L400625e0_take
+.L400625e0_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L400625e0_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L400625e0_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_400625e0_10
+modwerk_stock_400625e0_10:
+        .space  10 | the site's own stock bytes
+        jmp 0x400625ea
+
+| ---- 0x4006262a: ev_midi_live_record_trig
+        .globl  modwerk_site_4006262a
+modwerk_site_4006262a:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_midi_live_record_trig (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+300,%a2
+.L4006262a_take:
+        move.l  (%a2)+,%d0
+        beq     .L4006262a_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L4006262a_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L4006262a_take
+.L4006262a_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L4006262a_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L4006262a_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_4006262a_10
+modwerk_stock_4006262a_10:
+        .space  10 | the site's own stock bytes
+        jmp 0x40062634
+
+| ---- 0x400795ba: ev_fm_slot_assign
+        .globl  modwerk_site_400795ba
+modwerk_site_400795ba:
+        lea     -28(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_fm_slot_assign (take, jmp entry): the first record that claims the call
+        movea.l modwerk_runtime_event_row+332,%a2
+.L400795ba_take:
+        move.l  (%a2)+,%d0
+        beq     .L400795ba_tail
+        movea.l %d0,%a0
+        move.l  (%a0),%d0
+        beq     .L400795ba_entry
+        movea.l %d0,%a0
+        jsr     (%a0)
+        tst.l   %d0
+        beq     .L400795ba_take
+.L400795ba_entry:
+        movea.l -4(%a2),%a0
+        move.l  4(%a0),%d0
+        beq     .L400795ba_tail
+        move.l  %d0,24(%sp)
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        rts
+.L400795ba_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     28(%sp),%sp
+        .globl  modwerk_stock_400795ba_8
+modwerk_stock_400795ba_8:
+        .space  8 | the site's own stock bytes
+        jmp 0x400795c2
 
 | ---- 0x4007a1ec: ev_arp_setup_text
         .globl  modwerk_site_4007a1ec
@@ -1212,6 +1926,24 @@ modwerk_raise_ev_usb_frame:
         .globl  modwerk_raise_ev_frame_deadline
 modwerk_raise_ev_frame_deadline:
         lea     modwerk_runtime_event_row+232,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_hook_reserved_66: void f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_hook_reserved_66
+modwerk_raise_ev_hook_reserved_66:
+        lea     modwerk_runtime_event_row+248,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_hook_reserved_67: void f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_hook_reserved_67
+modwerk_raise_ev_hook_reserved_67:
+        lea     modwerk_runtime_event_row+252,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_hook_reserved_68: void f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_hook_reserved_68
+modwerk_raise_ev_hook_reserved_68:
+        lea     modwerk_runtime_event_row+256,%a0
         bra.w   modwerk_raise_row
 
 | a0: the hook's row pointer. C convention: d0 the answers OR'd, d2-d7/a2-a6 kept.

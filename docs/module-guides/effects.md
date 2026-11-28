@@ -41,7 +41,7 @@ Octabam names three (`sdk/octabam/docs/remixer/MODULES.md`, "Decide first"). Cho
 - **`active=True` on every slot the panel draws.** A slot the panel does not draw is unreachable, however complete the DSP.
 - **Draw a knob only if the DSP reads it.** The inverse is also true: a slot can draw a knob and publish nothing.
 - **A MODE select goes on an even slot of page 2** (slot 6 is hardware-confirmed). Declare `mode_slot` and `ModeView` so the knob names and defaults follow the mode.
-- **Claims.** FX2 id (a free, non-stock id; `registry.modules()` refuses duplicates), caves, hook sites, DSP data ranges, `Claims(fx1_only=True)` for an FX1-only station. The ledger refuses collisions by name.
+- **Claims.** FX2 id (a preferred, non-stock id: the base gives the effect its own at install, so another module may prefer it too; a card image takes 0x04-0x1f, one module an id), caves, hook sites, DSP data ranges, `Claims(fx1_only=True)` for an FX1-only station. The ledger refuses collisions by name.
 - **ColdFire units that may move (stock-DSP effects).** List them in `placement.json` (`{"schema": 1, "moduleId": "<id>", "joinRuntime": ["<label>", …]}`): the builder links them into the DRAM runtime when another selected module already carries one, and into the menu cave otherwise. Crowded sets keep their cave, and a set without DRAM code takes no sample memory (the runtime reserves about 10 MB of it). A listed unit has no `include`, `defsyms` or stock copies and assembles the same for both ISAs. Sidechain Compressor's two units are the first (#1175).
 - **`dear`:** every knob at its dearest setting. Pressure renders and the stress project read it.
 - **`gates`:** the verifiers `make check` runs when a remix carries your module.

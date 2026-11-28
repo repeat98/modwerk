@@ -535,6 +535,314 @@
     "1: jmp 0x4009fb5e"
    ],
    "done": null
+  },
+  {
+   "site": "0x40003ca4",
+   "length": 8,
+   "guard": "affe75cc6a50fffd392b3e1045e18d0fbf846ff2f30fe75be1e445e634f96cf9",
+   "routine": "the LFO routine depth read for FM machines",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x40003cac"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4000d03e",
+   "length": 8,
+   "guard": "affe75cc6a50fffd392b3e1045e18d0fbf846ff2f30fe75be1e445e634f96cf9",
+   "routine": "the frame-builder copy of the LFO depth read",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x4000d046"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x40031e62",
+   "length": 8,
+   "guard": "e959e9faafc44ea9c6bfdd092ecc23526495873cc4bb235455ee04d45d4c7c4b",
+   "routine": "the LFO page resolver branch for FLEX FM tracks",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x40031ed6"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4000b51a",
+   "length": 8,
+   "guard": "4aec4ef01824a0bd3e42321ef4c36e0fd1e2003924c72308dfa8bc1db84d38fc",
+   "routine": "AMP envelope release consumer before stock staging",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x4000b522"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4000b2c8",
+   "length": 6,
+   "guard": "172262e5ddbeacf59e683eccacdcbe33bfaa4609e2ff79f932b5e1b70a9a93bb",
+   "routine": "STOP ends FM machine voices",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x4000b2ce"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4000c634",
+   "length": 8,
+   "guard": "59609fac3f03905ee63fde6f557553d44e997fc6e02eb6c8aa4c475715ff2662",
+   "routine": "sequencer START rewrite for FM machines",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x4000c63c"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4000685c",
+   "length": 6,
+   "guard": "98e9488a15bc1e186e25540bc49839ccd37ffcb4a835ab2c26ec17362380b922",
+   "routine": "voice kill for FM machines",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x40006862"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4000e452",
+   "length": 8,
+   "guard": "1e3f89d63562977cf6928c72536e014118c40df97d7f5f3d80c78b10ed4c0448",
+   "routine": "MIDI chromatic note-on octave gate",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x4000e45a"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4000de10",
+   "length": 6,
+   "guard": "4a1708d81bb2f20ab51c41d28145e52f09c94f248bbdde8e63a7f08524734e89",
+   "routine": "MIDI chromatic note-off octave gate",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x4000de16"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x400625e0",
+   "length": 10,
+   "guard": "5c6bbcd0f1e2dd2ae81a5e24e88e3b98e08a127430e90904a746d7eaaac10004",
+   "routine": "MIDI live recorder on MIDI event 0x41",
+   "head": [],
+   "tail": [
+    {
+     "stock": 10
+    },
+    "jmp 0x400625ea"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4006262a",
+   "length": 10,
+   "guard": "77eaafa68e06beb974f9ba8fec19804e7601a2e326dbdf2aa5a6a62341741898",
+   "routine": "MIDI live recorder with trig held",
+   "head": [],
+   "tail": [
+    {
+     "stock": 10
+    },
+    "jmp 0x40062634"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x40059d56",
+   "length": 6,
+   "guard": "6e1b853823706fee366208281c3d01a27c06e219d8ff5e6145b06a450e3e25fa",
+   "routine": "AMP SETUP LEG staging on FM tracks",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x40059d5c"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4003685a",
+   "length": 12,
+   "guard": "9d2d6a8b11265cf919a3cf246ebf74e7ff2379d1ce4b15b310edffed55f665fb",
+   "routine": "AMP SETUP drawer name pointers",
+   "head": [],
+   "tail": [
+    {
+     "stock": 12
+    },
+    "jmp 0x40036866"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x400368ac",
+   "length": 12,
+   "guard": "b1ae4e00765b28aecf9f4e1be20a3a2b0ef1def51a5e47acbb01d84804231cbc",
+   "routine": "AMP SETUP drawer nibbles (first site)",
+   "head": [],
+   "tail": [
+    {
+     "stock": 12
+    },
+    "jmp 0x400368b8"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x40036946",
+   "length": 12,
+   "guard": "b1ae4e00765b28aecf9f4e1be20a3a2b0ef1def51a5e47acbb01d84804231cbc",
+   "routine": "AMP SETUP drawer nibbles (second site)",
+   "head": [],
+   "tail": [
+    {
+     "stock": 12
+    },
+    "jmp 0x40036952"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4003ae40",
+   "length": 12,
+   "guard": "3e401f14e70d67d18fcec37faf084580fd6bfa25426424788fe2828eb89f5c53",
+   "routine": "AMP page-2 LEG editor on FM tracks",
+   "head": [],
+   "tail": [
+    {
+     "stock": 12
+    },
+    "jmp 0x4003ae4c"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4003af0a",
+   "length": 10,
+   "guard": "d248085685bfc02ef8676cdf2e954840efc741ef3957382256f9dbd35c208e65",
+   "routine": "AMP LEG live-lane suppress",
+   "head": [],
+   "tail": [
+    {
+     "stock": 10
+    },
+    "jmp 0x4003af14"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x40051fce",
+   "length": 6,
+   "guard": "48029903d5d445adefcbc67dd2771ecaeac44c1000bfa1743f16f1665ed837ca",
+   "routine": "FUNC+UP/DOWN octave on FM tracks",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x40051fd4"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x400795ba",
+   "length": 8,
+   "guard": "246f05f28fccbec27678548be76fabfb68813a155739cc82b928cb08f35dbb52",
+   "routine": "machine slot assign became-FM predicate",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x400795c2"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x40022686",
+   "length": 6,
+   "guard": "ffcc36e1a4e00547dfdf889bb0fa8d8eccd4ca4166d097f5f79689712cd0cb07",
+   "routine": "file browser load-selector hook",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x4002268c"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4000d514",
+   "length": 8,
+   "guard": "39173055fb04ac0a6c355f89561b48834bc5b31ad67609e3fe53efbff7de1866",
+   "routine": "frame-builder renderer slot copy for FM machines",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x4000d51c"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x40031ece",
+   "length": 6,
+   "guard": "5aed68f7498659f87e414631493741e91f3442c5319f46e6893b567c423ce24f",
+   "routine": "PLAYBACK page resolver FLEX seam",
+   "head": [],
+   "tail": [
+    {
+     "stock": 4
+    },
+    "jmp 0x40031ed6"
+   ],
+   "done": null
   }
  ],
  "events": [
@@ -2394,7 +2702,7 @@
    "declaration": "struct modwerk_usb_function {\n    uint32_t abi, bytes;      /* MODWERK_USB_FUNCTION_ABI, sizeof this record (32 on target) */\n    uint16_t interfaces;      /* the interfaces it adds, numbered from MODWERK_USB_FUNCTION_INTERFACE: 1-4 */\n    uint16_t length;          /* bytes of each of the four descriptor blocks below */\n    uint32_t endpoints;       /* its endpoints as ENDPTFLUSH bits (bit n: OUT n, bit 16 + n: IN n): only endpoint MODWERK_USB_FUNCTION_ENDPOINT */\n    const uint8_t *fs, *hs, *os_fs, *os_hs; /* its interface association and interfaces as they follow the base's own: in the configuration at full and at high speed, and in OTHER_SPEED_CONFIGURATION describing full and high speed */\n};\n#define MODWERK_USB_FUNCTION_ABI 1u\n#define MODWERK_USB_PROFILES_ABI 2u\nstruct modwerk_usb_profiles {\n    struct modwerk_usb_function function; /* size 36. Each speed points at count consecutive equal-length blocks. */\n    uint16_t count;\n    volatile uint8_t requested, active; /* base sets active while detached */\n};\n#define MODWERK_USB_FUNCTION_INTERFACE 4u /* the base's own: 0 mass storage, 1 its vendor interface, 2 and 3 USB MIDI */\n#define MODWERK_USB_FUNCTION_ENDPOINT 3u  /* 0 control, 1 mass storage, 2 USB MIDI */",
    "when": "the base builds the USB configuration descriptors a host reads: its own functions (mass storage, the vendor interface, USB MIDI), then the contributed function's interfaces",
    "context": "the loader's switch (masked) and the sys task's tick; the record is copied, never called",
-   "contract": "Contribute one struct modwerk_usb_function. The base checks the whole record at admission (ABI and size, 1-4 interfaces, endpoint 3 alone, four blocks of `length` bytes inside the package's initialized image, the configuration within its 512-byte slot) and refuses the package otherwise; a base that links USB Audio in (a development twin) refuses every function. When the table changes the host has to read the descriptors again, so the base reconnects by itself: it waits until the control endpoint is idle, takes the unit off the bus for half a second, rewrites the four configurations and comes back. ABI 2 extends the record with a profile count (1–8) and requested and active indices. The base validates every profile, then switches the active format off the bus with playback stopped. A sync or trial stays open across that reconnect (the base's own disconnect undoes nothing), and the host has 20 s to speak to the vendor interface again before it counts as unplugged. A function that leaves has its endpoint flushed and disabled at the switch, before its memory can be reused. Its interrupt, bus-end and class-request work goes through ev_usb_isr, ev_usb_bus_end and ev_usb_control. SET_INTERFACE, GET_INTERFACE and the audio frame are not hooks yet: a function patches those stock sites itself, as its own.",
+   "contract": "Contribute one struct modwerk_usb_function. The base checks the whole record at admission (ABI and size, 1-4 interfaces, endpoint 3 alone, four blocks of `length` bytes inside the package's initialized image, the configuration within its 512-byte slot) and refuses the package otherwise; a base that links USB Audio in (a development twin) refuses every function. When the table changes the host has to read the descriptors again, so the base reconnects by itself: it waits until the control endpoint is idle, takes the unit off the bus for half a second, rewrites the four configurations and comes back. ABI 2 extends the record with a profile count (1\u20138) and requested and active indices. The base validates every profile, then switches the active format off the bus with playback stopped. A sync or trial stays open across that reconnect (the base's own disconnect undoes nothing), and the host has 20 s to speak to the vendor interface again before it counts as unplugged. A function that leaves has its endpoint flushed and disabled at the switch, before its memory can be reused. Its interrupt, bus-end and class-request work goes through ev_usb_isr, ev_usb_bus_end and ev_usb_control. SET_INTERFACE, GET_INTERFACE and the audio frame are not hooks yet: a function patches those stock sites itself, as its own.",
    "order": "lower first, then module id; the table holds one function.",
    "subscribers": [],
    "orderEvidence": "One function at a time: the controller has one endpoint left (3) and every authored USB Audio layout uses it, so a second function could not share the configuration. The USB Audio module is the first to contribute; until its package is published no module does.",
@@ -2444,10 +2752,10 @@
    "results": "notify",
    "when": "once per 16-sample audio frame, after sequencer event staging and before the eight audio tracks calculate LFOs and render their sources, including while transport is stopped",
    "context": "the audio frame interrupt. Keep the EMAC as found and preserve the C callee-saved registers. A handler must be bounded and must not block.",
-   "contract": "Observe the instrument’s current step and tick here to prepare the upcoming render. Return without starting transport or advancing the sequencer. Each subscriber receives one notification per visit to the frame preparation site. The hook stays active while a module rests, so it can retain timing from before its first note.",
+   "contract": "Observe the instrument\u2019s current step and tick here to prepare the upcoming render. Return without starting transport or advancing the sequencer. Each subscriber receives one notification per visit to the frame preparation site. The hook stays active while a module rests, so it can retain timing from before its first note.",
    "order": "Lower order first, then module ID. All subscribers run. 10-90.",
    "subscribers": [],
-   "orderEvidence": "Clock readers such as FM Synth and sequenced machines observe stock state independently. Subscribers must not rely on another module’s state."
+   "orderEvidence": "Clock readers such as FM Synth and sequenced machines observe stock state independently. Subscribers must not rely on another module\u2019s state."
   },
   {
    "event": "ev_frame_deadline",
@@ -2458,62 +2766,62 @@
    "results": "or",
    "when": "every frame-interrupt entry, before any render: no stock site, the base raises it from mw_frame_enter (machine_registry.c) once it knows how late the entry is against the DSP's frame grid",
    "context": "the frame interrupt: short, no firmware call that can block, the EMAC kept as found. Store the deadline and return",
-   "contract": "deadline is the DTCN3 count (0xfc07c00c, 132 MHz) by which work at IPL 5 (stock's delay routine and a module's detours in it) must end so that the next frame interrupt enters no more than 60 µs late: the next frame's grid time plus 80 µs less a 20 µs margin. Compare with (int32_t)(DTCN3 - deadline): past 0, or within your next block's cost of it, hold that block (dry, or the ring held) rather than run it. An entry in the DSP's late window (80 to 190 µs) skips a DSP frame, heard as a click, or stops the frame exchange for good (owner's MKII, 22 November 2026). rest is nonzero on every frame of a pattern the base predicts past the frame ceiling with this module's effect running, the Part's module machines already silent (owner, 22 November 2026): bypass dry for this frame, doing no work. It is latched at the frame's entry and never changes within it; the handler runs every frame whether rest is set or not, so it sees rest go back to 0 itself and starts its state afresh then. Admission charges the effect as if it ran either way. Every handler runs; the answers are ignored. d2-d7/a2-a6 must be kept, as C keeps them; the base keeps d0-d1/a0-a1.",
+   "contract": "deadline is the DTCN3 count (0xfc07c00c, 132 MHz) by which work at IPL 5 (stock's delay routine and a module's detours in it) must end so that the next frame interrupt enters no more than 60 \u00b5s late: the next frame's grid time plus 80 \u00b5s less a 20 \u00b5s margin. Compare with (int32_t)(DTCN3 - deadline): past 0, or within your next block's cost of it, hold that block (dry, or the ring held) rather than run it. An entry in the DSP's late window (80 to 190 \u00b5s) skips a DSP frame, heard as a click, or stops the frame exchange for good (owner's MKII, 22 November 2026). rest is nonzero on every frame of a pattern the base predicts past the frame ceiling with this module's effect running, the Part's module machines already silent (owner, 22 November 2026): bypass dry for this frame, doing no work. It is latched at the frame's entry and never changes within it; the handler runs every frame whether rest is set or not, so it sees rest go back to 0 itself and starts its state afresh then. Admission charges the effect as if it ran either way. Every handler runs; the answers are ignored. d2-d7/a2-a6 must be kept, as C keeps them; the base keeps d0-d1/a0-a1.",
    "order": "lower first, then module id; every handler runs, so the order does not change the result. 10-90.",
    "subscribers": [],
    "raisers": [],
    "raisedByBase": true,
    "orderEvidence": "Each subscriber keeps its own copy of the deadline; none reads another's. Owner approved 22 November 2026 for Tape Echo and every ColdFire effect after it."
   },
- {
-  "event": "ot_lfo_pmtr_dest",
-  "index": 63,
-  "kind": "table",
-  "site": null,
-  "length": 0,
-  "record": 12,
-  "key": null,
-  "room": 16,
-  "declaration": "typedef void modwerk_lfo_pmtr_after_store(uint16_t *word); /* audio path; publish live state from *word */\nstruct modwerk_lfo_pmtr_dest {\n    uint16_t index;                  /* destination index; 30-38 reserved for parked drafts */\n    uint16_t flags;                  /* MODWERK_LFO_PMTR_* */\n    const char *label;               /* SETUP string (PROB, RST, …), NUL-padded short name */\n    uint16_t *words;                 /* 8 live halfwords, one per audio track (LFO store form) */\n    modwerk_lfo_pmtr_after_store *after_store; /* optional; NULL = no peer publish */\n};\n#define MODWERK_LFO_PMTR_ABI 2u\n#define MODWERK_LFO_PMTR_AUDIO 1u     /* audio LFO page only (MIDI twin later) */",
-  "when": "audio LFO SETUP PMTR past stock 0-29: the base owns the page count, SETUP formatter, the PMTR beq that skipped WAVE's descriptor-count clamp, and dest store; dest lea is coded but not claimed yet (FM Synth overlap)",
-  "context": "the UI task (SETUP) and the audio LFO engine (destination resolve): short, no firmware call that can block",
-  "contract": "Contribute one struct modwerk_lfo_pmtr_dest. index must be unique among contributors and >= 30; the first record for an index wins. words points at eight track-indexed halfwords the LFO engine stores into. Optional after_store runs on the audio path after mw_lfo_pmtr_store writes *word (NULL = engine write only; peers must not claim 0x4000d07a). Room 16. Published SETUP count is 30 + number of unique contributed indexes (clamped to room). Dest store own/jmp at 0x4000d07a length 6 (move.w d0,(a1) + subq.l #1,4(sp); rejoin 0x4000d080) -> mw_lfo_pmtr_store (MOP-70/71). Resolve reloads MACSR/ACC1/ACC2 and takes track from a4. Dest lea at 0x4000d042 (pad_to=8) is implemented in lfo_pmtr_dest.s but not claimed in this land: published FM Synth po_lfo3b still overlaps at 0x4000d03e pad 8; a follow-up claims the lea with the companion migrate to 0x4000d03a (fork 6210dacde). SETUP encoder (MOP-34 twin live-patch): own/poke 0x4003923c length 2, stock 6734 (beq.s to 0x40039272) -> 4e71 nop; fall-through 0x4003923e (move.l d5,-(sp)). Not a detour at function entry 0x40038e04. Do not invent other addresses.",
-  "order": "lower first, then module id: SETUP scroll order among extended destinations. Drafts: PROB 30 order 10, RST 31 order 20, … TSTR 38 order 90.",
-  "subscribers": [],
-  "orderEvidence": "Coordinator lock LFO SETUP indexes 30–38 (TEMPO 39) on the fork; upstream hook index for this table is 63 (append after ev_frame_deadline). No catalogue module contributes on first land. Dest lea deferred pending FM Synth companion migrate. Port of fork scaffold 141322f42 through after_store ABI 2, without the lea claim from 6210dacde.",
-  "sites": [
-   {
-    "site": "0x4000d07a",
-    "length": 6,
-    "guard": "05513c90a3f4765378f011e125ede9c6eb20d8fdd856ecc65c5f8a7f8bcfb4ee",
-    "op": "jmp",
-    "target": "mw_lfo_pmtr_store",
-    "what": "audio LFO destination store (move.w d0,(a1) + subq.l #1,4(sp)); rejoin 0x4000d080 (OS 1.40C; MOP-70)"
-   },
-   {
-    "site": "0x4003923c",
-    "length": 2,
-    "guard": "c874bc29e99f2e67290d6cdb1caa2a67a4d8ec079434fef4eaa0715e902f4ac1",
-    "op": "own",
-    "what": "LFO page-2 encoder: nop PMTR beq (stock 6734) so SETUP uses WAVE's descriptor-count clamp; fall-through 0x4003923e (MOP-34 twin, OS 1.40C)"
-   },
-   {
-    "site": "0x4003bf64",
-    "length": 8,
-    "guard": "88c3015bea265af524001c19cb4e3b9743131f26f46f5d0e58dfb2f8622283c1",
-    "op": "jmp",
-    "target": "mw_lfo_pmtr_format",
-    "what": "audio LFO PMTR formatter: contributed indexes print their SETUP label (guards from trig-prob manifest, OS 1.40C)"
-   },
-   {
-    "site": "0x400d38a8",
-    "length": 4,
-    "guard": "560231689713a5933b6c8ac3e6b2f243730e49e1c6b0c610c41e8e8dad26044c",
-    "op": "own",
-    "what": "audio LFO page PMTR count word: base publishes 30+n from contributions"
-   }
-  ]
- },
+  {
+   "event": "ot_lfo_pmtr_dest",
+   "index": 63,
+   "kind": "table",
+   "site": null,
+   "length": 0,
+   "record": 12,
+   "key": null,
+   "room": 16,
+   "declaration": "typedef void modwerk_lfo_pmtr_after_store(uint16_t *word); /* audio path; publish live state from *word */\nstruct modwerk_lfo_pmtr_dest {\n    uint16_t index;                  /* destination index; 30-38 reserved for parked drafts */\n    uint16_t flags;                  /* MODWERK_LFO_PMTR_* */\n    const char *label;               /* SETUP string (PROB, RST, \u2026), NUL-padded short name */\n    uint16_t *words;                 /* 8 live halfwords, one per audio track (LFO store form) */\n    modwerk_lfo_pmtr_after_store *after_store; /* optional; NULL = no peer publish */\n};\n#define MODWERK_LFO_PMTR_ABI 2u\n#define MODWERK_LFO_PMTR_AUDIO 1u     /* audio LFO page only (MIDI twin later) */",
+   "when": "audio LFO SETUP PMTR past stock 0-29: the base owns the page count, SETUP formatter, the PMTR beq that skipped WAVE's descriptor-count clamp, and dest store; dest lea is coded but not claimed yet (FM Synth overlap)",
+   "context": "the UI task (SETUP) and the audio LFO engine (destination resolve): short, no firmware call that can block",
+   "contract": "Contribute one struct modwerk_lfo_pmtr_dest. index must be unique among contributors and >= 30; the first record for an index wins. words points at eight track-indexed halfwords the LFO engine stores into. Optional after_store runs on the audio path after mw_lfo_pmtr_store writes *word (NULL = engine write only; peers must not claim 0x4000d07a). Room 16. Published SETUP count is 30 + number of unique contributed indexes (clamped to room). Dest store own/jmp at 0x4000d07a length 6 (move.w d0,(a1) + subq.l #1,4(sp); rejoin 0x4000d080) -> mw_lfo_pmtr_store (MOP-70/71). Resolve reloads MACSR/ACC1/ACC2 and takes track from a4. Dest lea at 0x4000d042 (pad_to=8) is implemented in lfo_pmtr_dest.s but not claimed in this land: published FM Synth po_lfo3b still overlaps at 0x4000d03e pad 8; a follow-up claims the lea with the companion migrate to 0x4000d03a (fork 6210dacde). SETUP encoder (MOP-34 twin live-patch): own/poke 0x4003923c length 2, stock 6734 (beq.s to 0x40039272) -> 4e71 nop; fall-through 0x4003923e (move.l d5,-(sp)). Not a detour at function entry 0x40038e04. Do not invent other addresses.",
+   "order": "lower first, then module id: SETUP scroll order among extended destinations. Drafts: PROB 30 order 10, RST 31 order 20, \u2026 TSTR 38 order 90.",
+   "subscribers": [],
+   "orderEvidence": "Coordinator lock LFO SETUP indexes 30\u201338 (TEMPO 39) on the fork; upstream hook index for this table is 63 (append after ev_frame_deadline). No catalogue module contributes on first land. Dest lea deferred pending FM Synth companion migrate. Port of fork scaffold 141322f42 through after_store ABI 2, without the lea claim from 6210dacde.",
+   "sites": [
+    {
+     "site": "0x4000d07a",
+     "length": 6,
+     "guard": "05513c90a3f4765378f011e125ede9c6eb20d8fdd856ecc65c5f8a7f8bcfb4ee",
+     "op": "jmp",
+     "target": "mw_lfo_pmtr_store",
+     "what": "audio LFO destination store (move.w d0,(a1) + subq.l #1,4(sp)); rejoin 0x4000d080 (OS 1.40C; MOP-70)"
+    },
+    {
+     "site": "0x4003923c",
+     "length": 2,
+     "guard": "c874bc29e99f2e67290d6cdb1caa2a67a4d8ec079434fef4eaa0715e902f4ac1",
+     "op": "own",
+     "what": "LFO page-2 encoder: nop PMTR beq (stock 6734) so SETUP uses WAVE's descriptor-count clamp; fall-through 0x4003923e (MOP-34 twin, OS 1.40C)"
+    },
+    {
+     "site": "0x4003bf64",
+     "length": 8,
+     "guard": "88c3015bea265af524001c19cb4e3b9743131f26f46f5d0e58dfb2f8622283c1",
+     "op": "jmp",
+     "target": "mw_lfo_pmtr_format",
+     "what": "audio LFO PMTR formatter: contributed indexes print their SETUP label (guards from trig-prob manifest, OS 1.40C)"
+    },
+    {
+     "site": "0x400d38a8",
+     "length": 4,
+     "guard": "560231689713a5933b6c8ac3e6b2f243730e49e1c6b0c610c41e8e8dad26044c",
+     "op": "own",
+     "what": "audio LFO page PMTR count word: base publishes 30+n from contributions"
+    }
+   ]
+  },
   {
    "event": "ot_reserved_64",
    "index": 64,
@@ -2549,6 +2857,737 @@
    "order": "(order, module id); one record a module, read for the slots that run its effect id.",
    "subscribers": [],
    "orderEvidence": "Each record serves only the slots running its own module's effect id, so no two records serve one slot."
+  },
+  {
+   "event": "ev_hook_reserved_66",
+   "kind": "call",
+   "site": null,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "or",
+   "when": "Reserved index 66 for CLYPS base hook 3 (#1997).",
+   "context": "Reserved hook index; no subscribers on this branch.",
+   "contract": "Neutral placeholder: replace when the owning pull request lands on base/octatrack-next.",
+   "order": "10-90",
+   "subscribers": [],
+   "raisers": [],
+   "orderEvidence": "Index reservation (maintenance-bot, 28 Nov 2026; #2246 assignment on #2352).",
+   "index": 66
+  },
+  {
+   "event": "ev_hook_reserved_67",
+   "kind": "call",
+   "site": null,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "or",
+   "when": "Reserved index 67 for owner base hook (#2261), when ready.",
+   "context": "Reserved hook index; no subscribers on this branch.",
+   "contract": "Neutral placeholder: replace when the owning pull request lands on base/octatrack-next.",
+   "order": "10-90",
+   "subscribers": [],
+   "raisers": [],
+   "orderEvidence": "Index reservation (maintenance-bot, 28 Nov 2026; #2246 assignment on #2352).",
+   "index": 67
+  },
+  {
+   "event": "ev_hook_reserved_68",
+   "kind": "call",
+   "site": null,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "or",
+   "when": "Reserved index 68 for owner base hook (#2271), when ready.",
+   "context": "Reserved hook index; no subscribers on this branch.",
+   "contract": "Neutral placeholder: replace when the owning pull request lands on base/octatrack-next.",
+   "order": "10-90",
+   "subscribers": [],
+   "raisers": [],
+   "orderEvidence": "Index reservation (maintenance-bot, 28 Nov 2026; #2246 assignment on #2352).",
+   "index": 68
+  },
+  {
+   "event": "ev_fm_lfo_depth",
+   "index": 69,
+   "kind": "take",
+   "site": "0x40003ca4",
+   "length": 8,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "the LFO routine depth read for FM machines",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_lfo_depth",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_lfo3"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_lfo_depth",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s cx_lfo_standalone"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_lfo_depth_frame",
+   "index": 70,
+   "kind": "take",
+   "site": "0x4000d03e",
+   "length": 8,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "the frame-builder copy of the LFO depth read",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_lfo_depth_frame",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_lfo3b"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_lfo_depth_frame",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s cx_lfo_frame"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_lfo_page",
+   "index": 71,
+   "kind": "take",
+   "site": "0x40031e62",
+   "length": 8,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "the LFO page resolver branch for FLEX FM tracks",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_lfo_page",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_lfopage"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_lfo_page",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s cx_lfo_page"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_amp_release",
+   "index": 72,
+   "kind": "take",
+   "site": "0x4000b51a",
+   "length": 8,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "AMP envelope release consumer before stock staging",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_amp_release",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_rel"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_amp_release",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_rel"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_transport_stop",
+   "index": 73,
+   "site": "0x4000b2c8",
+   "length": 6,
+   "when": "STOP ends FM machine voices",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "A notification: every subscribed engine handler runs; each clears or gates only its own machine voices. Stock runs after every handler. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_fm_transport_stop",
+     "order": 40,
+     "does": "Clears FM Synth engine voices on this hook.",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_stop"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_fm_transport_stop",
+     "order": 45,
+     "does": "Clears CX OSC engine voices on this hook.",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_stop"
+    }
+   ],
+   "orderEvidence": "Every installed FM engine runs; FM Synth (40) before CX OSC (45).",
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify"
+  },
+  {
+   "event": "ev_fm_sequencer_retrig",
+   "index": 74,
+   "kind": "take",
+   "site": "0x4000c634",
+   "length": 8,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "sequencer START rewrite for FM machines",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_sequencer_retrig",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_retrig"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_sequencer_retrig",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_retrig"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_voice_kill",
+   "index": 75,
+   "kind": "take",
+   "site": "0x4000685c",
+   "length": 6,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "voice kill for FM machines",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_voice_kill",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_kill"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_voice_kill",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_kill"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_midi_chromatic_on_gate",
+   "index": 76,
+   "site": "0x4000e452",
+   "length": 8,
+   "when": "MIDI chromatic note-on octave gate",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "Every handler ORs its own tracks into wide_mask for notes outside 72..96, then returns. The base runs every handler. If the union is nonzero, it enters stock's wide chromatic block with d3 set to that mask; otherwise it runs the stock octave test. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_midi_chromatic_on_gate",
+     "order": 40,
+     "does": "Adds FM Synth tracks that need the wide note-on path.",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_mgate"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_midi_chromatic_on_gate",
+     "order": 45,
+     "does": "Adds CX OSC tracks that need the wide note-on path.",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_mgate"
+    }
+   ],
+   "orderEvidence": "Every installed FM engine runs; FM Synth (40) before CX OSC (45).",
+   "prototype": "void f(uint32_t *wide_mask)",
+   "args": ["&scratch"],
+   "results": "mask",
+   "maskRegister": "d3",
+   "wide": "0x4000e6e2"
+  },
+  {
+   "event": "ev_midi_chromatic_off_gate",
+   "index": 77,
+   "site": "0x4000de10",
+   "length": 6,
+   "when": "MIDI chromatic note-off octave gate",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "Every handler ORs its own tracks into wide_mask for notes outside 72..96, then returns. The base runs every handler. If the union is nonzero, it enters stock's wide chromatic release block with d4 set to that mask; otherwise it runs the stock octave test. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_midi_chromatic_off_gate",
+     "order": 40,
+     "does": "Adds FM Synth tracks that need the wide note-off path.",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_mogate"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_midi_chromatic_off_gate",
+     "order": 45,
+     "does": "Adds CX OSC tracks that need the wide note-off path.",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_mogate"
+    }
+   ],
+   "orderEvidence": "Every installed FM engine runs; FM Synth (40) before CX OSC (45).",
+   "prototype": "void f(uint32_t *wide_mask)",
+   "args": ["&scratch"],
+   "results": "mask",
+   "maskRegister": "d4",
+   "wide": "0x4000df9e"
+  },
+  {
+   "event": "ev_midi_live_record_event",
+   "index": 78,
+   "kind": "take",
+   "site": "0x400625e0",
+   "length": 10,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "MIDI live recorder on MIDI event 0x41",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_midi_live_record_event",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_mrec"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_midi_live_record_event",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_mrec"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_midi_live_record_trig",
+   "index": 79,
+   "kind": "take",
+   "site": "0x4006262a",
+   "length": 10,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "MIDI live recorder with trig held",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_midi_live_record_trig",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_mtrig"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_midi_live_record_trig",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_mtrig"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_amp_setup_stage",
+   "index": 80,
+   "kind": "take",
+   "site": "0x40059d56",
+   "length": 6,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "AMP SETUP LEG staging on FM tracks",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_amp_setup_stage",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_ampstage"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_amp_setup_stage",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_ampstage"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_amp_draw_names",
+   "index": 81,
+   "kind": "take",
+   "site": "0x4003685a",
+   "length": 12,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "AMP SETUP drawer name pointers",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_amp_draw_names",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_ampdraw1"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_amp_draw_names",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_ampdraw1"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_amp_draw_nibbles_a",
+   "index": 82,
+   "kind": "take",
+   "site": "0x400368ac",
+   "length": 12,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "AMP SETUP drawer nibbles (first site)",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_amp_draw_nibbles_a",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_ampdraw2"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_amp_draw_nibbles_a",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_ampdraw2"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_amp_draw_nibbles_b",
+   "index": 83,
+   "kind": "take",
+   "site": "0x40036946",
+   "length": 12,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "AMP SETUP drawer nibbles (second site)",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_amp_draw_nibbles_b",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_ampdraw3"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_amp_draw_nibbles_b",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_ampdraw3"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_amp_edit",
+   "index": 84,
+   "kind": "take",
+   "site": "0x4003ae40",
+   "length": 12,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "AMP page-2 LEG editor on FM tracks",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_amp_edit",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_ampedit"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_amp_edit",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_ampedit"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_amp_live_lane",
+   "index": 85,
+   "kind": "take",
+   "site": "0x4003af0a",
+   "length": 10,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "AMP LEG live-lane suppress",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_amp_live_lane",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_amplane"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_amp_live_lane",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_amplane"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_octave_func",
+   "index": 86,
+   "kind": "take",
+   "site": "0x40051fce",
+   "length": 6,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "FUNC+UP/DOWN octave on FM tracks",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_octave_func",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_octave"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_octave_func",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_octave"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_slot_assign",
+   "index": 87,
+   "kind": "take",
+   "site": "0x400795ba",
+   "length": 8,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "machine slot assign became-FM predicate",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_slot_assign",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_assign"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_slot_assign",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_assign"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_load_selector",
+   "index": 88,
+   "kind": "take",
+   "site": "0x40022686",
+   "length": 6,
+   "entry": "jsr",
+   "arg": null,
+   "room": 8,
+   "when": "file browser load-selector hook",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_load_selector",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_loadsel"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_load_selector",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_loadsel"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_fm_frame_source",
+   "index": 89,
+   "kind": "take",
+   "site": "0x4000d514",
+   "length": 8,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "frame-builder renderer slot copy for FM machines",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_fm_frame_source",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s fm_source_dispatch"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_fm_frame_source",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_fmsource"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
+  },
+  {
+   "event": "ev_playback_page_resolve",
+   "index": 90,
+   "kind": "take",
+   "site": "0x40031ece",
+   "length": 6,
+   "entry": "jmp",
+   "arg": null,
+   "room": 8,
+   "when": "PLAYBACK page resolver FLEX seam",
+   "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
+   "contract": "The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes.",
+   "order": "10-29: a machine claiming its own tracks (claims set); 30-49: a machine's bundled feature; 50-69: a standalone feature module. The first record that claims the call takes it.",
+   "subscribers": [
+    {
+     "module": "synth",
+     "fn": "mw_take_playback_page_resolve",
+     "order": 40,
+     "does": "FM Synth on its own tracks; other tracks replay stock",
+     "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s pg_resolve"
+    },
+    {
+     "module": "cx-osc",
+     "fn": "cx_take_playback_page_resolve",
+     "order": 45,
+     "does": "CX OSC on its own tracks; other tracks replay stock",
+     "evidence": "sdk/drafts/cx-osc/standalone/poly.s pg_resolve"
+    }
+   ],
+   "orderEvidence": "FM Synth (40) before CX OSC (45), matching ev_midi_note_on and ot_machines row order."
   }
  ]
 }

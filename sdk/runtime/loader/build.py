@@ -61,8 +61,6 @@ SITE_BYTES, SITE_RELOCATIONS = 32, 8  # loader.h
 DSP_WORDS, DSP_RELOCATIONS, STATE_WORDS, BUFFER_WORDS = 4096, 256, 132, 16384
 CYCLE_KINDS = {'executed': 1, 'modeled': 2, 'hardware': 3}  # loader.h's runtime_cycles
 SLOTS = {'fx1': 1, 'fx2': 2, 'both': 3}
-# The base's effect ids, FX1 and FX2 alike (fxids.h; dsp.c's choose hands out 32 and up from the start): one file sets them.
-FX_IDS = json.loads((Path(__file__).resolve().parents[2] / 'machines/octatrack/elekloader/fx-ids.json').read_text())['ids']
 CFLAGS = ['-mcpu=54455', '-Os', '-std=c99', '-ffreestanding', '-fno-builtin', '-fno-common',
           '-fno-tree-loop-distribute-patterns', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
           '-Wall', '-Wextra', '-Werror', '-I', str(HERE)]
@@ -219,10 +217,10 @@ def dsp_section(pkg, slots, cycles, kind, state, buffer=0, name='', layout=1):
         raise ValueError('The DSP package is malformed or does not match its checksum.')
     if len(pkg.get('proofs', [])) < 2 or any(digest(proof['base']) != proof['sha256'] for proof in pkg['proofs']):
         raise ValueError('The DSP package has no placement proofs, or its relocation does not reproduce them.')
-    if not (0 < pkg['fxId'] < FX_IDS and slots in SLOTS and kind in CYCLE_KINDS and 0 < cycles < 65536 and 0 < state <= STATE_WORDS
+    if not (0 < pkg['fxId'] < 32 and slots in SLOTS and kind in CYCLE_KINDS and 0 < cycles < 65536 and 0 < state <= STATE_WORDS
             and 0 <= buffer <= BUFFER_WORDS):
-        raise ValueError('Give the effect an id of 1-%d, its slots, a cycle figure and its kind, its state words (at most %d) '
-                         'and the delay-buffer words it reads (at most %d).' % (FX_IDS - 1, STATE_WORDS, BUFFER_WORDS))
+        raise ValueError('Give the effect its slots, a cycle figure and its kind, its state words (at most %d) and the '
+                         'delay-buffer words it reads (at most %d).' % (STATE_WORDS, BUFFER_WORDS))
     if not (0 < len(name) <= 15 and name.isascii() and name.isprintable() and 0 < layout < 65536):
         raise ValueError('Give the effect a display name of 1-15 printable ASCII characters and a layout number of 1-65535.')
     return dict(words=words, relocations=relocations, effect=pkg['fxId'], slots=SLOTS[slots], init=pkg['init'], proc=pkg['proc'],

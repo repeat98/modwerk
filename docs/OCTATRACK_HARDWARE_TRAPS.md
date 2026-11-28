@@ -490,6 +490,14 @@ and reproduced on the ColdFire emulator. Before taking a span, run `npm run stoc
 (with your OS file); shorten the detour and keep a shared target stock
 (Quantizer 0.1.3, its TESTING.md).
 
+**A copied stock branch keeps its displacement.** The FM hook tails at
+`0x40031e62` and `0x40031ece` originally copied a short branch along with
+the stock load. In the base's new code area, that branch targets different
+bytes. The earlier development twin halted with VEC:04 during RAM boot;
+the twin that copies only the loads and jumps to the resolver epilogue
+(`0x40031ed6`) booted on the owner's MKII (`3afe6b2d`, 28 November 2026).
+Disassemble every copied span before using `{"stock": n}` in an event tail.
+
 **One copy of the arena base literal is not the arena.** The sample arena's
 stock base address is the operand of 23 instructions. 22 of them are the
 arena. The 23rd, at `0x400254f8`, ends PURGE SAMPLES' walk over the 16

@@ -106,7 +106,7 @@ def ported(module, registry=None, path=PORTS):
     detours = []
     for d in module.detours:
         r = entry.get('retarget', {}).get(d.symbol)
-        detours.append(replace(d, unit=r['unit'], symbol=r['symbol'],
+        detours.append(replace(d, unit=r['unit'], symbol=r['symbol'], pad_to=r['guardLength'],
                                 expect=stock_guard(d.site, r['guardLength'], r['guardSha256'])) if r else d)
     kept, pokes, refs = builder.replaced(detours, builder.entries(declared), reg, pokes=module.pokes, refs=module.symbol_refs)
     owned = {(o['table'], o['site']) for o in reg['owned']}

@@ -230,7 +230,7 @@ and framebuffer data are removed by the script.
 
 `capture-module-ui.py` reads stock's LCD plane, so it misses everything a base draws through `ev_draw`: the startup,
 the CUE + PROJ status, the MODWERK pages' dialogs, the update and sync screens. A base image also runs past the
-emulator's default instruction budget before it is ready (`BUDGET -- instruction budget exhausted`); pass `--max 4000000000`.
+emulator's default instruction budget before it is ready (`BUDGET -- instruction budget exhausted`); pass `--max 4000000000` to `ot_emu`, or `scripts/capture-module-ui.py --boot-max N` for the same limit on scripted captures.
 Capture those screens from a development twin (`build_core.py` with the release flags plus `--dev`) under `--usb-host`
 and `pace on`: `npm run device -- do 'PROJ w500 … png:FILE' --emulator --socket SOCK`, or the emulator's `peek` of the
 `screen` symbol (dev.c's composed frame) while `npm run device -- boot DIR` runs, which shows the real BASE UPDATE screen.

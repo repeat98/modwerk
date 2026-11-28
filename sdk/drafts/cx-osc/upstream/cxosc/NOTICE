@@ -1,0 +1,23 @@
+CX OSC third-party provenance
+================================
+
+poly.s
+  Closest to timhastie/octatrick-modules v2.9 (525f4b1), MIT,
+  Copyright (c) 2026 Tim Hastie, plus po_amp_snap / po_amp_at / po_alaw
+  from v2.22 (73686de; po_amp_at without the SY DRUM branch). Local CX
+  OSC voice changes (FOLD/SYMM, free RATO, DEC on slot F, mono-only) are
+  by ilia-murzinov.
+
+page.s
+  Follows timhastie/octatrick-modules v2.15 (17ba281), MIT,
+  Copyright (c) 2026 Tim Hastie (closer to v2.15 than to v2.9). Local
+  CX OSC page names/formatters are by ilia-murzinov.
+
+machine.s
+  Tim Hastie's v2.15 machine list (17ba281), MIT, Copyright (c) 2026
+  Tim Hastie; that file was adapted by Tim from Modwerk's FM Synth
+  (repeat98/modwerk @ 1c1d938, MIT, Copyright (c) 2026 Modwerk
+  contributors). Signature here is "CX", 1.
+
+See also modules/cxosc/LICENSE-TIM (Tim Hastie MIT) and the repository
+LICENSE. Modwerk's licence text is MIT as cited in Tim's machine.s header.

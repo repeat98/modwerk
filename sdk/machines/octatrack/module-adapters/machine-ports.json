@@ -356,6 +356,138 @@
      "fn": "mw_take_project_write",
      "order": 40,
      "replaces": "qz_wr"
+    },
+    {
+     "event": "ev_fm_lfo_depth",
+     "fn": "mw_take_fm_lfo_depth",
+     "order": 40,
+     "replaces": "po_lfo3"
+    },
+    {
+     "event": "ev_fm_lfo_depth_frame",
+     "fn": "mw_take_fm_lfo_depth_frame",
+     "order": 40,
+     "replaces": "po_lfo3b"
+    },
+    {
+     "event": "ev_fm_lfo_page",
+     "fn": "mw_take_fm_lfo_page",
+     "order": 40,
+     "replaces": "po_lfopage"
+    },
+    {
+     "event": "ev_fm_amp_release",
+     "fn": "mw_take_fm_amp_release",
+     "order": 40,
+     "replaces": "po_rel"
+    },
+    {
+     "event": "ev_fm_transport_stop",
+     "fn": "mw_fm_transport_stop",
+     "order": 40,
+     "replaces": "po_stop"
+    },
+    {
+     "event": "ev_fm_sequencer_retrig",
+     "fn": "mw_take_fm_sequencer_retrig",
+     "order": 40,
+     "replaces": "po_retrig"
+    },
+    {
+     "event": "ev_fm_voice_kill",
+     "fn": "mw_take_fm_voice_kill",
+     "order": 40,
+     "replaces": "po_kill"
+    },
+    {
+     "event": "ev_midi_chromatic_on_gate",
+     "fn": "mw_midi_chromatic_on_gate",
+     "order": 40,
+     "replaces": "po_mgate"
+    },
+    {
+     "event": "ev_midi_chromatic_off_gate",
+     "fn": "mw_midi_chromatic_off_gate",
+     "order": 40,
+     "replaces": "po_mogate"
+    },
+    {
+     "event": "ev_midi_live_record_event",
+     "fn": "mw_take_midi_live_record_event",
+     "order": 40,
+     "replaces": "po_mrec"
+    },
+    {
+     "event": "ev_midi_live_record_trig",
+     "fn": "mw_take_midi_live_record_trig",
+     "order": 40,
+     "replaces": "po_mtrig"
+    },
+    {
+     "event": "ev_fm_amp_setup_stage",
+     "fn": "mw_take_fm_amp_setup_stage",
+     "order": 40,
+     "replaces": "po_ampstage"
+    },
+    {
+     "event": "ev_fm_amp_draw_names",
+     "fn": "mw_take_fm_amp_draw_names",
+     "order": 40,
+     "replaces": "po_ampdraw1"
+    },
+    {
+     "event": "ev_fm_amp_draw_nibbles_a",
+     "fn": "mw_take_fm_amp_draw_nibbles_a",
+     "order": 40,
+     "replaces": "po_ampdraw2"
+    },
+    {
+     "event": "ev_fm_amp_draw_nibbles_b",
+     "fn": "mw_take_fm_amp_draw_nibbles_b",
+     "order": 40,
+     "replaces": "po_ampdraw3"
+    },
+    {
+     "event": "ev_fm_amp_edit",
+     "fn": "mw_take_fm_amp_edit",
+     "order": 40,
+     "replaces": "po_ampedit"
+    },
+    {
+     "event": "ev_fm_amp_live_lane",
+     "fn": "mw_take_fm_amp_live_lane",
+     "order": 40,
+     "replaces": "po_amplane"
+    },
+    {
+     "event": "ev_fm_octave_func",
+     "fn": "mw_take_fm_octave_func",
+     "order": 40,
+     "replaces": "po_octave"
+    },
+    {
+     "event": "ev_fm_slot_assign",
+     "fn": "mw_take_fm_slot_assign",
+     "order": 40,
+     "replaces": "po_assign"
+    },
+    {
+     "event": "ev_fm_load_selector",
+     "fn": "mw_take_fm_load_selector",
+     "order": 40,
+     "replaces": "po_loadsel"
+    },
+    {
+     "event": "ev_fm_frame_source",
+     "fn": "mw_take_fm_frame_source",
+     "order": 40,
+     "replaces": "fm_source_dispatch"
+    },
+    {
+     "event": "ev_playback_page_resolve",
+     "fn": "mw_take_playback_page_resolve",
+     "order": 40,
+     "replaces": "pg_resolve"
     }
    ],
    "contribute": [
@@ -479,7 +611,92 @@
     "mw_take_project_write": [
      null,
      "qz_wr"
+    ],
+    "mw_take_fm_lfo_depth": [
+     null,
+     "po_lfo3"
+    ],
+    "mw_take_fm_lfo_depth_frame": [
+     null,
+     "po_lfo3b"
+    ],
+    "mw_take_fm_lfo_page": [
+     null,
+     "po_lfopage"
+    ],
+    "mw_take_fm_amp_release": [
+     null,
+     "po_rel"
+    ],
+    "mw_take_fm_sequencer_retrig": [
+     null,
+     "po_retrig"
+    ],
+    "mw_take_fm_voice_kill": [
+     null,
+     "po_kill"
+    ],
+    "mw_take_midi_live_record_event": [
+     null,
+     "po_mrec"
+    ],
+    "mw_take_midi_live_record_trig": [
+     null,
+     "po_mtrig"
+    ],
+    "mw_take_fm_amp_setup_stage": [
+     null,
+     "po_ampstage"
+    ],
+    "mw_take_fm_amp_draw_names": [
+     null,
+     "po_ampdraw1"
+    ],
+    "mw_take_fm_amp_draw_nibbles_a": [
+     null,
+     "po_ampdraw2"
+    ],
+    "mw_take_fm_amp_draw_nibbles_b": [
+     null,
+     "po_ampdraw3"
+    ],
+    "mw_take_fm_amp_edit": [
+     null,
+     "po_ampedit"
+    ],
+    "mw_take_fm_amp_live_lane": [
+     null,
+     "po_amplane"
+    ],
+    "mw_take_fm_octave_func": [
+     null,
+     "po_octave"
+    ],
+    "mw_take_fm_slot_assign": [
+     null,
+     "po_assign"
+    ],
+    "mw_take_fm_load_selector": [
+     null,
+     "po_loadsel"
+    ],
+    "mw_take_fm_frame_source": [
+     null,
+     "fm_source_dispatch"
+    ],
+    "mw_take_playback_page_resolve": [
+     null,
+     "pg_resolve"
     ]
+   },
+   "retarget": {
+    "po_mtrig": {
+     "unit": "poly",
+     "symbol": "po_mtrig",
+     "guardLength": 10,
+     "guardSha256": "77eaafa68e06beb974f9ba8fec19804e7601a2e326dbdf2aa5a6a62341741898",
+     "why": "ev_midi_live_record_trig keeps 10 stock bytes at 0x4006262a; the package detour must cover the site"
+    }
    },
    "machine": {
     "sig": "FM",
@@ -846,12 +1063,29 @@
     "source": "sdk/machines/octatrack/module-adapters/analog_bd_dsp_price.json"
    },
    "controller": "analog_bd_write_lease",
-   "lease": {"feature": 4, "functions": ["ab_render", "ab_lease_end"], "why": "its packaged feature (dsp-sites.json) and the functions holding its one Begin and one End call (machine_lease_policy.py)"},
+   "lease": {
+    "feature": 4,
+    "functions": [
+     "ab_render",
+     "ab_lease_end"
+    ],
+    "why": "its packaged feature (dsp-sites.json) and the functions holding its one Begin and one End call (machine_lease_policy.py)"
+   },
    "imports": [
     "modwerk_controller_write_begin",
     "modwerk_controller_write_end"
    ],
    "why": "Every Analog BD chooser, page and renderer seam is the base registry's. Since 0.1.6 it has no engine list (TYPE on SRC SETUP picks 808/909): without a pool it is a LIST machine: the base opens the track's window on the machine list, as for PICKUP, so the double tap shows the list at once. Its package links the analog-bd lane's controller (analog_bd_runtime.port: no writes to stock's descriptor row 5; analog_bd_write_lease.port: render only under the board's write lease, else the stock silent source), whose two lease functions are the exact base's exports. ab_type and ab_engine_right are not descriptor fields: both assume chooser row 5, and the registry's signature lookup and RIGHT dispatch do the same with the machine's actual row."
+  },
+  "cx-osc": {
+   "sources": {
+    "sdk/drafts/cx-osc/manifest.py": "71659ea5a5c7b051f93bf22edf33aeee843e6be6fc3c04fef68d4e434c598fb5",
+    "sdk/drafts/cx-osc/standalone/machine.s": "9b15fdef4dc24041b55592d06c32dc32ff005b441348056c16021018c7091423",
+    "sdk/drafts/cx-osc/standalone/poly.s": "8ef712b2cc3008b2a7002f83d675fc1979f8119b7d0d42e3d5d9054a0262c93e",
+    "sdk/drafts/cx-osc/upstream/cxosc/page.s": "f84e1e141d1fe9155e1b270795462618ded88660feab2b0a0e52120ea8c11332",
+    "sdk/drafts/cx-osc/cx_registration.s": "a59e2d0e534990d93f3e7cfcbcc0e9bfa8c76c42ceff0292b7d5eb9877f58f4b"
+   },
+   "why": "Draft only (#2293): sources under sdk/drafts/cx-osc/. FM take hooks and cx-osc machine-ports subscribe land with catalog listing after both engines subscribe."
   }
  }
 }
