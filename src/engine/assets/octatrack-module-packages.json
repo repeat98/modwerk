@@ -527,8 +527,8 @@
     {
       "id": "bar-led",
       "octabam": true,
-      "version": "0.1.0-experimental",
-      "path": "octatrack-modules/bar-led/0.1.0-experimental.mwrm",
+      "version": "0.1.1-experimental",
+      "path": "octatrack-modules/bar-led/0.1.1-experimental.mwrm",
       "abi": 7,
       "features": 1,
       "sites": 1,
@@ -536,8 +536,8 @@
       "fills": 0,
       "name": "Bar LED",
       "module": "9b41cd3d",
-      "bytes": 196,
-      "sha256": "de7f9caed60bffecc47a33144a223125500c4c8bcbd76e5022d1dc2ee9393600"
+      "bytes": 312,
+      "sha256": "52743aa2dfe2e83b7e9b0291b314d7da969ae4ceec3e1e3009f51f56c41b6885"
     },
     {
       "id": "tiempos",

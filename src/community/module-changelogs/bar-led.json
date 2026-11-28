@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "Fixed: on an Octatrack MKII the [TEMPO] key now turns green on the pattern's 1 (#1680).",
+      "On the MKII it sets that key's own colour to green and back to red; the MKI works as before."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-05",
     "changes": [
