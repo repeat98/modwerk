@@ -18,56 +18,64 @@
   "presentation": {
     "label": "SAMPLE LAYER",
     "family": "Sound",
-    "summary": "A filter and a decay for the sample alone, on a page after SMPL's waveform, so the sample layered on an analog drum can be shaped apart from it.",
-    "overview": "Sample Layer shapes a track's sample before it reaches its DAC, leaving the analog machine as it is. Press SMPL until the SMPL LAYER page shows, after the waveform: FRQ, RES and TYP (OFF, LP, BP, HP) set a 12 dB per octave filter on the sample, and DEC gives the sample a decay of its own, started at each trig, from 4 ms to 3 s or INF. The AMP envelope and the analog filter still shape the whole sound. The settings are kept with the sound.",
+    "summary": "Sample engines for the SMPL key: FUNC + SMPL picks SAMPLER (stock) or TRANSIENT for each sound, which shapes the sample alone apart from the analog voice.",
+    "overview": "Sample Layer gives a track's sample an engine, chosen per sound from a list like SRC's machine list (FUNC + SMPL). SAMPLER is stock's playback. TRANSIENT shapes the sample before its DAC: a punch or a soft attack, a decay of its own, a band the sample passes through, and a shift of up to 30 ms after the analog voice. The analog machine, filter and AMP envelope are left as they are, and the engine and its settings are saved with the sound.",
     "highlights": [
-      "A page after SMPL's waveform: the waveform view stays where it was.",
-      "LP, BP or HP on the sample alone, with resonance.",
-      "DEC: a decay for the sample, under the AMP envelope, restarted at every trig.",
-      "TYP OFF and DEC INF leave the sample exactly as stock plays it."
+      "FUNC + SMPL: an engine list in the style of SRC's machine list.",
+      "PCH: a snap with a pitch blip, or a soft attack rising in pitch.",
+      "DEC: a decay for the sample alone, 4 ms to 3 s.",
+      "BAS and WID: a band, drawn as one curve over E and F.",
+      "SHF: the sample lands up to 30 ms after the analog hit."
     ],
     "usage": [
-      "Put a sample on a BD track with an analog machine. Press SMPL until SMPL LAYER shows.",
-      "Set TYP to HP and turn FRQ up: the sample becomes a click on top of the analog body.",
-      "Turn DEC down: the sample is only the attack of the hit while the analog part rings on."
+      "Put a sample on a BD track with an analog machine. Hold FUNC and press SMPL, pick TRANSIENT and press YES.",
+      "Turn PCH to the right while a pattern plays: the sample gets a sharper click on top of the analog body. Turn it to the left: the sample swells in softly.",
+      "Turn DEC down: the sample is only the attack of the hit while the analog part rings on.",
+      "Raise BAS and lower WID: the sample thins to a narrow band. Turn SHF up: the sample lands a little after the analog hit.",
+      "Pick SAMPLER in the list: the sound plays as stock's again."
     ]
   },
   "access": {
-    "location": "SMPL key, pressed until the SMPL LAYER page shows (after the waveform).",
+    "location": "FUNC + SMPL on any track with a sample: the engine list. TRANSIENT's page on SMPL.",
     "steps": [
-      "Select a voice track with a sample.",
-      "Press SMPL: the SAMPLE page, then the waveform, then SMPL LAYER."
+      "Select a track with a sample, hold FUNC and press SMPL.",
+      "Choose TRANSIENT and press YES.",
+      "Press SMPL for TRANSIENT's page."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/engine-list.png",
+      "media/transient-page.png"
+    ]
   },
   "controls": [
     {
-      "name": "FRQ",
-      "default": 127,
-      "doc": "The filter's frequency, 20 Hz to 18 kHz. Its text is stock FILTER FRQ's.",
-      "labels": null
-    },
-    {
-      "name": "RES",
+      "name": "PCH",
       "default": 0,
-      "doc": "Resonance, 0 to 15: Q 0.5 to 4, up to +12 dB at FRQ.",
+      "doc": "Punch, -64 to +62: right of 0 a snap with a pitch blip of up to +2 semitones, left a fade-in of up to 40 ms rising from up to 4 semitones low.",
       "labels": null
-    },
-    {
-      "name": "TYP",
-      "default": 0,
-      "doc": "OFF, LP, BP or HP, 12 dB per octave.",
-      "labels": [
-        "OFF",
-        "LP",
-        "BP",
-        "HP"
-      ]
     },
     {
       "name": "DEC",
       "default": 127,
-      "doc": "The sample's own decay from each trig, 0 (4 ms) to 126 (3 s); 127 is INF, no decay.",
+      "doc": "The sample's own decay from each trig, 4 ms to 3 s; the top is INF, no decay.",
+      "labels": null
+    },
+    {
+      "name": "BAS",
+      "default": 0,
+      "doc": "The band's base, 20 Hz to 18 kHz: a high-pass on the sample.",
+      "labels": null
+    },
+    {
+      "name": "WID",
+      "default": 127,
+      "doc": "How far the band reaches above BAS: a low-pass on what is left. 127 leaves the top open.",
+      "labels": null
+    },
+    {
+      "name": "SHF",
+      "default": 0,
+      "doc": "Delays the sample 0 to 30 ms after the analog voice, taken at each trig.",
       "labels": null
     }
   ],
@@ -113,16 +121,46 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "cbcb7789c9d6ec548f100570fb39bec8aaeb55c79b48f96a1fbf70a4442c8947",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-28",
+      "tester": "chevyone",
+      "durationMinutes": null,
+      "summary": "0.1.0-experimental on chevyone's Analog Rytm MKII, OS 1.74, RAM-booted over the development link (SL03 to SL20 on the plain development base 6844766f; SL20 is this source). The author played TRANSIENT by ear and reported every control working, kit save and power cycle included; the list and the page were captured over the link.",
+      "limitations": [
+        "Ran from RAM on a development base with a USB test link, not the published base.",
+        "Not run: the audio load with TRANSIENT on every voice, beside other Rytm modules in one image, rytm-emu."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Probe SL01 and build SL02 on @chevyone's unit (OS 1.74): reported working; load, sound reset and other modules beside it not tested."
+    "summary": "Host: the render bit for bit as stock when neutral, SHF's delays, PUNCH's pitch on a 1 kHz tone. Unit (author's MKII, RAM boot, SL03 to SL20): the list, TRANSIENT's page and every control, reported working by the author; captures over the link. Load and other modules beside it not measured.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Put a sample on a BD track with an analog machine. Hold FUNC and press SMPL, pick TRANSIENT and press YES.",
+          "Turn PCH to the right while a pattern plays: the sample gets a sharper click on top of the analog body. Turn it to the left: the sample swells in softly.",
+          "Turn DEC down: the sample is only the attack of the hit while the analog part rings on.",
+          "Raise BAS and lower WID: the sample thins to a narrow band. Turn SHF up: the sample lands a little after the analog hit.",
+          "Pick SAMPLER in the list: the sound plays as stock's again."
+        ]
+      },
+      "screenshots": [
+        "media/engine-list.png",
+        "media/transient-page.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -138,6 +176,38 @@
       "credit": "chevyone",
       "license": "GPL-3.0-or-later",
       "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    },
+    {
+      "path": "media/engine-list.png",
+      "kind": "screenshot",
+      "caption": "The engine list (FUNC + SMPL): SAMPLER and TRANSIENT, with TRANSIENT under the cursor and named in the title bar.",
+      "alt": "A panel on the right with a waveform icon beside SAMPLER and a decay icon beside TRANSIENT, highlighted; TRANSIENT's page shows on the left.",
+      "credit": "chevyone documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "hardware",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "3aa46eb277a64ad0196576ad041a11b9e41b6598e14dd3d19bfb7c7e539dceb8",
+        "setup": "The author's Analog Rytm MKII running SL20 from RAM: the Modwerk plain development base (6844766f) and this folder's Sample Layer 0.1.0-experimental, linked by Modwerk on stock OS 1.74. The unit's 128x64 screen read over the development link at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/transient-page.png",
+      "kind": "screenshot",
+      "caption": "TRANSIENT's page: PCH, DEC, BR, SMP above the BAS/WID band, SHF and LEV.",
+      "alt": "Dials PCH, DEC, BR and SMP 30; a framed band curve over BAS and WID; the SHF dial and the LEV bar.",
+      "credit": "chevyone documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "hardware",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "3aa46eb277a64ad0196576ad041a11b9e41b6598e14dd3d19bfb7c7e539dceb8",
+        "setup": "The author's Analog Rytm MKII running SL20 from RAM: the Modwerk plain development base (6844766f) and this folder's Sample Layer 0.1.0-experimental, linked by Modwerk on stock OS 1.74. The unit's 128x64 screen read over the development link at 3x. UI documentation only."
+      }
     }
   ]
 }

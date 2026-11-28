@@ -30,6 +30,10 @@ TRANSIENT's page:
 | G | SHF | Delays the sample 0 to 30 ms after the analog voice. |
 | H | LEV | Stock's sample level. |
 
+## Usage
+
+Choose the engine per sound, then shape the sample on TRANSIENT's page while a pattern plays.
+
 ### Quick tutorial
 
 1. Put a sample on a BD track with an analog machine. Hold FUNC and press SMPL, pick TRANSIENT and press YES.
@@ -57,6 +61,17 @@ TRANSIENT's page:
 
 That is 40 of the sound's 56 bits: beside Voice DAC (39) a set does not link.
 
-## Tests
+## Tests and measurements
 
-See [TESTING.md](TESTING.md). The tables in `src/tables.h` are written by `python3 tools/tables.py > src/tables.h`.
+See [TESTING.md](TESTING.md): host tests of the render, and the author's unit for builds SL03 to SL20. The audio load is not measured yet. The tables in `src/tables.h` are written by `python3 tools/tables.py > src/tables.h`.
+
+## Authorship and licences
+
+Original work by @chevyone, with Claude Code: no code, samples or tables from any instrument. GPL-3.0-or-later ([LICENSE](LICENSE)). The screenshots are the author's captures of the Rytm's screen ([media/LICENSE.md](media/LICENSE.md)).
+
+## Screens and audio
+
+- [The engine list](media/engine-list.png): FUNC + SMPL, SAMPLER and TRANSIENT, the cursor's engine in the title bar.
+- [TRANSIENT's page](media/transient-page.png): PCH, DEC, BR, SMP above the BAS/WID band, SHF and LEV.
+
+No audio recordings yet.
