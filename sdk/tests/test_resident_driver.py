@@ -16,7 +16,7 @@ import resident_boot as boot
 import resident_dsp as dsp
 import resident_driver as driver
 import resident_source
-from resident_ledger_expectations import UNKNOWN_FEATURE, reset_end_expression
+from resident_ledger_expectations import UNKNOWN_FEATURE
 
 
 class ResidentDriver(unittest.TestCase):
@@ -133,7 +133,8 @@ class ResidentDriver(unittest.TestCase):
             changed = changed.replace(old, new)
         private = driver.transport(changed)
         self.assertIn('dl_hook_reset_start', private)
-        self.assertIn('unsigned end='+reset_end_expression()+';', private)  # every declared owned-range boundary
+        self.assertIn('unsigned end=(feature == 1u ? (offset < 16u ? 16u : offset < 530u ? 530u : 1042u) : feature == 2u ? 193u : '
+                      'feature == 4u ? 3776u : feature == 8u ? (offset < 514u ? 514u : 1026u) : 0u);', private)
         self.assertIn('feature==8u ? 1026u', private)  # the key bus
         self.assertIn('op!=10u', private)
         self.assertEqual((core.DYNLOAD / 'transfer.c').read_text(), original)

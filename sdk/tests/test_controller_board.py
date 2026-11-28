@@ -24,7 +24,6 @@ sys.path.append(str(ADAPTER))
 import resident_driver  # noqa: E402
 import resident_placement  # noqa: E402
 from host_flags import SANITIZE  # noqa: E402
-from native_processor_support import support_sources
 
 
 def _load(name, path):
@@ -693,8 +692,7 @@ class ControllerBoard(unittest.TestCase):
         result = subprocess.run(['cc', *flags, str(work / 'fixture.c'), str(POLICY / 'controller_board.c'),
                                  str(POLICY / 'controller_transport.c'), str(POLICY / 'controller_association.c'),
                                  str(ROOT / 'sdk/runtime/loader/loader.c'), str(ROOT / 'sdk/runtime/upload/sha256.c'),
-                                 str(ADAPTER / 'machine_lifetime.c'), *map(str, extra),
-                                 *map(str, support_sources(work, ADAPTER)), '-o', str(out)],
+                                 str(ADAPTER / 'machine_lifetime.c'), *map(str, extra), '-o', str(out)],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         return out
