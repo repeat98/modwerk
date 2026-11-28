@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "identity": "e02f3f969cd4c97a1051e4b5dd94e54ede061e7f429917b3cedf771319c11bec",
+  "identity": "a60c529bc40b1ba1012e18b2609fb65f220f4e65c03740360cb86fbba577a484",
   "package": "core-1.1.elemod",
   "sections": {
     ".boot": 68,

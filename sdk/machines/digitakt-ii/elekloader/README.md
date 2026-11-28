@@ -7,7 +7,7 @@ copier, `ev_tick`, `ev_draw`, `ev_key`, `ev_enc`, `ev_settings` with `core_addit
 `core.s` builds the Rytm MKII and Model:Cycles bases, each recipe's defsyms setting its addresses and switches.
 `core-dt2/` and `../include/digitakt-mk2/core.h` (GPL-2.0-or-later, 28 November 2026) hold the rest of the core: the
 PERSONALIZE, frame and key-LED events, the value rows and the kit and project data store. The package keeps every
-site, export, import and table of the base it replaced (`371564c4`); only internal symbols differ. The
+site, export, import and table of the base it replaced (`d7ec4d3c`); only internal symbols differ. The
 [import record](../../../imports/core-dt2-source-0df8409.json) stays as history.
 Modwerk's additional firmware bindings and hooks live under `modwerk/`.
 
@@ -27,7 +27,7 @@ The entries are proposed in [core-profile/interface.json](../../../digitakt-ii/c
 
 [base.json](base.json) stages the core and adds Modwerk's [sequencer and project hooks](modwerk/README.md).
 The recipe checks that the candidate keeps the id, version, target, sites, exports, imports, tables and contributions of
-the base `371564c4`, which also holds every item of the released `core-1.0.elemod`.
+the base `d7ec4d3c`, which also holds every item of the released `core-1.0.elemod`.
 It pins the same compiler and assembler as `sdk/build/Dockerfile`. To reproduce the local candidate, build with
 that toolchain, the kit-pinned Elekloader SDK and your local copy of the exact stock OS:
 
@@ -56,4 +56,4 @@ On a base `e88273ed` image with Chord Arp, Euclidean Scale and Track Names, Clap
 
 On KR17 with base `8650bb8a`, Chord Arp, Euclidean Scale and Track Names, Claptom-music reported that after Save Project and a power cycle Euclidean Scale kept its settings on a stock Euclidean track where Chord Arp ran with ROOT=TRIG, Chord Arp stayed on with its lock on a track of ordinary trigs, and official OS 1.17 opened the project. Image SHA-256 `3cbe6f35ae3ad4aa76a005837c89cf29f59b238bc8f91ae047c12191ff3f6d19`.
 
-Base `e02f3f96` (28 November 2026) is the first on Modwerk's own core. It keeps every site, export, import and table of `371564c4`, and its kit and project data keep the saved format byte for byte (host test). The site's builder and preflight under Node built it alone and with each released module; it is not yet tested on a unit.
+Base `a60c529b` (28 November 2026) is the first on Modwerk's own core. It keeps every site, export, import and table of `371564c4`, and its kit and project data keep the saved format byte for byte (host test). The site's builder and preflight under Node built it alone and with each released module; it is not yet tested on a unit.

@@ -10,8 +10,8 @@
     "binutils": "2.47"
   },
   "reference": {
-    "file": "vendor/elekloader/catalog/modwerk-base-digitakt-ii-371564c4.elemod",
-    "sha256": "371564c4d0af82f5df0ca17d808e9f0a6c2155bba5eb1846eba838bb72a90b7e",
+    "file": "vendor/elekloader/catalog/modwerk-base-digitakt-ii-d7ec4d3c.elemod",
+    "sha256": "d7ec4d3ce2700d71fe51f51886d07e8d8a0f498fa55cf7322a48d97e26e69a2a",
     "keeps": [
       "id",
       "version",
