@@ -77,7 +77,7 @@
       "key:DOWN+TEMPO"
     ],
     "limitations": [
-      "0.2.0 uses core hooks (module_key, module_tick) and ev_usb_frame instead of patching TEMPO, the frame tail and the UI loop, so Tuner can share a set. ev_usb_frame must run every audio block on the base you test; confirm on a development twin before claiming hardware proof.",
+      "0.2.0 targets the Modwerk 0.8.1 beta base (OS 1.40C). Install SCOPE from the catalog USB package on a base that includes USB Audio in the module set. Tuner can stay installed in the same set. Hold DOWN before TEMPO.",
       "0.1.0-experimental patched three stock sites and listed Tuner as a conflict; see git history and PR #2182.",
       "Hold DOWN before TEMPO. Pressing TEMPO alone opens the stock tempo window.",
       "XY uses a hotter vertical scale than OSC. Clip ! appears only when the recent peak reaches 0 dBFS.",

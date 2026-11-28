@@ -36,13 +36,15 @@ returns. Clip `!` appears only when the recent peak reaches 0 dBFS.
 
 ## Compatibility and limitations
 
-- **0.2.0** subscribes to `module_key`, `module_tick` and `ev_usb_frame` and
-  patches no stock site, so **Tuner** can share a set. Confirm on your base
-  that `ev_usb_frame` runs every audio block (ring fill and draw depend on it).
-- **0.1.0** patched three stock sites; see PR #2182.
+- **0.2.0** uses the Modwerk **0.8.1** beta base (Elektron OS **1.40C**). That
+  base can load **USB Audio** from the module set. SCOPE does not use an effect
+  slot and **works beside Tuner** in the same set.
+- **0.1.0** patched three stock sites and listed Tuner as a conflict; see PR
+  #2182.
 - Hold **[DOWN]** before **[TEMPO]**. TEMPO alone stays stock.
-- Standalone: TUNER is not required.
-- Shipped USB package `f8a1ffeb`; development-twin RAM trials used image `e300c134` (see TESTING.md).
+- Standalone: Tuner is not required.
+- Shipped USB package `f8a1ffeb`. See [TESTING.md](TESTING.md) for which bases
+  were flashed or RAM-booted for each check.
 
 ## Tests and measurements
 
@@ -57,9 +59,9 @@ Banks), kept as [upstream/LICENSE](upstream/LICENSE).
 
 ## Screens and audio
 
-The author's MKII LCD captures from the 0.2.0 package on a RAM-booted
-development base show [SCOPE opening while B02 plays](media/scope-all-live.png)
-and [a live trace after pressing DOWN](media/scope-live-trace.png).
-The capture provenance is in the module manifest. No MAIN/CUE audio capture
-was available from that base, so audible continuity is not established by
-these screenshots.
+LCD captures in this folder are from the **0.2.0** catalog package on a
+**development twin** RAM-booted from OS 1.40C (see TESTING.md). They show
+[SCOPE opening while B02 plays](media/scope-all-live.png) and [a live trace
+after DOWN+TEMPO](media/scope-live-trace.png). The **0.8.1 release base**
+window check on flashed hardware is documented separately in TESTING.md. No
+MAIN/CUE audio capture was available during those captures.

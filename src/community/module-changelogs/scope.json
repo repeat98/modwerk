@@ -4,7 +4,7 @@
     "date": "2026-11-27",
     "changes": [
       "First library release: full-panel SCOPE on DOWN + TEMPO (OSC, XY, ALL) on the selected audio track, ported from octabam.",
-      "Hooks build: module_key, module_tick and ev_usb_frame; Tuner can share a set once the base raises ev_usb_frame.",
+      "Works beside Tuner in the same set on the Modwerk 0.8.1 beta base (OS 1.40C), with USB Audio available in the module set.",
       "Replaces the 0.1.0 draft approach that patched stock TEMPO, frame and UI sites and conflicted with Tuner."
     ]
   }

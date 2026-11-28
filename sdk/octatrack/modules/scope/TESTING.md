@@ -28,14 +28,39 @@ development stats give a frame-gap observation only. ColdFire cycles are
 in `evidence/performance.json`; stack is a disassembly bound in
 `evidence/memory.md`, not a hardware canary.
 
-On the flashed 0.8.1 release base `eb6679620d0c9ed7…`, with B02 playing,
-the published-source USB package `f8a1ffeb984e…` ran as a 45-second RAM
-trial. The loader's verdict reported no crash, stall, freeze or skipped
-track; it rolled the trial back, and `do inventory` then returned `[]`.
-The loader's refusal counter rose from 216 to 228 during the trial; the
-release base does not answer development requests, so the cause was not
-established. macOS exposed no Octatrack audio input during this run, so no
-audio was captured and no dropout result is claimed.
+On the flashed **0.8.1 release base** `eb6679620d0c9ed7…`, with B02 playing,
+the catalog USB package `f8a1ffeb984e…` ran as a 45-second RAM trial. The
+loader's verdict reported no crash, stall, freeze or skipped track; it rolled
+the trial back, and `do inventory` then returned `[]`. The loader's refusal
+counter rose from 216 to 228 during the trial; the release base does not answer
+development requests, so the cause was not established. macOS exposed no
+Octatrack audio input during this run, so no audio was captured and no dropout
+result is claimed. That run did **not** open the SCOPE window or read the
+panel.
+
+### 0.8.1 release base: open SCOPE while audio plays
+
+**Musician setup:** Modwerk **0.8.1** on the author's MKII (base id
+`eb6679620d0c9ed7…`, Elektron OS **1.40C**). Use the public beta base that
+ships **USB Audio** in the module set. Install catalog package
+`f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273` with a
+**Keep** on the card (or accept Keep at the end of a RAM trial). Load a pattern
+that plays on at least one audio track (author uses bank B, pattern **B02**).
+Start transport and confirm you hear the pattern.
+
+**Check:** Hold **[DOWN]**, press **[TEMPO]**. OSC should show a moving trace.
+Press **[UP]** / **[DOWN]** for XY and ALL. **[TEMPO]** alone should still
+open the stock tempo window. Close with **[TEMPO]**, **[YES]**, or **[NO]**.
+
+| When | Package | How | Result |
+| --- | --- | --- | --- |
+| 28 Nov 2026 | `f8a1ffeb…` | Intended on flashed `eb667962…` with B02 playing | **Not run:** USB bench reported the unit away while another session held the shared device link. |
+| 26 Nov 2026 | `48522941…` (0.1.0, three stock sites) | By hand during a RAM trial on the same release base | **Pass (reported):** DOWN+TEMPO opens SCOPE; OSC, XY and ALL draw live audio; closes cleanly. See table below. |
+
+**0.2.0** on the release base is expected to match the 0.1.0 UX path above; the
+difference is Tuner compatibility, not the DOWN+TEMPO gesture. Complete the
+28 November row on hardware and update this table before calling release-base
+window proof done.
 
 The procedure in `/private/tmp/scope-procedure-scope-020-20261127-2` tested
 SCOPE 0.2.0-experimental package SHA-256
