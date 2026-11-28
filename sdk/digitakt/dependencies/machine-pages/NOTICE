@@ -1,9 +1,18 @@
-Machine Pages 1.1: irpina / Elekloader, GPL-2.0-or-later, pinned at
-3acac10ea86882a2ea51c9377ac6bd58fc4fec57 (mods/machine-pages).
+Machine Pages 1.2: irpina / Elekloader, GPL-2.0-or-later, pinned at
+6e1e099d613b654c583a0f1cd3d604def9f8c8d0 (tag machine-pages-v1.2, mods/machine-pages),
+with the SDK header elekloader/sdk/include/digitakt-mk1/core3.h at the same commit.
 
-Version 1.2, modified by sumedho on 2026-10-14 to run on Elekloader Core 2.1:
+Version 1.2.1, Modwerk's port of irpina's 1.2 to run on Elekloader Core 2.1, as sumedho
+ported 1.1 (Modwerk's Machine Pages 1.2, 2026-10-14):
 - pages.c reads a machine descriptor's UI tail directly instead of calling
   Core 3.0's core_machine_ui();
-- fw_active_track, fw_kit (pages.c) and fw_track_blocks (pages.s) come from
-  mod.json's per-OS cflags and defsym instead of Core 3.0's exports.
-Nothing else is changed.
+- fw_active_track, fw_kit (pages.c), fw_voice_params (src.c) and fw_track_blocks
+  (pages.s) come from build.json's per-OS cflags and defsym instead of Core 3.0's
+  exports;
+- params.c ends with four symbols for parts of mp_legacy_tables (+64, +228, +392,
+  +600), which mod.json's keep2 sites reach by addend: build.json's sites name a
+  symbol without one, and its keep2 sites are plain jsr, lea and guarded bytes.
+- build.json leaves out mod.json's site at 0x400318b2 (raising cmpi.l #0xa4,d5
+  to #0xab on both OSes): CC Names hooks that instruction for its labels and reads
+  every parameter's label itself, extra values included, so the two combine.
+Nothing else is changed. Stock preconditions are hashes only.
