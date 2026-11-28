@@ -1,0 +1,398 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/sample-layer.c",
+    "src/sample-layer.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "sample_layer_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "sample_layer_key",
+      "order": 30
+    },
+    {
+      "event": "ev_enc",
+      "fn": "sample_layer_enc",
+      "order": 30
+    },
+    {
+      "event": "ev_draw",
+      "fn": "sample_layer_draw",
+      "order": 50
+    },
+    {
+      "event": "ev_amp_record",
+      "fn": "sample_layer_amp",
+      "order": 60
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_page_fns",
+      "order": 14,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:sample_layer_page_fn",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_page_fns",
+      "order": 14,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:sample_layer_wave_fn",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_page_fns",
+      "order": 14,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:sample_layer_engine_fn",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_params",
+      "order": 14,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:sample_layer_params",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_view_pages",
+      "order": 30,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:sample_layer_engine_view",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:SMPL page key third press (ENGINE page, core_view_pages)",
+    "ui:UP, DOWN, YES, NO and knobs A-H on the ENGINE page",
+    "ui:SAMPLE page for TRANSIENT (one page)",
+    "param:hidden ids 447-456 and 458",
+    "audio:sample stream before the voice mixer"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x4012129a",
+          "len": 6,
+          "stockSha256": "0a0941dd4ed0e709cd614ccffb4af06efa23376b496b4ebc9423f081574de5b1",
+          "op": "jsr",
+          "target": "sample_layer_mixer_gate"
+        },
+        {
+          "addr": "0x401c5698",
+          "len": 4,
+          "stockSha256": "c22ceee66b8ab104483c83053173b33f992dd4fcb457284c60ef9d699a1c7059",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c56bc",
+          "len": 4,
+          "stockSha256": "e5f8fd36ae03422ed925d318765825b71c64a7feb414752c116568ef446b2119",
+          "op": "ptr",
+          "target": "sample_layer_long_punch"
+        },
+        {
+          "addr": "0x401c56c4",
+          "len": 4,
+          "stockSha256": "bed5bc611187b4e252e7f1cdb41ebb06d1d35bd1b7927ab3a555f70e619f2529",
+          "op": "ptr",
+          "target": "sample_layer_short_punch"
+        },
+        {
+          "addr": "0x401c56cc",
+          "len": 4,
+          "stockSha256": "8092fe01b9ce31a49ce380fc2fe1ee6b6b7d5c15c5f1ecb6ad98c60c4273a435",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c56f0",
+          "len": 4,
+          "stockSha256": "a95a14579daca39a407c3c678c7f9ac8f4da80214ae81e05b6c41ea71307fd9c",
+          "op": "ptr",
+          "target": "sample_layer_long_dec"
+        },
+        {
+          "addr": "0x401c56f8",
+          "len": 4,
+          "stockSha256": "f5854d69cab150b63b418528c3dd8449cbbd8d33c65577da68c2e71964c96325",
+          "op": "ptr",
+          "target": "sample_layer_short_dec"
+        },
+        {
+          "addr": "0x401c5700",
+          "len": 4,
+          "stockSha256": "3b28a6c3766c6295adad976d349705ef49393fbfdebe4facb5862d2cdfa285d3",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c5724",
+          "len": 4,
+          "stockSha256": "2c5ed57d74041ce334ae615a8082bb5b0c8efc8a75a47c15e99c4a3da8d6ad3b",
+          "op": "ptr",
+          "target": "sample_layer_long_bas"
+        },
+        {
+          "addr": "0x401c572c",
+          "len": 4,
+          "stockSha256": "817a418163c1998c9c3b2938a457f7b8daf3baf760f75f451a90dbb9a9d5fc84",
+          "op": "ptr",
+          "target": "sample_layer_short_bas"
+        },
+        {
+          "addr": "0x401c5734",
+          "len": 4,
+          "stockSha256": "e084a105a7b7d599b8346d3cba5ac51b756d7e29c7ef77fd9eff31fdeae31389",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c573c",
+          "len": 4,
+          "stockSha256": "313588ae36b23498c072b8718f9a3614d9e52b444cdcea74ecd49c93044741b3",
+          "op": "bytes",
+          "new": "00007f00",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c5758",
+          "len": 4,
+          "stockSha256": "9196b75b01b21e06c8fee129e13f231ca5147b94f714893f543c5d9a5cd2c907",
+          "op": "ptr",
+          "target": "sample_layer_long_wid"
+        },
+        {
+          "addr": "0x401c5760",
+          "len": 4,
+          "stockSha256": "3c2617ce41cd14dd0cc649c3b466feed919751a877b0f511bb8089d6a3e2a5e6",
+          "op": "ptr",
+          "target": "sample_layer_short_wid"
+        },
+        {
+          "addr": "0x401c5768",
+          "len": 4,
+          "stockSha256": "390b36a09502b05d4f8c27aea2636c6b7fd05b27d742ed32074ffea1f888ebe4",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c578c",
+          "len": 4,
+          "stockSha256": "22399d21e0c132ac9a6be2d67089ca8d07c6af4fb0a63e47c1a19690d6135038",
+          "op": "ptr",
+          "target": "sample_layer_long_shf"
+        },
+        {
+          "addr": "0x401c5794",
+          "len": 4,
+          "stockSha256": "53d1770045a4eee0b7bd342ba6071c232b278181700fb03163a475bb906c8344",
+          "op": "ptr",
+          "target": "sample_layer_short_shf"
+        },
+        {
+          "addr": "0x401c579c",
+          "len": 4,
+          "stockSha256": "c22ceee66b8ab104483c83053173b33f992dd4fcb457284c60ef9d699a1c7059",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c57c0",
+          "len": 4,
+          "stockSha256": "3c80ecf4481efecee3de72c7fb2858d6cb6e400f83957b10b7d48b60d92f09de",
+          "op": "ptr",
+          "target": "sample_layer_long_pos"
+        },
+        {
+          "addr": "0x401c57c8",
+          "len": 4,
+          "stockSha256": "a8769a886410b4ef6d304ae99fb84fba4cb00f02485f47f8dee5fe9d197a662c",
+          "op": "ptr",
+          "target": "sample_layer_short_pos"
+        },
+        {
+          "addr": "0x401c57d0",
+          "len": 4,
+          "stockSha256": "8092fe01b9ce31a49ce380fc2fe1ee6b6b7d5c15c5f1ecb6ad98c60c4273a435",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c57f4",
+          "len": 4,
+          "stockSha256": "f784335a72f1b0da3e33c2a96cb07fd121a81cf5666ed6deae980811177eeceb",
+          "op": "ptr",
+          "target": "sample_layer_long_siz"
+        },
+        {
+          "addr": "0x401c57fc",
+          "len": 4,
+          "stockSha256": "6f8e0dcb92e2027dd77344cf8a6ad0d6bff555cce8612be3247fc5288528df5d",
+          "op": "ptr",
+          "target": "sample_layer_short_siz"
+        },
+        {
+          "addr": "0x401c5804",
+          "len": 4,
+          "stockSha256": "7fde8eebf388fcff667a89be60430cc6e198b1a78cb603a39cdd09885a3336e3",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c5828",
+          "len": 4,
+          "stockSha256": "f56942e83ec3c67ae02bc3510bf3768f91f3ce6108f1363b5b2864ff8aecc123",
+          "op": "ptr",
+          "target": "sample_layer_long_den"
+        },
+        {
+          "addr": "0x401c5830",
+          "len": 4,
+          "stockSha256": "e9071691964b1692400d148f2d11682fb2bae94e6cf09a442b22aad3fb4b802d",
+          "op": "ptr",
+          "target": "sample_layer_short_den"
+        },
+        {
+          "addr": "0x401c5838",
+          "len": 4,
+          "stockSha256": "9246be1e9ba9f5de5baf766a256eb725e9a7551fb93d7faa793c938e0f41de35",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c585c",
+          "len": 4,
+          "stockSha256": "cda1a9aaf1c8389998de174409d7a5d7b8b4b4d4e0115d6bdbb4e2ab1cabbfa0",
+          "op": "ptr",
+          "target": "sample_layer_long_spr"
+        },
+        {
+          "addr": "0x401c5864",
+          "len": 4,
+          "stockSha256": "4c72cdad9204cf983e5212e8b0d523ebcc86044f25a30fe0fb3fe38ffe06a70b",
+          "op": "ptr",
+          "target": "sample_layer_short_spr"
+        },
+        {
+          "addr": "0x401c586c",
+          "len": 4,
+          "stockSha256": "5085cb99dbe1e374ccd321e5b58182d2c42cf4840c68cfab17b0618a8285e7d6",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c5890",
+          "len": 4,
+          "stockSha256": "858f32cae8595c0dd7534c803ad77812ed658ea41a8f6ccb2fed1c0c07a2c5aa",
+          "op": "ptr",
+          "target": "sample_layer_long_pit"
+        },
+        {
+          "addr": "0x401c5898",
+          "len": 4,
+          "stockSha256": "3017adae335e242402ac97061bbbd83d18b3137b2872e5b6ae36029d961bc69c",
+          "op": "ptr",
+          "target": "sample_layer_short_pit"
+        },
+        {
+          "addr": "0x401c58d4",
+          "len": 4,
+          "stockSha256": "390b36a09502b05d4f8c27aea2636c6b7fd05b27d742ed32074ffea1f888ebe4",
+          "op": "bytes",
+          "new": "ffffffff",
+          "kind": "data"
+        },
+        {
+          "addr": "0x401c58f8",
+          "len": 4,
+          "stockSha256": "2084829e4a2f71e1fdf34329aa31ade30e16133666e67e07063a39af679de033",
+          "op": "ptr",
+          "target": "sample_layer_long_spd"
+        },
+        {
+          "addr": "0x401c5900",
+          "len": 4,
+          "stockSha256": "7fdebbf70b8fd675b2d00f1757ce78b0f8837596d785209cbc2b956bd3205abe",
+          "op": "ptr",
+          "target": "sample_layer_short_spd"
+        }
+      ]
+    }
+  },
+  "storage": [
+    {
+      "sym": "sample_layer_eng",
+      "scope": "sound",
+      "bits": 20
+    },
+    {
+      "sym": "sample_layer_flt",
+      "scope": "sound",
+      "bits": 14
+    },
+    {
+      "sym": "sample_layer_gx",
+      "scope": "sound",
+      "bits": 6
+    }
+  ]
+}

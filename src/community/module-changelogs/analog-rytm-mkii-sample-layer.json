@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-28",
+    "changes": [
+      "First version: FUNC + SMPL picks the sample's engine for each sound, SAMPLER (stock) or TRANSIENT.",
+      "TRANSIENT shapes the sample alone: a punch or a soft attack, a decay, a band, and a shift after the analog voice.",
+      "The analog machine and the AMP envelope are left as they are."
+    ]
+  }
+]
