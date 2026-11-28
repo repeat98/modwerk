@@ -3,29 +3,22 @@
   "components": [
     {
       "id": "elekloader",
-      "name": "elekloader's kit (vendored Digitakt/Digitone builder)",
+      "name": "elekloader kit (the formats Modwerk's firmware builder reads and writes)",
       "spdx": "GPL-3.0-or-later",
       "noticeFile": "elekloader.txt",
       "sources": [
-        {
-          "path": "vendor/elekloader/kit/NOTICE"
-        },
-        {
-          "path": "vendor/elekloader/kit/LICENSE"
-        },
         {
           "url": "https://github.com/irpina/elekloader/tree/3b31ef3c0e43c810e3acd0be6257e2484b20fc40/js",
           "revision": "3b31ef3c0e43c810e3acd0be6257e2484b20fc40"
         }
       ],
       "usedIn": [
-        "vendor/elekloader/kit",
-        "Digitakt/Digitone browser builder"
+        "src/engine/elektron (Modwerk's firmware builder)"
       ]
     },
     {
       "id": "digi-mods",
-      "name": "Digitakt/Digitone mod releases (DIGISLICER, NEIGHBOR, digihealth, digitables, elekloader cores)",
+      "name": "Digitakt/Digitone core releases",
       "spdx": "GPL-2.0-or-later",
       "noticeFile": "digi-mods.txt",
       "sources": [
@@ -38,49 +31,6 @@
       ],
       "usedIn": [
         "vendor/elekloader/catalog"
-      ]
-    },
-    {
-      "id": "digisophie",
-      "name": "SOPHIE (digisophie) release",
-      "spdx": "MIT",
-      "noticeFile": "digisophie.txt",
-      "sources": [
-        {
-          "path": "sdk/digitakt/modules/digisophie/LICENSE"
-        }
-      ],
-      "usedIn": [
-        "vendor/elekloader/catalog/digisophie-1.1.13.elemod"
-      ]
-    },
-    {
-      "id": "digi1-mods",
-      "name": "digi1_mods releases (digichain, Digi EQ, Digi Matrix, Digi Mono, Digi Poly, Digi utilities)",
-      "spdx": "MIT",
-      "noticeFile": "digi1-mods.txt",
-      "sources": [
-        {
-          "path": "sdk/digitakt/modules/digichain/LICENSE"
-        }
-      ],
-      "usedIn": [
-        "vendor/elekloader/catalog/digichain-1.6.elemod",
-        "vendor/elekloader/catalog/digichain-1.6-os1.54.elemod",
-        "vendor/elekloader/catalog/digieq-1.0.2-experimental-os1.53.elemod",
-        "vendor/elekloader/catalog/digieq-1.0.2-experimental-os1.54.elemod",
-        "vendor/elekloader/catalog/digimatrix-1.0b.elemod",
-        "vendor/elekloader/catalog/digimatrix-1.0b-os1.54.elemod",
-        "vendor/elekloader/catalog/digimono-0.13.3-experimental-os1.53.elemod",
-        "vendor/elekloader/catalog/digimono-0.13.3-experimental-os1.54.elemod",
-        "vendor/elekloader/catalog/digipoly-2.0.elemod",
-        "vendor/elekloader/catalog/digipoly-2.0-os1.54.elemod",
-        "vendor/elekloader/catalog/digiutils-1.9a.elemod",
-        "vendor/elekloader/catalog/digiutils-1.9a-os1.54.elemod",
-        "sdk/imports/packages/digimono/digimono-0.13.2-experimental-os1.53.elemod",
-        "sdk/imports/packages/digimono/digimono-0.13.2-experimental-os1.54.elemod",
-        "sdk/imports/packages/digimono/digimono-0.13.3-experimental-os1.53.elemod",
-        "sdk/imports/packages/digimono/digimono-0.13.3-experimental-os1.54.elemod"
       ]
     },
     {

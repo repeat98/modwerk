@@ -1,4 +1,4 @@
-import { sha } from '../../../vendor/elekloader/kit/src/bytes'
+import { sha } from '../elektron/bytes'
 import { describe, expect, it } from 'vitest'
 import { publishedBinding as baseBinding, publishedManifest as manifest, publishedPackageText, publishedVariants as published } from './published-octatrack.fixture'
 import { USB_AUDIO_LAYOUTS, USB_AUDIO_MODULE, type UsbAudioLayout } from '../../config/usb-audio'

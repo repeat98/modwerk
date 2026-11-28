@@ -8,7 +8,7 @@ Existing published module authors may use the [automatic author-update workflow]
 
 For module development, start with the [repository quickstart](../README.md) and [SDK guide](../sdk/README.md). Run commands below from the repository root.
 
-A React / TypeScript web configurator for octabam, with a GitHub Pages frontend and a separate Cloudflare community API. Firmware stays on the user's device.
+A React site with a GitHub Pages frontend and a Cloudflare community API. Firmware stays on the user's device, except [hosted bases](HOSTED_BASES.md).
 
 The frontend, backend and octabam-derived developer SDK belong in one repository. The owner may self-host the backend later; storage adapters for that option remain pending. See [architecture decisions](DECISIONS.md).
 
@@ -129,7 +129,7 @@ Octatrack modules use `/module/<slug>/`. Elekloader modules use `/<machine>/modu
 
 `scripts/seo.ts` runs after the page generators and emits `/sitemap.xml` from canonical HTML pages actually present in the build. It deduplicates aliases and omits paused modules, noindex/404 pages, query strings, fragments and profiles without static pages. `/robots.txt` is `public/robots.txt` plus this sitemap; edit the crawler policy there. The site still builds without the community API; only successfully fetched public thread pages enter that build's sitemap. For a Pages project path, all URLs keep the configured base. After deployment, submit the sitemap in the site's verified Google Search Console property and inspect representative homepage/module URLs.
 
-For the local post-download check-in preview, open `http://127.0.0.1:5173/?preview=firmware-feedback`. Add `&guide-machine=digitakt` for Digi Mono, Digi utilities and the longer Digi guides. It opens the modal immediately; **Simulate download · 2 s** demonstrates a delayed check-in. The production check-in opens two seconds after a download, when the tab is visible and no other dialog or editor is active. The preview exercises the same scheduler with a disposable local fixture.
+For the local post-download check-in preview, open `http://127.0.0.1:5173/?preview=firmware-feedback`. Add `&guide-machine=digitakt` for the Digitakt guides. It opens the modal immediately; **Simulate download · 2 s** demonstrates a delayed check-in. The production check-in opens two seconds after a download, when the tab is visible and no other dialog or editor is active. The preview exercises the same scheduler with a disposable local fixture.
 
 The overview shows exact downloaded versions, sidebar thumbnails and real version-matched captures: two together on desktop, one below 1051px or when enlarged. Labeled 44px Previous/Next buttons and Left/Right, Home/End keys navigate only within the focused carousel. Its count announces the visible range; enlargement and Escape restore focus to the capture. Nothing rotates automatically. Short, titled quick tests are shared with module pages; full instructions, additional controls, setup steps and screenshot credits remain expandable. Screenshot paging, enlargement and the flashing guide stay in the same overlay. **Open module guide** reopens it from the download panel. It includes one-click per-module working confirmations, the real issue-report form with local submissions and dismiss/snooze choices. Preview actions never download firmware or send reports. Only the disposable fixture’s reminder state is stored locally and removed on leaving the preview. The preview is available only in Vite development mode.
 

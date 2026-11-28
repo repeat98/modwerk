@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fresh } from '../../vendor/elekloader/kit/src/store.ts'
+import { fresh } from '../engine/elektron/store.ts'
 import { afterDeleting, configurationDevice, newConfiguration, validateConfiguration, pinModuleVersions, startupSettings } from './workspace'
 import { DIGI_MODS, RETIRED_DIGI_MODULE_IDS } from '../devices/digi-mods'
 describe('persistent configuration version pins',()=>{

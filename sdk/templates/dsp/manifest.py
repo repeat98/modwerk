@@ -28,8 +28,9 @@ MODULE = Module(
     proof=Proof.UNTESTED, proof_note="Development scaffold; no module behavior has been verified.",
 
     menu=MenuEntry(
-        # 0x00-0x03 are stock's "no effect" synonyms and are rejected. Pick an
-        # id no other module claims; the ledger will tell you if you clash.
+        # The id this effect prefers; the Modwerk base gives it its own at
+        # install, so another module may prefer it too. 0x00-0x03 are stock's
+        # "no effect" synonyms and are rejected; a card image takes 0x04-0x1f.
         fx2_id=0x0a,
         # The stock descriptor this one is cloned from. EVERY FIELD YOU DO NOT
         # WRITE STAYS THE DONOR'S -- including formatters, which override the

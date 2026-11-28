@@ -94,8 +94,8 @@ export function manifestFacts(source) {
 function recordedGuards(t) {
   const rows = JSON.parse(t.text(RECIPES)).recipes.map(({ id, fxId, donorAddress, donorSha256, fx2Slot, slotSha256 }) => ({ id, fxId, donorAddress, donorSha256, fx2Slot, slotSha256 }))
   const number = '(0x[0-9a-fA-F]+|\\d+)', hash = "'([0-9a-f]{64})'"
-  const dict = new RegExp(`dict\\(id='([^']+)'[^)]*?fxId=${number},\\s*donorAddress=${number},\\s*donorSha256=${hash},\\s*fx2Slot=${number},\\s*slotSha256=${hash}`, 'g')
-  for (const m of t.text(BUILD).matchAll(dict)) rows.push({ id: m[1], fxId: Number(m[2]), donorAddress: Number(m[3]), donorSha256: m[4], fx2Slot: Number(m[5]), slotSha256: m[6] })
+  const dict = new RegExp(`dict\\(id='([^']+)'[^)]*?fxId=${number},\\s*donorAddress=${number},\\s*donorSha256=${hash}(?:,\\s*fx2Slot=${number},\\s*slotSha256=${hash})?\\)`, 'g')
+  for (const m of t.text(BUILD).matchAll(dict)) rows.push({ id: m[1], fxId: Number(m[2]), donorAddress: Number(m[3]), donorSha256: m[4], ...(m[5] ? { fx2Slot: Number(m[5]), slotSha256: m[6] } : {}) })
   return rows
 }
 
@@ -107,21 +107,14 @@ function stockFacts(t) {
   return { ids: new Set(ids[1].split(',').map(item => item.trim()).filter(Boolean).map(Number)), names }
 }
 
-const freeIds = (stock, rows) => Array.from({ length: 0x1c }, (_, i) => i + 4).filter(i => !stock.ids.has(i) && !rows.some(row => row.fxId === i)).map(i => hex(i, 2))
-/** The FX2 ids in the build's range 0x04-0x1f that neither stock nor a listed module's recorded page guard holds. */
-export function freeFx2Ids(root) { const t = tree(root); return freeIds(stockFacts(t), recordedGuards(t)) }
-
 /** The guard's addresses from the manifest, and its hashes from guards already verified on the same donor and kind of slot. */
 export function deriveGuard(t, id, facts) {
   if (facts.fxId === undefined || facts.donor === undefined) refuse(`${id}: manifest.py's MenuEntry gives no fx2_id or donor_desc as a number; module:list reads both from it.`)
   const stock = stockFacts(t), rows = recordedGuards(t).filter(row => row.id !== id)
   const fxId = facts.fxId, donorAddress = facts.donor + DONOR_GUARD, fx2Slot = FX2_IDS + 4 * fxId
-  const free = freeIds(stock, rows)
-  if (fxId < 0x04 || fxId > 0x1f) refuse(`${id}: FX2 id ${hex(fxId, 2)} is outside 0x04-0x1f.`)
-  const taken = rows.find(row => row.fxId === fxId)
-  if (taken) refuse(`${id}: FX2 id ${hex(fxId, 2)} is already ${taken.id}'s. Pick a free one in manifest.py (${free.join(', ') || 'none is left'}).`)
+  // The id is only preferred: the base gives the effect its own at install, so another module may prefer it too.
   const replacing = stock.ids.has(fxId)
-  if (replacing && !facts.replaces) refuse(`${id}: FX2 id ${hex(fxId, 2)} belongs to a stock effect. Pick a free one (${free.join(', ') || 'none is left'}) or declare MenuEntry(replaces=...).`)
+  if (replacing && !facts.replaces) refuse(`${id}: FX2 id ${hex(fxId, 2)} belongs to a stock effect. Prefer one stock does not use, or declare MenuEntry(replaces=...).`)
   const one = (values, what) => {
     const found = [...new Set(values)]
     if (found.length > 1) refuse(`${id}: the recorded guards disagree on ${what} (${found.join(', ')}); settle that before listing anything on it.`)
@@ -131,14 +124,16 @@ export function deriveGuard(t, id, facts) {
   const donors = [...new Set(rows.map(row => row.donorAddress))].map(address => `${donorName(address) ?? 'the descriptor'} ${hex(address - DONOR_GUARD, 8)}`)
   const donorSha256 = one(rows.filter(row => row.donorAddress === donorAddress).map(row => row.donorSha256), 'the donor at ' + hex(donorAddress, 8))
   if (!donorSha256) refuse(`${id}: no listed effect clones the donor descriptor at ${hex(facts.donor, 8)}, so its guard (${hex(donorAddress, 8)}) has no verified hash. Clone a donor one does (${donors.join(', ')}), or hash it on your own OS 1.40C and add the guard to ${BUILD} by hand.`)
-  const slotSha256 = replacing
+  // Stock's FX2 table holds ids below 0x20, so an id past it has no slot to guard (a card build refuses it, registry.remix).
+  const inTable = fxId < 0x20
+  const slotSha256 = !inTable ? undefined : replacing
     ? one(rows.filter(row => row.fx2Slot === fx2Slot).map(row => row.slotSha256), 'the FX2 slot at ' + hex(fx2Slot, 8))
-    : one(rows.filter(row => !stock.ids.has(row.fxId)).map(row => row.slotSha256), 'the stock NONE slot of unused ids')
-  if (!slotSha256) refuse(replacing
+    : one(rows.filter(row => row.slotSha256 && !stock.ids.has(row.fxId)).map(row => row.slotSha256), 'the stock NONE slot of unused ids')
+  if (inTable && !slotSha256) refuse(replacing
     ? `${id}: no listed module replaces ${facts.replaces} yet, so its FX2 slot (${hex(fx2Slot, 8)}) has no verified hash. Hash it on your own OS 1.40C and add the guard to ${BUILD} by hand.`
     : `${id}: no listed effect sits on an unused FX2 id, so the stock NONE slot has no verified hash. Hash it on your own OS 1.40C and add the guard to ${BUILD} by hand.`)
-  const slot = replacing ? `${facts.replaces}'s stock FX2 slot at id ${hex(fxId, 2)}` : `stock NONE at unused FX2 id ${hex(fxId, 2)}`
-  return { fxId, donorAddress, donorSha256, fx2Slot, slotSha256, donor: donorName(donorAddress) ?? 'stock descriptor ' + hex(facts.donor, 8), slot }
+  const slot = replacing ? `${facts.replaces}'s stock FX2 slot at id ${hex(fxId, 2)}` : inTable ? `stock NONE at unused FX2 id ${hex(fxId, 2)}` : `no FX2 slot (id ${hex(fxId, 2)} is past stock's table)`
+  return { fxId, donorAddress, donorSha256, ...(inTable ? { fx2Slot, slotSha256 } : {}), donor: donorName(donorAddress) ?? 'stock descriptor ' + hex(facts.donor, 8), slot }
 }
 
 export function guardBlock(id, facts, guard) {
@@ -148,9 +143,10 @@ export function guardBlock(id, facts, guard) {
     `            # them (npm run module:list); the build checks both against the private OS 1.40C. Never retain stock bytes.`,
     `            descriptor_guards.append(dict(id=${python(id)}, key=${python(facts.key)}, author=${python(facts.author)},`,
     `                fxId=${hex(guard.fxId, 2)}, donorAddress=${hex(guard.donorAddress, 8)},`,
-    `                donorSha256='${guard.donorSha256}',`,
-    `                fx2Slot=${hex(guard.fx2Slot, 8)},`,
-    `                slotSha256='${guard.slotSha256}'))`,
+    ...guard.fx2Slot === undefined ? [`                donorSha256='${guard.donorSha256}'))`] : [
+      `                donorSha256='${guard.donorSha256}',`,
+      `                fx2Slot=${hex(guard.fx2Slot, 8)},`,
+      `                slotSha256='${guard.slotSha256}'))`],
   ].join('\n') + '\n'
 }
 
@@ -245,7 +241,7 @@ function plan(t, id, settings) {
     const guard = deriveGuard(t, id, facts), source = t.text(BUILD)
     if (!source.includes(GUARD_ANCHOR)) refuse(`${BUILD} changed shape (no "${GUARD_ANCHOR.trim()}"); add ${id}'s descriptor guard by hand.`)
     t.write(BUILD, source.replace(GUARD_ANCHOR, guardBlock(id, facts, guard) + GUARD_ANCHOR))
-    changes.push(`${BUILD}: descriptor guard fxId ${hex(guard.fxId, 2)}, donor ${hex(guard.donorAddress, 8)} (${guard.donor}), FX2 slot ${hex(guard.fx2Slot, 8)}`)
+    changes.push(`${BUILD}: descriptor guard fxId ${hex(guard.fxId, 2)}, donor ${hex(guard.donorAddress, 8)} (${guard.donor}), ${guard.fx2Slot === undefined ? guard.slot : 'FX2 slot ' + hex(guard.fx2Slot, 8)}`)
   }
 
   // 4. The package row, after the last DSP effect's; octatrack:module-packages completes it.

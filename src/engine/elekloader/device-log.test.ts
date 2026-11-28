@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, describeUsbGone, freezeSamples, parseDeviceLog, usbGone } from './device-log'
+import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_SHEDS_PAGE, describeUsbGone, freezeSamples, parseDeviceLog, parseShedsPage, usbGone } from './device-log'
 import { DSP_REPORT_NAMES, describeStallFrames, describeStallPacket, describeStallPackets, stallLateness } from '../../community/octatrack-diagnostics-contract'
 import { validateDiagnostic } from '../../../server/octatrack-diagnostics'
 
@@ -147,6 +147,11 @@ describe('the unit’s diagnostics log, version 2', () => {
     expect(paged(0x4d57534b).sheds).toEqual({ count: 33, tracks: 0xff, lateOver: 0 })
     expect(paged(0).sheds).toBeUndefined() // an older base: zeros there
     expect(DEVICE_LOG_PAGES * DEVICE_LOG_PAGE).toBe(V2_END + 180 + 456 + 520 + 16) // the last page, filled
+    // The last page alone gives the same counts, in one transfer.
+    const page = (magic: number) => { const data = new Uint8Array(DEVICE_LOG_PAGES * DEVICE_LOG_PAGE), view = new DataView(data.buffer), at = V2_END + 180 + 456 + 520
+      view.setUint32(at, magic); view.setUint32(at + 4, 33); view.setUint32(at + 8, 0x1ff); view.setUint32(at + 12, 2); return data.slice(DEVICE_LOG_SHEDS_PAGE * DEVICE_LOG_PAGE) }
+    expect(parseShedsPage(page(0x4d57534b))).toEqual({ count: 33, tracks: 0xff, lateOver: 2 })
+    expect(parseShedsPage(page(0))).toBeUndefined()
   })
 
   it('reads the frames kept with the stall record, in µs, and no other stall’s', () => {

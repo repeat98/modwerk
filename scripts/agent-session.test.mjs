@@ -10,6 +10,22 @@ import { COMMUNITY_RULES_VERSION } from '../src/legal/policy.ts'
 import { accountRequest, alreadyShared, asAccount, buildSession, pullSessions, sharedMoments } from './agent-session.mjs'
 import { BoardError } from './agent-board.mjs'
 
+// Session redaction reads the developer's Git identity. This transcript fixture
+// must not depend on a contributor having a name such as "The" or "Now".
+vi.mock('node:child_process', async importOriginal => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    execFileSync(command, args, options) {
+      if (command === 'git' && args.length === 3 && args[0] === 'config' && args[1] === '--get') {
+        if (args[2] === 'user.name') return 'Fixture Developer'
+        if (args[2] === 'user.email') return 'fixture@example.test'
+      }
+      return actual.execFileSync(command, args, options)
+    },
+  }
+})
+
 const password = 'private session pull test passphrase'
 const cleanup = []
 afterEach(async () => { vi.unstubAllGlobals(); for (const step of cleanup.splice(0)) await step() })
