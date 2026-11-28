@@ -3,6 +3,9 @@
 **Status: design for joint review by Kári (`karigardarsson`), Lukas
 (`prodbysmolec`) and Jannik (`repeat98`).** Repository review: 27 November 2026,
 main `faff374b9d136f48d4e0159fe480f8f65d27cacc`. This document implements nothing.
+Final content review: 28 November, against main
+`1456cebb3f1c49ca4c0312026f54cc20993add4e`; the relevant native, runtime,
+builder and link sources and the named DN2 PR heads are unchanged.
 The proposed file layout and responsibility split need both contributors'
 agreement before new link, loader or page code. They are not board claims.
 
@@ -51,7 +54,11 @@ This is a proposed split for Kári and Lukas to accept or revise in this Docs PR
 The board still has Lukas's wanted task for the DN2 link and sharing with DT2;
 Kári's earlier adapter question is unanswered there. Jannik's DT2 go-ahead and
 shared-design instruction establish the direction, not acceptance of this table.
-After agreement, record the exact pieces on the [agent board](AGENT_BOARD.md).
+Every proposed lead below is an invitation to accept, revise or defer that piece,
+including the proposed extraction of Lukas's existing work. No assignment or
+reservation takes effect through this document alone. Jannik retains the owner
+decisions and release approval; any policy exception returns to him. Record
+agreed pieces on the [agent board](AGENT_BOARD.md) before implementation.
 
 | Piece | Proposed lead | Shared review and handoff |
 | --- | --- | --- |
@@ -110,9 +117,12 @@ returns promptly while stock routing continues. Decode/service work has a fixed
 budget in the designated UI task. A non-reading host must not block it. The TX
 interface must distinguish not-admitted from accepted/in-flight: retain accepted
 payload storage until ownership actually ends, and stop taking more work when
-that storage is occupied. Dropping a diagnostic reply must not later replay a
-state-changing upload operation. Agree timeout/retry behavior with the existing
-controller before using this seam for upload. Expose supported busy/drop counters.
+that storage is occupied. TX contention must not stop tick/watchdog service.
+Distinguish a request not executed from an operation executed whose reply is
+pending or lost: retrying the latter must not execute it twice. Agree recovery
+and retry behavior with the existing controller before using this seam for
+upload. Expose supported busy/drop counters. One shared scheduling contract
+still requires independent native sender and resource proof on each machine.
 
 | Binding | DN2 OS 1.12 source reference | DT2 OS 1.17 acceptance condition |
 | --- | --- | --- |
@@ -120,13 +130,24 @@ controller before using this seam for upload. Expose supported busy/drop counter
 | TX ownership | Current `send()` calls stock `0x401236d2`; bounded native sending and hostile-backpressure evidence are still required. | Stock `0x40121d2a` reaches serializer and allocator waits. Prove atomic idle admission, descriptor reserve for stock, DMA coherence/lifetime, callback retirement, reset/epoch behavior and full critical-section duration. A check followed by a blocking call is insufficient. |
 | Build identity | #1842 hashes staged sources and merged recipe, emits `.identity`, and puts that digest in HELLO. Bounded `ident` reports counters/status and live count, not a full build/live-set identity. | Agree a versioned, backwards-compatible diagnostic carrier for the digest and live entries, consistent with HELLO. Review existing MWUI schema compatibility first; it does not allocate an MWL command. Keep legacy counter parsing. Opcode/offsets remain open. |
 
-DT2's preflight does not prove transmit timing. Its selected 23+46 native
-instruction paths exclude adapter guards, initialization, lock/unlock and
-cache/bus costs. Completion, cancellation, endpoint drain and reset have different
+DT2's preflight verifies stock bindings and overlap; it does not execute the
+native send path or prove transmit timing. The dated investigation's conditional
+23+46 native-instruction paths exclude adapter guards, initialization,
+lock/unlock and cache/bus costs. They establish neither worst-case duration nor
+audio safety. Completion, cancellation, endpoint drain and reset have different
 retirement orders. Reset reconstructs pools without ordinary callbacks; a reused
 buffer address is not an epoch cookie. Establish CPU callback retirement as well
 as hardware quiescence before reuse. Do not enable native TX with guessed
 coherence or recovery behavior. No USB driver takeover is proposed.
+
+The exact build digest, boot/session identity and live-set digest/generation have
+different lifetimes. Keep them distinct and associate live module entries with
+one consistent live-set snapshot; a count alone does not identify the set.
+A diagnostic-only connection must report its real build identity without
+initializing an upload controller or inventing pool/staging capacity. Unsupported
+upload, meters or self-tests stay explicitly unsupported. Existing MWUI schema
+compatibility does not settle the carrier, allocate an opcode or qualify native
+identity discovery; those remain joint-review decisions.
 
 ## Loader ABI, admission and lifecycle
 
@@ -204,6 +225,10 @@ source change requires both machines' build/check evidence; machine-specific
 code needs its target checks and proof that shared interfaces remain compatible.
 Each implementation PR updates the affected `GOAL.md`, recipe table and
 `machine.json` stack. This design PR changes no capability/status declaration.
+No DT2 link/runtime unit result is established by this proposal. Existing base
+or stock observations do not qualify a new native adapter, and DN2 results do
+not establish DT2 bindings. Attach accepted/refused TX timing, callback/DMA
+lifetime and coexistence results to the exact target build before claiming them.
 
 Agree responsibilities and record claims first. Finish and integrate the existing
 DN2 stack in the owner's order. Extract one shared implementation with both-machine
