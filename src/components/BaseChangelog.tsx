@@ -21,6 +21,7 @@ const releases: Record<'octatrack' | 'rytm' | 'zoom', [BaseRelease, ...BaseRelea
         { area: 'CPU', detail: 'A module machine pasted onto a track, or brought back by a Part reload, is checked against the CPU line the same way as picking it, so it can no longer push a full pattern over.' },
         { area: 'Update screen', detail: 'The Octatrack shows MODWERK while it installs a base or a module set.' },
         { area: 'Reports', detail: 'Diagnostics say which check refused a module pick and what kind each late audio frame was, and the start no longer reports a late frame of its own.' },
+        { area: 'Settings', detail: 'Modules can offer commands that act when you press YES and keep the selected row in view. Installing or undoing a module does not repeat those commands.' },
       ],
     },
     {
