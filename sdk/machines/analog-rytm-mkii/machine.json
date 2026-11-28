@@ -96,19 +96,19 @@
         "name": "Core image",
         "unit": "bytes",
         "value": 12164,
-        "note": "Modwerk's base, plain variant (9af4adee), for a set with no send effect or digital voice machine: 10,796 bytes .run plus 1,368 bytes .bss in the shared area, and a 110-byte .boot copier. The link check measures each selected module set."
+        "note": "Modwerk's base, plain variant (6dce8111), for a set with no send effect or digital voice machine: 10,796 bytes .run plus 1,368 bytes .bss in the shared area, and a 110-byte .boot copier. The link check measures each selected module set."
       },
       {
         "name": "Core image with the send bus",
         "unit": "bytes",
         "value": 37182,
-        "note": "The base's send-bus variant (9f677a80), for a set with a send effect: 33,010 bytes .run plus 4,172 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+        "note": "The base's send-bus variant (9dc04c4c), for a set with a send effect: 33,010 bytes .run plus 4,172 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
       },
       {
         "name": "Core image with the digital voices",
         "unit": "bytes",
         "value": 17712,
-        "note": "The base's voices variant (5768f70f), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 14,880 bytes .run plus 2,832 bytes .bss."
+        "note": "The base's voices variant (187b5126), for a set with a digital voice machine and no send effect: send-bus's digital voices without the FX track's lock words, the send bus, its pages, its clock or the FX list, 14,880 bytes .run plus 2,832 bytes .bss."
       }
     ]
   },

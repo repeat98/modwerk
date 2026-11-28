@@ -1,4 +1,4 @@
-| SPDX-License-Identifier: GPL-3.0-or-later
+| SPDX-License-Identifier: GPL-2.0-or-later
 | Modwerk hook bus: copies modules' .fast code into SRAM on the first ev_tick.
 | core_fast entries are {DDR source, SRAM destination, bytes (a multiple of 4), 0},
 | ended by an entry whose first word is 0. core-dt2's mod.json subscribes core_fastcopy

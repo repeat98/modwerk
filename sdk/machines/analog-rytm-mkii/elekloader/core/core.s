@@ -1,4 +1,4 @@
-| SPDX-License-Identifier: GPL-3.0-or-later
+| SPDX-License-Identifier: GPL-2.0-or-later
 | Modwerk hook bus: the boot copier and the UI events (ev_tick, ev_draw, ev_key, ev_enc).
 | One source for the Digitakt II, the Analog Rytm MKII and the Model:Cycles; each machine's
 | recipe mod.json chooses the addresses and switches with --defsym (see the machine's guide).

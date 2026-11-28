@@ -5,7 +5,7 @@ source of elekloader's core-ar2 0.7, copied unchanged: `core-ar2/` (its `mod.jso
 provenance and hashes are in
 [sdk/imports/core-ar2-source-fb58292.json](../../../imports/core-ar2-source-fb58292.json). They are
 GPL-2.0-or-later, by irpina and Iced-Cream, and keep their SPDX lines. `core/` (`core.s`, `settings.s`, `render.s`) is
-Modwerk's own hook bus (GPL-3.0-or-later, 28 November 2026), which `mod.json` builds with the Rytm's addresses: the same
+Modwerk's own hook bus (GPL-2.0-or-later, 28 November 2026), which `mod.json` builds with the Rytm's addresses: the same
 `core.s` and `settings.s` as the Digitakt II's, with the same symbols, sites and tables as the files it replaced. The
 bus does not save EMAC around `ev_render_in` and `ev_render_out` handlers: a handler that uses it saves its own.
 

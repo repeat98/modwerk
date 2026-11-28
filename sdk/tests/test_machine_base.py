@@ -65,7 +65,7 @@ class MachineBases(unittest.TestCase):
             copies = {sha(APP / path) for path in HOOK_BUS if path.endswith("/" + name)}
             self.assertEqual(len(copies), 1, name)
         for path in HOOK_BUS:
-            self.assertTrue((APP / path).read_text().startswith("| SPDX-License-Identifier: GPL-3.0-or-later\n"), path)
+            self.assertTrue((APP / path).read_text().startswith("| SPDX-License-Identifier: GPL-2.0-or-later\n"), path)
 
     def test_rytm_base_is_core_ar2_0_7_source_unchanged(self):
         record = json.loads((APP / "sdk/imports/core-ar2-source-fb58292.json").read_text())

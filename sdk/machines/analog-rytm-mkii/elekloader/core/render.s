@@ -1,4 +1,4 @@
-| SPDX-License-Identifier: GPL-3.0-or-later
+| SPDX-License-Identifier: GPL-2.0-or-later
 | Modwerk hook bus: the audio interrupt's ev_render_in and ev_render_out (Analog Rytm MKII).
 | Handlers are void f(void) at interrupt level. The bus does not save EMAC: a handler
 | that uses it saves and restores what it touches, MACSR included.

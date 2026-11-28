@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "identity": "9f677a8095b945008eb26452405bf54794580be89542a9bf8e3403c45ee961f8",
+  "identity": "9dc04c4c5043d81a498adfca91c8c2c34e38b626e85f0eb3d1f5e96832aacfc5",
   "package": "core-0.7.elemod",
   "sections": {
     ".boot": 110,
@@ -18,8 +18,8 @@
     "stock": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123"
   },
   "variants": {
-    "send-bus": "9f677a8095b945008eb26452405bf54794580be89542a9bf8e3403c45ee961f8",
-    "voices": "5768f70f65cfd45c8ea612117ad65008c7af4fd3c8883f758812675edf652dad",
-    "plain": "9af4adee9511147b977df4962519593e3381dd3fe63e5ebafc5b0e20b3d7b1b1"
+    "send-bus": "9dc04c4c5043d81a498adfca91c8c2c34e38b626e85f0eb3d1f5e96832aacfc5",
+    "voices": "187b5126142904b73fa3596322c23e46072343e99d090f4b3ab07c48e8750532",
+    "plain": "6dce8111914fd0e8e81ed12953cc411a573827153430e144c3191dc7b1bebc1d"
   }
 }

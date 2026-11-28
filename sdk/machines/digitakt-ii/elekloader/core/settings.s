@@ -1,4 +1,4 @@
-| SPDX-License-Identifier: GPL-3.0-or-later
+| SPDX-License-Identifier: GPL-2.0-or-later
 | Modwerk hook bus: the SETTINGS (Rytm: GLOBAL) menu event ev_settings and core_additem.
 | One source for the Digitakt II and the Analog Rytm MKII; addresses come from --defsym.
 
