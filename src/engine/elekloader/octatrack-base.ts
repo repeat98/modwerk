@@ -5,6 +5,7 @@
 // fillBase puts the words back from the user's firmware (every recipe hash-checked), then the unchanged Elekloader kit
 // links, packs and verifies the base exactly as build_core.py's patch.build does, .run packed as build_core.py packs it.
 import { BASE_FIRMWARE } from '../base.ts'
+import { baseVersion } from './base-variants.ts'
 import { usbAudioPostCurve } from '../usb-audio-curve.ts'
 import { recoverStockDsp, type StockDspCore } from '../stock-dsp.ts'
 import { packRun, RUN_UNPACK } from './run-pack.ts'
@@ -16,8 +17,13 @@ import { build } from '../elektron/firmware-build.ts'
  * layout) of a section (24-bit code or the named 32-bit POST data recipe), or a DSP payload site (24-bit little-endian). */
 export type BaseFill = { tag: string; first: number; count: number; offset: number } &
   ({ fx: number; section: string } | { shared: number; site: string } | { curve: 'usb-post-xlv'; section: string })
-/** What build_core.py names its version field: the base's own. */
-const VERSION = 'MODWERK'
+/** The ten-cell name the unit shows at boot (build_core.py update_name): MW and the base's version, MODWERK for a base
+ * without a released version (owner, 28 November 2026). It sits in the file's header, outside the base's identity. */
+export function bootName(base: string) {
+  const version = baseVersion(base), name = version ? 'MW ' + version : 'MODWERK'
+  if (name.length > 10) throw new Error('The boot name holds ten characters: ' + name)
+  return name
+}
 
 type Part = ['hex', string] | ['stock', string, number]
 const hex = (words: Uint32Array, big: boolean) => Array.from(words, w => (big ? [w >>> 16, w >>> 8, w] : [w, w >>> 8, w >>> 16])
@@ -76,15 +82,15 @@ export async function buildBase(stock: Uint8Array, packageText: string, fills: r
   if (sha(stock) !== BASE_FIRMWARE.sha256) throw new Error('The base builds only from the original Octatrack OS 1.40C file. Choose an unmodified ' + BASE_FIRMWARE.filename + '.')
   const [parsed, device] = await formats.load(stock)
   const cores = await recoverStockDsp(formats.mainImage(parsed, device))
-  const text = fillBase(packageText, fills, cores), base = baseIdentity(text)
+  const text = fillBase(packageText, fills, cores), base = baseIdentity(text), name = bootName(base)
   const filled = new TextEncoder().encode(text)
-  const [outputs, manifest] = await build({ path: '/' + BASE_FIRMWARE.filename, data: stock }, [{ path: '/octatrack-base.elemod', data: filled }], VERSION)
+  const [outputs, manifest] = await build({ path: '/' + BASE_FIRMWARE.filename, data: stock }, [{ path: '/octatrack-base.elemod', data: filled }], name)
   if (!outputs?.bin) throw new Error('The builder did not write a .bin.')
   if (!manifest._map?.has(RUN_UNPACK)) return { bin: outputs.bin, sha256: sha(outputs.bin), base }
   // Its boot decodes .run packed (run-pack.ts): MAIN again with it packed, repacked and verified as build() does.
   const main = packRun(formats.mainImage(formats.parse(outputs.bin, device), device), manifest.link.layout, device.mainLoad)
-  const packed = formats.write(parsed, formats.packMain(main, device), device, VERSION)
-  formats.verify(packed, parsed, main, device, VERSION)
+  const packed = formats.write(parsed, formats.packMain(main, device), device, name)
+  formats.verify(packed, parsed, main, device, name)
   if (!packed.bin) throw new Error('The builder did not write a .bin.')
   return { bin: packed.bin, sha256: sha(packed.bin), base }
 }

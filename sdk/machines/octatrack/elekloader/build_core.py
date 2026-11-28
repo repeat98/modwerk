@@ -25,6 +25,18 @@ VERSION = '0.3.1-modwerk-dev.1'
 # The update name the resident bootloader shows while flashing (the ELEK header's ten-character field, right-justified);
 # src/engine/elekloader/octatrack-base.ts writes the same.
 UPDATE_NAME = 'MODWERK'
+
+
+def update_name(identity):
+    """The ten-cell name the Octatrack shows at boot: MW and the base's version (base-versions.json), as
+    octatrack-base.ts names it; UPDATE_NAME for a base without a released version."""
+    for base in json.loads((HERE.parent/'base-versions.json').read_text())['bases']:
+        if identity in base['identities']:
+            name = 'MW ' + base['version']
+            if len(name) > 10:
+                raise ValueError('The boot name holds ten characters: ' + name)
+            return name
+    return UPDATE_NAME
 # Resident controller trust: association, the scoped write lease, its resolver and the board-compiled policy table.
 CONTROLLER_POLICY_SOURCES = ('controller_policy.c', 'controller_policy.h', 'controller_association.c', 'controller_association.h',
                              'controller_write_lease.c', 'controller_write_lease.h', 'controller_write_policy.c',
@@ -2520,7 +2532,7 @@ modwerk_retained_end:
                       'arena_base','__arena_pages','__arena_fill','__arena_clear',
                       'ev_tick','ev_draw','ev_key','ev_enc','ev_midi','ev_frame'}:
         raise ValueError('Core has unexpected unresolved imports: ' + str(mod.imports))
-    outputs, manifest = patch.build(str(args.stock), [path], version=UPDATE_NAME)
+    outputs, manifest = patch.build(str(args.stock), [path], version=update_name(identity))
     mapping = manifest.pop('_map')
     # MAIN stores .run packed (run_pack.py): the linked image again without its plain copy, repacked and verified as
     # patch.build does, so the RAM boot bound and every hash below are the packed image's.
