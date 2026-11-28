@@ -598,10 +598,10 @@ modwerk_site_40031e62:
 .L40031e62_tail:
         movem.l (%sp),%d0-%d1/%a0-%a2
         lea     28(%sp),%sp
-        .globl  modwerk_stock_40031e62_8
-modwerk_stock_40031e62_8:
-        .space  8 | the site's own stock bytes
-        jmp 0x40031e6a
+        .globl  modwerk_stock_40031e62_6
+modwerk_stock_40031e62_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x40031ed6
 
 | ---- 0x40031ece: ev_playback_page_resolve
         .globl  modwerk_site_40031ece
@@ -631,9 +631,9 @@ modwerk_site_40031ece:
 .L40031ece_tail:
         movem.l (%sp),%d0-%d1/%a0-%a2
         lea     28(%sp),%sp
-        .globl  modwerk_stock_40031ece_6
-modwerk_stock_40031ece_6:
-        .space  6 | the site's own stock bytes
+        .globl  modwerk_stock_40031ece_4
+modwerk_stock_40031ece_4:
+        .space  4 | the site's own stock bytes
         jmp 0x40031ed6
 
 | ---- 0x4003685a: ev_fm_amp_draw_names

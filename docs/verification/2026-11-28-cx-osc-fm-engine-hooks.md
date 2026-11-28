@@ -39,33 +39,35 @@ Twenty-two new **take** events, indices **69 through 90**, each `room` 8:
 | 89 | `ev_fm_frame_source` | `0x4000d514` | `fm_source_dispatch` | `po_fmsource` |
 | 90 | `ev_playback_page_resolve` | `0x40031ece` | `pg_resolve` | `pg_resolve` |
 
-Guards and lengths match the FM Synth port (`sdk/octatrack/modules/synth` manifests) on OS 1.40C. Site tails use a linear `jmp` after `{"stock": length}` except:
+Guards and lengths match the FM Synth port (`sdk/octatrack/modules/synth` manifests) on OS 1.40C. Most site tails copy the displaced stock instructions and jump to the next stock address. Two resolver sites contain short branches that cannot be copied to a new address:
 
-- `0x400625e0` continues at `0x400625ea` (synth README live recorder).
-- `0x40031ece` continues at `0x40031ed6` (resolver epilogue).
+- `0x40031e62`: copy only the six-byte descriptor load, then jump to `0x40031ed6`.
+- `0x40031ece`: copy only the four-byte table load, then jump to `0x40031ed6`.
 
 ## Stock tails (guards and continuation)
 
-Each site `guard` is the SHA-256 of the first `length` stock bytes at the hook. The tail replays `{"stock": length}` then jumps back into stock. Addresses use Elekloader `main_load` `0x40000400`.
+Each site `guard` is the SHA-256 of the first `length` stock bytes at the hook. Most tails replay `{"stock": length}` then jump back into stock; the two resolver tails omit the short branch as listed above. Addresses use Elekloader `main_load` `0x40000400`.
 
-Verified against original **1.40C** stock (MAIN SHA-256 `164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`, the fingerprint Elekloader pins for release **1.40C**): all **22** FM guards match; **21** tails use `jmp site+length`. The exception is unchanged from the synth port:
+Verified against original **1.40C** stock (MAIN SHA-256 `164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`, the fingerprint Elekloader pins for release **1.40C**): all **22** FM guards match. The original tail copied the short branches at two resolver sites. Those branches keep their relative displacements when moved into the base, so they jump into the new code instead of the resolver epilogue. The corrected tails omit the branches:
 
-- `0x40031ece` (`ev_playback_page_resolve`): 6-byte site is `movel …; bras 0x40031ed6`; tail `jmp 0x40031ed6` (resolver epilogue), not `0x40031ed4`.
+- `0x40031e62` (`ev_fm_lfo_page`): six-byte descriptor load, then `jmp 0x40031ed6`.
+- `0x40031ece` (`ev_playback_page_resolve`): four-byte table load, then `jmp 0x40031ed6`.
 
 Guards are the same hashes as `sdk/octatrack/modules/synth` `stock_guard` entries on 1.40C.
 
 **`build_core.py --site-events` (same check as `octatrack:base --beta`):** every `events.json` `guard` on this branch matches **1.40C** stock (57 `base_sites` plus 69 owned table sites, including FM hooks 69 through 90).
 
-**Base regeneration (28 Nov 2026, private 1.40C):** `npm run octatrack:base -- --stock … --beta --write` exits 0. `controller-policies.json` updated for the new layout. Identity **`fd6e0e40f4c6f86e…`**, package **`045f3a264bc10c1a…`**, browser `.bin` **`0698a1ce5ec05f77…`** (847572 bytes). `node scripts/base-size.mjs` is not run here; sizes come from the script’s own `octatrack:base` log line.
+**Base regeneration (28 Nov 2026, private 1.40C):** `npm run octatrack:base -- --stock … --beta --write` exits 0. Identity **`0fdb31fcb96b88c8…`**, package **`221e3241998bdffa…`**, browser `.bin` **`fad907f860f5084a…`** (847560 bytes). `node scripts/base-size.mjs --stock … --write` reports 847,544 of 851,712 container bytes, 4,168 free. The browser `.bin` matches `build_core.py` byte for byte.
 
 **Unit (MKII, dev twin, 28 Nov 2026):**
 
 | Build | `configurationHash` (prefix) | RAM boot | Notes |
 | --- | --- | --- | --- |
 | Dev twin **without** FM hooks 69-90 (same flags, `events.json` from `base/octatrack-next`) | `195915abb6bd4471…` | **Pass** | `device boot` reports `booted: base 195915ab…`; `stats` on dev base. |
-| Dev twin **with** FM hooks 69-90 (this branch) | `38a6d03fba944b23…` | **Fail** | MODWERK **VEC:04** (`ADDR` in stub arena near `0x40AE60xx`, site `0x4003685a` / `ev_fm_amp_draw_names`). Unit returns to flashed base after power cycle. |
+| Dev twin **with** FM hooks 69-90 (earlier tip) | `38a6d03fba944b23…` | **Fail** | MODWERK **VEC:04** (`ADDR` in the base code area). The relocated resolver branches are a source-level cause candidate. Unit returns to flashed base after power cycle. |
+| Dev twin with corrected resolver tails (this worktree) | `3afe6b2da03a30e6…` | **Pass** | MKII RAM boot reported `booted: base 3afe6b2d…`; the USB session reconnected and identified the same base. On saved B04, preflight passed. With no modules installed, PLAY, STOP and Part 1 to 2 to 1 completed. The unit reported stopped, and Part restore found working = saved with nothing to put back. |
 
-**Not run on hardware yet:** FM Synth on subscribed hooks, LFO depth, STOP with notes, Part change. Blocked until the FM-hooks dev twin passes RAM boot. FM Synth package migration stays in follow-up.
+**Not run on hardware yet:** FM Synth on subscribed hooks, LFO depth, and STOP with FM notes. FM Synth 0.1.5 still detours these sites and cannot load on this base; its package migration stays in follow-up. The Part switch above tested the base without a module.
 
 `machine-ports.json` lists **synth** `subscribe` / `records`; **cx-osc** cites draft sources only (`sdk/drafts/cx-osc/`, #2293). Hook coverage passes: every hook has a declared user; placeholders cite `unused-hooks.json`.
 

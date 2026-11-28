@@ -1,3 +1,5 @@
 Octatrack base (cumulative `base/octatrack-next`): twenty-two shared **take** hooks at indices 69 through 90 so FM Synth and CX OSC can subscribe instead of detouring the same ColdFire engine sites. Indices **63 through 65** are owner tables on the current base (`ot_lfo_pmtr_dest`, `ot_reserved_64`, `ot_dsp_effects`). Indices **66 through 68** stay neutral call placeholders until CLYPS and the owner hooks **#2261** / **#2271** land.
 
 FM Synth **machine-ports** (`synth`): `replaces` and glue `records` name FM Synth detour symbols (`po_lfo3`…, `fm_source_dispatch`); `po_mtrig` site coverage stays in `machine-ports` `retarget` (Tim owns upstream `pad_to`, FM Synth release). **cx-osc** port cites `sdk/drafts/cx-osc/` only (#2293). Indices **73, 76, 77** (`STOP`, MIDI note gates) are **call** hooks (`results: notify`): every engine runs. Loader still needs FM Synth to subscribe and drop detours in the same release window.
+
+The two playback resolver tails now replay their loads and jump to the resolver epilogue. Copying their short stock branches into the relocated tails led to an invalid branch target during a RAM boot trial.

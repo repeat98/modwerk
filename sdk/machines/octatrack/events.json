@@ -572,9 +572,9 @@
    "head": [],
    "tail": [
     {
-     "stock": 8
+     "stock": 6
     },
-    "jmp 0x40031e6a"
+    "jmp 0x40031ed6"
    ],
    "done": null
   },
@@ -838,7 +838,7 @@
    "head": [],
    "tail": [
     {
-     "stock": 6
+     "stock": 4
     },
     "jmp 0x40031ed6"
    ],

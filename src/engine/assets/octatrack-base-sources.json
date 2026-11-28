@@ -75,7 +75,7 @@
   "sdk/machines/octatrack/elekloader/runtime.c": "de6a6c97d7660ff25431f356d9a163a994386d708a7ebe67490ac5dfff267f00",
   "sdk/machines/octatrack/elekloader/runtime.h": "c99e9f64174794a9f66a4eb8fbd8ca14d1a6d21fda243a456aa28c9ff22ded4e",
   "sdk/machines/octatrack/elekloader/runtime_events.h": "75d4e14cb7a3504a70c1e3d69fc09ec8903eb132b87b1ed8dd085723c8372ef9",
-  "sdk/machines/octatrack/elekloader/runtime_events.s": "b250d7beb9c30b1da329c877096a4f37f67f07d72c1d9f1b20b981c26c25a816",
+  "sdk/machines/octatrack/elekloader/runtime_events.s": "8174ea5376214168db592cf9ff17078f585f12abd5ac12ee6281b688a032ac69",
   "sdk/machines/octatrack/elekloader/sample_memory.c": "207d022869eb071b63e4a991e6335c4e06272e316da7c2837f52351d92eac02f",
   "sdk/machines/octatrack/elekloader/selftest.h": "c1bbc27e23720b2d70bec0b022b2c4314eaad1f06226216d9d6200e2776bf037",
   "sdk/machines/octatrack/elekloader/setting_presets.h": "a48a131f1bef071420281ef7c95417979783b65021d07060450f4b34b3f5e44c",
