@@ -176,12 +176,12 @@
       "sites": 23,
       "copies": 5,
       "fills": 0,
-      "version": "0.3.3-experimental",
+      "version": "0.3.4-experimental",
       "name": "POLY8",
       "module": "9fa85eef",
       "bytes": 59808,
-      "sha256": "1d9e9ecae22a60b592e5cfc8750adcdf0060faad36c826b6e6abb5393bb86c21",
-      "path": "octatrack-modules/poly8/0.3.3-experimental.mwrm"
+      "sha256": "42180899c82146c15b48bdf049964d37f5d0228bafff1cbef2a062372c2c1db6",
+      "path": "octatrack-modules/poly8/0.3.4-experimental.mwrm"
     },
     {
       "id": "vector",
