@@ -6,3 +6,4 @@ instrument settings. Separate API review; not yet a released capability.
 The draft includes its regenerated development Base and matching reconstruction
 and size records. Both USB Audio compiled images remain unchanged; the shared
 header pins are refreshed from verified rebuilds. Physical testing is pending.
+The base-bound package records are relinked; all five compiled packages remain identical.
