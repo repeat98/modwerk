@@ -1,6 +1,6 @@
 # Octatrack base: FM engine take hooks for CX OSC and FM Synth (28 November 2026)
 
-Status: proposed on branch `prop/cx-osc-fm-engine-hooks` for cumulative base `base/octatrack-next`. Stock tail guards for indices 69 through 90 are verified against original Octatrack OS **1.40C** (`main_load` `0x40000400`). Committed `octatrack-base.elemod` regen with `--write` stays with the owner after merge.
+Status: proposed on branch `prop/cx-osc-fm-engine-hooks` for cumulative base `base/octatrack-next`. Stock tail guards for indices 69 through 90 are verified against original Octatrack OS **1.40C** (`main_load` `0x40000400`). The committed base package is regenerated on this branch (`npm run octatrack:base -- --beta --write` against private **1.40C** `34695b606…`). Branch tracks `origin/main` and `origin/base/octatrack-next` (merge 28 Nov 2026: already up to date).
 
 ## Problem
 
@@ -54,7 +54,18 @@ Verified against original **1.40C** stock (MAIN SHA-256 `164f31224bf61181e3f50e7
 
 Guards are the same hashes as `sdk/octatrack/modules/synth` `stock_guard` entries on 1.40C.
 
-**`build_core.py --site-events` (same check as `octatrack:base --beta`):** every `events.json` `guard` on this branch matches **1.40C** stock (57 `base_sites` plus 69 owned table sites, including FM hooks 69 through 90). A contributor `npm run octatrack:base -- --stock <private 1.40C> --beta` run linked with “stock bytes as expected”; without `--write` it stops at `octatrack-base.elemod` drift, which is expected until the owner regenerates the committed base package after merge.
+**`build_core.py --site-events` (same check as `octatrack:base --beta`):** every `events.json` `guard` on this branch matches **1.40C** stock (57 `base_sites` plus 69 owned table sites, including FM hooks 69 through 90).
+
+**Base regeneration (28 Nov 2026, private 1.40C):** `npm run octatrack:base -- --stock … --beta --write` exits 0. `controller-policies.json` updated for the new layout. Identity **`fd6e0e40f4c6f86e…`**, package **`045f3a264bc10c1a…`**, browser `.bin` **`0698a1ce5ec05f77…`** (847572 bytes). `node scripts/base-size.mjs` is not run here; sizes come from the script’s own `octatrack:base` log line.
+
+**Unit (MKII, dev twin, 28 Nov 2026):**
+
+| Build | `configurationHash` (prefix) | RAM boot | Notes |
+| --- | --- | --- | --- |
+| Dev twin **without** FM hooks 69-90 (same flags, `events.json` from `base/octatrack-next`) | `195915abb6bd4471…` | **Pass** | `device boot` reports `booted: base 195915ab…`; `stats` on dev base. |
+| Dev twin **with** FM hooks 69-90 (this branch) | `38a6d03fba944b23…` | **Fail** | MODWERK **VEC:04** (`ADDR` in stub arena near `0x40AE60xx`, site `0x4003685a` / `ev_fm_amp_draw_names`). Unit returns to flashed base after power cycle. |
+
+**Not run on hardware yet:** FM Synth on subscribed hooks, LFO depth, STOP with notes, Part change. Blocked until the FM-hooks dev twin passes RAM boot. FM Synth package migration stays in follow-up.
 
 `machine-ports.json` lists **synth** `subscribe` / `records`; **cx-osc** cites draft sources only (`sdk/drafts/cx-osc/`, #2293). Hook coverage passes: every hook has a declared user; placeholders cite `unused-hooks.json`.
 
