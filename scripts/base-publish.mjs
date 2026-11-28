@@ -12,7 +12,8 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { buildPublishedBase } from '../src/engine/elekloader/published-base.ts'
-import { baseLayout, baseName, buildLayout } from '../src/engine/elekloader/base-variants.ts'
+import { baseLayout, buildLayout } from '../src/engine/elekloader/base-variants.ts'
+import { firmwareFilename } from '../src/config/firmware-filename.ts'
 import { USB_AUDIO_PACKAGED } from '../src/config/usb-audio.ts'
 
 const BUCKET = 'modwerk-base-images', MANIFEST = 'manifest.json'
@@ -34,7 +35,8 @@ export async function publishedImages(stock) {
     const layout = buildLayout(undefined, step)
     const built = await buildPublishedBase(stock, load, layout, step)
     if (!step && baseLayout(built.base) !== built.layout) throw new Error('The base built as ' + built.base + ', which this checkout does not publish. Use a checkout of the deployed revision.')
-    const name = (step ? 'modwerk-step-base-' : 'modwerk-base-') + baseName(built.base) + '-' + built.layout + '.bin'
+    // The name a base built from your own file downloads under (firmware-filename.ts), never the internal layout name.
+    const name = firmwareFilename(step ? 'step base' : 'base', built.base)
     images.push({ entry: { machine: 'octatrack', identity: built.base, sha256: built.sha256, size: built.bin.length, file: name, layout: built.layout, ...(step ? { step: true } : {}) }, bin: built.bin })
   }
   return images
@@ -42,7 +44,7 @@ export async function publishedImages(stock) {
 
 const stock = new Uint8Array(readFileSync(args.stock))
 const images = await publishedImages(stock)
-for (const { entry } of images) console.log(`${entry.step ? 'step' : 'base'} ${entry.layout}: ${entry.identity} sha256 ${entry.sha256} (${entry.size} bytes)`)
+for (const { entry } of images) console.log(`${entry.file}: identity ${entry.identity}, sha256 ${entry.sha256} (${entry.size} bytes)`)
 if (args['dry-run']) process.exit(0)
 
 let manifest = { schema: 1, images: [] }
@@ -52,7 +54,7 @@ const folder = mkdtempSync(join(tmpdir(), 'modwerk-base-publish-'))
 try {
   for (const { entry, bin } of images) {
     const known = manifest.images.find(image => image.machine === entry.machine && image.identity === entry.identity)
-    if (known?.sha256 === entry.sha256) { console.log('already hosted: ' + entry.file); continue }
+    if (known?.sha256 === entry.sha256) { Object.assign(known, entry); console.log('already hosted: ' + entry.file); continue }
     // An identity names one image: a different build of the same identity means the builder changed, so stop.
     if (known) throw new Error(entry.identity + ' is hosted with another SHA-256 (' + known.sha256 + '). Find out why before replacing it.')
     const path = join(folder, entry.file)
