@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "recorded": "2026-11-28",
+  "decision": "Start Modwerk\u2019s Analog Four MKII base from core-a4 0.5, the Elekloader release used in SL18. Compiler sources are copied byte for byte. Stock site signatures in the upstream recipe become lengths and SHA-256 hashes. The released package is represented by its interface and section sizes for the build parity check.",
+  "repository": "https://github.com/elekloader/elekloader",
+  "tag": "v0.10.0",
+  "revision": "0f990f23bee4d75d4af7fbe71776cae6f7b871a3",
+  "license": "GPL-2.0-or-later",
+  "files": [
+    {
+      "from": "mods/core/core.s",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core/core.s",
+      "sha256": "dd0074e9b08a254838feae6215404e775ba7ef7aa2afbcce1e5c24794eebddc5"
+    },
+    {
+      "from": "mods/core/settings.s",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core/settings.s",
+      "sha256": "8fa715d46d6dbe239bed6d8d0ea4a0c3100c068b39869c938b402f2d6a15a380"
+    },
+    {
+      "from": "mods/core/render.s",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core/render.s",
+      "sha256": "442a5ea752fae5bfe8eeb326a90f0e9c0533e13d7caa0355d7fbb53266212418"
+    },
+    {
+      "from": "mods/core-a4/store.c",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/store.c",
+      "sha256": "2ea7ecd2417e6aaea195cf6f20f1d424de7b6fe957ca21dca19169c4563155c3"
+    },
+    {
+      "from": "mods/core-a4/store.s",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/store.s",
+      "sha256": "06717daef5a40156016c0de803ceac3d8913b0112951798d0c73e30609f69221"
+    },
+    {
+      "from": "mods/core-a4/pages.s",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/pages.s",
+      "sha256": "b06abaacd452cfd89572b6d457353ea718049a527fb7222a62c128f19fa60ccf"
+    },
+    {
+      "from": "mods/core-a4/lock.c",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/lock.c",
+      "sha256": "d16e83d9919250e9d42c714ae0602c00f470d213bbd619adbdd7069c43d89496"
+    },
+    {
+      "from": "mods/core-a4/rows.c",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/rows.c",
+      "sha256": "086a5df85a10ea15dca888dd316b7daafcbc8440388dcb6b733dc9258fb6d0f1"
+    },
+    {
+      "from": "mods/core-a4/rows.s",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/rows.s",
+      "sha256": "07c8f6382f731fd81709c412e114c37303abef8934df0b67f204ec85829a6a30"
+    },
+    {
+      "from": "mods/core-a4/dests.c",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/dests.c",
+      "sha256": "19320c7570762fa82a9a2bdbeebe92a18dec688b033338b1d469229b508bec7b"
+    },
+    {
+      "from": "mods/core-a4/dests.s",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/dests.s",
+      "sha256": "f28cf53ffa2914247f438900895c8778fa68dcee35fbcbacd9feab25f00a1fc3"
+    },
+    {
+      "from": "mods/core-a4/value.c",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/value.c",
+      "sha256": "2592f716dd2f968f5b4415f1501e99e22f7d8b37a72c5001462a86c869950c41"
+    },
+    {
+      "from": "mods/core-a4/midi.c",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/midi.c",
+      "sha256": "6917c5778611cca0503d982d32a1d25abc579feddbf3ac5ec1a825b84d248795"
+    },
+    {
+      "from": "mods/core-a4/midi.s",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/midi.s",
+      "sha256": "5a171cb7fd4cc69b807cfcb0d4debde12d349471b963a19cbdba187853464f07"
+    },
+    {
+      "from": "mods/core-ar2/load.s",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-ar2/load.s",
+      "sha256": "cc4218cd22e926b2021346037a35005f744193d2dc5db00d1cba9940e5feb08f"
+    },
+    {
+      "from": "mods/core-ar2/finish.s",
+      "to": "sdk/machines/analog-four-mkii/elekloader/core-ar2/finish.s",
+      "sha256": "f7e8801b7274a9405a443859b2e29fa1cd51a4212c8d7f7c2dfdbf3240bf9e27"
+    },
+    {
+      "from": "LICENSE",
+      "to": "sdk/machines/analog-four-mkii/elekloader/LICENSE.upstream",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    }
+  ],
+  "adaptedRecipe": {
+    "from": "mods/core-a4/mod.json",
+    "sourceSha256": "0345e6dcded7f8056d12152ebf40168e32fcc6e613d5699397e2fd400789e94a",
+    "to": "sdk/machines/analog-four-mkii/elekloader/core-a4/mod.json",
+    "siteGuards": "sdk/machines/analog-four-mkii/elekloader/base.json"
+  },
+  "referencePackageSha256": "f2473c7fb8de3c16a9113a371cf6e3e50bf87f34792effd0d344d94dda615235"
+}

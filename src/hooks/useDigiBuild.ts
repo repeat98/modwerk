@@ -32,8 +32,6 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
   const inputs = JSON.stringify([machine, release ?? '', file ? [file.name, file.size, file.lastModified] : null, [...moduleIds].sort()])
   const key = inputs + '#' + attempt
   const [view, setView] = useState<DigiBuildState>({ phase: 'idle', key: '' })
-  // Local build outcomes include preview machines; their download gates remain separate.
-  const usageMachine = machine
   const client = useRef<Builder | null>(null), operation = useRef(0), storageRef = useRef(storage)
   useEffect(() => { storageRef.current = storage })
   useEffect(() => () => { client.current?.dispose(); client.current = null }, [])
@@ -91,7 +89,7 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
           if (operation.current !== request) return
           emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'verifying', buildKind: elekloaderBuildKind(machine), error: 'build' }, context)
           setView({ phase: 'failed', key, enabled, device, error: 'The build did not pass the preflight check, so it is not offered.', problems: error instanceof PreflightError ? error.problems : [message(error, 'The preflight could not run.')] })
-          trackUsage('build_failed', usageMachine)
+          if (machine !== 'analog-four-mkii') trackUsage('build_failed', machine)
           return
         }
         if (operation.current !== request) return
@@ -99,13 +97,13 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
       const lock = builtLock(result)
       if (lock && storage && JSON.stringify(lock) !== JSON.stringify(storage.lock)) storage.save(lock)
       setView(result.ok ? { phase: 'built', key, enabled, device, moduleIds: [...moduleIds], result, preflight } : { phase: 'failed', key, enabled, device, error: result.error, result })
-      trackUsage(result.ok ? 'build_succeeded' : 'build_failed', usageMachine)
+      if (machine !== 'analog-four-mkii') trackUsage(result.ok ? 'build_succeeded' : 'build_failed', machine)
     } catch (error) {
       if (operation.current !== request) return
       setView({ phase: 'failed', key, enabled, device, error: message(error, 'The build failed.') })
       // A refused sign-in is not a failed build; a rejected OS version name returns above without counting.
       if (started && !isExpectedDiagnosticCancellation(error)) emitSiteDiagnosticEvent({ event: 'build_failed', phase: step, buildKind: elekloaderBuildKind(machine), error: 'build' }, context)
-      if (started) trackUsage('build_failed', usageMachine)
+      if (started && machine !== 'analog-four-mkii') trackUsage('build_failed', machine)
     }
   }
   function cancel() {

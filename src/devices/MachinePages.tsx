@@ -25,7 +25,7 @@ import { DownloadPeriodContext } from '../community/download-period'
 import { DeviceImage, PhotoCredit } from './DeviceImage'
 import { ALL_MACHINES, DEVICES, DEVICES_BY_ID, MC_UNIT_ROUTE, STATUS_LABELS, deviceHref, deviceSteps, deviceTitle, readyForMods, stepsDone, type DeviceProfile } from './registry'
 import { MACHINE_STACK } from './machine-contract'
-import { coreBuildPreviewOpen } from '../engine/elekloader/protocol'
+import { coreBuildPreviewOpen, isCoreBuildPreview } from '../engine/elekloader/protocol'
 import { useCommunity } from '../community/context'
 import { hasBetaUi } from '../community/beta-access'
 import { DIGI_CORES, DIGI_DEVICES, DIGI_MODS, estimateCombination, type DigiMod } from './digi-mods'
@@ -112,7 +112,7 @@ type AllMachinesLibraryProps = {
   octatrackModules: readonly FirmwareModule[]
   octatrackSelected: string[]
   onToggleOctatrack: (id: string) => void
-  digiSelected: Record<DigiMod['device'], string[]>
+  digiSelected: Partial<Record<DigiMod['device'], string[]>>
   onToggleDigi: (device: DigiMod['device'], id: string) => void
   // Each Zoom pedal's set (machine id → effect ids); Sync on the pedal page brings the pedal to it.
   zoomSelected?: Record<string, string[]>
@@ -137,13 +137,14 @@ type AllMachinesLibraryProps = {
 type MachineLibraryProps = AllMachinesLibraryProps & {
   device?: DeviceProfile; children?: ReactNode; categoryNav?: ReactNode; onClearSearch?: () => void; onClearQuery?: () => void
   phone?: boolean; resultsSlot?: HTMLElement | null; octatrackCatalogue?: readonly FirmwareModule[]
-  buildHref?: string; buildLabel?: string; buildText?: string
+  buildHref?: string; buildLabel?: string; buildText?: string; betaUi?: boolean
 }
 
-export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, zoomSelected = {}, onToggleZoom, family, onFamilyChange, sort, onSortChange, statistics, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, categoryNav, children, onClearSearch, onClearQuery, onBrowse, phone = false, resultsSlot, octatrackCatalogue = AVAILABLE_MODULES, buildHref, buildLabel, buildText }: MachineLibraryProps) {
+export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, zoomSelected = {}, onToggleZoom, family, onFamilyChange, sort, onSortChange, statistics, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, categoryNav, children, onClearSearch, onClearQuery, onBrowse, phone = false, resultsSlot, octatrackCatalogue = AVAILABLE_MODULES, buildHref, buildLabel, buildText, betaUi = false }: MachineLibraryProps) {
   const w = useSetWords()
   const heading = useRef<HTMLHeadingElement>(null)
   const term = query.toLowerCase().trim()
+  const canOpenBuild = (id: string) => betaUi || !isCoreBuildPreview(id)
   const hasMods = !device || device.status === 'available' || device.status === 'preview'
   const families = Array.from(new Set([
     ...(!device || device.id === 'octatrack' ? octatrackCatalogue.map(module => module.type) : []),
@@ -179,7 +180,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
   }
   const groups: { device: DeviceProfile; count: number; cards: ReactNode[] }[] = [
     ...(!device || device.id === 'octatrack' ? [{device: DEVICES_BY_ID.octatrack, count: octatrack.length, cards: octatrack.map(module => <ModuleCard key={module.id} module={module} selected={octatrackSelected.includes(module.id)} statistics={statistics?.find(item => item.module_id === module.id)} viewedVersion={viewedModuleVersions[module.id]} baseline={moduleBaseline} compared={comparison.includes(module.id)} canCompare={comparison.length < 3 || comparison.includes(module.id)} onToggle={() => onToggleOctatrack(module.id)} onCompare={() => onCompare(module.id)} onBrowse={browseResults} block={octatrackBlocks?.[module.id]} onSwap={removeIds => onSwapOctatrack?.(module.id, removeIds)} />)}] : []),
-    ...digiGroups.map(({ id, mods }) => ({device: DEVICES_BY_ID[id], count: mods.length, cards: mods.map(mod => <DigiModCard key={mod.id} mod={mod} selected={digiSelected[id].includes(mod.id)} statistics={statistics?.find(item => item.module_id === id + '-' + mod.id)} onToggle={() => onToggleDigi(id, mod.id)} compared={comparison.includes(id + '-' + mod.id)} canCompare={comparison.length < 3 || comparison.includes(id + '-' + mod.id)} onCompare={() => onCompare(id + '-' + mod.id)} onBrowse={browseResults} />)})),
+    ...digiGroups.map(({ id, mods }) => ({device: DEVICES_BY_ID[id], count: mods.length, cards: mods.map(mod => <DigiModCard key={mod.id} mod={mod} selected={digiSelected[id]?.includes(mod.id) ?? false} statistics={statistics?.find(item => item.module_id === id + '-' + mod.id)} onToggle={() => onToggleDigi(id, mod.id)} compared={comparison.includes(id + '-' + mod.id)} canCompare={comparison.length < 3 || comparison.includes(id + '-' + mod.id)} onCompare={() => onCompare(id + '-' + mod.id)} onBrowse={browseResults} />)})),
     ...zoomGroups.map(({ device: pedal, effects }) => ({device: pedal, count: effects.length, cards: effects.map(effect => <ZoomEffectCard key={effect.id} effect={effect} selected={(zoomSelected[pedal.id] ?? []).includes(effect.id)} onToggle={() => onToggleZoom?.(pedal.id, effect.id)} statistics={statistics?.find(item => item.module_id === pedal.id + '-' + effect.id)} compared={comparison.includes(pedal.id + '-' + effect.id)} canCompare={comparison.length < 3 || comparison.includes(pedal.id + '-' + effect.id)} onCompare={() => onCompare(pedal.id + '-' + effect.id)} onBrowse={browseResults} />)})),
   ]
   const total = groups.reduce((sum, group) => sum + group.count, 0)
@@ -198,7 +199,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
     </header>
     {category === 'standalone' && <p className="service-note">{STANDALONE_NOTE}</p>}
     {phone && projectLink}
-    {phone ? resultsSlot && createPortal(<LibraryResultsBar summary={resultsSummary} sort={sort} onSortChange={onSortChange} family={libraryFamily} onFamilyChange={onFamilyChange} families={typeCounts} allCount={scopeFamilies.length} disabled={!hasMods} />, resultsSlot) : <LibraryTools family={libraryFamily} families={typeCounts.map(option => option.value)} onFamilyChange={onFamilyChange} sort={sort} onSortChange={onSortChange} comparisonCount={comparison.length} onCompare={onOpenComparison} buildHref={hasMods ? buildHref ?? deviceHref(device?.id ?? 'octatrack', 'configuration') : null} buildLabel={hasMods ? buildLabel ?? 'Build firmware for ' + (device?.name ?? 'Octatrack') : 'No modules to build yet'} categoryNav={categoryNav} categoryLabel={category && LIBRARY_CATEGORY_LABELS[category]} machine={typeof machinePicker === 'function' ? machinePicker(countLabel) : machinePicker} disabled={!hasMods} build={device?.family !== 'zoom' || isZoomSetDevice(device.id)} buildText={buildText ?? (device?.family === 'zoom' ? 'Your ' + device.name : undefined)} />}
+    {phone ? resultsSlot && createPortal(<LibraryResultsBar summary={resultsSummary} sort={sort} onSortChange={onSortChange} family={libraryFamily} onFamilyChange={onFamilyChange} families={typeCounts} allCount={scopeFamilies.length} disabled={!hasMods} />, resultsSlot) : <LibraryTools family={libraryFamily} families={typeCounts.map(option => option.value)} onFamilyChange={onFamilyChange} sort={sort} onSortChange={onSortChange} comparisonCount={comparison.length} onCompare={onOpenComparison} buildHref={hasMods ? buildHref ?? deviceHref(device?.id ?? 'octatrack', 'configuration') : null} buildLabel={hasMods ? buildLabel ?? 'Build firmware for ' + (device?.name ?? 'Octatrack') : 'No modules to build yet'} categoryNav={categoryNav} categoryLabel={category && LIBRARY_CATEGORY_LABELS[category]} machine={typeof machinePicker === 'function' ? machinePicker(countLabel) : machinePicker} disabled={!hasMods} build={(!device || canOpenBuild(device.id)) && (device?.family !== 'zoom' || isZoomSetDevice(device.id))} buildText={buildText ?? (device?.family === 'zoom' ? 'Your ' + device.name : undefined)} />}
     {hasMods && (term || libraryFamily !== 'all') && <div className="library-active-filters" role="group" aria-label="Active filters">
       <span>Filtered by</span>
       {term && onClearQuery && <button type="button" aria-label={'Remove search “' + query.trim() + '”'} onClick={() => clearFilter(onClearQuery)}><span>Search: {query.trim()}</span><Icon name="close" size={14} /></button>}
@@ -207,7 +208,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
     </div>}
     {(!device || device.id === 'octatrack') && Object.values(octatrackBlocks ?? {}).some(block => block.kind === 'limit') && <p className="library-limit-note" role="status"><Icon name="lock" size={16} /><span>{LIMIT_REACHED}</span></p>}
     {shownGroups.map(group => <section key={group.device.id} className={'machine-section' + (onlyGroup ? ' is-only-group' : '')} aria-labelledby={!device ? 'machine-' + group.device.id : undefined}>
-      {!device && <div className="library-subheading"><span id={'machine-' + group.device.id}>{group.device.name} <span className="subtle">· {group.count} {group.count === 1 ? 'module' : 'modules'}{group.device.status === 'preview' ? ' · preview' : ''}</span></span><div className="machine-library-actions"><a className="text-button" href={deviceHref(group.device.id)}>Open {group.device.name} library <Icon name="arrow" size={13} /></a>{group.device.family === 'zoom' && isZoomSetDevice(group.device.id) && <a className="button button-primary" href={zoomHubHref(group.device.id)}><Icon name="sliders" size={16}/>Your {group.device.name}</a>}{group.device.id !== 'octatrack' && group.device.family !== 'zoom' && <a className="button button-primary" href={deviceHref(group.device.id,'configuration')} aria-label={(mobile ? 'Open configuration for ' : 'Build firmware for ') + group.device.name}><Icon name="sliders" size={16}/>{mobile ? 'Open configuration' : 'Build firmware'}</a>}</div></div>}
+      {!device && <div className="library-subheading"><span id={'machine-' + group.device.id}>{group.device.name} <span className="subtle">· {group.count} {group.count === 1 ? 'module' : 'modules'}{group.device.status === 'preview' ? ' · preview' : ''}</span></span><div className="machine-library-actions"><a className="text-button" href={deviceHref(group.device.id)}>Open {group.device.name} library <Icon name="arrow" size={13} /></a>{group.device.family === 'zoom' && isZoomSetDevice(group.device.id) && <a className="button button-primary" href={zoomHubHref(group.device.id)}><Icon name="sliders" size={16}/>Your {group.device.name}</a>}{group.device.id !== 'octatrack' && group.device.family !== 'zoom' && canOpenBuild(group.device.id) && <a className="button button-primary" href={deviceHref(group.device.id,'configuration')} aria-label={(mobile ? 'Open configuration for ' : 'Build firmware for ') + group.device.name}><Icon name="sliders" size={16}/>{mobile ? 'Open configuration' : 'Build firmware'}</a>}</div></div>}
       <div className="module-grid">{group.cards}</div>
     </section>)}
     {hasMods ? <>

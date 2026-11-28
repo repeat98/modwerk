@@ -3,6 +3,7 @@
 // Every machine Modwerk knows about (Elektron instruments, Zoom MultiStomp pedals and the Erica Synths LXR-02), with what is known about modding it.
 // Facts about devices other than the Octatrack come from public research projects and are linked from each profile.
 import MACHINES from './machines.generated.json'
+import MACHINE_MODULES from '../catalog/machine-modules.json'
 import type { MachineFamily, MachineProfile } from './machine-contract'
 import { assetUrl } from '../hosting'
 
@@ -82,22 +83,29 @@ export function readyForMods(device: Pick<DeviceProfile, 'family' | 'steps' | 's
 // A machine Start developing sends to integration rather than to module prompts.
 export const needsIntegration = (device: DeviceProfile | undefined) => !device || !readyForMods(device)
 
-// Machines come from sdk/machines/<id>/machine.json through scripts/machines.mjs; the UI keeps a compact shape.
-export const DEVICES: DeviceProfile[] = (MACHINES as MachineProfile[]).map(machine => ({
-  id: machine.id, name: machine.name, family: machine.family, variants: machine.variants, status: machine.status, summary: machine.summary,
-  firmware: machine.firmware && {
-    releases: machine.firmware.releases.map(release => release.version),
-    file: machine.firmware.releases[machine.firmware.releases.length - 1].files[0]?.name,
-    flash: machine.firmware.flash, recovery: machine.firmware.recovery,
-  },
-  steps: machine.steps, stack: machine.stack, research: machine.research, sdk: machine.sdk?.guide, art: machine.art,
-}))
+// A research preview with a library module has reached the first-mod step. An empty preview still shows its research page.
+const machinesWithModules = new Set(MACHINE_MODULES.modules.map(module => module.machine))
+const machineProfiles = MACHINES as MachineProfile[]
+export const DEVICES: DeviceProfile[] = machineProfiles.map(machine => {
+  const hasPreviewModule = machine.status === 'research' && machine.sdk?.platform === 'elemod' && machinesWithModules.has(machine.id)
+  return {
+    id: machine.id, name: machine.name, family: machine.family, variants: machine.variants,
+    status: hasPreviewModule ? 'preview' : machine.status, summary: machine.summary,
+    firmware: machine.firmware && {
+      releases: machine.firmware.releases.map(release => release.version),
+      file: machine.firmware.releases[machine.firmware.releases.length - 1].files[0]?.name,
+      flash: machine.firmware.flash, recovery: machine.firmware.recovery,
+    },
+    steps: hasPreviewModule ? { ...machine.steps, mods: 'done' } : machine.steps,
+    stack: machine.stack, research: machine.research, sdk: machine.sdk?.guide, art: machine.art,
+  }
+})
 
 export const DEVICES_BY_ID: Record<string, DeviceProfile> = Object.fromEntries(DEVICES.map(device => [device.id, device]))
 
 // The build generates standalone pages for the library's Elekloader modules.
-const deviceModulePages = new Set((MACHINES as MachineProfile[])
-  .filter(machine => machine.sdk?.platform === 'elemod' && (machine.status === 'available' || machine.status === 'preview'))
+const deviceModulePages = new Set(machineProfiles
+  .filter(machine => machine.sdk?.platform === 'elemod' && (DEVICES_BY_ID[machine.id].status === 'available' || DEVICES_BY_ID[machine.id].status === 'preview'))
   .map(machine => machine.id))
 export const hasDeviceModulePages = (id: string) => deviceModulePages.has(id)
 

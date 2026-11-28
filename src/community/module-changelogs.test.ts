@@ -22,7 +22,9 @@ describe('module release notes', () => {
   it('covers every current catalog release across every instrument', () => {
     const notes = parseModuleChangelogs(data, COMMUNITY_MODULES)
     expect(Object.keys(notes).length).toBe(COMMUNITY_MODULES.length)
-    expect(new Set(COMMUNITY_MODULES.map(module => module.machine))).toEqual(new Set(['octatrack', 'digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii', 'zoom-ms-70cdr']))
+    const expected = new Set(['octatrack', 'digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii', 'zoom-ms-70cdr'])
+    if (COMMUNITY_MODULES.some(module => module.id === 'analog-four-mkii-euclid-notes')) expected.add('analog-four-mkii')
+    expect(new Set(COMMUNITY_MODULES.map(module => module.machine))).toEqual(expected)
   })
 
   it('rejects an updated catalog version without matching written notes', () => {

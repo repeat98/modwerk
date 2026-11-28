@@ -1,12 +1,12 @@
 # Analog Four MKII SDK
 
-**Platform:** elemod · **OS:** 1.56 · **Core:** elekloader core-a4 0.2 · **Modules:** [`sdk/analog-four-mkii/modules/`](../../analog-four-mkii/modules/) · **Status:** research
+**Platform:** elemod · **OS:** 1.56 · **Core:** Modwerk base from core-a4 0.5 · **Modules:** [`sdk/analog-four-mkii/modules/`](../../analog-four-mkii/modules/) · **Status:** research
 
-The Analog Four MKII runs on the Analog Rytm MKII's platform, a ColdFire MCF5441x: its OS entry, bootstrap loader and UI loop are the Rytm's, instruction for instruction apart from addresses. Its core is elekloader's core-a4, which builds the Digitakt mk1's `core.s`, `settings.s` and `render.s` with the A4's addresses as core-ar2 does for the Rytm, and adds mod storage and parameter pages. The core hooks the shared sites and calls every subscribed mod's handler, in order, from tables the linker builds, so any set of mods that fits the budgets combines. Every hook below has run on a unit. Modwerk's linker has an A4 profile (`src/engine/elektron/elemod.ts`): on the owner's stock 1.56 file it links core-a4 0.2 alone, with each of elekloader's five A4 examples and with three of them together to the same main OS image and storage lockfile as `elekloader.patch`. There is no library module yet, and the browser builds nothing for the A4 until one exists.
+The Analog Four MKII runs on the Analog Rytm MKII's platform, a ColdFire MCF5441x: its OS entry, bootstrap loader and UI loop are the Rytm's, instruction for instruction apart from addresses. Its core is elekloader's core-a4, which builds the Digitakt mk1's `core.s`, `settings.s` and `render.s` with the A4's addresses as core-ar2 does for the Rytm, and adds mod storage and parameter pages. The core hooks the shared sites and calls every subscribed mod's handler, in order, from tables the linker builds, so any set of mods that fits the budgets combines. Every hook below has run on a unit. Modwerk's linker has an A4 profile (`src/engine/elektron/elemod.ts`): on the owner's stock 1.56 file it links core-a4 0.2 alone, with each of elekloader's five A4 examples and with three of them together to the same main OS image and storage lockfile as `elekloader.patch`.
 
 ## Modwerk stack
 
-Today the core is elekloader's core-a4 0.2, and nothing builds for the A4 yet. It is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)). It shares the Rytm's platform, so its base is planned as the Rytm's Modwerk base built with the A4's addresses, as core-a4 is core-ar2 built with them, not as a second design. None of it is started.
+The beta build preview uses the source-built Modwerk base for OS 1.56. It starts from Elekloader core-a4 0.5 and uses the same [base build process](../../../docs/MACHINE_RECIPE.md) as the Analog Rytm MKII. The SDK continues to expose the core 0.2 contract below. The preview checks the owner's stock file locally. Downloads remain disabled pending review.
 
 ## Create a mod
 
@@ -62,7 +62,7 @@ core_store_set(STORE(my_accent), live_pattern, track, v + 1);
 ## Memory and budgets
 
 - **Shared mod memory:** 128 KiB of DDR (`0x47BE0000–0x47C00000`) for the core and every mod's code and data, as on the Rytm. A boot-time fill of the area and the gaps beside it was read back intact on a unit, through normal use, Overbridge and a power cycle.
-- **Core image:** core 0.2 is 8,764 bytes `.run` plus 192 bytes `.bss` in the shared area, and an 88-byte `.boot` copier (elekloader `f02be99`). The linker remains authoritative for combined sizes and overlap.
+- **Core image:** the pinned Modwerk base, linked by itself, uses 43,472 bytes of shared memory. The original core 0.2 reference build is 8,764 bytes `.run` plus 192 bytes `.bss` in the shared area, and an 88-byte `.boot` copier (elekloader `f02be99`). The linker remains authoritative for combined sizes and overlap.
 - **Fast SRAM:** none.
 - **Protected ranges:** none on OS 1.56.
 - **Flash:** the main OS must end below `0x300000`, where the OS keeps its voice calibration record; its settings store is at `0x380000–0x400000`.
@@ -71,19 +71,14 @@ Claim named resources (a settings row, a SysEx id, a timer) in `platform.claims`
 
 ## Toolchain and build
 
-Debian's `m68k-linux-gnu` GCC and binutils for ColdFire (set `ELEKLOADER_CROSS` for another prefix such as `m68k-elf-`), and elekloader's builder. Use the exact owner-supplied `Analog-Four_MKII_OS1.56.syx`; the builder recognises firmware by hash and changes only the main OS section. From an elekloader checkout:
+From Modwerk, use the pinned Elekloader compiler checkout and the same ColdFire tools as the Analog Rytm MKII. Supply your original OS 1.56 file and a new output folder outside the checkout.
 
 ```sh
-python -m elekloader.sdk.build mods/core-a4 --stock Analog-Four_MKII_OS1.56.syx
-python -m elekloader.sdk.build <module-folder> --stock Analog-Four_MKII_OS1.56.syx
-python -m elekloader.lint <module-folder>/out/<mod>-<version>.elemod \
-    --stock Analog-Four_MKII_OS1.56.syx --with mods/core-a4/out/core-0.2.elemod
-python -m elekloader.patch --stock Analog-Four_MKII_OS1.56.syx \
-    --mod mods/core-a4/out/core-0.2.elemod --mod <module-folder>/out/<mod>-<version>.elemod \
-    --out my-build.syx --version XX01
+npm run upstream:tools
+npm run machine:base -- analog-four-mkii --stock /path/to/Analog-Four_MKII_OS1.56.syx --out /path/to/new-output
 ```
 
-Modwerk packs the main OS more densely than elekloader, so a build's .syx is smaller than elekloader's for the same image (893,717 stored bytes against 974,236 for core alone); both depack to the same image. The in-place depack margin narrows with it: about 478 KB for core with three mods, against stock's 540 KB.
+The command checks the OS hash, builds the vendored source, checks the preserved core interface and verifies the result against [the base identity](base-binding.json). The [source and licence](elekloader/README.md) are pinned separately from the Modwerk compiler checkout.
 
 ## Flash and recover
 
@@ -91,7 +86,7 @@ Send the .syx with Elektron Transfer over USB (MIDI IN and OUT set to the device
 
 ## Status
 
-core-a4 0.1 and 0.2 are in elekloader (irpina/elekloader#154 and #180). On a unit, on OS 1.56: HC56 (core and hooks-check-a4) ran every hook; SC56 (store-check-a4) kept every storage field through saves, loads, power cycles and a Transfer round trip; CA56 (ddr-canary-a4) left the mods' area intact; PA56 (core 0.2 and pages-check-a4) passed the parameter page checks; the stock file restored the unit over MIDI DIN. Before a first module enters the library, the A4 needs a pinned core-a4 release (elekloader has none yet) and the browser's build preview.
+core-a4 0.1 and 0.2 are in elekloader (irpina/elekloader#154 and #180). On a unit, on OS 1.56: HC56 (core and hooks-check-a4) ran every hook; SC56 (store-check-a4) kept every storage field through saves, loads, power cycles and a Transfer round trip; CA56 (ddr-canary-a4) left the mods' area intact; PA56 (core 0.2 and pages-check-a4) passed the parameter page checks; the stock file restored the unit over MIDI DIN. The preview pins the Modwerk base built from Elekloader v0.10.0 source. The author reported that the standalone A4B1 build worked on their Analog Four MKII. See the [exact-build verification](../../../docs/verification/2026-11-28-analog-four-mkii-base.md).
 
 ## Credits
 

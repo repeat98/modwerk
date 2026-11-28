@@ -23,7 +23,7 @@ import { KIT_FILES, UPSTREAM_CATALOG, assembleCatalog, isCatalogRecord, type Cat
 export { mergeCatalogOverlay } from './elekloader-vendor.ts'
 
 /** The devices Modwerk builds for, and their machine folders under sdk/. */
-export const DEVICES: Record<string, string> = { 'digitakt-mk1': 'digitakt', 'digitakt-mk2': 'digitakt-ii', 'digitone-mk1': 'digitone', 'analog-rytm-mk2': 'analog-rytm-mkii', 'model-cycles': 'model-cycles' }
+export const DEVICES: Record<string, string> = { 'digitakt-mk1': 'digitakt', 'digitakt-mk2': 'digitakt-ii', 'digitone-mk1': 'digitone', 'analog-rytm-mk2': 'analog-rytm-mkii', 'analog-four-mk2': 'analog-four-mkii', 'model-cycles': 'model-cycles' }
 
 type Pin = CatalogFile['mods'][number]
 
