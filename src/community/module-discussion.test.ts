@@ -25,8 +25,8 @@ describe('one module discussion',()=>{
     const issue={device:'Octatrack MKII',version:communityModule('miniverb')!.version,steps:'Select Mini Verb.',expected:'Audio plays.',actual:'Audio stops.'}
     for(const payload of [
       {category:'issues',moduleId:'miniverb',issue},
-      {category:'issues',moduleId:'digitakt-digihealth',machine:'digitakt',issue},
-      {category:'issues',moduleId:'digitone-digihealth',machine:'digitone',issue},
+      {category:'issues',moduleId:'digitakt-digiperform',machine:'digitakt',issue},
+      {category:'issues',moduleId:'digitone-kitbank',machine:'digitone',issue},
       {category:'issues',machine:'syntakt'},
       {category:'general',moduleId:'miniverb',issue},
     ]){
@@ -223,16 +223,16 @@ describe('shared configurations on module pages',()=>{
     const share=async(configuration:unknown,title='Shared set')=>{const result=await call('/forum/threads','POST',{title,body:'Try this set.',category:'configs',configuration},token);expect(result.status).toBe(201);return (await result.json()).id as string}
     const first=await share(octatrack(['miniverb','recorder-loop-fix']),'Ambient set'),second=await share(octatrack(['miniverb']),'Verb only'),hidden=await share(octatrack(['miniverb']),'Hidden later')
     await share(octatrack(['recorder-loop-fix']),'No verb')
-    const digi=await share({name:'Digi',device:'digitakt',moduleIds:['digihealth'],moduleVersions:{digihealth:communityModule('digitakt-digihealth')!.version},keepStockFx2:false},'Digitakt set')
+    const digi=await share({name:'Digi',device:'digitakt',moduleIds:['digiperform'],moduleVersions:{digiperform:communityModule('digitakt-digiperform')!.version},keepStockFx2:false},'Digitakt set')
     await call('/forum/threads','POST',{title:'A question',body:'Not a configuration.',category:'general',moduleId:'miniverb'},token)
     db.prepare('UPDATE forum_threads SET hidden=1 WHERE id=?').run(hidden)
     expect((await (await call('/modules/miniverb')).json()).sharedConfigurations).toBe(2)
     expect((await (await call('/modules/recorder-loop-fix')).json()).sharedConfigurations).toBe(2)
-    expect((await (await call('/modules/digitakt-digihealth')).json()).sharedConfigurations).toBe(1)
+    expect((await (await call('/modules/digitakt-digiperform')).json()).sharedConfigurations).toBe(1)
     expect((await (await call('/modules/remix-tapeecho')).json()).sharedConfigurations).toBe(0)
     const listed=async(query:string)=>((await (await call('/forum/threads?'+query)).json()).threads as {id:string}[]).map(thread=>thread.id).sort()
     expect(await listed('category=configs&module=miniverb')).toEqual([first,second].sort())
-    expect(await listed('category=configs&module=digitakt-digihealth')).toEqual([digi])
+    expect(await listed('category=configs&module=digitakt-digiperform')).toEqual([digi])
     expect((await listed('module=miniverb')).length).toBe(3)
     expect(await listed('category=general&module=miniverb')).toHaveLength(1)
   })

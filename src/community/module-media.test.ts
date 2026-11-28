@@ -13,7 +13,8 @@ describe('committed module media', () => {
       expect(media?.version).toBe(document.version)
       expect(media?.media.map(item => item.path)).toEqual(document.media.filter(item => item.kind !== 'thumbnail').map(item => item.path))
     }
-    expect(moduleMediaDocument('digitakt-digihealth')?.version).not.toBe(moduleMediaDocument('digitone-digihealth')?.version)
-    expect(moduleMediaDocument('unknown-digihealth')).toBeUndefined()
+    expect(moduleMediaDocument('digitakt-digiutils')?.version).not.toBe(moduleMediaDocument('digitone-kitbank')?.version)
+    expect(moduleMediaDocument('digitone-digiutils')).toBeUndefined()
+    expect(moduleMediaDocument('unknown-digiutils')).toBeUndefined()
   })
 })

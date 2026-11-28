@@ -120,21 +120,6 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
         links: [repo('devilfish707/Octaplay')],
       },
       {
-        name: 'digi1_mods', author: 'gdeo607 and contributors',
-        description: 'Digi EQ, Digi Mono, Digi Poly, Digi Matrix, Digi utilities and digichain: the original Digitakt engines, tools and module implementations.',
-        links: [repo('gdeo607/digi1_mods')],
-      },
-      {
-        name: 'Digisophie', author: 'Sjoerd (@soejrd)',
-        description: 'The Sophie metallic-percussion algorithm adapted for the Digitakt, with its original source, documentation and component credits retained.',
-        links: [repo('soejrd/digisophie')],
-      },
-      {
-        name: 'Sophie for Schwung', author: 'Matt Estela (@mestela)',
-        description: 'The original metallic-percussion algorithm behind Digisophie’s fixed-point port.',
-        links: [repo('mestela/schwung-sophie')],
-      },
-      {
         name: 'Modwerk & Octatrack modules', author: 'Jannik Aßfalg (@repeat98) and Modwerk contributors',
         description: 'The browser configurator, local build integration and community, plus Mini Verb, Tape Echo, Euclid, Repitch, VECTOR and the original Analog BD engines. The octamad fork records earlier Octatrack integration work.',
         links: [repo('repeat98/modwerk'), repo('repeat98/octamad')],

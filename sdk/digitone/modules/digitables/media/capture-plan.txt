@@ -1,9 +1,0 @@
-wait 1000
-tap AMP
-tap AMP
-tap AMP
-snap tbl
-tap T1 5000 100
-snap editor
-turn A 4 100
-snap editor-step
