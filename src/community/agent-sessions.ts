@@ -14,7 +14,7 @@ export const SESSION_NOTE_LIMIT = 1000
 export const SESSION_ENTRY_LIMIT = 8000
 export const SESSION_TEXT_LIMIT = 3_000_000 // characters of kept text, before compression
 export const SESSION_GZIP_LIMIT = 1_000_000 // bytes the Worker accepts
-export const SESSION_AGENTS = ['claude-code', 'codex'] as const
+export const SESSION_AGENTS = ['claude-code', 'codex', 'cursor'] as const
 export type SessionAgent = typeof SESSION_AGENTS[number]
 export type SessionEntry = { who: 'developer' | 'agent' | 'tool'; text: string; at?: string; failed?: true }
 export type SessionRemoved = { toolOutputs: number; thinking: number; codeBlocks: number; hexLines: number; blobs: number; secrets: number; skipped: number; trimmed: number }
@@ -194,6 +194,65 @@ export function readCodexRollout(lines: string[]): Omit<SessionDocument, 'note'>
     }
   }
   return { format: SESSION_FORMAT, agent: 'codex', ...(cwd ? { cwd } : {}), ...(branch ? { branch } : {}), ...(startedAt ? { startedAt, endedAt } : {}), entries, removed }
+}
+
+const CURSOR_TIMESTAMP = /<timestamp>([^<]+)<\/timestamp>/
+const CURSOR_SKIP = /^\s*(?:<(?:available_subagent|user_info|system_reminder|open_and_recently_viewed_files|git_status)|# AGENTS\.md instructions)/
+const cursorPrompt = (text: string) => {
+  const body = (text.match(/<user_query>\s*([\s\S]*?)\s*<\/user_query>/) ?? [])[1] ?? text
+  return body.replace(CURSOR_TIMESTAMP, '').trim()
+}
+const cursorAt = (text: string) => {
+  const match = text.match(CURSOR_TIMESTAMP)
+  if (!match) return undefined
+  const at = Date.parse(match[1].trim())
+  return Number.isFinite(at) ? new Date(at).toISOString() : undefined
+}
+const cursorToolName = (name: string) => (name === 'Shell' ? 'Bash' : name)
+const cursorToolInput = (name: string, input: unknown): Raw => {
+  if (!record(input)) return {}
+  if (name === 'Shell') return { command: input.command, description: input.description }
+  if (name === 'Read' || name === 'Write' || name === 'StrReplace') return { file_path: input.path, description: input.description }
+  if (name === 'Grep') return { pattern: input.pattern, description: input.path ?? input.description }
+  if (name === 'Glob') return { pattern: input.glob_pattern, description: input.target_directory }
+  return input
+}
+
+/** One Cursor transcript (`~/.cursor/projects/<cwd>/agent-transcripts/<id>/<id>.jsonl`), one JSON object per line. */
+export function readCursorTranscript(lines: string[]): Omit<SessionDocument, 'note'> {
+  const entries: SessionEntry[] = [], removed = emptyRemoved(), tools = new Map<string, SessionEntry>()
+  let startedAt: string | undefined, endedAt: string | undefined
+  for (const line of lines) {
+    let row: unknown
+    try { row = JSON.parse(line) } catch { continue }
+    if (!record(row) || !record(row.message)) continue
+    const role = str(row.role)
+    const blocks = Array.isArray(row.message.content) ? row.message.content.filter(record) : []
+    const text = blocks.filter(block => block.type === 'text').map(block => str(block.text)).join('\n')
+    const at = cursorAt(text) || str(row.timestamp) || undefined
+    if (at) { startedAt ??= at; endedAt = at }
+    if (role === 'user') {
+      for (const block of blocks) if (block.type === 'tool_result') {
+        removed.toolOutputs++
+        const tool = tools.get(str(block.tool_use_id))
+        if (tool && block.is_error === true) tool.failed = true
+      }
+      const prompt = cursorPrompt(text)
+      if (prompt && !CURSOR_SKIP.test(prompt)) entries.push({ who: 'developer', text: prompt, ...(at ? { at } : {}) })
+      else if (prompt) removed.skipped++
+      continue
+    }
+    if (role !== 'assistant') continue
+    if (text.trim()) entries.push({ who: 'agent', text, ...(at ? { at } : {}) })
+    for (const block of blocks) if (block.type === 'tool_use') {
+      const rawName = str(block.name)
+      const entry: SessionEntry = { who: 'tool', text: describeTool(cursorToolName(rawName), cursorToolInput(rawName, block.input)), ...(at ? { at } : {}) }
+      entries.push(entry)
+      const id = str(block.id)
+      if (id) tools.set(id, entry)
+    }
+  }
+  return { format: SESSION_FORMAT, agent: 'cursor', ...(startedAt ? { startedAt, endedAt } : {}), entries, removed }
 }
 
 /** Scrubs every entry and the note, drops the entries the developer chose to leave out, and trims the middle of a session

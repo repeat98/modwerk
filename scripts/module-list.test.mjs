@@ -74,8 +74,8 @@ function draft({ kind = 'DSP_EFFECT', manifest = MANIFEST(kind), testing = TESTI
   write(`sdk/drafts/${id}/upstream/LICENSE`, LICENSE)
   for (const name of ['qualification.example.json', 'resource-impact.example.json']) write(`sdk/drafts/${id}/${name}`, '{}\n')
 }
-beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'modwerk-module-list-'))
+beforeEach(() => { root = mkdtempSync(join(tmpdir(), 'modwerk-module-list-')); setup() })
+function setup() {
   write('sdk/catalog.json', out({ schemaVersion: 1, modules: [
     { id: 'dark', version: '0.2.0', addedAt: '2026-10-01T00:00:00Z' }, { id: 'tape', version: '0.1.0', addedAt: '2026-10-02T00:00:00Z' },
     { id: 'cf-thing', version: '0.1.0', addedAt: '2026-10-03T00:00:00Z' }] }))
@@ -93,7 +93,7 @@ beforeEach(() => {
     moduleComponents: { chorus: ['airwindows'], other: ['elsewhere'] } }))
   write('src/community/module-changelogs/dark.json', '[]\n')
   draft()
-})
+}
 afterEach(() => rmSync(root, { recursive: true, force: true }))
 
 function list(ids = ['desk'], options = {}) {
@@ -213,11 +213,26 @@ describe('module:list', () => {
     rmSync(join(root, 'sdk/drafts/desk'), { recursive: true }); draft({ manifest: MANIFEST('DSP_EFFECT').replace('donor_desc=0x400d58b8', 'donor_desc=0x400d5000') })
     await refused(/donor descriptor at 0x400d5000, so its guard \(0x400d5038\) has no verified hash. Clone a donor one does \(DARK REV 0x400d58b8, the descriptor 0x400d5a4a, SPRING REV 0x400d5726\)/)
   })
-  it('refuses an FX2 id another module holds or a stock one', async () => {
-    rmSync(join(root, 'sdk/drafts/desk'), { recursive: true }); draft({ manifest: MANIFEST('DSP_EFFECT').replace('fx2_id=0x1a,', 'fx2_id=0x17,') })
-    await refused(/FX2 id 0x17 is already dark's/)
+  it('refuses a stock FX2 id without replaces', async () => {
     rmSync(join(root, 'sdk/drafts/desk'), { recursive: true }); draft({ manifest: MANIFEST('DSP_EFFECT').replace('fx2_id=0x1a,', 'fx2_id=0x15,') })
     await refused(/FX2 id 0x15 belongs to a stock effect/)
+  })
+  // The id is only preferred: the base gives each effect its own at install (owner, 28 November 2026).
+  it('lists an effect on an id another module prefers, or past stock\'s 32 without a slot guard', async () => {
+    rmSync(join(root, 'sdk/drafts/desk'), { recursive: true }); draft({ manifest: MANIFEST('DSP_EFFECT').replace('fx2_id=0x1a,', 'fx2_id=0x17,') })
+    await list().promise
+    expect(read('scripts/build-module-packages.py')).toContain("fxId=0x17, donorAddress=0x400d58f0,\n                donorSha256='" + A + "',\n                fx2Slot=0x400d6038,")
+    for (const fxId of ['0x20', '0x7f']) {
+      rmSync(root, { recursive: true, force: true }); root = mkdtempSync(join(tmpdir(), 'modwerk-module-list-')); setup()
+      rmSync(join(root, 'sdk/drafts/desk'), { recursive: true }); draft({ manifest: MANIFEST('DSP_EFFECT').replace('fx2_id=0x1a,', `fx2_id=${fxId},`) })
+      const run = list()
+      await run.promise
+      expect(read('scripts/build-module-packages.py')).toContain(`fxId=${fxId}, donorAddress=0x400d58f0,\n                donorSha256='${A}'))\n        for old in descriptor_guards:`)
+      expect(run.lines.join('\n')).toContain(`(DARK REV), no FX2 slot (id ${fxId} is past stock's table)`)
+      const again = list()
+      await again.promise
+      expect(again.lines[0]).toBe('desk: listed already; nothing to change.')
+    }
   })
   it('refuses DSP figures it cannot find', async () => {
     rmSync(join(root, 'sdk/drafts/desk'), { recursive: true }); draft({ testing: 'Not measured.\n' })

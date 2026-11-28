@@ -37,8 +37,8 @@ MODULE = Module(
     category=Category.MACHINES,
     author="ilia-murzinov",
     author_url="https://github.com/ilia-murzinov",
-    proof=Proof.UNTESTED,
-    proof_note="Partial MKII and emulator results are recorded in TESTING.md; full publication qualification remains incomplete.",
+    proof=Proof.HARDWARE,
+    proof_note="MKII on twin 43ac24652a89f28b (release base eb667962): test:procedure steps 1-10, CUE Undo, save and power-cycle persistence; TESTING.md.",
     doc="TRACK + PAGE opens SEQ: Euclidean rhythms, lock rhythms, and generated melodies and chords, "
         "for audio and MIDI tracks.",
     linked=(Linked("seq", "modules/seq/seq.s", dram=True),),

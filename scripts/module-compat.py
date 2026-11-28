@@ -13,12 +13,14 @@ when present, the committed base package): no firmware, no emulator. Shared beha
 as in Elekloader (docs/ADAPTING.md, rule 4): the base owns each hook's stock site and modules subscribe
 to it. Two owners may meet on stock bytes only where sdk/machines/octatrack/compatibility.json names both
 modules and the address with a reason; the base's own exceptions are build_core.py's BASE_OWNS. Everything
-else octabam's ledger refuses (FX ids, DSP hooks, core-private Y, buffer regions, data ranges) is checked
+else octabam's ledger refuses (DSP hooks, core-private Y, buffer regions, data ranges; FX ids only for two
+replacements of one stock effect or a pinned id, since the base gives every effect its own) is checked
 for every pair and for the whole active set. Two modules may not claim the same key gesture or stock screen
 (compatibility.uiClaims in octamod.module.json) unless one lists the other in compatibility.conflicts, which the
 configurator enforces.
 """
 import ast
+import functools
 import importlib.util
 import itertools
 import json
@@ -58,7 +60,8 @@ ROUTES = {
               'relocating it again', '#propose-a-hook'),
     'copy': ('copy these stock bytes from an unpatched location (identical bytes elsewhere in stock)',
              '#cross-compatibility'),
-    'row': ('pick another chooser row (a free effect ID)', '#cross-compatibility'),
+    'row': ('only one module may replace a stock effect, and a pinned effect id (its ColdFire code names it) is that '
+            'module\'s: prefer another id', '#cross-compatibility'),
     'ui': ('change one so both work together; if the clash is deliberate, add the other module to compatibility.conflicts '
            'in your octamod.module.json, and the configurator never builds the two together', '#ui-claims'),
     'other': ('claim a resource nobody else uses, or request a base-owned region or hook for shared state',
@@ -181,7 +184,18 @@ def ledger_findings(selected, platform):
         problems = ledger.check(modules)
     except (ValueError, SystemExit) as error:
         problems = [f'composition: {error}']
-    return [p for p in problems if p.split(':', 1)[0] not in SPAN_FINDINGS]
+    # The base gives each effect its own id at install (dsp.c choose), so a shared preferred id installs; a shared stock id
+    # (two replacements) or a pinned package's id does not. The ledger's 'fx2 id' finding ends with the id.
+    fixed = {m.menu.fx2_id for m in selected if m.menu and (m.menu.replaces or m.name in pinned_ids())}
+    return [p for p in problems if p.split(':', 1)[0] not in SPAN_FINDINGS
+            and not (p.startswith('fx2 id:') and int(p.rsplit('0x', 1)[1], 16) not in fixed)]
+
+
+@functools.cache
+def pinned_ids():
+    """Packages whose ColdFire code names their effect id (build.py --pinned): the base gives them that id or none."""
+    packages = json.loads((APP / 'src/engine/assets/octatrack-module-packages.json').read_text(encoding='utf-8'))['packages']
+    return {row['id'] for row in packages if row.get('pinned')}
 
 
 def room_problems(hooks, rooms):
