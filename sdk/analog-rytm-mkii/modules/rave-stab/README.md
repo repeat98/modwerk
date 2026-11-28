@@ -55,9 +55,9 @@ The BD, SD and BT tracks' machine lists, in the SY section (FUNC + SRC).
 
 ### Quick tutorial
 
-1. Select the BD track, press FUNC + SRC, choose SY RAVE and press YES. Play the pad: the EURK chord.
+1. Select the BD track, press FUNC + SRC, scroll to SY RAVE in the SY section and press YES. Play the pad: the EURK chord.
 2. On the FLTR page close the frequency, raise the resonance a little and give the filter envelope a short decay: the classic stab. Shorten the AMP's decay for a tighter one.
-3. Turn CHD to MI11 and DET to 40 for a wide, beating stab; WAV to 0 for a saw; PCH to +40 for the zap; STR to 40 for a quick strum.
+3. Turn CHD to MI11 and DET to 40 for a wide, beating stab; WAV to 0 for a saw; PCH to 100 for the zap; STR to 40 for a quick strum.
 4. In CHROMATIC mode play notes: the whole chord transposes.
 5. Lock CHD and VOI on a few steps (hold the trig, turn the knob) for a progression on one track.
 
@@ -83,4 +83,10 @@ Original work by chevyone, GPL-3.0-or-later ([LICENSE](LICENSE)). The chords, cu
 
 ## Screens and audio
 
-No screenshots or audio yet.
+Captured on a MKII running RV07 (SY RAVE alone on the development base, RAM-booted), the screen read over USB ([capture.json](media/capture.json)):
+
+- ![SY RAVE in the machine list](media/machine-list.png) SY RAVE in the SY section of the machine list (FUNC + SRC).
+- ![SY RAVE's SYNTH page](media/synth-page.png) The SYNTH page.
+- ![CHD showing MIN9](media/chord-name.png) CHD shows the chord's name while it turns.
+
+No audio yet.

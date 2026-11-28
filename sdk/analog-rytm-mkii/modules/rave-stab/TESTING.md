@@ -62,6 +62,23 @@ The developer, by ear on RH05: the strum is a good idea; the downward half is no
 
 `RH06` (with HH Alloy, from RH05's lockfile): sha256 `96509cc583150f679eeb3b719169f03018cc95af585a03ca10a3999c40e4030b`, ramSpare 93,960 B. RAM-booted over the link (image crc e3c8a7dd; the flash still holds SC02). The developer, by ear on RH06: "excellent".
 
+## Screenshots (28 Nov 2026)
+
+`RV07`: the development base's voices variant (`879c6c23`) and rave-stab 0.1.0-experimental alone, sha256 `d7697d672a32fb3176ab582ad00127d64a9af2ad4d80c7decf0418a955058c7b`, ramSpare 100,400 B. RAM-booted over the link (back in 13.2 s, image crc de8e3c72; the flash still holds SC02). On the SD track: FUNC + SRC lists SY RAVE in the SY section, YES chooses it and the SYNTH page reads `T-1 PCH CHD STR / WAV VOI DET LEV`; a turn of CHD shows the chord's name (EURK, OCT and MIN9 seen). The three screens are in `media/`, their plans in `media/capture.json`.
+
+## Edge cases (0.1.0-experimental, RH06)
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| CHD and VOI locked on several steps | the chord and voicing are latched at the hit; a lock must change the next hit and never the ringing chord | host test (a change after the hit leaves the ringing chord exactly as it was); not on a unit | not run: on a unit, needs a person to lock steps and listen |
+| SY RAVE on BD, SD and BT at once | each voice costs 6.8 % of a block; three ringing together about a fifth | the CPU meter measured one voice (6.76 %, 7.95 % at most) on RH01 | not run: several voices together not measured |
+| Project save and power cycle | the register (T-1 … T+1) is kept in the sound's mod storage | — | not run: needs a Keep or flash and a power cycle, left to a device reviewer |
+| Other machines' knob text | the `core_params` entry at order 9 sits before the base's text for every hidden slot | code path: it returns PASS for every record whose owner is not slot 39 or whose index is not 12 or 13; on RH04–RH06 SY RAVE's own page read right | not run: another digital voice's page not read beside it |
+| STR 127 over a chord still ringing | a waiting note fades out first; a step would click | host test: largest sample step 0.267; the author by ear on RH06 | pass (by ear as reported) |
+| PCH at 0 and 127 with DET 127, velocity 127 | the pitch offset and spread add up; the sum must not wrap | host test: peak 0.901, never wraps | pass |
+| A sound saved with stock DEC on index 11 | STR reuses DEC's index and CC | read the code: an old DEC value becomes a strum; written in the README | not run on a unit |
+| Beside another module on the same base | slot 39 and the order-9 text entry must not clash with another voice machine | RH04–RH06 booted with HH Alloy (slot 41) beside it; `module:doctor` and `modules:check` green | pass |
+
 ## Not tested
 
 - On a unit: the register tap, the sound by ear (the developer is playing it), locks, the filter after it, several voices at once, the CPU meter, a project save and a power cycle.
