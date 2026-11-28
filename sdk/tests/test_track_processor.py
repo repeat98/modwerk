@@ -13,8 +13,8 @@ class TrackProcessor(unittest.TestCase):
     def test_publication_identity_and_complete_trial_readiness(self):
         subprocess.run([sys.executable,'-B',str(FIXTURES/'check_ready.py')],check=True)
 
-    def test_direct_actions_and_existing_settings(self):
-        subprocess.run([sys.executable,'-B',str(FIXTURES/'check_actions.py')],check=True)
+    def test_returning_chain_contract_and_transport(self):
+        subprocess.run([sys.executable,'-B',str(FIXTURES/'returning/check_chain.py')],check=True)
 
     def test_owned_controls_and_retirement(self):
         policy=ROOT/'sdk/machines/octatrack/module-adapters/controller-policy'

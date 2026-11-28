@@ -60,7 +60,7 @@ modwerk_track_publication exposes only the actual execution image's publication
 serial: unrelated MODULES READY preserves it; Undo/reactivation changes it.
 Zero means absent/exhausted. Modules never infer it from addresses or owner epoch.
 
-## Budget, settings and lifecycle
+## Budget and lifecycle
 
 The aggregate sums existing executed/hardware prices plus a conservative wrapper
 allowance, reserves before ENABLE and retains capacity until known-off/drained.
@@ -69,10 +69,10 @@ Ordinary uncommitted FX picks keep their refusal policy. Heavy scans stay outsid
 the short full-mask publication fence. Each fresh budget check shares one bank
 scan across cores; no bank-dependent result is cached between checks.
 
-The direct nonpersistent settings action-group ABI keeps YES on its row and
-refreshes the fields. It never replays project edits at installation. Existing
-settings/presets/status behavior remains. Completed temporary whole-set readiness
-does not permit saved-set writes during a trial.
+The direct settings action API and its tests are split into a separate proposal
+on branch base/settings-direct-actions. This processor proposal adds no settings
+ABI. Completed temporary whole-set readiness does not permit saved-set writes
+during a trial.
 
 ## Evidence and limits
 
@@ -103,3 +103,14 @@ The maintainer requested scheduling after0.8.3. Exact-build live-FX/both-core,
 CPU/load, persistence, normal-set and longer Undo qualification remain pending;
 an older1,562-second Undo failure is unresolved. Keep the proposal a draft.
 The later module release needs its own PR and the owner's library-copy approval.
+
+## Review follow-up — 28 November 2026
+
+Board claims are linked to PR2248: hook octatrack/0 denotes the existing DSP
+dispatcher, not a new ColdFire event; the two DSP-region keys are
+octatrack/returning-y-800-bff-both and octatrack/returning-y-cc1-fef-both.
+The three legacy-test assumptions are corrected only on the separate branch
+fix/resident-tests-ledger, tested on both current main and the processor extension.
+That fix needs its own review/merge before the full processor check can be green.
+The private RAM pair named above still contains both proposals. Splitting the
+source does not turn it into physical qualification of the eventual merged Base.
