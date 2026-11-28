@@ -178,6 +178,11 @@
       "addedAt": "2026-10-26T02:02:14Z"
     },
     {
+      "id": "scope",
+      "version": "0.2.0-experimental",
+      "addedAt": "2026-11-27T00:00:00Z"
+    },
+    {
       "id": "slow-lfo",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-05T12:00:00Z"

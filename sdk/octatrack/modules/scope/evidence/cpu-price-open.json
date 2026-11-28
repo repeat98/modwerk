@@ -1,0 +1,68 @@
+{
+  "module": "scope",
+  "version": "0.2.0-experimental",
+  "base": "4c7eb79b844c8139",
+  "scene": "MKII, dev twin 4c7eb79b (0.8.1 beta --dev), pattern playing, SCOPE window open (DOWN+0x18 TEMPO)",
+  "inputs": {
+    "transport": "playing"
+  },
+  "seconds": 8,
+  "readings": 3,
+  "measuredAt": "2026-11-28T11:22:59.018Z",
+  "result": {
+    "id": "scope",
+    "version": "0.2.0-experimental",
+    "packageSha256": "f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273",
+    "before": {
+      "frame": 29.1,
+      "frameMax": 59.8,
+      "frames": 67111,
+      "skipped": 0,
+      "cpu": 44,
+      "dsp1to4": 34.6,
+      "dsp5to8": 41.9,
+      "dsp1to4Peak": 35.7,
+      "dsp5to8Peak": 42.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.1,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 7.6,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "atRest": {
+      "frame": 30.2,
+      "frameMax": 64.2,
+      "frames": 67095,
+      "skipped": 0,
+      "cpu": 46.7,
+      "dsp1to4": 34,
+      "dsp5to8": 41.9,
+      "dsp1to4Peak": 35.7,
+      "dsp5to8Peak": 42.9,
+      "readings": 3,
+      "spread": {
+        "frame": 0.3,
+        "cpu": 1,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 1,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "atRestAdds": {
+      "frame": 1.1,
+      "cpu": 2.7,
+      "dsp1to4": -0.6,
+      "dsp5to8": 0,
+      "dsp1to4Peak": 0,
+      "dsp5to8Peak": 0
+    },
+    "rolledBack": true
+  }
+}

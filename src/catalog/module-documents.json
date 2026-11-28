@@ -11762,6 +11762,294 @@
     },
     {
       "schemaVersion": 2,
+      "id": "scope",
+      "key": "SCOPE",
+      "name": "Scope",
+      "version": "0.2.0-experimental",
+      "category": "system",
+      "access": {
+        "location": "Front panel: hold DOWN first, then press TEMPO.",
+        "steps": [
+          "Select an audio track that is making sound. No effect slot is required.",
+          "Hold [DOWN] first, then press [TEMPO]. The full-panel SCOPE window opens.",
+          "Turn DATA ENTRY A (GAIN) and B (TIME). Press [UP] or [DOWN] to cycle OSC, XY and ALL.",
+          "Press [TEMPO], [YES] or [NO] to close. Hold [DOWN] and press [TEMPO] again to reopen."
+        ],
+        "screenshots": [
+          "media/scope-all-live.png",
+          "media/scope-live-trace.png"
+        ]
+      },
+      "author": {
+        "github": "ilia-murzinov",
+        "credits": [
+          "ilia-murzinov: SCOPE ColdFire unit, panel and behaviour in octabam (upstream/modules/scope/); Modwerk hooks port and catalog documentation.",
+          "Sam Banks: octabam upstream tree and MIT licence (upstream/LICENSE)."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "Live waveform on DOWN + TEMPO",
+        "family": "Meter",
+        "summary": "Hold DOWN and press TEMPO for a full-screen scope of the selected track: OSC, XY or ALL eight tracks, with GAIN and TIME on A and B.",
+        "overview": "SCOPE opens a full-panel window over the page and plots the selected audio track after its effects and before its fader. OSC draws a mono polyline, XY plots left against right, and ALL shows eight mini level strips in track-pad order. Encoder A sets GAIN, encoder B sets TIME. Push A to reset GAIN and clear the peak hold. Release CUE to toggle the G/P HUD. UP and DOWN cycle the three views; RIGHT shows help and LEFT returns.",
+        "highlights": [
+          "DOWN + TEMPO opens OSC, XY or ALL without using an effect slot.",
+          "GAIN and TIME on A and B; push A clears the peak; CUE release toggles G/P.",
+          "Standalone: no TUNER module required."
+        ],
+        "usage": [
+          "Hold [DOWN] and press [TEMPO] to open SCOPE on the selected audio track.",
+          "Turn DATA ENTRY A for GAIN and B for TIME; press [UP] or [DOWN] to switch OSC, XY and ALL.",
+          "Press [TEMPO], [YES] or [NO] to close, or hold [DOWN] and press [TEMPO] again."
+        ]
+      },
+      "controls": [
+        {
+          "name": "GAIN",
+          "default": 20,
+          "count": 41,
+          "doc": "Vertical scale for OSC and XY. Centre (20) is 0 dB; 0..40 is about ±20 dB. Push A resets to centre and clears the peak hold.",
+          "labels": null
+        },
+        {
+          "name": "TIME",
+          "default": 3,
+          "count": 10,
+          "doc": "How much of the ring maps across the panel. Higher values show a longer stretch of audio.",
+          "labels": null
+        },
+        {
+          "name": "VIEW",
+          "default": 0,
+          "count": 3,
+          "doc": "OSC is a mono polyline of the selected track. XY is left against right. ALL is eight mini strips in track-pad order.",
+          "labels": [
+            "OSC",
+            "XY",
+            "ALL"
+          ]
+        }
+      ],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Audio tracks",
+        "conflicts": [],
+        "uiClaims": [
+          "key:DOWN+TEMPO"
+        ],
+        "limitations": [
+          "0.2.0 targets the public Modwerk 0.8.1 beta base (Elektron OS 1.40C). Install SCOPE from the catalog USB package. No separate USB Audio module is required. Tuner can stay installed in the same set. Hold DOWN before TEMPO.",
+          "Hold DOWN before TEMPO. Pressing TEMPO alone opens the stock tempo window.",
+          "XY uses a hotter vertical scale than OSC. Clip ! appears only when the recent peak reaches 0 dBFS.",
+          "DRAM unit: on a card build without another DRAM module, choosing SCOPE creates the platform DRAM reserve from Flex sample RAM (same class of cost as Tuner).",
+          "Catalog CPU price +1.1 % of a frame with the SCOPE window open and a pattern playing (dev twin 4c7eb79b; +0.2 % installed with the window closed in evidence/cpu-price.json)."
+        ]
+      },
+      "resources": {
+        "recorded": "2026-11-27",
+        "storage": {
+          "label": "ColdFire code",
+          "display": "37704 bytes",
+          "value": null,
+          "unit": "see display",
+          "method": "static",
+          "conditions": "The tested USB package f8a1ffeb contains 37,704 bytes of ColdFire code and data and no BSS, according to its package header. This figure excludes stack and any base-owned memory reused at runtime.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire worst event",
+          "display": "602 cycles/block (6% of allowance)",
+          "value": 602,
+          "unit": "cycles/block",
+          "method": "static",
+          "conditions": "Window open on OSC/XY/ALL; worst event 602 cycles of 9577 per 16-sample block (evidence/performance.json, perf.py on 27 November 2026).",
+          "source": "evidence/performance.json"
+        },
+        "impact": {
+          "conditions": "One open SCOPE window on the selected audio track; worst ColdFire event 602 cycles per 16-sample block.",
+          "cpu": {
+            "level": "low",
+            "basis": "measured-comparison",
+            "rationale": "Frame interrupt copies 16 stereo samples into a ring while open; the UI task redraws about 60 Hz. perf:audit records 602 cycles per block against a 9577 allowance. On twin 4c7eb79b: +0.2 % frame with the window closed (cpu-price.json), +1.1 % with the window open (cpu-price-open.json).",
+            "source": "evidence/performance.json"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP program or effect slot. Reads the existing audio read-back arena.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "low",
+            "basis": "measured-comparison",
+            "rationale": "One DRAM unit with stereo rings and draw state; about 75 KB combined from disassembly and the package header. Creates the DRAM platform reserve when alone on the card.",
+            "source": "evidence/memory.md"
+          }
+        },
+        "cpuPrice": {
+          "value": 1.1,
+          "unit": "percent-of-frame",
+          "measure": "frame-interrupt",
+          "tool": "npm run device:price -- --write",
+          "date": "2026-11-28",
+          "conditions": "MKII, dev twin 4c7eb79b (0.8.1 beta --dev), pattern playing, SCOPE window open (DOWN+0x18 TEMPO); base 4c7eb79b844c8139; 3 readings of 8 s a state. Frame interrupt 29.1 % before, 30.2 % at rest with window open; CPU meter 44.0 % before, 46.7 % at rest.",
+          "source": "evidence/cpu-price-open.json"
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "SCOPE 0.2.0 package f8a1ffeb ran on an MKII on 27 November 2026. npm run test:procedure on base 311bb670 passed unit steps 6–10. perf:audit records 602 cycles per block (static bound 650). Hardware LCD captures and release-base trials are in TESTING.md.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "befbf7433a255981385a047a53341e4f75bd1e3c",
+        "gates": [
+          "python3 sdk/octatrack/modules/scope/perf.py static",
+          "npm run perf:audit -- check evidence/performance.json"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "Select an audio track that is making sound. No effect slot is required.",
+                "Hold [DOWN] first, then press [TEMPO]. The full-panel SCOPE window opens.",
+                "Turn DATA ENTRY A (GAIN) and B (TIME). Press [UP] or [DOWN] to cycle OSC, XY and ALL.",
+                "Press [TEMPO], [YES] or [NO] to close. Hold [DOWN] and press [TEMPO] again to reopen."
+              ]
+            },
+            "screenshots": [
+              "media/scope-all-live.png",
+              "media/scope-live-trace.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.2.0-experimental",
+          "sourceSha256": "06deb83ddb1b176fffa57119a14a393b6000f572ec9550d88f3ae04d8ce46f8d",
+          "imageSha256": "e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 602,
+              "maxConfiguration": 602,
+              "maxInstances": 1,
+              "budget": 9577,
+              "unit": "cycles/event",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "GAIN at 0 and 40, TIME at 0 and 9, VIEW on ALL (eight mini strips). Frame hook cost is fixed; draw path varies by view.",
+                "parameterModulation": "Encoder turns change GAIN/TIME/VIEW while open; frame hook does not depend on knob values.",
+                "modeSwitching": "DOWN+TEMPO open and close; UP/DOWN cycle views; YES/TEMPO/NO close.",
+                "maxLoad": "One global instance. Development twin 43ac2465 with stereo line-in on T1 THRU, transport playing.",
+                "inputConditions": "440 Hz line-in; ALL view with eight tracks is the heaviest frame path."
+              },
+              "report": "evidence/performance.json"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "ColdFire code (.text)",
+                "space": "sdram",
+                "words": 3630,
+                "wordBits": 8,
+                "bytes": 3630,
+                "scope": "shared"
+              },
+              {
+                "name": "Rings and state (.data)",
+                "space": "sdram",
+                "words": 33952,
+                "wordBits": 8,
+                "bytes": 33952,
+                "scope": "shared"
+              },
+              {
+                "name": "Runtime package code and data (ABI 8 header)",
+                "space": "cpu-ram",
+                "words": 37704,
+                "wordBits": 8,
+                "bytes": 37704,
+                "scope": "shared"
+              },
+              {
+                "name": "UI-task stack below sc_draw (disassembly bound, no canary)",
+                "space": "sdram",
+                "words": 200,
+                "wordBits": 8,
+                "bytes": 200,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 75486,
+            "maxInstances": 1,
+            "totalBytes": 75486,
+            "conditions": "Assembled unit.s with MODWERK_EVENTS=1; package header from f8a1ffeb. Stack is a bound from sc_draw movem, not a hardware canary.",
+            "report": "evidence/memory.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-27",
+            "tester": "ilia-murzinov",
+            "sourceRevision": "befbf7433a255981385a047a53341e4f75bd1e3c",
+            "imageSha256": "e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd",
+            "summary": "On an MKII, 27 November 2026: test procedure on base 311bb670 passed steps 6–10 (trial, soak, price, restore). Development-twin trials, open-window gap reading, and LCD captures are in TESTING.md. Audio dropout counts and chip canary are not claimed.",
+            "limitations": [
+              "Emulator cycles and load rows are not hardware timing.",
+              "MAIN/CUE USB capture for dropouts was not run in the procedure.",
+              "DRAM platform reserve when SCOPE is the only ColdFire unit is described in the README; not re-measured on every base."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "SCOPE unit and panel by ilia-murzinov under MIT; the octabam upstream tree under upstream/ is Sam Banks's MIT work (upstream/LICENSE). No Elektron firmware, extracted routines or tables."
+      },
+      "media": [
+        {
+          "path": "media/scope-all-live.png",
+          "captureType": "hardware",
+          "caption": "SCOPE open while B02 played, with a live trace and the SCOPE ALL toast visible.",
+          "alt": "Octatrack SCOPE window showing a live waveform, a center crosshair and a SCOPE ALL toast.",
+          "credit": "SCOPE by Ilia Murzinov; underlying Octatrack interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SCOPE ALL",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd",
+            "setup": "Captured from the author's MKII over USB on 27 November 2026. Modwerk development base 43ac24652a89f28b, RAM-booted from the image hash above; SCOPE package f8a1ffeb installed. B02 playing, author held DOWN then pressed TEMPO. Original 128x64 LCD at integer scale 2; no image edits."
+          }
+        },
+        {
+          "path": "media/scope-live-trace.png",
+          "captureType": "hardware",
+          "caption": "SCOPE's waveform after pressing DOWN once from the ALL capture, while B02 played.",
+          "alt": "Octatrack SCOPE window showing a diagonal live waveform trace and the gain and peak readout.",
+          "credit": "SCOPE by Ilia Murzinov; underlying Octatrack interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SCOPE waveform",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd",
+            "setup": "Same MKII, development base and SCOPE package as scope-all-live.png. B02 playing; pressed DOWN once with SCOPE open, then captured the original LCD at integer scale 2 without edits."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
       "id": "slow-lfo",
       "key": "SLOW LFO",
       "name": "Slow LFO",

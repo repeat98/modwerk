@@ -720,6 +720,22 @@
       "path": "octatrack-modules/tuner/0.1.0-experimental.mwrm"
     },
     {
+      "id": "scope",
+      "octabam": true,
+      "unitName": "Scope",
+      "version": "0.2.0-experimental",
+      "path": "octatrack-modules/scope/0.2.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Scope",
+      "module": "5f161c91",
+      "bytes": 38812,
+      "sha256": "f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273"
+    },
+    {
       "id": "vibrato",
       "slots": "both",
       "cycles": 249,
