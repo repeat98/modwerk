@@ -1,4 +1,4 @@
-        | SPDX-License-Identifier: GPL-3.0-or-later
+        | SPDX-License-Identifier: GPL-2.0-or-later
         | Modwerk's Analog Rytm MKII base: the amp envelope's record (the table ev_amp_record).
         | modwerk/amp.h is the modules' side.
         |

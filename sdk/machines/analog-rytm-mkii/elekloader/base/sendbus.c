@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Modwerk's Analog Rytm MKII base: the send bus and its effects' list, from Send FX (the same author's module,
 // whose effects now come one per module).
 //

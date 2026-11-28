@@ -1,37 +1,32 @@
 | SPDX-License-Identifier: GPL-2.0-or-later
-| core-ar2 and core-a4: an OS upgrade's restart that cannot hang on the
-| panel link.
+| Analog Rytm core (Modwerk): an OS upgrade's restart lets the queued serial bytes go out first.
 |
-| After writing a new OS, stock waits 3 s, masks every interrupt
-| (move #0x2700,sr) and calls a routine (FINISH_DRAIN) that waits for its
-| serial output to drain: while bytes are pending behind the panel link's DMA
-| (FINISH_PANEL), then while the UART queue holds bytes (FINISH_UART), then
-| for the UART to be empty. Only the DMA's and the UART's interrupts move
-| those counts on, so bytes the panel task queued while a DMA was still
-| running are never sent: the unit stays on SUCCESS! REBOOTING until it is
-| switched off (the new OS is written; it boots then). Seen in analog-emu on
-| the Rytm's 1.74; the A4's 1.56 has the same code.
-|
-| core_finish_drain takes the place of the mask and the call: it masks
-| interrupts only once nothing is pending, unmasking again to let the
-| interrupts send whatever was queued, then goes on to FINISH_DRAIN as stock
-| does, with interrupts masked.
-|
-| The device's mod.json gives FINISH_PANEL, FINISH_UART and FINISH_DRAIN.
+| After writing a new OS stock masks every interrupt and calls FINISH_DRAIN, which waits for counts that only the
+| panel link's DMA and the UART interrupts move: bytes still queued then never leave, and the unit hangs on
+| SUCCESS! REBOOTING. core_finish_drain (jsr from that site, or from C as a void function) lets the interrupts
+| run until both queues are empty, then masks them and goes on in FINISH_DRAIN, which returns to the caller with
+| interrupts masked. Uses d1 and SR besides what FINISH_DRAIN uses.
+
+        .irp name, FINISH_PANEL, FINISH_UART, FINISH_DRAIN
+        .ifndef \name
+        .error "finish.s: \name is not defined for this machine"
+        .endif
+        .endr
 
         .section .run, "ax"
-        .globl  core_finish_drain
+
+        .globl core_finish_drain
 core_finish_drain:
-        move.w  %sr, %d1
-1:      move.w  #0x2700, %sr
-        tst.l   FINISH_PANEL
-        bgt.s   2f
-        tst.l   FINISH_UART
-        bgt.s   2f
-        jmp     FINISH_DRAIN            | its rts returns to the site's caller
-2:      move.w  %d1, %sr                | let the interrupts send it
-3:      tst.l   FINISH_PANEL
-        bgt.s   3b
-        tst.l   FINISH_UART
-        bgt.s   3b
-        bra.s   1b
+        move.w %sr, %d1
+1:      move.w #0x2700, %sr
+        tst.l FINISH_PANEL
+        bgt.s 2f
+        tst.l FINISH_UART
+        bgt.s 2f
+        jmp FINISH_DRAIN
+2:      move.w %d1, %sr
+3:      tst.l FINISH_PANEL
+        bgt.s 3b
+        tst.l FINISH_UART
+        bgt.s 3b
+        bra.s 1b

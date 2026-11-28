@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Generated tables (Python, taken from Send FX by the same author): not stock data.
 const unsigned mw_fx_rate[128] = {
     1790, 1879, 1974, 2073, 2176, 2286,

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Digitakt II OS 1.17 base candidate. Modwerk adds audio sequencer pitch, grid and phrase collections, active project generation and the firmware bindings used by those hooks and module pages to the core-dt2 sources from Elekloader PR #221. Its copy of core-dt2's mod.json (copies) differs in one value: KIT_ROOM is 146, so core's kit data ends at 0x57d0 of each 0x5800-byte kit record, where the base's project archive takes the last 48 bytes.",
+  "about": "Modwerk's Digitakt II OS 1.17 base candidate. Modwerk adds audio sequencer pitch, grid and phrase collections, active project generation and the firmware bindings used by those hooks and module pages to the core-dt2 sources from Elekloader PR #221, whose hook bus (core/core.s, settings.s, fast.s) is Modwerk's own. Its copy of core-dt2's mod.json (copies) differs in one value: KIT_ROOM is 146, so core's kit data ends at 0x57d0 of each 0x5800-byte kit record, where the base's project archive takes the last 48 bytes.",
   "core": "core-dt2",
   "include": "sdk/machines/digitakt-ii/include",
   "os": "1.17",

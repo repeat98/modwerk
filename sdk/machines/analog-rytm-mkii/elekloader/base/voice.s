@@ -1,4 +1,4 @@
-| SPDX-License-Identifier: GPL-3.0-or-later
+| SPDX-License-Identifier: GPL-2.0-or-later
 | Modwerk's Analog Rytm MKII base: ev_sound_applied's site.
 |
 | Stock's routine that applies a sound to a track (0x4011f60a: kit and sound loads,

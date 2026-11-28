@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKI base, built by npm run machine:base -- analog-rytm-mki: the MKII base's core-ar2 0.7 source (source names that folder) with the MKI's own sites and addresses (recipe), MKI copies of four of its files (copies: each names the core-ar2 file and SHA-256 it was made from, and the build refuses when that file has changed), the MKI's settings and render-out variants (mki/), and the MKII base's machine list sections (common). No send bus yet: one variant, plain. Every site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. Addresses and differences: docs/RYTM_MKI_OS_RESEARCH.md.",
-  "pending": "No base-binding.json yet: the pinned Elekloader kit has no analog-rytm-mk1 device or ELE2 reader, so npm run machine:base cannot build this base until Modwerk's builder carries them. Built with a privately registered device, it gave the package that passed on a unit (MW06, 8 November 2026).",
+  "about": "Modwerk's Analog Rytm MKI base, built by npm run machine:base -- analog-rytm-mki: the MKII base's core (source names that folder), built with the MKI's own sites and asm addresses (recipe), its C addresses (common.cflags), the MKI's settings and render-out variants (mki/), and the MKII base's machine list sections (common). No send bus yet: one variant, plain. Every site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. Addresses and differences: docs/RYTM_MKI_OS_RESEARCH.md.",
+  "pending": "No base-binding.json yet: the pinned Elekloader kit has no analog-rytm-mk1 device or ELE2 reader, so npm run machine:base cannot build this base until Modwerk's builder carries them. The package that passed on a unit (MW06, 8 November 2026) was built from core-ar2 0.7's source; Modwerk's own core for the MKI has not been built as a package or run on a unit yet.",
   "source": "analog-rytm-mkii",
   "core": "core-ar2",
   "include": "sdk/machines/analog-rytm-mkii/include",
@@ -16,28 +16,6 @@
       "add": false
     }
   },
-  "copies": [
-    {
-      "path": "core-ar2/pages.s",
-      "from": "core-ar2/pages.s",
-      "sha256": "9802fba66d893f66b05daef2ba18846b407e7e6843729a75d939c21a717c5c60"
-    },
-    {
-      "path": "core-ar2/store.c",
-      "from": "core-ar2/store.c",
-      "sha256": "0bf6c97195aed10d4d5ea33662d06b94448786296fc6e716a2df1a279bebc744"
-    },
-    {
-      "path": "core-ar2/store.s",
-      "from": "core-ar2/store.s",
-      "sha256": "d0fe7d9d6530e42b59381cc6b011a7f482e165b563479a1233ea9446c814c01a"
-    },
-    {
-      "path": "core-ar2/machines.c",
-      "from": "core-ar2/machines.c",
-      "sha256": "6c788ea6d305bbc74ca0a037ada8b8d84a7b1ed24f1fb8331e4ee66e01b3f5a1"
-    }
-  ],
   "recipe": {
     "device": "analog-rytm-mk1",
     "defsym": {
@@ -102,7 +80,22 @@
       "VIEW8_N": "1",
       "VIEW9_RET": "0x400c74b4",
       "VIEW9_LIST": "0x401af560",
-      "VIEW9_N": "1"
+      "VIEW9_N": "1",
+      "ROUTE_DEFAULTS": "0x4001212e",
+      "PAGE_BOUND": "10",
+      "ST_SOUND_SAVE_RET": "0x40008322",
+      "ST_SOUND_LOAD_RET": "0x400080de",
+      "ST_PAT_SAVE_RET": "0x40009264",
+      "ST_PAT_LOAD_RET": "0x4000902e",
+      "ST_KIT_SAVE_RET": "0x400087be",
+      "ST_KIT_LOAD_RET": "0x40008526",
+      "ST_GLOB_SAVE_RET": "0x40007944",
+      "ST_GLOB_LOAD_RET": "0x40007524",
+      "ST_PAT_INIT_RET": "0x400119a0",
+      "ST_TRACK_INIT_RET": "0x400117ce",
+      "ST_SOUND_INIT_RET": "0x4001219e",
+      "ST_PROJ_INIT_RET": "0x40011c20",
+      "ST_PROJ_LOAD_RET": "0x4000cc16"
     },
     "sites": [
       {
@@ -539,7 +532,20 @@
       }
     ],
     "cflags": [
-      "-DMACHINE_SECTION_AT=0x4021f98d"
+      "-DMACHINE_SECTION_AT=0x4021f98d",
+      "-DCORE_S_AT=0x20000110u",
+      "-DCORE_LP_AT=0x40b55708u",
+      "-DCORE_GLOBALS_AT=0x416a603cu",
+      "-DCORE_SAVE_AT=0x4000cfeeu",
+      "-DCORE_LOAD_AT=0x4000cc0eu",
+      "-DCORE_TRACK_SAVE_AT=0x40008ca8u",
+      "-DCORE_SETTINGS_SAVE_AT=0x400089e6u",
+      "-DCORE_LOCK_SAVE_AT=0x400092ecu",
+      "-DCORE_LOCKS_SAVE_AT=0x400090f6u",
+      "-DCORE_NAMES_AT=0x4018d6f0u",
+      "-DCORE_AVAIL_AT=0x4018d8c8u",
+      "-DCORE_ENGINES_AT=0x40254430u",
+      "-DCORE_RECORDS_AT=0x4018e064u"
     ],
     "collections": {
       "mw_machine_sections": 4

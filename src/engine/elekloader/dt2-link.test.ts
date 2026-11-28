@@ -20,7 +20,8 @@ describe.runIf(STOCK)('a Digitakt II image built off the page and on it', () => 
   const machine = machineBytes ? JSON.parse(new TextDecoder().decode(machineBytes)) as { id: string; version: string } : null
   const machineFile = machine ? `${machine.id}-${machine.version}-os1.17.elemod` : ''
   const files = new Map<string, Uint8Array>([[baseFile, baseBytes], ...(machineBytes ? [[machineFile, machineBytes] as [string, Uint8Array]] : [])])
-  const template = (CATALOG as Catalog).cores.find(core => core.device === 'digitakt-mk2' && core.version === '1.1')!
+  // The bound base's own entry: the catalogue keeps older Digitakt II 1.1 bases beside it.
+  const template = (CATALOG as Catalog).cores.find(core => core.file === baseFile)!
   const catalog: Catalog = {
     ...(CATALOG as Catalog),
     cores: [...(CATALOG as Catalog).cores.filter(core => core !== template), { ...template, file: baseFile, sha256: sha(baseBytes) }],

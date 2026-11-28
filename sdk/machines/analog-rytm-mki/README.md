@@ -1,6 +1,6 @@
 # Analog Rytm MKI SDK
 
-**Platform:** elemod · **OS:** 1.74 · **Core:** Modwerk's MKI base, from elekloader core-ar2 0.7's source at the MKI's addresses · **Modules:** [`sdk/analog-rytm-mki/modules/`](../../analog-rytm-mki/modules/) · **Status:** research
+**Platform:** elemod · **OS:** 1.74 · **Core:** Modwerk's MKI base: the MKII base's own core at the MKI's addresses · **Modules:** [`sdk/analog-rytm-mki/modules/`](../../analog-rytm-mki/modules/) · **Status:** research
 
 The Analog Rytm MKI runs the MKII's code base on the same ColdFire family: its OS is the MKII's C++ compiled separately, so routines sit at other addresses, often at a constant distance over long runs, and its data structures are mostly the same. Its base is the MKII base's plain variant ([elekloader/](elekloader/README.md)): core-ar2 0.7's source with the MKI's sites and addresses, and MKI copies of four core-ar2 files. So the [MKII guide](../analog-rytm-mkii/README.md)'s core hooks, parameter pages, mod machines and mod storage apply here as written, at the MKI's addresses; the core's contract is [core-profile/interface.json](../../analog-rytm-mki/core-profile/interface.json). The research, the evidence for every address and the unit runs are in [the MKI research report](../../../docs/RYTM_MKI_OS_RESEARCH.md).
 
@@ -26,7 +26,7 @@ A mod's controls should look and turn exactly as stock's do (FUNC, push + turn, 
 parameter id has a record in RAM (88 bytes an id, from `0x416a6aa4`) that decides it: the turn's fine step (+4),
 the coarse step while the encoder is pushed (+8) and the knob's drawing (+48, +52: a dial, a fader, a bipolar dial, a
 list). Most records step 0x100 a count and 0x800 pushed, but records differ (LFO DEP, delay X), and sends and levels
-draw as faders. A stock page turns a knob through its record, then core-ar2 hands the result to the mod (core_params'
+draw as faders. A stock page turns a knob through its record, then the core hands the result to the mod (core_params'
 delta, in 8.8).
 
 - Put a mod's controls on a stock parameter page (core_pages, core_page_fns, core_params) rather than drawing a page
@@ -59,7 +59,7 @@ A module carries what an MKII module carries ([MKII guide](../analog-rytm-mkii/R
 ## Memory and budgets
 
 - **Shared mod memory:** 128 KiB of DDR (`0x47BE0000–0x47C00000`) for the core and every mod, as on the MKII. A canary over `0x47B00000–0x47F00000` read back intact on a unit (MW02, 8 November 2026).
-- **Core image:** the plain base is 10,696 bytes `.run` plus 1,368 bytes `.bss` in the shared area, and a 100-byte `.boot` copier.
+- **Core image:** the plain base that ran on a unit (MW06, built from core-ar2 0.7's source) is 10,696 bytes `.run` plus 1,368 bytes `.bss` in the shared area, and a 100-byte `.boot` copier. Modwerk's own core keeps the same `.bss`; its MKI package is not built yet.
 - **Fast SRAM:** none.
 
 ## Flash and recover

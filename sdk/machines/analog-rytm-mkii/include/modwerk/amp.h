@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* Modwerk's Analog Rytm MKII base: the amp envelope's record (base/amp.s). Each audio block stock's
  * amp_env_commands works out every voice's amp record, a rate word and a level word; the base takes the four
  * stores that send it to the amp, so no module patches them. To rewrite or follow the record, subscribe an

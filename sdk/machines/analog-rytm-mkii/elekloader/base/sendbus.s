@@ -1,4 +1,4 @@
-| SPDX-License-Identifier: GPL-3.0-or-later
+| SPDX-License-Identifier: GPL-2.0-or-later
 | Modwerk's Analog Rytm MKII base, the send bus: the FX returns' hook, and the block's input and output loops.
 |
 | The audio block calls one routine with the output slot in its argument; it

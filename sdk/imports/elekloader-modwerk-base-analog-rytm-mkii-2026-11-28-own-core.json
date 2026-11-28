@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-analog-rytm-mkii-2026-11-28-own-core",
+  "about": "Modwerk's Analog Rytm MKII base for OS 1.74 with Modwerk's own core (core-ar2/) and hook bus (core/), built by npm run machine:base -- analog-rytm-mkii: plain (14aab2f2), send-bus (2623f464) and voices (69713be7), each with the same sites, exports, imports and tables as the variant it follows (6dce8111, 9dc04c4c, 187b5126).",
+  "cores": [
+    {
+      "file": "modwerk-base-analog-rytm-mkii-14aab2f2.elemod",
+      "sha256": "14aab2f2d7991ebaf5f35ed61a338eeb29cc313f6004f40e8e214c48592ed2ad",
+      "id": "core",
+      "version": "0.7",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "17236892b7f5f4bd171cb210a5bb2a8162679aa3",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-14aab2f2.elemod"
+      }
+    },
+    {
+      "file": "modwerk-base-analog-rytm-mkii-2623f464.elemod",
+      "sha256": "2623f464207d765c10acb48003f0101a2577f2267e7ab13988f6af81750b10d2",
+      "id": "core",
+      "version": "0.7",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "1a65613fd652fbc06b22e1a42b3669c078864e84",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-2623f464.elemod"
+      }
+    },
+    {
+      "file": "modwerk-base-analog-rytm-mkii-69713be7.elemod",
+      "sha256": "69713be7ba76d5205a3b8fbf485a6b39b766839c4c80c6e0c8cac450f19704f2",
+      "id": "core",
+      "version": "0.7",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "1a65613fd652fbc06b22e1a42b3669c078864e84",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-69713be7.elemod"
+      }
+    }
+  ],
+  "mods": []
+}

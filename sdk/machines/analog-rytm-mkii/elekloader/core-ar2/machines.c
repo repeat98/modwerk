@@ -1,68 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* core-ar2 0.5: machines mods add, in the hidden slots 34..43 (OS 1.74).
- *
- * The machine table is three arrays of the main OS's data, each indexed by
- * the machine's number m (0..52):
- *
- *   0x401bf254 + 8m   long name, short name (pointers)
- *   0x401bf42c + 2m   home track (signed byte), voice mask (bit v: voice v)
- *   0x402906dc + 4m   the engine the audio interrupt calls
- *
- * and each machine owns its parameter records (0x401bfbc8 + 0x34 id)
- * whose owner (+0x00) is m, at sound indices 9..16 (+0x04). Stock hides
- * machines 34..52 with mask 0 and nothing else. Before the OS reads any of
- * this (core_boot_init, from core.s's .boot), core writes each core_machines entry into
- * it (analog-rytm-mk2/machines.h). The OS then builds the knobs' runtime
- * copies, the machine list and the MIDI maps from them as it does for its
- * own machines. elekloader refuses two entries for one slot (the profile's
- * slot_claims), so the first entry for a slot is the only one.
- */
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Analog Rytm core (Modwerk): machines modules add in the hidden slots 34..43 (analog-rytm-mk2/machines.h).
+//
+// The hook bus calls core_boot_init once at boot, after the image copy and the .bss clear and before the OS reads
+// the machine tables. For each slot, the first core_machines entry naming it writes its engine, home track, voices
+// and names into the machine tables, and its knobs into the slot's parameter records (sound indices 9..16). A
+// record's id, sound index, MIDI CC and NRPN stay as stock has them. Addresses from base.json common.cflags.
+
 #include <stdint.h>
 #include "analog-rytm-mk2/machines.h"
 
-#define NAMES ((const char **)0x401bf254)
-#define AVAIL ((volatile uint8_t *)0x401bf42c)
-#define ENGINES ((core_engine *)0x402906dc)
-#define RECORDS ((uint8_t *)0x401bfbc8)
-#define RECORD_SIZE 0x34
-#define RECORD_COUNT 469
-#define SLOT_FIRST 34
-#define SLOT_LAST 43                /* 44..52's records are mods' spares */
+#if !defined(CORE_NAMES_AT) || !defined(CORE_AVAIL_AT) || !defined(CORE_ENGINES_AT) || !defined(CORE_RECORDS_AT)
+#error "machines.c: the machine tables' addresses (CORE_*_AT) come from base.json common.cflags"
+#endif
+
+#define FIRST_SLOT 34
+#define LAST_SLOT 43
+#define RECORDS 469
+#define RECORD 0x34
 
 extern const struct core_machine *const core_machines[];
 
-#define L(p, o) (*(volatile int32_t *)((p) + (o)))
-
 void core_boot_init(void)
 {
-    uint32_t done = 0;
-    const struct core_machine *const *e;
-    for (e = core_machines; *e; e++) {
-        const struct core_machine *m = *e;
-        int32_t s = m->slot;
-        if (s < SLOT_FIRST || s > SLOT_LAST || (done >> (s - SLOT_FIRST) & 1))
+    volatile const char **names = (volatile const char **)(CORE_NAMES_AT);
+    volatile int8_t *avail = (volatile int8_t *)(CORE_AVAIL_AT);
+    volatile core_engine *engines = (volatile core_engine *)(CORE_ENGINES_AT);
+    unsigned taken = 0;
+    for (const struct core_machine *const *entry = core_machines; *entry; entry++) {
+        const struct core_machine *m = *entry;
+        int32_t slot = m->slot;
+        if (slot < FIRST_SLOT || slot > LAST_SLOT || taken & 1u << (slot - FIRST_SLOT))
             continue;
-        done |= 1u << (s - SLOT_FIRST);
-        ENGINES[s] = m->engine;
-        AVAIL[2 * s] = (uint8_t)m->home;
-        AVAIL[2 * s + 1] = m->voices;
-        NAMES[2 * s] = m->name;
-        NAMES[2 * s + 1] = m->label;
-        for (int id = 0; id < RECORD_COUNT; id++) {
-            uint8_t *r = RECORDS + RECORD_SIZE * id;
-            int32_t k = L(r, 0x04) - 9;
-            if (L(r, 0x00) != s || k < 0 || k > 7)
+        taken |= 1u << (slot - FIRST_SLOT);
+        engines[slot] = m->engine;
+        avail[2 * slot] = m->home;
+        avail[2 * slot + 1] = (int8_t)m->voices;
+        names[2 * slot] = m->name;
+        names[2 * slot + 1] = m->label;
+        for (int id = 0; id < RECORDS; id++) {
+            volatile int32_t *rec = (volatile int32_t *)(CORE_RECORDS_AT + RECORD * id);
+            int32_t index = rec[1];
+            if (rec[0] != slot || index < 9 || index > 16)
                 continue;
-            const struct core_machine_knob *n = &m->knobs[k];
-            if (!n->name)
+            const struct core_machine_knob *knob = &m->knobs[index - 9];
+            if (!knob->name)
                 continue;
-            L(r, 0x08) = n->min << 8;               /* min, max, default: value << 8 */
-            L(r, 0x0c) = n->max << 8;
-            L(r, 0x10) = n->def << 8;
-            L(r, 0x14) = n->centred;
-            L(r, 0x28) = (int32_t)n->name;
-            L(r, 0x2c) = (int32_t)m->name;         /* the group: the machine */
-            L(r, 0x30) = (int32_t)n->label;
+            rec[2] = (int32_t)knob->min << 8;
+            rec[3] = (int32_t)knob->max << 8;
+            rec[4] = (int32_t)knob->def << 8;
+            rec[5] = knob->centred;
+            rec[10] = (int32_t)(uintptr_t)knob->name;
+            rec[11] = (int32_t)(uintptr_t)m->name;
+            rec[12] = (int32_t)(uintptr_t)knob->label;
         }
     }
 }

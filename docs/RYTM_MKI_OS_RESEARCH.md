@@ -87,7 +87,7 @@ So a container that differs from stock only in its stream and version field boot
 
 ## 6. The Modwerk base (step `core`)
 
-The MKI's base is the MKII base's plain variant built for the MKI ([`sdk/machines/analog-rytm-mki/elekloader/`](../sdk/machines/analog-rytm-mki/elekloader/README.md)): core-ar2 0.7's source and the machine list's sections, with the MKI's sites and addresses. Sites were found by matching the Digitakt mk1 1.54 routines elekloader's cores hook (the MKI shares the Digitakt's UI framework; its graphics library lies at `-0x52CA0` from the Digitakt's), by core-ar2's own stock bytes with addresses masked, and by behaviour in rytm-emu; every site's stock bytes are checked by length and SHA-256 at build time.
+The MKI's base is the MKII base's plain variant built for the MKI ([`sdk/machines/analog-rytm-mki/elekloader/`](../sdk/machines/analog-rytm-mki/elekloader/README.md)): Modwerk's own core (since 28 November 2026; before, core-ar2 0.7's source) and the machine list's sections, with the MKI's sites and addresses. Sites were found by matching the Digitakt mk1 1.54 routines elekloader's cores hook (the MKI shares the Digitakt's UI framework; its graphics library lies at `-0x52CA0` from the Digitakt's), by core-ar2's own stock bytes with addresses masked, and by behaviour in rytm-emu; every site's stock bytes are checked by length and SHA-256 at build time.
 
 | Part | MKI 1.74 | Notes |
 | --- | --- | --- |

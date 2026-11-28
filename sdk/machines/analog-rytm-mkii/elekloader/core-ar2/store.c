@@ -1,202 +1,140 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* core-ar2 0.3: mod storage on the Analog Rytm MKII, OS 1.74 only (core 0.2
- * is the last with 1.73). Every address here is 1.74's.
- *
- * Mods declare fields in their mod.json ("storage"); elekloader places them
- * at build time from the build's lockfile (docs/ADAPTING.md, "Mod storage")
- * and gives each one an absolute symbol, its descriptor, which a mod passes to
- * core_store_get and core_store_set. Zero always means the mod's default.
- *
- * Each item keeps its fields in a live home inside stock's own objects, so
- * copy, paste, undo and pattern switch carry them with no hooks:
- *
- *   scope     live home                         persisted in
- *   sound     live sound +0x6d..+0x6f (3 B)     stored sound +0x70..+0x72, with
- *             and the 4 velocity routes' amount the layout ID (+0x73) and the
- *             low bytes +0x71, +0x74, +0x77,    sound generation (+0x77), and
- *             +0x7a (from 0.3; route.s)         +0x78..+0x7b
- *   kit       live kit FX words 38..41          stored kit +0x7c6+0x50..+0x57,
- *             (+0x796..+0x79d, 8 B)             with the layout ID (+0x58) and
- *                                               the kit generation (+0x5c)
- *   global    core_store_globals (5 B a slot)   stored slot +0x4b..+0x4f
- *   track     live track +785.. (64 B)          the tagged store: the first T B
- *   pattern   live pattern +85696.. (64 B)      the tagged store: the first P B
- *   project   the tagged store itself           (it is the store)
- *
- * The tagged store is byte +2 of all 256 entries of the 17 songs in a whole
- * project image (4,352 B), which stock never reads or writes. It holds a
- * header (the layout ID, then one generation per scope: sound, kit, global,
- * track, pattern, project), then T B for each of the 129 x 13 pattern tracks,
- * then P B for each of the 129 patterns, then the project's bytes. The
- * stored project (the working copy at 0x405c8f20) carries the build's own
- * store; a project file and the like carry theirs (a Total Recall take sends
- * the stored project itself).
- *
- * The SysEx project commands that copy, swap or write whole stored songs go
- * through st_song_copy, which leaves the target's store bytes, and those for
- * whole stored patterns through st_pattern_copy, which clears the target
- * slot's fields (three sites each).
- *
- * From 0.7 core_store_set writes a field straight into its item's stored
- * copy (write_through), and after a whole save of the live project into
- * another image (SAVE PROJECT AS) core copies its own bytes from it into the
- * stored project (st_file_save), so a power cycle without a save keeps them.
- *
- * Stock saves an edited pattern track, a pattern's settings and its
- * parameter locks into the stored project one part at a time, not through
- * the pattern serializer (from 0.3: st_track_save and the others below), so
- * each of those saves also writes the pattern's track and pattern fields.
- *
- * Data is used only when it was written by this layout or one of its
- * ancestors (core_store_ids) and its scope's generation is this build's:
- * sounds and kits by their own copy of the ID, everything else by the header
- * of the image it is read from. Anything else loads as zeros, and so does a
- * global slot from a SysEx dump, which has no room for an ID.
- */
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Analog Rytm core (Modwerk): mod storage, the fields modules declare (analog-rytm-mk2/store.h).
+//
+// Where a field's bytes live:
+// - sound: three spare bytes of the live sound (+0x6d..+0x6f) and the low bytes of its four velocity-route amount
+//   words (+0x71, +0x74, +0x77, +0x7a), which stock only ever holds at 0 (route.s keeps them from stock's readers and
+//   writers). Stored in the stored sound's +0x70..+0x7b, with the layout ID and the generation between them.
+// - kit: the live kit's FX words 38..41 (+0x796..+0x79d), stored in the stored kit's FX record + 0x50..+0x5c.
+// - global: core_store_globals, stored in the five spare bytes at the end of each stored global slot.
+// - track and pattern: 64 spare bytes per track and per pattern in the live pattern.
+// - project, and the stored copies of track and pattern: the tagged store, 4352 bytes nobody else uses in each
+//   project image (byte 2 of every 4-byte entry from + 0x114 in each of the 17 song records). It begins with a
+//   10-byte header: the layout ID and the generation of each scope.
+//
+// Stored module data is used only when the layout that wrote it is this build's or one of its ancestors
+// (core_store_ids) and the scope's generation matches. Anything else loads as zeros, every field's default.
+//
+// The stock routines this wraps are entered through store.s (their *_body continuations). Every address comes from
+// the machine's base.json common.cflags.
 
-#define S ((unsigned char *)0x405c8f20)         /* the stored project */
-#define IMAGE_SIZE 0x1f9f32
-#define B(p) (*(volatile unsigned char *)(p))
+#include <stdint.h>
+#include "analog-rytm-mk2/store.h"
 
-#define SC_SOUND 1
-#define SC_KIT 2
-#define SC_GLOBAL 3
-#define SC_TRACK 4
-#define SC_PATTERN 5
-#define SC_PROJECT 6
+#if !defined(CORE_S_AT) || !defined(CORE_LP_AT) || !defined(CORE_GLOBALS_AT) || !defined(CORE_SAVE_AT) || \
+    !defined(CORE_LOAD_AT) || !defined(CORE_TRACK_SAVE_AT) || !defined(CORE_SETTINGS_SAVE_AT) || \
+    !defined(CORE_LOCK_SAVE_AT) || !defined(CORE_LOCKS_SAVE_AT)
+#error "store.c: the machine's storage addresses (CORE_*_AT) come from base.json common.cflags"
+#endif
 
-#define SOUND_HOME 0x6d
-#define SOUND_SPARE 0x70
-#define SOUND_SPARE2 0x78       /* the route bytes' copies, 0.3 */
-#define SOUND_BYTES 7
-#define KIT_HOME 0x796
-#define KIT_SPARE (0x7c6 + 0x50)
-#define TRACK_HOME 785
-#define PATTERN_HOME 85696
-#define HOME_BYTES 64
-#define GLOBALS_AT 0x1f9dee
-#define GLOBAL_LIVE ((unsigned char *)0x413192ff) /* live global slot 0; slots are 228 B apart */
+typedef unsigned char u8;
+typedef uintptr_t addr;
 
-#define STORE_BYTES 4352
-#define HEADER 10
-#define TRACKS (129 * 13)
-
-/* the live project, and where its parts sit in it and in a project image.
- * The live kits come twice: as edited (LIVE_KITS) and as last saved
- * (LIVE_KITS + LIVE_KITS_SAVED); a whole save writes the saved ones into the
- * image's 128 kits and the edited current kit into the image's working kit,
- * the copy of the kit whose index is at WORKING_KIT_INDEX. */
-#define LIVE_PROJECT ((unsigned char *)0x407c89cb)
-#define LIVE_KITS (LIVE_PROJECT + 0xa8cf18)
-#define LIVE_KITS_SAVED 0x4f180
-#define LIVE_KIT_SIZE 2531
-#define LIVE_KIT_SOUNDS 42                      /* a live kit's 12 sounds, 152 B each */
-#define LIVE_SOUND_SIZE 152
-#define LIVE_POOL (LIVE_PROJECT + 0xb4b27c)     /* the 128 pool sounds */
-#define LIVE_PATTERN0 (LIVE_PROJECT + 24)       /* the working pattern, then the 128 */
-#define LIVE_PATTERNS (LIVE_PROJECT + 85784)
-#define LIVE_PATTERN_SIZE 85760
-#define WORKING_KIT 0x19c9c5
-#define WORKING_KIT_INDEX 0x19d3f7
-#define KITS_AT 0x19d3fb
-#define KIT_STORED 2610
-#define STORED_KIT_SOUNDS 46                    /* a stored kit's 12 sounds, 162 B each */
-#define SOUND_STORED 162
-#define POOL_AT 0x1f4397
-
-/* From the linker, out of the lockfile: the IDs this build reads (its own
- * first, then its ancestors', zero-terminated), the generations (sound, kit,
- * global and track in __store_gen; pattern and project, then T and P, in
- * __store_gen2). */
-extern const unsigned core_store_ids[];
+#ifndef CORE_GEN
 extern char __store_gen[], __store_gen2[];
+#define CORE_GEN ((unsigned)(addr)__store_gen)
+#define CORE_GEN2 ((unsigned)(addr)__store_gen2)
+#endif
+#ifndef CORE_DDR_LO
+#define CORE_DDR_LO 0x40000000u
+#define CORE_DDR_HI 0x48000000u
+#endif
 
-typedef int (*psave_t)(void *dst, void *live, int a, int flags, void *progress);
-typedef int (*pload_t)(void *live, void *src, void *progress);
-#define PROJECT_SAVE ((psave_t)0x4000d10e)
-#define PROJECT_LOAD ((pload_t)0x4000cd2e)
+extern const unsigned core_store_ids[];
+extern void (*const ev_project[])(int how, unsigned dropped);
 
-/* the pattern serializer's parts that stock also calls on their own, each
- * (stored part, live part, ...) -> nonzero when done */
-typedef int (*part_t)(unsigned char *dst, unsigned char *live, int a, int b, int c);
-#define TRACK_SAVE ((part_t)0x40008dc8)         /* stored track (641 B), live track (917 B) */
-#define SETTINGS_SAVE ((part_t)0x40008b06)      /* pattern +13089, live pattern +85683 */
-#define LOCK_SAVE ((part_t)0x4000940c)          /* pattern +8337, live +11921, a, param, track */
-#define LOCKS_SAVE ((part_t)0x40009216)         /* pattern +8337, live +11921, a */
-#define REC_TRACKS 4                            /* the stored pattern's first track */
-#define REC_TRACK 641
-#define REC_LOCKS 8337
-#define REC_SETTINGS 13089
-#define LIVE_TRACK 917
-#define LIVE_LOCKS 11921
-#define LIVE_SETTINGS 85683
-#define ROUTE_DEFAULTS ((void (*)(unsigned char *))0x4001224e)  /* a velocity route set's */
+#define S ((u8 *)(CORE_S_AT))
+#define LP ((u8 *)(CORE_LP_AT))
 
-/* store.s: each routine's displaced first instructions, then a jump back */
-extern int st_sound_save_body(void *dst, void *live, int a);
-extern int st_sound_load_body(void *live, void *src);
-extern int st_pat_save_body(void *dst, void *live, int a);
-extern int st_pat_load_body(void *live, void *src);
-extern int st_kit_save_body(void *dst, void *live, int a);
-extern int st_kit_load_body(void *live, void *src);
-extern int st_glob_save_body(void *dst, void *live, int a);
-extern int st_glob_load_body(void *live, void *src);
-extern int st_pat_init_body(void *pattern, int a);
-extern int st_track_init_body(void *track, int a);
-extern int st_sound_init_body(void *sound, int a, int b, int c);
-extern int st_proj_init_body(void *project, int a, int b, int c);
-extern int st_proj_load_body(void *live, void *src, void *progress);
+// project image
+#define IMAGE 0x1f9f32u
+#define IMG_PATTERN0 0x18u
+#define IMG_PATTERNS 0x3345u
+#define PATTERN_REC 13101u
+#define IMG_KIT0 0x19c9c5u
+#define IMG_KIT_INDEX 0x19d3f7u
+#define IMG_KITS 0x19d3fbu
+#define KIT_REC 2610u
+#define IMG_SONGS 0x1eecfbu
+#define SONG_REC 0x518u
+#define IMG_SOUNDS 0x1f4397u
+#define SOUND_REC 162u
+#define IMG_GLOBALS 0x1f9dee
+#define GLOBAL_REC 80u
+// stored records
+#define PAT_TRACK0 4u
+#define PAT_TRACK_REC 641u
+#define PAT_LOCKS 8337u
+#define PAT_SETTINGS 13089u
+#define KIT_SOUND0 46u
+#define KIT_FX 0x7c6u
+#define SND_F0 0x70u                      // field bytes 0..2
+#define SND_ID 0x73u
+#define SND_GEN 0x77u
+#define SND_F3 0x78u                      // field bytes 3..6
+#define FX_F 0x50u                        // kit field bytes 0..7
+#define FX_ID 0x58u
+#define FX_GEN 0x5cu
+#define GLB_F 0x4bu
+// live objects
+#define LP_PATTERN0 24u
+#define LP_PATTERNS 85784u
+#define LIVE_PATTERN 85760u
+#define LP_KITS 0xa8cf18u
+#define LIVE_KIT 2531u
+#define LP_SAVED_KITS (LP_KITS + 128u * LIVE_KIT)
+#define LP_SOUNDS 0xb4b27cu
+#define LIVE_SOUND 152u
+#define KIT_SOUNDS 42u
+#define LIVE_TRACK 917u
+#define TRACK_HOME 785u
+#define PATTERN_HOME 85696u
+#define LIVE_LOCKS 11921u
+#define LIVE_SETTINGS 85683u
+#define KIT_HOME 0x796u
+#define HOME 64u
+#define LIVE_GLOBAL 228u
+// tagged store
+#define TAGGED 4352u
+#define HEADER 10u
+#define T ((CORE_GEN2 >> 8) & 255u)
+#define P (CORE_GEN2 & 255u)
+#define PATTERNS_AT (HEADER + 1677u * T)
+#define PROJECT_AT (PATTERNS_AT + 129u * P)
 
-/* ev_project: f(how, dropped) after CREATE NEW (how 0) and after every project
- * load (how 1), with the stored project in place; dropped has bit 1 << scope
- * set for each of global, track, pattern and project whose data the project
- * had none of for this layout, now zeros */
-typedef void (*ev_project_t)(int how, unsigned dropped);
-extern const ev_project_t ev_project[];
+typedef int (*serial_save)(void *dst, void *live, int a, int flags, int progress);
+typedef int (*serial_load)(void *live, void *src, int progress);
+typedef int (*part_save)(void *dst, void *live, int a, int b, int c);
 
-static void project_event(int how, unsigned dropped)
+unsigned char core_store_globals[4][5];
+static u8 *st_image = S;                 // initialised data: S from the first instruction on
+
+static inline unsigned short irq_off(void)
 {
-    const ev_project_t *f;
-    for (f = ev_project; *f; f++)
-        (*f)(how, dropped);
+#ifdef MODWERK_HOST
+    return 0;
+#else
+    unsigned short sr;
+    __asm__ volatile("move.w %%sr,%0\n\tmove.w #0x2700,%%sr" : "=d"(sr) : : "memory", "cc");
+    return sr;
+#endif
 }
 
-/* the live homes of the four global slots: stock's live records have no spare */
-volatile unsigned char core_store_globals[4][5];
-
-/* the image a project file is being saved from or loaded into (the file
- * hooks set it), else the stored project; 0 while a file of another project
- * version loads */
-static unsigned char *st_image = S;
-
-static unsigned gen(int scope)
+static inline void irq_on(unsigned short sr)
 {
-    unsigned g = scope <= SC_TRACK ? (unsigned)__store_gen : (unsigned)__store_gen2;
-    return g >> (24 - 8 * ((scope - 1) & 3)) & 255;
-}
-#define SPLIT_T ((unsigned)__store_gen2 >> 8 & 255)
-#define SPLIT_P ((unsigned)__store_gen2 & 255)
-#define PATTERNS_AT (HEADER + TRACKS * SPLIT_T)
-#define PROJECT_AT (PATTERNS_AT + 129 * SPLIT_P)
-
-static volatile unsigned char *store_byte(unsigned char *img, unsigned k)
-{
-    return img + 0x1eecfb + 1304 * (k >> 8) + 0x116 + 4 * (k & 255);
+#ifdef MODWERK_HOST
+    (void)sr;
+#else
+    __asm__ volatile("move.w %0,%%sr" : : "d"(sr) : "memory", "cc");
+#endif
 }
 
-/* sound byte k (0..6) of the live sound's fields, from +0x6d: its 3 spare
- * bytes, then the 4 velocity routes' amount low bytes (+0x71 + 3i) */
-static unsigned sound_at(unsigned k)
-{
-    return k < 3 ? k : 3 * k - 5;
-}
-
-static unsigned rd32(const volatile unsigned char *p)
+static unsigned get32(const u8 *p)
 {
     return (unsigned)p[0] << 24 | (unsigned)p[1] << 16 | (unsigned)p[2] << 8 | p[3];
 }
 
-static void wr32(volatile unsigned char *p, unsigned v)
+static void put32(u8 *p, unsigned v)
 {
     p[0] = v >> 24;
     p[1] = v >> 16;
@@ -204,689 +142,656 @@ static void wr32(volatile unsigned char *p, unsigned v)
     p[3] = v;
 }
 
-static int known_id(unsigned id)
+static void copy(u8 *dst, const u8 *src, unsigned n)
 {
-    const unsigned *p;
+    while (n--)
+        *dst++ = *src++;
+}
+
+static void zero(u8 *dst, unsigned n)
+{
+    while (n--)
+        *dst++ = 0;
+}
+
+static unsigned gen(int scope)
+{
+    switch (scope) {
+    case STORE_SOUND: return CORE_GEN >> 24;
+    case STORE_KIT: return (CORE_GEN >> 16) & 255;
+    case STORE_GLOBAL: return (CORE_GEN >> 8) & 255;
+    case STORE_TRACK: return CORE_GEN & 255;
+    case STORE_PATTERN: return CORE_GEN2 >> 24;
+    default: return (CORE_GEN2 >> 16) & 255;
+    }
+}
+
+static int known(unsigned id)
+{
     if (!id)
         return 0;
-    for (p = core_store_ids; *p; p++)
+    for (const unsigned *p = core_store_ids; *p; p++)
         if (*p == id)
             return 1;
     return 0;
 }
 
-/* does the image's store hold this scope's data in this layout? */
-static int store_ok(unsigned char *img, int scope)
+// Tagged byte k of an image.
+static u8 *tag(u8 *img, unsigned k)
 {
-    unsigned id;
+    return img + IMG_SONGS + SONG_REC * (k >> 8) + 0x116u + 4u * (k & 255u);
+}
+
+static int is_image(const u8 *b)
+{
+    addr a = (addr)b;
+    if (b != S && (a < CORE_DDR_LO || a > CORE_DDR_HI - IMAGE))
+        return 0;
+    return get32(b) == 0xbeefbaceu && get32(b + 4) == 9 && get32(b + IMAGE - 4) == 0xbacef00cu;
+}
+
+static int inside(const u8 *img, const u8 *p)
+{
+    return img && p >= img && (addr)(p - img) < IMAGE;
+}
+
+static int store_ok(u8 *img, int scope)
+{
     if (!img)
         return 0;
-    id = (unsigned)B(store_byte(img, 0)) << 24 | (unsigned)B(store_byte(img, 1)) << 16 |
-         (unsigned)B(store_byte(img, 2)) << 8 | B(store_byte(img, 3));
-    return known_id(id) && B(store_byte(img, 3 + scope)) == gen(scope);
+    unsigned id = 0;
+    for (unsigned k = 0; k < 4; k++)
+        id = id << 8 | *tag(img, k);
+    return known(id) && *tag(img, 3 + scope) == gen(scope);
 }
 
-static void store_header(unsigned char *img)
+static void put_header(u8 *img)
 {
-    int s;
-    B(store_byte(img, 0)) = core_store_ids[0] >> 24;
-    B(store_byte(img, 1)) = core_store_ids[0] >> 16;
-    B(store_byte(img, 2)) = core_store_ids[0] >> 8;
-    B(store_byte(img, 3)) = core_store_ids[0];
-    for (s = SC_SOUND; s <= SC_PROJECT; s++)
-        B(store_byte(img, 3 + s)) = gen(s);
+    unsigned id = core_store_ids[0];
+    for (unsigned k = 0; k < 4; k++)
+        *tag(img, k) = id >> (24 - 8 * k);
+    for (int scope = STORE_SOUND; scope <= STORE_PROJECT; scope++)
+        *tag(img, 3 + scope) = gen(scope);
 }
 
-static void store_clear(unsigned char *img, unsigned from, unsigned to)
+static void tagged_copy(u8 *dst, u8 *src, unsigned from, unsigned to)
 {
-    for (; from < to; from++)
-        B(store_byte(img, from)) = 0;
+    for (unsigned k = from; k < to; k++)
+        *tag(dst, k) = *tag(src, k);
 }
 
-static void store_copy(unsigned char *to, unsigned char *from, unsigned k, unsigned end)
+static void tagged_zero(u8 *img, unsigned from, unsigned to)
 {
-    for (; k < end; k++)
-        B(store_byte(to, k)) = B(store_byte(from, k));
+    for (unsigned k = from; k < to; k++)
+        *tag(img, k) = 0;
 }
 
-static int in_image(const unsigned char *img, const unsigned char *p)
+static void fire(int how, unsigned dropped)
 {
-    return img && p >= img && p < img + IMAGE_SIZE;
+    for (void (*const *f)(int, unsigned) = ev_project; *f; f++)
+        (*f)(how, dropped);
 }
 
-static int is_image(const unsigned char *b)
-{
-    return (unsigned)b >= 0x40000000u && (unsigned)b + IMAGE_SIZE <= 0x48000000u &&
-           rd32(b) == 0xbeefbace && rd32(b + 4) == 9 && rd32(b + 0x1f9f2e) == 0xbacef00c;
-}
+// ---- where stored records belong
 
-/* the whole project image a pattern record sits in: the current image, or
- * any other buffer that holds one (Total Recall's recall uses its own) */
-static unsigned char *pattern_image(unsigned char *p)
+// The image holding pattern record p.
+static u8 *pattern_image(u8 *p)
 {
-    unsigned n;
-    if (in_image(st_image, p))
+    if (inside(st_image, p))
         return st_image;
-    if (is_image(p - 0x18))
-        return p - 0x18;
-    for (n = 0; n < 128; n++)
-        if (is_image(p - 0x3345 - 13101 * n))
-            return p - 0x3345 - 13101 * n;
+    if (is_image(p - IMG_PATTERN0))
+        return p - IMG_PATTERN0;
+    for (unsigned n = 0; n < 128; n++) {
+        u8 *img = p - IMG_PATTERNS - PATTERN_REC * n;
+        if (is_image(img))
+            return img;
+    }
     return 0;
 }
 
-/* the pattern's index in the store (0 = the working pattern, 1..128), or -1 */
-static int pattern_index(unsigned char *img, unsigned char *p)
+// Pattern record p's number in img: 0 the working pattern, 1 + n pattern n, -1 none.
+static int pattern_index(u8 *img, u8 *p)
 {
-    unsigned o;
-    if (!in_image(img, p))
+    if (!inside(img, p))
         return -1;
-    o = p - img;
-    if (o == 0x18)
+    addr at = (addr)(p - img);
+    if (at == IMG_PATTERN0)
         return 0;
-    if (o >= 0x3345 && (o - 0x3345) % 13101 == 0 && (o - 0x3345) / 13101 < 128)
-        return 1 + (o - 0x3345) / 13101;
-    return -1;
+    if (at < IMG_PATTERNS)
+        return -1;
+    at -= IMG_PATTERNS;
+    if (at % PATTERN_REC || at / PATTERN_REC >= 128)
+        return -1;
+    return 1 + (int)(at / PATTERN_REC);
 }
 
-/* the image a stored global slot sits in, or 0 (a SysEx dump) */
-static unsigned char *global_image(unsigned char *p)
+static u8 *global_image(u8 *p)
 {
-    unsigned g;
-    if (in_image(st_image, p))
+    if (inside(st_image, p))
         return st_image;
-    if (in_image(S, p))
+    if (inside(S, p))
         return S;
-    for (g = 0; g < 4; g++)
-        if (is_image(p - GLOBALS_AT - 80 * g))
-            return p - GLOBALS_AT - 80 * g;
+    for (unsigned g = 0; g < 4; g++) {
+        u8 *img = p - IMG_GLOBALS - GLOBAL_REC * g;
+        if (is_image(img))
+            return img;
+    }
     return 0;
 }
 
-static int global_slot(const unsigned char *live)
+static int live_slot(u8 *live)
 {
-    unsigned o = live - GLOBAL_LIVE;
-    return live >= GLOBAL_LIVE && o % 228 == 0 && o / 228 < 4 ? (int)(o / 228) : -1;
+    addr at = (addr)live - (addr)(CORE_GLOBALS_AT);
+    if ((addr)live < (addr)(CORE_GLOBALS_AT) || at % LIVE_GLOBAL || at / LIVE_GLOBAL >= 4)
+        return -1;
+    return (int)(at / LIVE_GLOBAL);
 }
 
-/* ---- the pattern serializers: pattern-track, pattern and project data ---- */
-
-/* a live pattern's track and pattern fields into pattern n of an image's store */
-static void pattern_out(unsigned char *img, int n, const unsigned char *live, int tracks, int pattern)
+// The live pattern's number as the tagged store counts them, -1 when it is none of the project's.
+static int live_pattern(u8 *pattern)
 {
-    unsigned t, j, T = SPLIT_T, P = SPLIT_P;
-    if (tracks)
-        for (t = 0; t < 13; t++)
-            for (j = 0; j < T; j++)
-                B(store_byte(img, HEADER + (13 * n + t) * T + j)) = live[LIVE_TRACK * t + TRACK_HOME + j];
-    if (pattern)
-        for (j = 0; j < P; j++)
-            B(store_byte(img, PATTERNS_AT + P * n + j)) = live[PATTERN_HOME + j];
+    if (pattern == LP + LP_PATTERN0)
+        return 0;
+    addr at = (addr)pattern - (addr)(LP + LP_PATTERNS);
+    if ((addr)pattern < (addr)(LP + LP_PATTERNS) || at % LIVE_PATTERN || at / LIVE_PATTERN >= 128)
+        return -1;
+    return 1 + (int)(at / LIVE_PATTERN);
 }
 
-int st_pat_save(unsigned char *dst, unsigned char *live, int a)
+// The stored kit in S of a live kit: the working kit for the edited kit the project is on, the stored kit i for the
+// as-last-saved live kit i, else none.
+static u8 *stored_kit(u8 *kit)
 {
-    unsigned char *img = pattern_image(dst);
-    int r = st_pat_save_body(dst, live, a), n = pattern_index(img, dst);
+    unsigned k = get32(S + IMG_KIT_INDEX);
+    if (k < 128 && kit == LP + LP_KITS + LIVE_KIT * k)
+        return S + IMG_KIT0;
+    addr at = (addr)kit - (addr)(LP + LP_SAVED_KITS);
+    if ((addr)kit >= (addr)(LP + LP_SAVED_KITS) && !(at % LIVE_KIT) && at / LIVE_KIT < 128)
+        return S + IMG_KITS + KIT_REC * (unsigned)(at / LIVE_KIT);
+    return 0;
+}
+
+// ---- live homes
+
+static u8 *sound_byte(u8 *sound, unsigned k)
+{
+    return k < 3 ? sound + 0x6d + k : sound + 0x71 + 3 * (k - 3);
+}
+
+static u8 *track_home(u8 *pattern, unsigned t)
+{
+    return pattern + LIVE_TRACK * t + TRACK_HOME;
+}
+
+static u8 *home(int scope, u8 *item, int index, unsigned k)
+{
+    switch (scope) {
+    case STORE_SOUND: return sound_byte(item, k);
+    case STORE_KIT: return item + KIT_HOME + k;
+    case STORE_GLOBAL: return &core_store_globals[index][k];
+    case STORE_TRACK: return track_home(item, (unsigned)index) + k;
+    case STORE_PATTERN: return item + PATTERN_HOME + k;
+    default: return tag(S, PROJECT_AT + k);
+    }
+}
+
+// Stored sound and kit records: the bytes the core owns in them.
+static void sound_out(u8 *dst, u8 *live)
+{
+    for (unsigned k = 0; k < 3; k++)
+        dst[SND_F0 + k] = *sound_byte(live, k);
+    for (unsigned k = 3; k < 7; k++)
+        dst[SND_F3 + k - 3] = *sound_byte(live, k);
+    put32(dst + SND_ID, core_store_ids[0]);
+    dst[SND_GEN] = gen(STORE_SOUND);
+}
+
+static void sound_in(u8 *live, const u8 *src, int valid)
+{
+    for (unsigned k = 0; k < 3; k++)
+        *sound_byte(live, k) = valid ? src[SND_F0 + k] : 0;
+    for (unsigned k = 3; k < 7; k++)
+        *sound_byte(live, k) = valid ? src[SND_F3 + k - 3] : 0;
+}
+
+static void kit_out(u8 *dst, u8 *live)
+{
+    u8 *fx = dst + KIT_FX;
+    copy(fx + FX_F, live + KIT_HOME, 8);
+    put32(fx + FX_ID, core_store_ids[0]);
+    fx[FX_GEN] = gen(STORE_KIT);
+}
+
+// The tagged bytes of pattern n: its 13 tracks (T bytes each), then the pattern's own P bytes.
+static unsigned track_at(unsigned n, unsigned t)
+{
+    return HEADER + (13 * n + t) * T;
+}
+
+static unsigned pattern_at(unsigned n)
+{
+    return PATTERNS_AT + P * n;
+}
+
+static void tracks_out(u8 *img, unsigned n, u8 *live)
+{
+    for (unsigned t = 0; t < 13; t++)
+        for (unsigned j = 0; j < T; j++)
+            *tag(img, track_at(n, t) + j) = track_home(live, t)[j];
+}
+
+static void pattern_out(u8 *img, unsigned n, u8 *live)
+{
+    for (unsigned j = 0; j < P; j++)
+        *tag(img, pattern_at(n) + j) = live[PATTERN_HOME + j];
+}
+
+// ---- core_store_get / core_store_set
+
+static int has_base(int scope, void *item, int index)
+{
+    switch (scope) {
+    case STORE_SOUND: case STORE_KIT: case STORE_PATTERN: return item != 0;
+    case STORE_GLOBAL: return (unsigned)index < 4;
+    case STORE_TRACK: return item != 0 && (unsigned)index < 13;
+    case STORE_PROJECT: return 1;
+    default: return 0;
+    }
+}
+
+unsigned core_store_get(unsigned field, void *item, int index)
+{
+    int scope = field >> 28;
+    unsigned bits = (field >> 22) & 63, at = field & 0x3fffff, end = at + bits, value = 0;
+    if (!has_base(scope, item, index))
+        return 0;
+    unsigned short sr = irq_off();
+    while (at < end) {
+        unsigned skip = at & 7, n = 8 - skip;
+        if (n > end - at)
+            n = end - at;
+        unsigned byte = *home(scope, item, index, at >> 3);
+        value = value << n | ((byte >> (8 - skip - n)) & ((1u << n) - 1));
+        at += n;
+    }
+    irq_on(sr);
+    return value;
+}
+
+// The value just set, copied into its stored copy in S, so a power cycle keeps it as stock keeps its own edits.
+static void write_through(int scope, u8 *item, int index)
+{
+    switch (scope) {
+    case STORE_KIT: {
+        u8 *kit = stored_kit(item);
+        if (kit)
+            kit_out(kit, item);
+        return;
+    }
+    case STORE_SOUND: {
+        addr at = (addr)item - (addr)(LP + LP_SOUNDS);
+        if ((addr)item >= (addr)(LP + LP_SOUNDS) && !(at % LIVE_SOUND) && at / LIVE_SOUND < 128) {
+            sound_out(S + IMG_SOUNDS + SOUND_REC * (unsigned)(at / LIVE_SOUND), item);
+            return;
+        }
+        at = (addr)item - (addr)(LP + LP_KITS + KIT_SOUNDS);
+        if ((addr)item < (addr)(LP + LP_KITS + KIT_SOUNDS))
+            return;
+        unsigned in_kit = (unsigned)(at % LIVE_KIT);
+        if (in_kit % LIVE_SOUND || in_kit / LIVE_SOUND >= 12)
+            return;
+        unsigned t = in_kit / LIVE_SOUND;
+        u8 *kit = stored_kit(item - KIT_SOUNDS - LIVE_SOUND * t);
+        if (kit)
+            sound_out(kit + KIT_SOUND0 + SOUND_REC * t, item);
+        return;
+    }
+    case STORE_GLOBAL:
+        copy(S + IMG_GLOBALS + GLOBAL_REC * (unsigned)index + GLB_F, core_store_globals[index], 5);
+        return;
+    case STORE_TRACK:
+    case STORE_PATTERN: {
+        int n = live_pattern(item);
+        if (n < 0 || !store_ok(S, scope))
+            return;
+        if (scope == STORE_PATTERN)
+            pattern_out(S, (unsigned)n, item);
+        else
+            for (unsigned j = 0; j < T; j++)
+                *tag(S, track_at((unsigned)n, (unsigned)index) + j) = track_home(item, (unsigned)index)[j];
+        return;
+    }
+    default:
+        return;                            // project: the bytes already live in S
+    }
+}
+
+void core_store_set(unsigned field, void *item, int index, unsigned value)
+{
+    int scope = field >> 28;
+    unsigned bits = (field >> 22) & 63, at = field & 0x3fffff, end = at + bits, left = bits;
+    if (!has_base(scope, item, index))
+        return;
+    if (bits < 32)
+        value &= (1u << bits) - 1;
+    unsigned short sr = irq_off();
+    while (at < end) {
+        unsigned skip = at & 7, n = 8 - skip;
+        if (n > end - at)
+            n = end - at;
+        left -= n;
+        unsigned shift = 8 - skip - n, mask = ((1u << n) - 1) << shift;
+        u8 *byte = home(scope, item, index, at >> 3);
+        *byte = (*byte & ~mask) | (((value >> left) << shift) & mask);
+        at += n;
+    }
+    write_through(scope, item, index);
+    irq_on(sr);
+}
+
+// ---- the stock routines' own work (store.s)
+
+int st_sound_save_body(u8 *dst, u8 *live, int a);
+int st_sound_load_body(u8 *live, u8 *src);
+int st_pat_save_body(u8 *dst, u8 *live, int a);
+int st_pat_load_body(u8 *live, u8 *src);
+int st_kit_save_body(u8 *dst, u8 *live, int a);
+int st_kit_load_body(u8 *live, u8 *src);
+int st_glob_save_body(u8 *dst, u8 *live, int a);
+int st_glob_load_body(u8 *live, u8 *src);
+int st_pat_init_body(u8 *pattern, int a);
+int st_track_init_body(u8 *track, int a);
+int st_sound_init_body(u8 *sound, int a, int b, int c);
+int st_proj_init_body(void *project, int a, int b, int c);
+int st_proj_load_body(void *live, u8 *src, int progress);
+
+// ---- patterns
+
+int st_pat_save(u8 *dst, u8 *live, int a)
+{
+    u8 *img = pattern_image(dst);
+    int r = st_pat_save_body(dst, live, a);
+    int n = pattern_index(img, dst);
     if (n < 0 || !live)
         return r;
-    pattern_out(img, n, live, 1, 1);
-    if (n == 0 && img != S) {           /* a whole project leaves: its header and project data */
-        store_copy(img, S, 0, HEADER);
-        store_copy(img, S, PROJECT_AT, STORE_BYTES);
+    tracks_out(img, (unsigned)n, live);
+    pattern_out(img, (unsigned)n, live);
+    if (n == 0 && img != S) {
+        // a whole project is leaving: it takes the header and the project's bytes along
+        tagged_copy(img, S, 0, HEADER);
+        tagged_copy(img, S, PROJECT_AT, TAGGED);
     }
     return r;
 }
 
-int st_pat_load(unsigned char *live, unsigned char *src)
+int st_pat_load(u8 *live, u8 *src)
 {
-    unsigned char *img = pattern_image(src);
-    int r = st_pat_load_body(live, src), n = pattern_index(img, src);
-    int tok = n >= 0 && store_ok(img, SC_TRACK), pok = n >= 0 && store_ok(img, SC_PATTERN);
-    unsigned t, j, T = SPLIT_T, P = SPLIT_P;
+    u8 *img = pattern_image(src);
+    int r = st_pat_load_body(live, src);
+    int n = pattern_index(img, src);
+    int tok = n >= 0 && store_ok(img, STORE_TRACK), pok = n >= 0 && store_ok(img, STORE_PATTERN);
     if (!live)
         return r;
-    for (t = 0; t < 13; t++)
-        for (j = 0; j < HOME_BYTES; j++)
-            live[917 * t + TRACK_HOME + j] =
-                tok && j < T ? B(store_byte(img, HEADER + (13 * n + t) * T + j)) : 0;
-    for (j = 0; j < HOME_BYTES; j++)
-        live[PATTERN_HOME + j] = pok && j < P ? B(store_byte(img, PATTERNS_AT + P * n + j)) : 0;
-    if (n == 0 && img != S) {           /* a whole project arrives: take its project data */
-        if (store_ok(img, SC_PROJECT))
-            store_copy(S, img, PROJECT_AT, STORE_BYTES);
+    for (unsigned t = 0; t < 13; t++)
+        for (unsigned j = 0; j < HOME; j++)
+            track_home(live, t)[j] = tok && j < T ? *tag(img, track_at((unsigned)n, t) + j) : 0;
+    for (unsigned j = 0; j < HOME; j++)
+        live[PATTERN_HOME + j] = pok && j < P ? *tag(img, pattern_at((unsigned)n) + j) : 0;
+    if (n == 0 && img != S) {
+        if (store_ok(img, STORE_PROJECT))
+            tagged_copy(S, img, PROJECT_AT, TAGGED);
         else
-            store_clear(S, PROJECT_AT, STORE_BYTES);
+            tagged_zero(S, PROJECT_AT, TAGGED);
     }
     return r;
 }
 
-/* ---- the parts of a pattern stock saves on their own ----
- * After a front-panel edit and on a pattern change, stock saves each edited
- * track (st_track_save), a pattern's settings (st_settings_save) and its
- * parameter locks (st_lock_save, st_locks_save) into the stored project, each
- * by itself. Each of those saves also writes the whole pattern's track and
- * pattern fields: their live homes are what a mod last set, and they have no
- * edit marks of their own. Only into an image whose header is this layout's
- * (the stored project's always is, from the first project load at boot). No
- * stock routine loads one of these parts by itself: a pattern comes back
- * whole, through st_pat_load. */
-
-static void part_out(unsigned char *rec, unsigned char *live)
+// One part of a pattern (a track, its settings or its locks) saved on its own: the tagged bytes follow it when the
+// image's layout is this build's.
+static void part_out(u8 *record, u8 *live)
 {
-    unsigned char *img = pattern_image(rec);
-    int n = pattern_index(img, rec);
+    u8 *img = pattern_image(record);
+    int n = pattern_index(img, record);
     if (n < 0 || !live)
         return;
-    pattern_out(img, n, live, store_ok(img, SC_TRACK), store_ok(img, SC_PATTERN));
+    if (store_ok(img, STORE_TRACK))
+        tracks_out(img, (unsigned)n, live);
+    if (store_ok(img, STORE_PATTERN))
+        pattern_out(img, (unsigned)n, live);
 }
 
-/* 0x400bf818's call: (stored track, live track, a, b, c); the track is found
- * from where its record sits */
-int st_track_save(unsigned char *dst, unsigned char *live, int a, int b, int c)
+int st_track_save(u8 *dst, u8 *live, int a, int b, int c)
 {
-    int r = TRACK_SAVE(dst, live, a, b, c), t;
-    unsigned char *rec;
+    int r = ((part_save)(CORE_TRACK_SAVE_AT))(dst, live, a, b, c);
     if (!dst || !live)
         return r;
-    for (t = 0; t < 13; t++) {
-        rec = dst - REC_TRACKS - REC_TRACK * t;
-        if (pattern_index(pattern_image(rec), rec) >= 0) {
-            part_out(rec, live - LIVE_TRACK * t);
+    for (unsigned t = 0; t < 13; t++) {
+        u8 *record = dst - PAT_TRACK0 - PAT_TRACK_REC * t;
+        if (pattern_index(pattern_image(record), record) >= 0) {
+            part_out(record, live - LIVE_TRACK * t);
             break;
         }
     }
     return r;
 }
 
-/* 0x400aacc4's call: (stored pattern +13089, live pattern +85683) */
-int st_settings_save(unsigned char *dst, unsigned char *live, int a)
+int st_settings_save(u8 *dst, u8 *live, int a)
 {
-    int r = SETTINGS_SAVE(dst, live, a, 0, 0);
+    int r = ((part_save)(CORE_SETTINGS_SAVE_AT))(dst, live, a, 0, 0);
     if (dst && live)
-        part_out(dst - REC_SETTINGS, live - LIVE_SETTINGS);
+        part_out(dst - PAT_SETTINGS, live - LIVE_SETTINGS);
     return r;
 }
 
-/* 0x400ac2ce's call: one parameter's locks on one track */
-int st_lock_save(unsigned char *dst, unsigned char *live, int a, int param, int track)
+// Both call stock's entry address: on the send-bus base the lock words hook it.
+int st_lock_save(u8 *dst, u8 *live, int a, int param, int track)
 {
-    int r = LOCK_SAVE(dst, live, a, param, track);
+    int r = ((part_save)(CORE_LOCK_SAVE_AT))(dst, live, a, param, track);
     if (dst && live)
-        part_out(dst - REC_LOCKS, live - LIVE_LOCKS);
+        part_out(dst - PAT_LOCKS, live - LIVE_LOCKS);
     return r;
 }
 
-/* 0x400ac2ec's call: all of a pattern's locks */
-int st_locks_save(unsigned char *dst, unsigned char *live, int a)
+int st_locks_save(u8 *dst, u8 *live, int a)
 {
-    int r = LOCKS_SAVE(dst, live, a, 0, 0);
+    int r = ((part_save)(CORE_LOCKS_SAVE_AT))(dst, live, a, 0, 0);
     if (dst && live)
-        part_out(dst - REC_LOCKS, live - LIVE_LOCKS);
+        part_out(dst - PAT_LOCKS, live - LIVE_LOCKS);
     return r;
 }
 
-/* ---- sounds and kits: their own bytes, with their own copy of the ID ---- */
+int st_pat_init(u8 *pattern, int a)
+{
+    int r = st_pat_init_body(pattern, a);
+    if (pattern)
+        zero(pattern + PATTERN_HOME, HOME);
+    return r;
+}
 
-int st_sound_save(unsigned char *dst, unsigned char *live, int a)
+int st_track_init(u8 *track, int a)
+{
+    int r = st_track_init_body(track, a);
+    if (track)
+        zero(track + TRACK_HOME, HOME);
+    return r;
+}
+
+// ---- sounds and kits
+
+int st_sound_save(u8 *dst, u8 *live, int a)
 {
     int r = st_sound_save_body(dst, live, a);
-    if (dst && live) {
-        int j;
-        for (j = 0; j < 3; j++)
-            dst[SOUND_SPARE + j] = live[SOUND_HOME + j];
-        for (j = 3; j < SOUND_BYTES; j++)
-            dst[SOUND_SPARE2 + j - 3] = live[SOUND_HOME + sound_at(j)];
-        wr32(dst + SOUND_SPARE + 3, core_store_ids[0]);
-        dst[SOUND_SPARE + 7] = gen(SC_SOUND);
-    }
+    if (dst && live)
+        sound_out(dst, live);
     return r;
 }
 
-int st_sound_load(unsigned char *live, unsigned char *src)
+int st_sound_load(u8 *live, u8 *src)
 {
-    int r = st_sound_load_body(live, src), j;
-    if (live && src) {
-        int ok = st_image && known_id(rd32(src + SOUND_SPARE + 3)) &&
-                 src[SOUND_SPARE + 7] == gen(SC_SOUND);
-        /* after the body: its route load wrote each amount's low byte 0 */
-        for (j = 0; j < SOUND_BYTES; j++)
-            live[SOUND_HOME + sound_at(j)] =
-                ok ? src[j < 3 ? SOUND_SPARE + j : SOUND_SPARE2 + j - 3] : 0;
-    }
+    int r = st_sound_load_body(live, src);
+    if (live && src)
+        sound_in(live, src, st_image && known(get32(src + SND_ID)) && src[SND_GEN] == gen(STORE_SOUND));
     return r;
 }
 
-int st_kit_save(unsigned char *dst, unsigned char *live, int a)
+int st_sound_init(u8 *sound, int a, int b, int c)
 {
-    int r = st_kit_save_body(dst, live, a), j;
-    if (dst && live) {
-        for (j = 0; j < 8; j++)
-            dst[KIT_SPARE + j] = live[KIT_HOME + j];
-        wr32(dst + KIT_SPARE + 8, core_store_ids[0]);
-        dst[KIT_SPARE + 12] = gen(SC_KIT);
-    }
-    return r;
-}
-
-int st_kit_load(unsigned char *live, unsigned char *src)
-{
-    int r = st_kit_load_body(live, src), j;
-    if (live && src) {
-        int ok = st_image && known_id(rd32(src + KIT_SPARE + 8)) &&
-                 src[KIT_SPARE + 12] == gen(SC_KIT);
-        for (j = 0; j < 8; j++)
-            live[KIT_HOME + j] = ok ? src[KIT_SPARE + j] : 0;
-    }
-    return r;
-}
-
-/* ---- the global slots ---- */
-
-int st_glob_save(unsigned char *dst, unsigned char *live, int a)
-{
-    int r = st_glob_save_body(dst, live, a), g = global_slot(live), j;
-    if (dst)
-        for (j = 0; j < 5; j++)
-            dst[0x4b + j] = g >= 0 ? core_store_globals[g][j] : 0;
-    return r;
-}
-
-int st_glob_load(unsigned char *live, unsigned char *src)
-{
-    int r = st_glob_load_body(live, src), g = global_slot(live), j;
-    if (src && g >= 0) {
-        unsigned char *img = global_image(src);
-        /* a SysEx dump (no image) carries no layout ID: its mod data is dropped */
-        int ok = st_image && img && store_ok(img, SC_GLOBAL);
-        for (j = 0; j < 5; j++)
-            core_store_globals[g][j] = ok ? src[0x4b + j] : 0;
-    }
-    return r;
-}
-
-/* ---- inits: stock leaves the spare bytes as they were ---- */
-
-int st_pat_init(unsigned char *pattern, int a)
-{
-    int r = st_pat_init_body(pattern, a), j;   /* its track inits go through st_track_init */
-    if (pattern)
-        for (j = 0; j < HOME_BYTES; j++)
-            pattern[PATTERN_HOME + j] = 0;
-    return r;
-}
-
-int st_track_init(unsigned char *track, int a)
-{
-    int r = st_track_init_body(track, a), j;
-    if (track)
-        for (j = 0; j < HOME_BYTES; j++)
-            track[TRACK_HOME + j] = 0;
-    return r;
-}
-
-int st_sound_init(unsigned char *sound, int a, int b, int c)
-{
-    int r = st_sound_init_body(sound, a, b, c), j;
+    int r = st_sound_init_body(sound, a, b, c);
     if (sound)
-        for (j = 0; j < SOUND_BYTES; j++)
-            sound[SOUND_HOME + sound_at(j)] = 0;
+        sound_in(sound, 0, 0);
     return r;
 }
 
-static unsigned short irq_mask(void);
-static void irq_restore(unsigned short sr);
-
-/* 0x400c542c's call, the VELOCITY MOD menu's reset of a sound's velocity
- * routes (routes: the live sound +0x70): the routes go to stock's defaults,
- * the fields in their low bytes stay. Interrupts are masked from the low
- * bytes' read to their write back, as core_store_set writes them, so a field
- * the audio interrupt sets meanwhile is not lost; the defaults are a leaf of
- * 14 instructions. */
-void st_vel_defaults(unsigned char *routes)
+int st_kit_save(u8 *dst, u8 *live, int a)
 {
-    unsigned char keep[4];
-    unsigned short sr;
-    int i;
-    if (!routes) {
-        ROUTE_DEFAULTS(routes);
-        return;
-    }
-    sr = irq_mask();
-    for (i = 0; i < 4; i++)
-        keep[i] = routes[3 * i + 1];
-    ROUTE_DEFAULTS(routes);
-    for (i = 0; i < 4; i++)
-        routes[3 * i + 1] = keep[i];
-    irq_restore(sr);
+    int r = st_kit_save_body(dst, live, a);
+    if (dst && live)
+        kit_out(dst, live);
+    return r;
 }
 
-/* CREATE NEW and the project reset: a fresh store, and no global data */
+int st_kit_load(u8 *live, u8 *src)
+{
+    int r = st_kit_load_body(live, src);
+    if (live && src) {
+        u8 *fx = src + KIT_FX;
+        int valid = st_image && known(get32(fx + FX_ID)) && fx[FX_GEN] == gen(STORE_KIT);
+        for (unsigned k = 0; k < 8; k++)
+            live[KIT_HOME + k] = valid ? fx[FX_F + k] : 0;
+    }
+    return r;
+}
+
+// ---- global slots
+
+int st_glob_save(u8 *dst, u8 *live, int a)
+{
+    int r = st_glob_save_body(dst, live, a);
+    if (dst) {
+        int g = live_slot(live);
+        for (unsigned k = 0; k < 5; k++)
+            dst[GLB_F + k] = g >= 0 ? core_store_globals[g][k] : 0;
+    }
+    return r;
+}
+
+int st_glob_load(u8 *live, u8 *src)
+{
+    int r = st_glob_load_body(live, src);
+    int g = live_slot(live);
+    if (src && g >= 0) {
+        u8 *img = global_image(src);          // none for a SysEx global dump: that loads zeros
+        int valid = st_image && img && store_ok(img, STORE_GLOBAL);
+        for (unsigned k = 0; k < 5; k++)
+            core_store_globals[g][k] = valid ? src[GLB_F + k] : 0;
+    }
+    return r;
+}
+
+// ---- whole projects
+
 int st_proj_init(void *project, int a, int b, int c)
 {
-    int r = st_proj_init_body(project, a, b, c), g, j;
-    store_clear(S, 0, STORE_BYTES);
-    store_header(S);
-    for (g = 0; g < 4; g++)
-        for (j = 0; j < 5; j++)
-            core_store_globals[g][j] = 0;
-    project_event(0, 0);
+    int r = st_proj_init_body(project, a, b, c);
+    tagged_zero(S, 0, TAGGED);
+    put_header(S);
+    zero(&core_store_globals[0][0], sizeof core_store_globals);
+    fire(CORE_PROJECT_NEW, 0);
     return r;
 }
 
-/* After any project load: the stored project's store drops what this layout
- * can't read, then takes this build's header, and the mods hear of it, with
- * the scopes the loaded image (a file's buffer, else the stored project) had
- * nothing for. A file of an older project version (st_image 0) brings no
- * project data. */
-int st_proj_load(void *live, unsigned char *src, void *progress)
+int st_proj_load(void *live, u8 *src, int progress)
 {
-    int r = st_proj_load_body(live, src, progress), g, j, s;
-    unsigned char *from = is_image(src) ? src : st_image;
+    int r = st_proj_load_body(live, src, progress);
+    u8 *from = is_image(src) ? src : st_image;
     unsigned dropped = 0;
-    for (s = SC_GLOBAL; s <= SC_PROJECT; s++)
-        if (!store_ok(from, s))
-            dropped |= 1 << s;
-    if (!store_ok(S, SC_TRACK))
-        store_clear(S, HEADER, PATTERNS_AT);
-    if (!store_ok(S, SC_PATTERN))
-        store_clear(S, PATTERNS_AT, PROJECT_AT);
-    if (!st_image || !store_ok(S, SC_PROJECT))
-        store_clear(S, PROJECT_AT, STORE_BYTES);
-    if (!store_ok(S, SC_GLOBAL))
-        for (g = 0; g < 4; g++)
-            for (j = 0; j < 5; j++)
-                S[GLOBALS_AT + 80 * g + 0x4b + j] = 0;
-    store_header(S);
-    project_event(1, dropped);
+    for (int scope = STORE_GLOBAL; scope <= STORE_PROJECT; scope++)
+        if (!store_ok(from, scope))
+            dropped |= STORE_DROPPED(scope);
+    if (!store_ok(S, STORE_TRACK))
+        tagged_zero(S, HEADER, PATTERNS_AT);
+    if (!store_ok(S, STORE_PATTERN))
+        tagged_zero(S, PATTERNS_AT, PROJECT_AT);
+    if (!st_image || !store_ok(S, STORE_PROJECT))
+        tagged_zero(S, PROJECT_AT, TAGGED);
+    if (!store_ok(S, STORE_GLOBAL))
+        for (unsigned g = 0; g < 4; g++)
+            zero(S + IMG_GLOBALS + GLOBAL_REC * g + GLB_F, 5);
+    put_header(S);
+    fire(CORE_PROJECT_LOADED, dropped);
     return r;
 }
 
-/* ---- the project file calls: the serializers work on the file's buffer ---- */
-
-/* SAVE PROJECT AS writes only the project's name into the stored project
- * (stock's own data is already there, edit by edit) and then the whole live
- * project into the file's buffer. So after a save of the live project into
- * another image, core copies its own bytes from that image into the stored
- * project, by the parts the save wrote (flags: 2 the global slots, 4 the
- * kits and their sounds, 8 the patterns and with them the tagged store, 0x20
- * the sound pool): a power cycle straight after the save then keeps the
- * mods' fields, as it keeps stock's. Only core's bytes are copied. */
-
-static void sound_bytes(unsigned char *to, const unsigned char *from)
+// SAVE PROJECT AS: stock already keeps S edit by edit; the core's bytes of the saved file follow, by flags, so a
+// power cycle keeps the module fields as well.
+static void saved_as(u8 *dst, int flags)
 {
-    unsigned j;
-    for (j = 0; j < 8; j++)                     /* the 3 bytes, the ID and the generation */
-        to[SOUND_SPARE + j] = from[SOUND_SPARE + j];
-    for (j = 0; j < 4; j++)                     /* the route bytes' copies */
-        to[SOUND_SPARE2 + j] = from[SOUND_SPARE2 + j];
-}
-
-static void kit_bytes(unsigned char *to, const unsigned char *from)
-{
-    unsigned j;
-    for (j = 0; j < 13; j++)                    /* the 8 bytes, the ID and the generation */
-        to[KIT_SPARE + j] = from[KIT_SPARE + j];
-    for (j = 0; j < 12; j++)
-        sound_bytes(to + STORED_KIT_SOUNDS + SOUND_STORED * j, from + STORED_KIT_SOUNDS + SOUND_STORED * j);
-}
-
-static void to_stored(const unsigned char *img, int flags)
-{
-    unsigned i, j;
-    if (flags & 2)
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 5; j++)
-                S[GLOBALS_AT + 80 * i + 0x4b + j] = img[GLOBALS_AT + 80 * i + 0x4b + j];
-    if (flags & 4) {
-        for (i = 0; i < 128; i++)
-            kit_bytes(S + KITS_AT + KIT_STORED * i, img + KITS_AT + KIT_STORED * i);
-        if (rd32(img + WORKING_KIT_INDEX) == rd32(S + WORKING_KIT_INDEX))  /* the same kit's copy */
-            kit_bytes(S + WORKING_KIT, img + WORKING_KIT);
+    if (flags & 0x02)
+        for (unsigned g = 0; g < 4; g++)
+            copy(S + IMG_GLOBALS + GLOBAL_REC * g + GLB_F, dst + IMG_GLOBALS + GLOBAL_REC * g + GLB_F, 5);
+    if (flags & 0x04) {
+        for (unsigned i = 0; i <= 128; i++) {
+            unsigned kit = i < 128 ? IMG_KITS + KIT_REC * i : IMG_KIT0;
+            if (i == 128 && get32(dst + IMG_KIT_INDEX) != get32(S + IMG_KIT_INDEX))
+                break;
+            copy(S + kit + KIT_FX + FX_F, dst + kit + KIT_FX + FX_F, 13);
+            for (unsigned j = 0; j < 12; j++)
+                copy(S + kit + KIT_SOUND0 + SOUND_REC * j + SND_F0, dst + kit + KIT_SOUND0 + SOUND_REC * j + SND_F0, 12);
+        }
     }
+    if (flags & 0x08)
+        tagged_copy(S, dst, 0, TAGGED);
     if (flags & 0x20)
-        for (i = 0; i < 128; i++)
-            sound_bytes(S + POOL_AT + SOUND_STORED * i, img + POOL_AT + SOUND_STORED * i);
-    if (flags & 8)
-        store_copy(S, (unsigned char *)img, 0, STORE_BYTES);
+        for (unsigned i = 0; i < 128; i++)
+            copy(S + IMG_SOUNDS + SOUND_REC * i + SND_F0, dst + IMG_SOUNDS + SOUND_REC * i + SND_F0, 12);
 }
 
-int st_file_save(unsigned char *dst, void *live, int a, int flags, void *progress)
+int st_file_save(u8 *dst, void *live, int a, int flags, int progress)
 {
-    int r;
     st_image = dst;
-    r = PROJECT_SAVE(dst, live, a, flags, progress);
+    int r = ((serial_save)(CORE_SAVE_AT))(dst, live, a, flags, progress);
     st_image = S;
-    if (r && dst != S && live == LIVE_PROJECT && is_image(dst))
-        to_stored(dst, flags);
+    if (r && dst != S && live == (void *)LP && is_image(dst))
+        saved_as(dst, flags);
     return r;
 }
 
-int st_file_load(void *live, unsigned char *src, void *progress)
+// Through the stock load's own entry, which is st_proj_load's site.
+int st_file_load(void *live, u8 *src, int progress)
 {
-    int r;
-    st_image = src && rd32(src + 4) == 9 ? src : 0;
-    r = PROJECT_LOAD(live, src, progress);   /* through st_proj_load */
+    st_image = src && get32(src + 4) == 9 ? src : 0;   // an older project version brings no module data
+    int r = ((serial_load)(CORE_LOAD_AT))(live, src, progress);
     st_image = S;
     return r;
 }
 
-/* ---- the SysEx project commands: whole stored songs ----
- * The SysEx handler copies, swaps and writes stored song records (0x518 B,
- * song slots 1..16 of a project image) with memcpy. Byte +2 of each of a
- * record's 256 entries is the tagged store, which belongs to the image, not
- * the song: copy everything else and leave the target's store bytes. In a
- * swap the temporary buffer keeps its own (garbage) bytes, so both slots end
- * with their own. Any other length is a plain copy. */
+// ---- copies (memcpy's contract)
 
-void *st_song_copy(unsigned char *dst, const unsigned char *src, unsigned n)
+void *st_song_copy(u8 *dst, const u8 *src, unsigned n)
 {
-    unsigned i;
-    for (i = 0; i < n; i++)
-        if (n != 0x518 || i < 0x116 || i >= 0x116 + 4 * 256 || ((i - 0x116) & 3))
-            dst[i] = src[i];
-    return dst;
-}
-
-/* The same commands copy, write and swap whole stored patterns (13,101 B)
- * with memcpy. A pattern's track and pattern fields are kept by slot in the
- * image's store, so they can't follow it: clear the target slot's, so the
- * pattern loads with its mods' defaults instead of the slot's old values.
- * Only a scope this layout reads there is cleared: another layout places its
- * fields elsewhere, and this layout's offsets would hit other slots' fields
- * or the project's. A swap's temporary buffer is in no image and is left
- * alone. */
-
-void *st_pattern_copy(unsigned char *dst, const unsigned char *src, unsigned n)
-{
-    unsigned char *img;
-    unsigned i, t, j, T = SPLIT_T, P = SPLIT_P;
-    int k;
-    for (i = 0; i < n; i++)
-        dst[i] = src[i];
-    if (n != 13101 || !(img = pattern_image(dst)) || (k = pattern_index(img, dst)) < 0)
+    if (n != SONG_REC) {
+        copy(dst, src, n);
         return dst;
-    if (store_ok(img, SC_TRACK))
-        for (t = 0; t < 13; t++)
-            for (j = 0; j < T; j++)
-                B(store_byte(img, HEADER + (13 * k + t) * T + j)) = 0;
-    if (store_ok(img, SC_PATTERN))
-        for (j = 0; j < P; j++)
-            B(store_byte(img, PATTERNS_AT + P * k + j)) = 0;
+    }
+    for (unsigned i = 0; i < n; i++)
+        if (i < 0x116 || i > 0x116 + 4 * 255 || (i - 0x116) & 3)
+            dst[i] = src[i];                  // the target keeps its tagged bytes
     return dst;
 }
 
-/* ---- for mods: a field's value in an item ----
- * field: the descriptor elekloader gives the field's symbol: the scope in
- * bits 28..31, the width (1..32) in bits 22..27 and the bit offset in the
- * scope's bytes in bits 0..21, most significant bit first.
- * item and index, by scope: a sound, the live sound; a kit, the live kit; a
- * global slot, index 0..3; a pattern track, the live pattern and index 0..12
- * (the track); a pattern, the live pattern; the project, neither.
- *
- * One byte can hold fields of several mods, and mods use them from the UI
- * and from the audio interrupt, so a field is read and written with
- * interrupts masked, as the OS's own critical sections do: no write is lost
- * to another's, and no reader sees half a value. */
-
-static unsigned short irq_mask(void)
+void *st_pattern_copy(u8 *dst, const u8 *src, unsigned n)
 {
-    unsigned short sr;
-    __asm__ volatile("move.w %%sr,%0\n\tmove.w #0x2700,%%sr" : "=d"(sr) : : "memory");
-    return sr;
-}
-
-static void irq_restore(unsigned short sr)
-{
-    __asm__ volatile("move.w %0,%%sr" : : "d"(sr) : "memory");
-}
-
-static volatile unsigned char *field_base(unsigned scope, unsigned char *item, int index)
-{
-    switch (scope) {
-    case SC_SOUND:
-        return item ? item + SOUND_HOME : 0;
-    case SC_KIT:
-        return item ? item + KIT_HOME : 0;
-    case SC_GLOBAL:
-        return (unsigned)index < 4 ? core_store_globals[index] : 0;
-    case SC_TRACK:
-        return item && (unsigned)index < 13 ? item + 917 * index + TRACK_HOME : 0;
-    case SC_PATTERN:
-        return item ? item + PATTERN_HOME : 0;
-    }
-    return 0;
-}
-
-static volatile unsigned char *field_byte(unsigned scope, volatile unsigned char *base, unsigned k)
-{
-    if (scope == SC_SOUND)
-        return base + sound_at(k);
-    return scope == SC_PROJECT ? store_byte(S, PROJECT_AT + k) : base + k;
-}
-
-/* Stock writes each parameter edit of the current kit both into the live kit
- * and into the stored project's copy of that kit, which is what a power
- * cycle brings back. A field set with core_store_set is written through to
- * the stored copy of its item at once, with the item's layout ID and
- * generation where it carries its own: the edited current kit (into the
- * working kit) and its sounds, a saved kit (into its slot of the 128) and
- * its sounds, a pool sound, a global slot, and a track or pattern of the
- * working pattern or of the 128 (their slots in the stored project's store,
- * when its header is this layout's, as it is from the first load at boot).
- * Other items (an edited kit that is not the current one, a buffer outside
- * the live project) reach the stored project by stock's saves, as their
- * stock data does. Called with interrupts masked. */
-
-static void sound_through(unsigned char *dst, const unsigned char *live)
-{
-    unsigned j;
-    for (j = 0; j < 3; j++)
-        dst[SOUND_SPARE + j] = live[SOUND_HOME + j];
-    for (j = 3; j < SOUND_BYTES; j++)
-        dst[SOUND_SPARE2 + j - 3] = live[SOUND_HOME + sound_at(j)];
-    wr32(dst + SOUND_SPARE + 3, core_store_ids[0]);
-    dst[SOUND_SPARE + 7] = gen(SC_SOUND);
-}
-
-/* the stored kit a live kit is kept in, or 0: the edited current kit's is the
- * working kit, a saved kit's is its slot of the 128 */
-static unsigned char *stored_kit(const unsigned char *kit)
-{
-    unsigned k = rd32(S + WORKING_KIT_INDEX), o;
-    if (k < 128 && kit == LIVE_KITS + LIVE_KIT_SIZE * k)
-        return S + WORKING_KIT;
-    o = kit - (LIVE_KITS + LIVE_KITS_SAVED);
-    if (kit >= LIVE_KITS + LIVE_KITS_SAVED && o % LIVE_KIT_SIZE == 0 && o / LIVE_KIT_SIZE < 128)
-        return S + KITS_AT + KIT_STORED * (o / LIVE_KIT_SIZE);
-    return 0;
-}
-
-static void write_through(unsigned scope, unsigned char *item, int index)
-{
-    unsigned j, t, o;
-    unsigned char *dst;
-    int n;
-    switch (scope) {
-    case SC_KIT:
-        if ((dst = stored_kit(item)) != 0) {
-            for (j = 0; j < 8; j++)
-                dst[KIT_SPARE + j] = item[KIT_HOME + j];
-            wr32(dst + KIT_SPARE + 8, core_store_ids[0]);
-            dst[KIT_SPARE + 12] = gen(SC_KIT);
+    copy(dst, src, n);
+    if (n == PATTERN_REC) {
+        // a pattern record copied in from elsewhere brings no module data
+        u8 *img = pattern_image(dst);
+        int k = pattern_index(img, dst);
+        if (k >= 0) {
+            if (store_ok(img, STORE_TRACK))
+                tagged_zero(img, track_at((unsigned)k, 0), track_at((unsigned)k, 13));
+            if (store_ok(img, STORE_PATTERN))
+                tagged_zero(img, pattern_at((unsigned)k), pattern_at((unsigned)k) + P);
         }
-        return;
-    case SC_SOUND:
-        o = item - LIVE_POOL;
-        if (item >= LIVE_POOL && o % LIVE_SOUND_SIZE == 0 && o / LIVE_SOUND_SIZE < 128) {
-            sound_through(S + POOL_AT + SOUND_STORED * (o / LIVE_SOUND_SIZE), item);
-            return;
-        }
-        /* a kit's sound: the kit is the whole kit before it, if one is there */
-        if (item < LIVE_KITS + LIVE_KIT_SOUNDS)
-            return;
-        o = item - (LIVE_KITS + LIVE_KIT_SOUNDS);
-        if (o % LIVE_KIT_SIZE % LIVE_SOUND_SIZE || o % LIVE_KIT_SIZE / LIVE_SOUND_SIZE >= 12)
-            return;
-        t = o % LIVE_KIT_SIZE / LIVE_SOUND_SIZE;
-        if ((dst = stored_kit(item - LIVE_KIT_SOUNDS - LIVE_SOUND_SIZE * t)) != 0)
-            sound_through(dst + STORED_KIT_SOUNDS + SOUND_STORED * t, item);
-        return;
-    case SC_GLOBAL:
-        for (j = 0; j < 5; j++)
-            S[GLOBALS_AT + 80 * index + 0x4b + j] = core_store_globals[index][j];
-        return;
-    case SC_TRACK:
-    case SC_PATTERN:
-        if (item == LIVE_PATTERN0)
-            n = 0;
-        else if (item >= LIVE_PATTERNS && (o = item - LIVE_PATTERNS) % LIVE_PATTERN_SIZE == 0 &&
-                 o / LIVE_PATTERN_SIZE < 128)
-            n = 1 + o / LIVE_PATTERN_SIZE;
-        else
-            return;
-        if (!store_ok(S, scope))
-            return;
-        if (scope == SC_PATTERN)
-            for (j = 0; j < SPLIT_P; j++)
-                B(store_byte(S, PATTERNS_AT + SPLIT_P * n + j)) = item[PATTERN_HOME + j];
-        else
-            for (t = index, j = 0; j < SPLIT_T; j++)
-                B(store_byte(S, HEADER + (13 * n + t) * SPLIT_T + j)) = item[917 * t + TRACK_HOME + j];
-        return;
     }
-}
-
-unsigned core_store_get(unsigned field, void *item, int index)
-{
-    unsigned scope = field >> 28, w = field >> 22 & 63, o = field & 0x3fffff, v = 0, i;
-    volatile unsigned char *base = field_base(scope, item, index);
-    unsigned short sr;
-    if (scope != SC_PROJECT && !base)
-        return 0;
-    sr = irq_mask();
-    for (i = 0; i < w; i++, o++)
-        v = v << 1 | (B(field_byte(scope, base, o >> 3)) >> (7 - (o & 7)) & 1);
-    irq_restore(sr);
-    return v;
-}
-
-void core_store_set(unsigned field, void *item, int index, unsigned value)
-{
-    unsigned scope = field >> 28, w = field >> 22 & 63, o = field & 0x3fffff, i;
-    volatile unsigned char *base = field_base(scope, item, index), *p;
-    unsigned short sr;
-    if (scope != SC_PROJECT && !base)
-        return;
-    sr = irq_mask();
-    for (i = 0; i < w; i++, o++) {
-        unsigned bit = 0x80 >> (o & 7);
-        p = field_byte(scope, base, o >> 3);
-        if (value >> (w - 1 - i) & 1)
-            *p |= bit;
-        else
-            *p &= ~bit;
-    }
-    write_through(scope, item, index);
-    irq_restore(sr);
+    return dst;
 }

@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* Modwerk's Analog Rytm MKII base: digital voices. A machine module that makes its sound
  * in software (as stock's CP CLASSIC does) declares one struct mw_voice and gives the
  * base its sound, a block at a time; the base does the rest on every physical voice:

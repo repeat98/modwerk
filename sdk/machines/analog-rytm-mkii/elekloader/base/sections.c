@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Modwerk's Analog Rytm MKII base: the machine list's sections (the table mw_machine_sections).
 //
 // Stock OS 1.74 files each machine in the list under a section, a byte per machine id from a 34-byte table

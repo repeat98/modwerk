@@ -1,4 +1,4 @@
-| SPDX-License-Identifier: GPL-3.0-or-later
+| SPDX-License-Identifier: GPL-2.0-or-later
 | Modwerk's Rytm base: the FX track's edit save keeps words 38 to 41 off the
 | delay's TIME. OS 1.74.
 |

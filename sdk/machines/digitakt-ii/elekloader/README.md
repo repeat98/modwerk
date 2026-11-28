@@ -2,8 +2,11 @@
 
 Modwerk's base for Digitakt II OS 1.17 starts from core-dt2 1.1 at `0df8409`, the reviewed head of
 [Elekloader PR #221](https://github.com/elekloader/elekloader/pull/221). Modwerk pins the reviewed commit
-directly. The imported `core-dt2/`, shared `core/` sources and `../include/digitakt-mk2/core.h` are
-byte-for-byte copies. The core is irpina's and the 1.1 additions are toonst's. The
+directly. The imported `core-dt2/` and `../include/digitakt-mk2/core.h` are byte-for-byte copies. `core/` (`core.s`,
+`settings.s`, `fast.s`) is Modwerk's own hook bus (GPL-2.0-or-later, 28 November 2026): the boot copier, `ev_tick`, `ev_draw`,
+`ev_key`, `ev_enc`, `ev_settings` with `core_additem`, and the `.fast` copy, with the same symbols, sites and tables as
+the core it replaced. The same `core.s` builds the Rytm MKII and Model:Cycles bases; each recipe's defsyms set its
+addresses and switches. The core is irpina's and the 1.1 additions are toonst's. The
 [import record](../../../imports/core-dt2-source-0df8409.json) lists each file and its SHA-256.
 Modwerk's additional firmware bindings and hooks live under `modwerk/`.
 
