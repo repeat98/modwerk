@@ -3,24 +3,17 @@
   "components": [
     {
       "id": "elekloader",
-      "name": "elekloader's kit (vendored Digitakt/Digitone builder)",
+      "name": "elekloader kit (the formats Modwerk's firmware builder reads and writes)",
       "spdx": "GPL-3.0-or-later",
       "noticeFile": "elekloader.txt",
       "sources": [
-        {
-          "path": "vendor/elekloader/kit/NOTICE"
-        },
-        {
-          "path": "vendor/elekloader/kit/LICENSE"
-        },
         {
           "url": "https://github.com/irpina/elekloader/tree/3b31ef3c0e43c810e3acd0be6257e2484b20fc40/js",
           "revision": "3b31ef3c0e43c810e3acd0be6257e2484b20fc40"
         }
       ],
       "usedIn": [
-        "vendor/elekloader/kit",
-        "Digitakt/Digitone browser builder"
+        "src/engine/elektron (Modwerk's firmware builder)"
       ]
     },
     {

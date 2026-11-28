@@ -292,9 +292,9 @@ For local emulator captures, use digiemu revision
 Install them with digiemu's `tools/install-patched-unicorn.sh`, then run
 `.venv/bin/python -m emu.unicorn_compat` from the digiemu folder; the script's
 own final check fails when started from elsewhere. Run the capture with that
-`.venv/bin/python`. Build the author's pinned catalog release with the unchanged
-vendored elekloader kit and your own supported stock OS file: the site's builder,
-or `build(stock, mods, 'D001')` from `vendor/elekloader/kit/src/patch.ts` with the
+`.venv/bin/python`. Build the author's pinned catalog release with Modwerk's firmware builder and your
+own supported stock OS file: the site's builder, or
+`build(stock, mods, 'D001')` from `src/engine/elektron/firmware-build.ts` with the
 core and module packages in `vendor/elekloader/catalog/`, under Node 24. Then run the
 capture script in an isolated sandbox with network and user credentials denied
 (on macOS, `sandbox-exec` with a `(deny network*)` profile):

@@ -6,69 +6,33 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { DEVICE } from '../engine/elekloader/digi-build'
-import { DEVICES, KIT_PROTOCOL, catalogChanges, describeChange, followUps, libraryCatalog, mergeCatalogOverlay, readKitZip, type KitJson } from '../../scripts/elekloader-update.ts'
-import { kitNotice, replacementText } from '../../scripts/elekloader-vendor.ts'
-import { PROTOCOL } from '../../vendor/elekloader/kit/src/kit/protocol.ts'
+import { DEVICES, catalogChanges, describeChange, followUps, libraryCatalog, mergeCatalogOverlay, syncCatalog, verifyCatalogFolder } from '../../scripts/elekloader-update.ts'
+import { kitNotice } from '../../scripts/elekloader-vendor.ts'
 
 const sha = (data: Uint8Array) => createHash('sha256').update(data).digest('hex')
 const text = (value: string) => new TextEncoder().encode(value)
 
-function crc32(data: Uint8Array) {
-  let c = 0xffffffff
-  for (const byte of data) { c ^= byte; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1 }
-  return (c ^ 0xffffffff) >>> 0
-}
-
-/** A stored zip, as packaging/build_kit.py writes the kit. */
-function zip(files: Record<string, Uint8Array>) {
-  const parts: Uint8Array[] = [], central: Uint8Array[] = []
-  let offset = 0
-  for (const [name, data] of Object.entries(files)) {
-    const n = text(name), crc = crc32(data)
-    const local = new DataView(new ArrayBuffer(30))
-    local.setUint32(0, 0x04034b50, true); local.setUint16(4, 20, true); local.setUint32(14, crc, true)
-    local.setUint32(18, data.length, true); local.setUint32(22, data.length, true); local.setUint16(26, n.length, true)
-    const entry = new DataView(new ArrayBuffer(46))
-    entry.setUint32(0, 0x02014b50, true); entry.setUint16(4, 20, true); entry.setUint16(6, 20, true); entry.setUint32(16, crc, true)
-    entry.setUint32(20, data.length, true); entry.setUint32(24, data.length, true); entry.setUint16(28, n.length, true); entry.setUint32(42, offset, true)
-    parts.push(new Uint8Array(local.buffer), n, data); central.push(new Uint8Array(entry.buffer), n)
-    offset += 30 + n.length + data.length
-  }
-  const size = central.reduce((sum, part) => sum + part.length, 0), end = new DataView(new ArrayBuffer(22))
-  end.setUint32(0, 0x06054b50, true); end.setUint16(8, central.length / 2, true); end.setUint16(10, central.length / 2, true)
-  end.setUint32(12, size, true); end.setUint32(16, offset, true)
-  return new Uint8Array(Buffer.concat([...parts, ...central, new Uint8Array(end.buffer)]))
-}
-
-function kitZip(change: (kit: KitJson, files: Record<string, Uint8Array>) => void = () => {}, top = 'elekloader-kit-0.5.0') {
-  const files: Record<string, Uint8Array> = {
-    'LICENSE': text('GPL'), 'NOTICE': text('elekloader'), 'README.md': text('# kit'), 'src/kit/protocol.ts': text('export const PROTOCOL = 1'),
-    'tools/kit.ts': text('// tools'), 'tools/build.ts': text('// build'), 'dist/kit/worker.js': text('// worker'), 'examples/minimal/index.html': text('<!doctype html>'),
-  }
-  const kit: KitJson = { name: 'elekloader-kit', version: '0.5.0', protocol: 1, commit: 'a'.repeat(40), files: Object.fromEntries(Object.entries(files).map(([name, data]) => [name, sha(data)])) }
-  change(kit, files)
-  return zip(Object.fromEntries([...Object.entries({ ...files, 'kit.json': text(JSON.stringify(kit)) })].map(([name, data]) => [top + '/' + name, data])))
-}
-
 describe('the elekloader update', () => {
-  it('is written for the vendored kit\'s protocol and Modwerk\'s devices', () => {
-    expect(KIT_PROTOCOL).toBe(PROTOCOL)
+  it('covers Modwerk\'s devices', () => {
     expect(Object.keys(DEVICES).sort()).toEqual(Object.values(DEVICE).sort())
     for (const [key, machine] of Object.entries(DEVICES)) expect(DEVICE[machine as keyof typeof DEVICE]).toBe(key)
   })
-  it('takes the kit files Modwerk vendors from a zip that matches its kit.json', async () => {
-    const { kit, files } = await readKitZip(kitZip())
-    expect(kit.version).toBe('0.5.0')
-    expect([...files.keys()].sort()).toEqual(['LICENSE', 'NOTICE', 'README.md', 'kit.json', 'src/kit/protocol.ts', 'tools/kit.ts'])
-  })
-  it('refuses a changed, missing or extra file, another protocol, and a zip that is not a kit', async () => {
-    await expect(readKitZip(kitZip((_, files) => { files['NOTICE'] = text('changed') }))).rejects.toThrow('not the file kit.json names: NOTICE')
-    await expect(readKitZip(kitZip((_, files) => { delete files['NOTICE'] }))).rejects.toThrow('missing: NOTICE')
-    await expect(readKitZip(kitZip((_, files) => { files['src/extra.ts'] = text('') }))).rejects.toThrow('not in kit.json: src/extra.ts')
-    await expect(readKitZip(kitZip(kit => { kit.protocol = 2 }))).rejects.toThrow('protocol 2')
-    await expect(readKitZip(kitZip(() => {}, 'elekloader-kit-0.4.0'))).rejects.toThrow('not elekloader-kit-0.5.0')
-    await expect(readKitZip(zip({ 'a/kit.json': text('{}'), 'b/x': text('') }))).rejects.toThrow('one elekloader-kit-<version>/ folder')
-    await expect(readKitZip(zip({ 'elekloader-kit-0.5.0/../kit.json': text('{}') }))).rejects.toThrow('outside its folder')
+  it('syncs a catalog\'s pins into a folder, fetching only what is missing, and refuses a file that is not the pinned one', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'modwerk-sync-'))
+    try {
+      const data = text('{"elemod": 2}'), other = text('{"elemod": 2, "id": "x"}')
+      const pin = { file: 'a.elemod', sha256: sha(data), id: 'a', version: '1', device: 'digitakt-mk1', os: '1.54', license: 'MIT', source: { repo: 'o/r', tag: 'v1' }, title: 'A', requires: [], conflicts: [] }
+      const catalog = { schema: 1, kind: 'elekloader-catalog', revision: 'r', cores: [], mods: [pin, { ...pin, file: 'b.elemod', device: 'octatrack' }] }
+      const fetched: string[] = []
+      await syncCatalog(catalog, folder, ['digitakt-mk1'], async url => { fetched.push(url); return data })
+      expect(fetched).toEqual(['https://github.com/o/r/releases/download/v1/a.elemod'])
+      verifyCatalogFolder(folder)
+      await syncCatalog(catalog, folder, ['digitakt-mk1'], async () => { throw new Error('no second download') })
+      writeFileSync(join(folder, 'a.elemod'), other)
+      await expect(syncCatalog(catalog, folder, ['digitakt-mk1'], async () => other)).rejects.toThrow('is not the file the catalog pins')
+      writeFileSync(join(folder, 'stray.elemod'), data)
+      expect(() => verifyCatalogFolder(folder)).toThrow('not in the catalog: stray.elemod')
+    } finally { rmSync(folder, { recursive: true, force: true }) }
   })
   it('lists what changed between two catalogs and what is left to do by hand', () => {
     const pin = (id: string, version: string, os = '1.53', device = 'digitakt-mk1') => ({ file: `${id}-${version}.elemod`, sha256: sha(text(id + version)), id, version, device, os })
@@ -129,11 +93,10 @@ describe('the elekloader update', () => {
     expect(cut.leftOut).toEqual(['digitakt/digislicer'])
     expect(DEVICES['digitakt-mk2']).toBe('digitakt-ii')
   })
-  it('ships the kit NOTICE whole, keeping its credit for the code the replaced files stand in for', () => {
-    const notice = readFileSync(join(ROOT, 'vendor/elekloader/kit/NOTICE'), 'utf8'), shipped = kitNotice(notice)
-    expect(shipped.endsWith(notice)).toBe(true)
-    expect(shipped).toContain('Code from other projects')
-    expect(shipped).toContain("replaced by Modwerk's own implementation")
+  it('ships the kit\'s notice whole after the note on what it covers', () => {
+    const notice = 'elekloader\nCopyright (C) 2026 irpina and contributors\n'
+    expect(kitNotice(notice).endsWith(notice)).toBe(true)
+    expect(kitNotice(notice)).toContain("Modwerk's own implementation")
   })
   it('adds pinned site packages to the existing catalog without replacement and fingerprints the result', () => {
     const pin = (id: string, device: string, file: string, sha256: string) => ({
@@ -180,7 +143,7 @@ function fixture() {
     mkdirSync(dirname(join(root, path)), { recursive: true })
     cpSync(join(ROOT, path), join(root, path), { recursive: true })
   }
-  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron/codec', 'src/engine/elektron/odd-jumps.ts']) copy(path)
+  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron']) copy(path)  // the builder modules the scripts import
   // The module records that add Modwerk-built pins to the upstream catalog.
   for (const name of readdirSync(join(ROOT, 'sdk/imports')).filter(name => /^elekloader-.*\.json$/.test(name))) copy('sdk/imports/' + name)
   const manifest = JSON.parse(readFileSync(join(root, 'sdk/octabam/licenses/manifest.json'), 'utf8')) as { moduleComponents: Record<string, string[]> }
@@ -195,17 +158,6 @@ function fixture() {
   return root
 }
 
-function fullKitZip(root: string, change: (files: Record<string, Uint8Array>) => void = () => {}) {
-  const files = fileBytes(join(root, 'vendor/elekloader/kit'))
-  delete files['kit.json']
-  change(files)
-  const kit: KitJson = { name: 'elekloader-kit', version: '0.5.0', protocol: 1, commit: 'a'.repeat(40), files: Object.fromEntries(Object.entries(files).map(([name, data]) => [name, sha(data)])) }
-  const raw = zip(Object.fromEntries(Object.entries({ ...files, 'kit.json': text(JSON.stringify(kit)) }).map(([name, data]) => ['elekloader-kit-0.5.0/' + name, data])))
-  const path = join(root, 'update.zip')
-  writeFileSync(path, raw)
-  return [path, '--sha256', sha(raw)]
-}
-
 function update(root: string, args: string[]) {
   return spawnSync(process.execPath, [join(root, 'scripts/elekloader-update.ts'), ...args], { cwd: root, encoding: 'utf8', timeout: 20_000 })
 }
@@ -216,53 +168,35 @@ function identities(root: string) {
 
 // Each case runs the real CLI, up to 20 s per call: vitest's 5 s default timed out on loaded CI runners.
 describe('elekloader update CLI', { timeout: 60_000 }, () => {
-  it('ships changed upstream notices and full licence terms, and keeps an identical update unchanged', () => {
+  it('keeps an identical catalog update unchanged', () => {
     const root = fixture()
     try {
-      const marker = 'Copyright (C) 2027 Fixture Contributor'
-      const args = fullKitZip(root, files => { files.NOTICE = text(new TextDecoder().decode(files.NOTICE) + '\n' + marker + '\n') })
-      const result = update(root, args)
-      expect(result.status, result.stderr).toBe(0)
-      for (const path of ['vendor/licenses/elekloader.txt', 'public/licenses/THIRD_PARTY_NOTICES.txt', 'public/licenses/THIRD_PARTY_NOTICES.html']) {
-        expect(readFileSync(join(root, path), 'utf8')).toContain(marker)
-      }
-      expect(readFileSync(join(root, 'vendor/licenses/elekloader.txt'), 'utf8')).toContain(readFileSync(join(root, 'vendor/elekloader/kit/LICENSE'), 'utf8').trimEnd())
-      expect(readFileSync(join(root, 'vendor/licenses/manifest.json'), 'utf8')).toContain('a'.repeat(40))
+      const catalogPath = join(root, 'update.json')
+      writeFileSync(catalogPath, readFileSync(join(root, 'vendor/elekloader/upstream-catalog.json')))
       const before = identities(root)
-      const again = update(root, args)
-      expect(again.status, again.stderr).toBe(0)
-      expect(identities(root)).toEqual(before)
+      const result = update(root, [catalogPath])
+      expect(result.status, result.stderr).toBe(0)
+      const after = identities(root)
+      expect(Object.keys(after).filter(k => after[k] !== before[k]).concat(Object.keys(before).filter(k => !(k in after)))).toEqual([])
     } finally { rmSync(root, { recursive: true, force: true }) }
   })
-  it('installs the re-export over a replaced kit file and records the upstream file it stands for', () => {
+  it('refuses a catalog the builder cannot read before changing any installed file', () => {
     const root = fixture()
     try {
-      const upstream = text('export const upstreamCode = 1\n')
-      const result = update(root, fullKitZip(root, files => { files['src/codec/elz.ts'] = upstream }))
-      expect(result.status, result.stderr).toBe(0)
-      expect(readFileSync(join(root, 'vendor/elekloader/kit/src/codec/elz.ts'), 'utf8')).toBe(replacementText('src/codec/elz.ts'))
-      const lock = JSON.parse(readFileSync(join(root, 'vendor/elekloader/elekloader.lock.json'), 'utf8')) as { kit: { replaced: Record<string, string> } }
-      expect(lock.kit.replaced['src/codec/elz.ts']).toBe(sha(upstream))
-      expect(result.stdout).toContain('Upstream changed src/codec/elz.ts')
-    } finally { rmSync(root, { recursive: true, force: true }) }
-  })
-  it('refuses a same-protocol kit that cannot read the current catalog before changing any installed file', () => {
-    const root = fixture()
-    try {
-      const args = fullKitZip(root, files => {
-        files['src/kit/catalog.ts'] = text(new TextDecoder().decode(files['src/kit/catalog.ts']).replace('export const CATALOG_SCHEMA = 1', 'export const CATALOG_SCHEMA = 2'))
-      })
+      const catalog = JSON.parse(readFileSync(join(root, 'vendor/elekloader/upstream-catalog.json'), 'utf8')) as { schema: number }
+      catalog.schema = 2
+      const catalogPath = join(root, 'update.json')
+      writeFileSync(catalogPath, JSON.stringify(catalog))
       const before = identities(root)
-      const result = update(root, args)
+      const result = update(root, [catalogPath])
       expect(result.status).toBe(1)
-      expect(result.stderr).toContain('catalog schema 1: this kit reads schema 2')
+      expect(result.stderr).toContain('catalog schema 2: this builder reads schema 1')
       expect(identities(root)).toEqual(before)
     } finally { rmSync(root, { recursive: true, force: true }) }
   })
-  it.each(['notice generation', 'vendor validation'])('restores the kit, catalog, lock, manifest and all notices when %s fails', failure => {
+  it.each(['notice generation', 'vendor validation'])('restores the catalog, lock and all notices when %s fails', failure => {
     const root = fixture()
     try {
-      const args = fullKitZip(root, files => { files.NOTICE = text(new TextDecoder().decode(files.NOTICE) + '\nCopyright (C) 2027 Fixture Contributor\n') })
       const catalog = JSON.parse(readFileSync(join(root, 'vendor/elekloader/catalog/catalog.json'), 'utf8')) as { revision: string; mods: { id: string }[] }
       catalog.revision = 'b'.repeat(40)
       catalog.mods = catalog.mods.filter(mod => mod.id !== 'digistring')
@@ -276,7 +210,7 @@ describe('elekloader update CLI', { timeout: 60_000 }, () => {
       // The update imports this module, so only its run as the final vendor check fails.
       else writeFileSync(script, readFileSync(script, 'utf8') + "\nif (process.argv[1]?.endsWith('elekloader-vendor.ts')) throw new Error('fixture validation failure')\n")
       const before = identities(root)
-      const result = update(root, [...args, catalogPath])
+      const result = update(root, [catalogPath])
       expect(result.status).toBe(1)
       expect(result.stderr).toContain(failure === 'notice generation' ? 'fixture generation failure' : 'fixture validation failure')
       expect(identities(root)).toEqual(before)

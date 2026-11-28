@@ -40,7 +40,7 @@ export const USB_AUDIO_MIDI_CREDITS: readonly Credit[] = [
 ]
 
 // Attribution follows sdk/octabam/THIRD_PARTY.md, the retained licence manifest,
-// sdk/imports/, vendor/elekloader/kit/NOTICE and each module's author/source record.
+// sdk/imports/ and each module's author/source record.
 // Describe the retained contribution, rather than implying every linked project
 // is bundled with the website. Source revisions remain in those provenance files.
 export const DSP56300_CREDIT: Credit = {
@@ -81,11 +81,6 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
         description: 'The virtual Octatrack panel and emulator improvements, including interactive execution, timing, card write-back and audio taps, retained through octabam.',
         links: [repo('timhastie/octa-panel')],
       },
-      {
-        name: 'elekloader', author: 'irpina and contributors',
-        description: 'The vendored TypeScript kit for local Digitakt and Digitone firmware builds, shared cores and elemod format. Its public ABI and adaptation guides also inform Modwerk’s core research.',
-        links: [repo('irpina/elekloader')],
-      },
     ],
   },
   {
@@ -123,11 +118,6 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
         name: 'Play Modes', author: 'devilfish707',
         description: 'The Octaplay engine, firmware integration, investigation and documentation behind the Octatrack Play Modes module.',
         links: [repo('devilfish707/Octaplay')],
-      },
-      {
-        name: 'Digihealth', author: 'irpina',
-        description: 'The Digitakt FAST AUDIO planning that Modwerk\'s module builds follow.',
-        links: [repo('irpina/digihealth')],
       },
       {
         name: 'Modwerk & Octatrack modules', author: 'Jannik Aßfalg (@repeat98) and Modwerk contributors',
@@ -192,7 +182,7 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
       },
       {
         name: 'Pyodide', author: 'The Pyodide and CPython contributors',
-        description: 'Python in WebAssembly powered the earlier Digitakt and Digitone browser builder. Current builds use elekloader’s TypeScript kit; Pyodide remains part of the project’s history.',
+        description: 'Python in WebAssembly powered the earlier Digitakt and Digitone browser builder. Current builds use Modwerk’s own builder; Pyodide remains part of the project’s history.',
         links: [repo('pyodide/pyodide')],
       },
       {

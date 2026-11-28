@@ -8,7 +8,7 @@ import { parseBuildRequest, siteBase, verifyPublishedModules, buildAndSave, libr
 import { readFirmwareBuildManifest, sha256 } from './firmware-build-manifest.mjs'
 
 const image = new Uint8Array([1, 2, 3, 4])
-vi.mock('../vendor/elekloader/kit/src/bridge.ts', () => ({ Bridge: class {
+vi.mock('../src/engine/elektron/builder-bridge.ts', () => ({ Bridge: class {
   async setStock() { return { ok: true, dev: { key: 'digitakt-mk1' }, os: '1.54' } }
   addCore() { return {} }
   addMod() { return { ok: true } }

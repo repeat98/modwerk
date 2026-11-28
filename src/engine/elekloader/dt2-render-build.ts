@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { DIGITAKT_MK2 } from '../../../vendor/elekloader/kit/src/devices.ts'
-import { Syx, packMain, verify, write } from '../../../vendor/elekloader/kit/src/syx.ts'
+import { DIGITAKT_MK2 } from '../elektron/devices.ts'
+import { Syx, packMain, verify, write } from '../elektron/syx-container.ts'
 import {
   buildDt2RenderSection, combineDt2Plans, DT2_ADDED_TYPES, DT2_FIRST_ADDED_TYPE, DT2_MACHINE_KNOBS_AT, DT2_MACHINE_TYPES_AT, planDt2FrameReceive,
   planDt2MachinePlayers, planDt2MachineSelectors, unpackDt2SharcSection,
