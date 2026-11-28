@@ -31,8 +31,8 @@ export function digiDownloadsOpen(machine: string, betaUi: boolean): boolean {
   return digiDownloadsEnabled(machine) || (betaUi && (DIGI_BETA_DOWNLOADS as readonly string[]).includes(machine))
 }
 
-// Research machines whose page offers a local core build before any module is published. Build outcomes count
-// by machine; download availability remains governed independently above. The preview, its configuration route
+// Research machines whose page offers a local core build before any module is published. Download availability
+// remains governed independently above. The preview, its configuration route
 // and its button are beta-only until the owner releases the machine (MACHINE_RECIPE.md, Beta first): ask
 // coreBuildPreviewOpen with the session's hasBetaUi.
 export const CORE_BUILD_PREVIEWS: readonly BuilderMachine[] = ['model-cycles', 'analog-four-mkii']
