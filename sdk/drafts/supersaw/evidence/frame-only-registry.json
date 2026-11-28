@@ -1,0 +1,41 @@
+{
+  "version": "0.31.0-source-draft",
+  "mode": "full",
+  "profile": "frame-only",
+  "scope": "virtual USB and native registry; note captures only when audioChecks are present; no physical USB or reboot test",
+  "transport": "in-memory USB model via process pipes",
+  "baseIdentity": "e5c7be2b26e60e6a2b0434234a11f6c635eb97dc7f53ce3ac6ec8b3206ae70cc",
+  "moduleId": "3fae49db",
+  "packageSha256": "7b62a0461f40c8d699f181c4819d0e9d21f7d4936e71e32de4428c75d24eac7b",
+  "checks": [
+    "bare base has no runtime module",
+    "package admitted and live in virtual USB Trial",
+    "Undo removes the unused trial module",
+    "reinstall and Keep accepted on the virtual card",
+    "base machine table contains relocated SUPERSAW SW/1 descriptor",
+    "native base assignment signs T1 and applies six defaults",
+    "native base refuses a second SuperSAW in the same Part",
+    "native panel PLAY and STOP reach the transport before manual note test",
+    "removal refused while a Part owns SuperSAW",
+    "native FLEX assignment clears the SuperSAW signature",
+    "module removed after leaving its track"
+  ],
+  "assignmentPreflight": {
+    "bank": 1074668000,
+    "pi": 0,
+    "part": 1075253088,
+    "signatures": "Raw signature memory buffer omitted from public export.",
+    "admitted": 1,
+    "cpu": 408,
+    "hot": 850,
+    "allowance": 45,
+    "audioFrames": 14534,
+    "idleGap": 134,
+    "idleCounts": 390211569
+  },
+  "audioChecks": [],
+  "hardwareTested": false,
+  "audioTested": false,
+  "rebootTested": false,
+  "cpuIsHardwareMeasurement": false
+}

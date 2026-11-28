@@ -1,0 +1,26 @@
+{
+  "controlVersion": "manual-confirm-v1",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "soundEngineUnchanged": true,
+  "hardwareTested": false,
+  "checks": [
+    "audition coordination: duration/CPU/interrupt/late Q/EOF/retention",
+    "integrated deadline waiting and confirmed Undo",
+    "legacy console and lifecycle regressions",
+    "Python entrypoints and JS syntax"
+  ],
+  "sha256": {
+    "audition_monitor.mjs": "eae6052ee44f4f58f6d3df27031f789e0dd7b17b98e91f10e20b1c5c7e6af092",
+    "operator_console.mjs": "b736cbd9abae6a777de08ceb967621b11e98c73622baebf1ae9e5c040f3a4a98",
+    "trial_current_listen.mjs": "9dbfd8ca5acc2629363ba9ad3cf3bef0de4dedea5e26523783b1ac87a5dcdb42",
+    "trial_current_listen.py": "8a0e6ef1ccce36c09bbdb8821bb73a63eda4981b5418c37f5ca5e1e4795effd4",
+    "read_hardware.py": "b50498222150c848847427550fbde59a3aed80ddb7e709fa62cb6384b0a90d42",
+    "test_audition_monitor.mjs": "ef10363d414ede42697f7e39c75e71f1e31290088ed42fdcfdc1959b3991f6d5",
+    "test_current_listen_trial.mjs": "6db4c40e8a38b2d5d3d871eec735aebcfc1e8651cf052ea1d6b04b93fc6d881c"
+  },
+  "limitations": [
+    "Software fakes prove host control flow, not physical STOP/FLEX gestures or firmware rollback behavior.",
+    "Past needs-recovery root cause remains unproven.",
+    "Two physical normal exits requested; not yet observed."
+  ]
+}

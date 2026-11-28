@@ -1,0 +1,144 @@
+{
+  "scope": "emulated MAIN output; not physical hardware",
+  "finding": "Single native STOP during stopped-transport manual MIDI play did not silence MAIN on the controlled RTC baseline or voice-reset-only candidate.",
+  "invalidEarlierStimuli": "Raw mailbox writes and earlier panel runs without proven key delivery do not establish a STOP regression.",
+  "records": [
+    {
+      "case": "panel",
+      "packageSha256": "c397adef976e923e4c3e4b2da327d77330d4819ccb24bd863eae31538b11ab75",
+      "validRTC": false,
+      "panelTransportPreflightPassed": false,
+      "stopAssertionPassed": false,
+      "captureStats": [
+        {
+          "label": "held",
+          "frames": 13374,
+          "peak": 1395,
+          "tailPeak": 1199
+        },
+        {
+          "label": "release",
+          "frames": 44271,
+          "peak": 959,
+          "tailPeak": 0
+        },
+        {
+          "label": "restarted",
+          "frames": 13374,
+          "peak": 1455,
+          "tailPeak": 1455
+        },
+        {
+          "label": "stopped",
+          "frames": 31913,
+          "peak": 1566,
+          "tailPeak": 1566
+        }
+      ],
+      "logSha256": "7781ba7c9936747a458c8645159f7f443c5e0ce39b250b26bf881ebd50bc75b9"
+    },
+    {
+      "case": "reset",
+      "packageSha256": "7b62a0461f40c8d699f181c4819d0e9d21f7d4936e71e32de4428c75d24eac7b",
+      "validRTC": false,
+      "panelTransportPreflightPassed": false,
+      "stopAssertionPassed": false,
+      "captureStats": [
+        {
+          "label": "held",
+          "frames": 13374,
+          "peak": 1395,
+          "tailPeak": 1199
+        },
+        {
+          "label": "release",
+          "frames": 44271,
+          "peak": 959,
+          "tailPeak": 0
+        },
+        {
+          "label": "restarted",
+          "frames": 13374,
+          "peak": 1455,
+          "tailPeak": 1455
+        },
+        {
+          "label": "stopped",
+          "frames": 31913,
+          "peak": 1566,
+          "tailPeak": 1566
+        }
+      ],
+      "logSha256": "67530cff82bf3add954fb59f2c4a40bae546b445a59b641e97365588382a88de"
+    },
+    {
+      "case": "rtc-baseline",
+      "packageSha256": "909ebc771df301881d9d7255b5606a06662531e9db44d260470aafeb9c875c0e",
+      "validRTC": true,
+      "panelTransportPreflightPassed": true,
+      "stopAssertionPassed": false,
+      "captureStats": [
+        {
+          "label": "held",
+          "frames": 13374,
+          "peak": 1395,
+          "tailPeak": 1199
+        },
+        {
+          "label": "release",
+          "frames": 44272,
+          "peak": 959,
+          "tailPeak": 0
+        },
+        {
+          "label": "restarted",
+          "frames": 13374,
+          "peak": 1455,
+          "tailPeak": 1455
+        },
+        {
+          "label": "stopped",
+          "frames": 34561,
+          "peak": 1604,
+          "tailPeak": 1604
+        }
+      ],
+      "logSha256": "d3e8c02364ecc5bad58de9ad134b1e5dc0e495e999fa3b1fb854793dc3c264fe"
+    },
+    {
+      "case": "rtc-reset",
+      "packageSha256": "7b62a0461f40c8d699f181c4819d0e9d21f7d4936e71e32de4428c75d24eac7b",
+      "validRTC": true,
+      "panelTransportPreflightPassed": true,
+      "stopAssertionPassed": false,
+      "captureStats": [
+        {
+          "label": "held",
+          "frames": 13374,
+          "peak": 1395,
+          "tailPeak": 1199
+        },
+        {
+          "label": "release",
+          "frames": 44272,
+          "peak": 959,
+          "tailPeak": 0
+        },
+        {
+          "label": "restarted",
+          "frames": 13374,
+          "peak": 1455,
+          "tailPeak": 1455
+        },
+        {
+          "label": "stopped",
+          "frames": 34561,
+          "peak": 1604,
+          "tailPeak": 1604
+        }
+      ],
+      "logSha256": "f04153d547400d989b660945e269078b4a3d12f2a299dbbded01134ea1d844e2"
+    }
+  ],
+  "hardwareTested": false
+}

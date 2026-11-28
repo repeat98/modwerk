@@ -1,0 +1,19 @@
+{
+  "kind": "static-only-compatibility-audit",
+  "hardwareTested": false,
+  "publicBaseIdentity": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a",
+  "baseArtifactContainsReportedIdentity": true,
+  "baseArtifactSha256": "1af5719b1ddc3623d8c545e6a8f39ea4fbfaff255687529a436ddd9da9c3fd61",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "packageAbi": 8,
+  "currentLoaderMaxAbi": 10,
+  "imageBytes": 35336,
+  "relocations": 88,
+  "ownSites": 0,
+  "stockCopies": 15,
+  "stockCopyBaseSiteOverlaps": [],
+  "subscribedContractChanges": [],
+  "sw1InAbsentMachineKnownList": false,
+  "conclusion": "Static format and source checks only. No current-base trial, Keep, project save or reboot approved by this audit.",
+  "normalization": "Core module_key is RUNTIME_KEY (index 2); omitted site-event kinds default to call, as in the SDK."
+}

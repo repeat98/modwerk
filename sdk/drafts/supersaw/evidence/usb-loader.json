@@ -1,0 +1,32 @@
+{
+  "version": "0.30.0-source-draft",
+  "mode": "loader-only",
+  "scope": "virtual USB loader subset only; assignment and rendering not tested",
+  "transport": "in-memory USB model via process pipes",
+  "baseIdentity": "e5c7be2b26e60e6a2b0434234a11f6c635eb97dc7f53ce3ac6ec8b3206ae70cc",
+  "moduleId": "3fae49db",
+  "packageSha256": "909ebc771df301881d9d7255b5606a06662531e9db44d260470aafeb9c875c0e",
+  "checks": [
+    "bare base has no runtime module",
+    "package admitted and live in virtual USB Trial",
+    "Undo removes the unused trial module",
+    "reinstall and Keep accepted on the virtual card",
+    "base machine table contains relocated SUPERSAW SW/1 descriptor",
+    "unused kept module removed through the virtual USB loader"
+  ],
+  "hardwareTested": false,
+  "audioTested": false,
+  "rebootTested": false,
+  "modelInputs": {
+    "pipeExecutableSha256": "317e345631149ed505f383be202914d0f2fb6424f95714fb93decf6831e33811",
+    "pipeSourceSha256": "25fcf2777995e3c822760d073e0221d4ff2df5df430eba12ec6454ea7cf9820f",
+    "adaptedRtosSha256": "35e0892fac9da71f01c8072318fc54fbbd582c399c6648c277d54af02e80b3a6",
+    "nativeArchives": {
+      "out/emu/libot_machine.a": "9b7c52f775a66f690bb231eee1fd7e73df208c5b6dda9fd6937627c97ef61a4a",
+      "out/emu/mc68k/lib68kEmu.a": "26252f2cbb3066efc6611a70722a9ea8886ecd479c7d9e744688b2e5df4d32d8",
+      "out/emu/dsp56300/dsp56kEmu/libdsp56kEmu.a": "358022426894933ba136509132b04e7ec9bddefc37c9c2b94c54b0046c1d7f10",
+      "out/emu/dsp56300/dsp56kBase/libdsp56kBase.a": "78d39241b97985060a19342b6c4361691cc9d0afaa4d717f2f9a2b4f5a5e6086",
+      "out/emu/dsp56300/asmjit/libasmjit.a": "275c6cc30897d1c8b3c14bd3a32ff514b166c5fe9d16062b53c301fdc7c62841"
+    }
+  }
+}

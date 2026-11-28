@@ -1,0 +1,19 @@
+{
+  "base": "27c9d36f427079114b598f2910018ea7cd8d3ab7d63dffdca484651551ba020d",
+  "before": {
+    "phase": "normal",
+    "activeKnown": true,
+    "active": "27c9d36f427079114b598f2910018ea7cd8d3ab7d63dffdca484651551ba020d",
+    "inventory": []
+  },
+  "after": {
+    "phase": "normal",
+    "activeKnown": true,
+    "active": "27c9d36f427079114b598f2910018ea7cd8d3ab7d63dffdca484651551ba020d",
+    "inventory": []
+  },
+  "restored": true,
+  "packageSent": false,
+  "keepPerformed": false,
+  "at": "2026-11-15T23:46:49.179Z"
+}

@@ -1,0 +1,53 @@
+{
+  "version": "0.32.0-source-draft",
+  "baseIdentity": "27c9d36f427079114b598f2910018ea7cd8d3ab7d63dffdca484651551ba020d",
+  "layout": "off",
+  "downloadFile": "Modwerk-octatrack-base-44cb5b.bin",
+  "downloadSha256": "44cb5b245c789f512ec015945a50f971dcb5d259c8c86e6a45b2d7fbbb825707",
+  "mainSha256": "96abd812843fb0774fcdc563a7f7ee2147186f7c6cb0d27a72cc5d04cfcd569d",
+  "reconstructedMainEqualsDownloadedMain": true,
+  "modulePackageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "emulatorAudioQualification": "18 checks passed with 7 MAIN captures on exact public base",
+  "hardwareTrialTested": true,
+  "hardwareUsbConnection": "reported by user and supplied Modwerk screenshots",
+  "agentLibusbElektronCount": 0,
+  "nativeTerminalProbePrepared": true,
+  "baselineFromUserScreenshot": {
+    "cpuPercent": 43.4,
+    "dspTracks1to4Percent": 50.3,
+    "dspTracks5to8Percent": 41.9,
+    "modules": 0,
+    "transportStopped": "requested, not independently read"
+  },
+  "missingMachineProtection": "public base lacks local SW/1 fix; persistence and absence restore remain unqualified; first trial must use a disposable project",
+  "hardwareNativeTerminalIdentityPrefix": "27c9d36f42707911",
+  "hardwareNativeTerminalInventory": [],
+  "initialProbeFailure": "development-only state request refused by public base; no package sent",
+  "correctedProbeAllowedVendorReads": [
+    3,
+    27,
+    30
+  ],
+  "correctedProbeUsbWritesDisabled": true,
+  "correctedProbeHardwareTested": true,
+  "hardwareNativeTerminalIdentity": "27c9d36f427079114b598f2910018ea7cd8d3ab7d63dffdca484651551ba020d",
+  "hardwareReadOnlyLoadReported": {
+    "cpuPercent": 43.4,
+    "tracks1to4Percent": 50.3,
+    "tracks5to8Percent": 41.9,
+    "peak1to4Percent": 51.3,
+    "peak5to8Percent": 41.9,
+    "ticks": 81292,
+    "frames": 3743294,
+    "source": "user Terminal screenshot"
+  },
+  "unusedRamTrialPrepared": {
+    "seconds": 10,
+    "assignedToTrack": false,
+    "keep": false,
+    "automaticUndo": true,
+    "offlineFailureChecks": "passed",
+    "hardwareRun": "passed; exact previous identity and empty inventory restored"
+  },
+  "hardwareTrialScope": "unused RAM lifecycle only"
+}

@@ -1,0 +1,91 @@
+{
+  "version": "0.31.0-source-draft",
+  "mode": "full",
+  "profile": "frame-dsp",
+  "scope": "virtual USB and native registry; note captures only when audioChecks are present; no physical USB or reboot test",
+  "transport": "in-memory USB model via process pipes",
+  "baseIdentity": "c718ab2ef2c9d0dc617fb1157e31137314f047ba45a1c39940a97701ea98dceb",
+  "moduleId": "3fae49db",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "checks": [
+    "bare base has no runtime module",
+    "package admitted and live in virtual USB Trial",
+    "Undo removes the unused trial module",
+    "reinstall and Keep accepted on the virtual card",
+    "base machine table contains relocated SUPERSAW SW/1 descriptor",
+    "native base assignment signs T1 and applies six defaults",
+    "native base refuses a second SuperSAW in the same Part",
+    "native panel PLAY and STOP reach the transport before manual note test",
+    "MIDI note reaches native base renderer and DSP MAIN",
+    "native FUNC+STOP keeps the held note sounding",
+    "native MIDI release settles at DSP MAIN",
+    "MIDI restart sounds through DSP MAIN",
+    "native MKII STOP key silences manual play at DSP MAIN",
+    "new MIDI note after STOP restarts through DSP MAIN",
+    "post-STOP MIDI release settles at DSP MAIN",
+    "removal refused while a Part owns SuperSAW",
+    "native FLEX assignment clears the SuperSAW signature",
+    "module removed after leaving its track"
+  ],
+  "assignmentPreflight": {
+    "bank": 1074668000,
+    "pi": 0,
+    "part": 1075253088,
+    "signatures": "Raw signature memory buffer omitted from public export.",
+    "admitted": 1,
+    "cpu": 408,
+    "hot": 850,
+    "allowance": 45,
+    "audioFrames": 14546,
+    "idleGap": 134,
+    "idleCounts": 398908312
+  },
+  "audioChecks": [
+    {
+      "label": "held",
+      "frames": 13374,
+      "peak": 1395,
+      "tailPeak": 1199
+    },
+    {
+      "label": "func-stop",
+      "frames": 19553,
+      "peak": 1715,
+      "tailPeak": 1386
+    },
+    {
+      "label": "release",
+      "frames": 44272,
+      "peak": 1006,
+      "tailPeak": 0
+    },
+    {
+      "label": "restarted",
+      "frames": 13374,
+      "peak": 1233,
+      "tailPeak": 1180
+    },
+    {
+      "label": "stopped",
+      "frames": 34561,
+      "peak": 860,
+      "tailPeak": 0
+    },
+    {
+      "label": "after-stop",
+      "frames": 13374,
+      "peak": 2001,
+      "tailPeak": 1901
+    },
+    {
+      "label": "after-stop-release",
+      "frames": 44271,
+      "peak": 1154,
+      "tailPeak": 0
+    }
+  ],
+  "hardwareTested": false,
+  "audioTested": true,
+  "rebootTested": false,
+  "cpuIsHardwareMeasurement": false
+}

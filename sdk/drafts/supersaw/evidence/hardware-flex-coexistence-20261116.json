@@ -1,0 +1,35 @@
+{
+  "at": "2026-11-16T22:58:16.769Z",
+  "base": "27c9d36f427079114b598f2910018ea7cd8d3ab7d63dffdca484651551ba020d",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "configurationReportedByOperator": {
+    "T1": "SuperSAW",
+    "T2": "FLEX sample",
+    "T3": "FLEX sample",
+    "T4": "FLEX sample",
+    "T5": "FLEX sample",
+    "T6-T8": "no samples"
+  },
+  "operatorReport": "All five tracks play simultaneously without audible clicks or dropouts.",
+  "sampleCount": 547,
+  "lastElapsedMs": 547437,
+  "wholeSessionCpuMaxPercent": 73.3,
+  "screenshotPlayingCpuPercent": [
+    72.5,
+    72.6,
+    73.2
+  ],
+  "screenshotDsp1to4Percent": [
+    39.7,
+    40.3,
+    38.4
+  ],
+  "screenshotDsp5to8Percent": 43.7,
+  "undoConfirmed": true,
+  "keepPerformed": false,
+  "limitations": [
+    "No action timestamps: session maximum is not attributed to a specific gesture.",
+    "Whole-device load, not isolated module cost.",
+    "Seven simultaneous sample tracks, STATIC coexistence and reboot persistence remain untested."
+  ]
+}

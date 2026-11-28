@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 2,
+  "id": "supersaw",
+  "key": "SUPERSAW",
+  "name": "SuperSAW-OT",
+  "version": "0.32.0-source-draft",
+  "category": "machines",
+  "author": {
+    "github": "jokobol",
+    "name": "José Aleixo",
+    "credits": [
+      "José Aleixo: instrument concept, sound direction and physical Octatrack MKII listening tests, with AI coding assistance.",
+      "Retained MIT notices credit Tim Hastie and Sam Banks for source components; see provenance.json, LICENSE-TIM and LICENSE-OCTABAM.",
+      "Modwerk SDK headers retain their original notices and GPL-3.0-or-later terms where specified."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Experimental monophonic saw machine",
+    "family": "Synth track machine",
+    "summary": "One to seven detuned saw oscillators, with stereo spread and native track processing.",
+    "overview": "Monophonic source draft. The exact private RAM package has produced sound on an Octatrack MKII with public base 0.7.13; unassigned Undo passed, but timed audition rollback failed and durable installation remains unqualified.",
+    "highlights": [
+      "Six SRC controls; one instance per Part.",
+      "Native AMP and track effects; sequencing and modulation heard in prior RAM trials.",
+      "No sub oscillator or chord mode in this reference version."
+    ],
+    "usage": [
+      "Use only a separately qualified compatible base and private package; this draft is not available in the public library.",
+      "In a backed-up test project choose SUPERSAW on one audio track, open SRC and use TUNE, DETN, MIX, OSC, WIDE and LEVL.",
+      "Trigger a note at low monitoring volume, check STOP, then return the track to FLEX before requesting Undo. Do not Keep or reboot with a SuperSAW track until persistence is qualified."
+    ]
+  },
+  "access": {
+    "location": "Audio track > SRC SETUP > SUPERSAW, on a qualified private build only",
+    "steps": [
+      "Use only a separately qualified compatible base and private package; this draft is not available in the public library.",
+      "In a backed-up test project choose SUPERSAW on one audio track, open SRC and use TUNE, DETN, MIX, OSC, WIDE and LEVL.",
+      "Trigger a note at low monitoring volume, check STOP, then return the track to FLEX before requesting Undo. Do not Keep or reboot with a SuperSAW track until persistence is qualified."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "TUNE",
+      "default": 64,
+      "count": 128,
+      "doc": "Pitch on the native FLEX scale; the centre value is 64.",
+      "labels": null
+    },
+    {
+      "name": "DETN",
+      "default": 85,
+      "count": 128,
+      "doc": "Detune of the saw oscillators.",
+      "labels": null
+    },
+    {
+      "name": "MIX",
+      "default": 127,
+      "count": 128,
+      "doc": "Balance of the centre oscillator and detuned side oscillators.",
+      "labels": null
+    },
+    {
+      "name": "OSC",
+      "default": 6,
+      "count": 7,
+      "doc": "One to seven oscillators. Stored values 0–6 display as 1–7.",
+      "labels": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ]
+    },
+    {
+      "name": "WIDE",
+      "default": 127,
+      "count": 128,
+      "doc": "Stereo spread of the saw oscillators.",
+      "labels": null
+    },
+    {
+      "name": "LEVL",
+      "default": 80,
+      "count": 128,
+      "doc": "Source output level; zero is silent.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Track machine",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Exact private package played on public base 0.7.13; unassigned Trial/Undo passed. Timed audition rollback failed, with a later check finding normal mode and empty inventory. Public packaging, SW/1 boot protection and durable lifecycle remain open.",
+      "Unlisted source draft, not a public installable release.",
+      "One SuperSAW instance per Part, monophonic; OSC is oscillator count, not polyphony.",
+      "Prior exact RAM package uses ABI 8; ABI 10 maximum alone does not establish incompatibility or compatibility.",
+      "Do not Keep, save a project containing this draft or reboot with it until SW/1 absent-machine validation and persistence are qualified.",
+      "Eight-track listening used short samples on the former base; 82.6% was global CPU, not the isolated cost of SuperSAW."
+    ]
+  },
+  "resources": {
+    "recorded": "22 Nov 2026: package size and RAM trials; isolated renderer cost unmeasured",
+    "storage": {
+      "label": "Historical runtime image and BSS",
+      "display": "35,336-byte image and 2,416-byte BSS (previous package)",
+      "value": 37752,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Previous private package 52df3143…; excludes loader overhead and stack. No current-base memory claim.",
+      "source": "evidence/package-checks.json"
+    },
+    "processing": {
+      "label": "Isolated source render cost",
+      "display": "Not measured on the current base",
+      "value": null,
+      "unit": "percent-of-frame",
+      "method": "unmeasured",
+      "conditions": "Global CPU screenshots do not isolate this renderer. Matched current-base measurement required.",
+      "source": "SUBMISSION_STATUS.md"
+    },
+    "impact": {
+      "conditions": "One active monophonic instance; ColdFire renders one to seven saw oscillators. Current-base measurement pending.",
+      "cpu": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "Audio-rate interpolated ColdFire oscillator work. No measured isolated render percentage.",
+        "source": "engine/machine.c"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No added DSP program; native track DSP filter, AMP and effects still process the source.",
+        "source": "usb_machine.c"
+      },
+      "memory": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "Historical image plus BSS is 37,752 bytes, with no sample buffer; current integration remains unmeasured.",
+        "source": "evidence/package-checks.json"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Historical RAM listening plus exact-package current-base unassigned Trial/Undo and user-reported T1 audition. Timed audition rollback failed; later state was normal and empty. Keep, physical reboot, calibrated pitch and full publication qualification remain open.",
+    "hardwareStatus": "historical",
+    "evidenceRevision": "d26528a58a323b1003eaf85f4406d0e5a032ac23",
+    "gates": [
+      "modules/supersaw/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT AND GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "MIT engine and bridge with retained Tim Hastie and Sam Banks notices; GPL-3.0-or-later SDK components keep their own notices and full licence text. No firmware or stock dumps are distributed."
+  },
+  "media": []
+}

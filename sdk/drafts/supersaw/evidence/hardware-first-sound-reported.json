@@ -1,0 +1,50 @@
+{
+  "version": "0.32.0-source-draft",
+  "baseIdentity": "27c9d36f427079114b598f2910018ea7cd8d3ab7d63dffdca484651551ba020d",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "project": "SS_TEST",
+  "evidence": "user-supplied hardware photograph, Terminal screenshot and explicit listening report",
+  "track": 1,
+  "srcPageObserved": [
+    "TUNE",
+    "DETN",
+    "MIX",
+    "OSC",
+    "WIDE",
+    "LEVL"
+  ],
+  "audibilityReported": true,
+  "manualTrigger": "T1 + PLAY, reported by user",
+  "stopSilencesReported": true,
+  "terminalScreenshot": {
+    "earlierCpuRangePercent": [
+      41.0,
+      41.2
+    ],
+    "transientCpuPercent": 55.5,
+    "subsequentCpuRangePercent": [
+      46.9,
+      47.2
+    ],
+    "earlierDspTracks1to4Percent": 40.4,
+    "subsequentDspTracks1to4RangePercent": [
+      38.5,
+      38.6
+    ],
+    "dspTracks5to8Percent": 41.9
+  },
+  "triggerAndStopTimeMarkersAvailable": false,
+  "activeVoiceCostQualified": false,
+  "preciseControlValuesReadBack": false,
+  "allControlsSwept": false,
+  "sevenSampleTrackCoexistenceTested": false,
+  "keepPerformed": false,
+  "physicalRebootTested": false,
+  "listeningTrialUndoConfirmed": true,
+  "notes": [
+    "55.5 percent is an observed transient, not an isolated oscillator benchmark.",
+    "Earlier 43.4/50.3/41.9 readings came from a different project configuration and cannot be subtracted as a matched baseline.",
+    "User reports audible tone and correct STOP; no audio recording was analyzed."
+  ],
+  "undoEvidence": "native host report and supplied Terminal confirmation"
+}

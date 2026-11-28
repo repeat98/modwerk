@@ -1,0 +1,16 @@
+{
+  "version": "0.29.0-source-draft",
+  "sdkRevision": "b52d11e00a124a7e1ae35d23eff5b4d072ab961f",
+  "elekloaderRevision": "3b31ef3c0e43c810e3acd0be6257e2484b20fc40",
+  "baseMainSha256": "f46ebc1b8c840800bba6d5e422fe2ba23aff8150f972c5c938edc1e3e7321971",
+  "emulatorSha256": "97995943e23c936a8966ab05c18da01bd6db2c9c80a7593704ec4968e2e5f862",
+  "profile": "private source-linked base; MSC/vendor USB, site events, cached modules, module sets, on-demand resident stock hooks; no USB MIDI/audio or controller qualification",
+  "build": "passed stock guards, overlap checks, link and container re-read checks",
+  "boot": "M6a GATE passed; 10 tasks created; 190 dispatches; 11 contexts ran; 0 audio frame interrupts",
+  "moduleInstalled": false,
+  "usbLifecycleTested": false,
+  "dspAudioTested": false,
+  "hardwareTested": false,
+  "productionReady": false,
+  "scope": "Base preparation and short bare-base kernel boot only. Not module integration or public-base equivalence."
+}

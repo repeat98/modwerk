@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event":"module_key","fn":"sw_usb_key"},
+    {"event":"ev_voice_bind_run","fn":"sw_usb_voice_reset","order":20},
+    {"event":"ev_midi_note_on","fn":"sw_usb_take_midi_on","order":20},
+    {"event":"ev_midi_note_off","fn":"sw_usb_take_midi_off","order":20},
+    {"event":"ev_chromatic_pitch","fn":"sw_usb_take_chrom_pitch","order":20},
+    {"event":"ev_chromatic_release","fn":"sw_usb_take_chrom_release","order":20},
+    {"event":"ev_tail_kill","fn":"sw_usb_tail_kill","order":20}
+  ],
+  "contribute": [
+    {"to":"ot_machines","order":60,"data":"sw_usb_machine"},
+    {"to":"ot_machine_starts","order":60,"data":"sw_usb_machine_start"}
+  ]
+}

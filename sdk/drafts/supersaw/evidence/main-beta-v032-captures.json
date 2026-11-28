@@ -1,0 +1,63 @@
+{
+  "baseIdentity": "7b8bac10e4d9e0c16567f2c5eaa393a9ec54b251e321b61cda974074ec095633",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "captures": [
+    {
+      "label": "held",
+      "frames": 13374,
+      "peak": 1395,
+      "tailPeak": 1199,
+      "sha256": "4729e6ce24559fba07c9bf7bedbd5566fbb85c5a9d987a50c262beff4af32ae6",
+      "bytes": 53540
+    },
+    {
+      "label": "func-stop",
+      "frames": 19553,
+      "peak": 1715,
+      "tailPeak": 1386,
+      "sha256": "670fb4825fae3f389d2e80d7bba89ce42b09b9ca08d365b47d00644f441af4a1",
+      "bytes": 78256
+    },
+    {
+      "label": "release",
+      "frames": 44272,
+      "peak": 1006,
+      "tailPeak": 0,
+      "sha256": "e846be039a43e5d94507ea466f0b03d04bb7af098be7ab2b353b0c830e340ced",
+      "bytes": 177132
+    },
+    {
+      "label": "restarted",
+      "frames": 13374,
+      "peak": 1233,
+      "tailPeak": 1180,
+      "sha256": "c20e57d1f3ffd439b22d18a956a651a809840a1aaf671fb5921de6faa1167b11",
+      "bytes": 53540
+    },
+    {
+      "label": "stopped",
+      "frames": 34561,
+      "peak": 860,
+      "tailPeak": 0,
+      "sha256": "87282adc92db232e08912e42b85d935932053a7d6b9edce7bc68b5274a09cdaa",
+      "bytes": 138288
+    },
+    {
+      "label": "after-stop",
+      "frames": 13374,
+      "peak": 2001,
+      "tailPeak": 1901,
+      "sha256": "becd100bfcbbed6fdcbc9edf283c5f86c6e7ca6cc1a8285cbf2d8dbbfb28ab1c",
+      "bytes": 53540
+    },
+    {
+      "label": "after-stop-release",
+      "frames": 44271,
+      "peak": 1154,
+      "tailPeak": 0,
+      "sha256": "9f57c49a4f5503bac85587b3fd005d418ff30f499b150800f72ec65c1d89d43c",
+      "bytes": 177128
+    }
+  ],
+  "hardwareTested": false
+}

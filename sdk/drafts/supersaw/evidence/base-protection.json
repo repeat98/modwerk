@@ -1,0 +1,23 @@
+{
+  "version": "0.32.0-source-draft",
+  "baseBranch": "fix/supersaw-absent-signature",
+  "baseSourceRevision": "af8863684854884565f177e871fd567b57bc5403",
+  "sdkParentRevision": "b52d11e00a124a7e1ae35d23eff5b4d072ab961f",
+  "registrySha256": "c7b530d86e95e9fd1f804cfbe619bcb2fbcdceae2c9516626c14f5825c39c1d9",
+  "baseMainSha256": "9f0ca0545e8a7c4e930b2b491bbcaa6f5c27c4e966796ef89f5d4cba59fee7bc",
+  "basePackageSha256": "6b545c8e791f8600c48d3129da5b49bdbb237b4c7840ce1d1dfd833f8fff7caf",
+  "modulePackageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "hostMachineEventTests": 13,
+  "negativeControlFailsWithoutFix": true,
+  "emulatedColdRestoreChecks": 11,
+  "emulatedDspChecks": 18,
+  "fixtureFormatGuard": true,
+  "nativeProjectLoadCompletionRequired": true,
+  "hardwareTested": false,
+  "physicalRebootTested": false,
+  "batterySRAMPersisted": false,
+  "nativeSaveProjectTested": false,
+  "publicBaseUpdated": false,
+  "publicCatalogueSubmission": false,
+  "scope": "private core profile; full beta reconstruction is a separate check, not transferred qualification"
+}

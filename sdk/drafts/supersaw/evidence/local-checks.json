@@ -1,0 +1,22 @@
+{
+  "version": "0.32.0-source-draft",
+  "engineUnchanged": true,
+  "hardwareTested": false,
+  "usbLifecycleTested": false,
+  "cpuPercent": null,
+  "bridge": "PASS: 38824 packets, 320000 stereo samples; V0.27 scheduler/core equality, split boundaries, guards, silence, release priority, page and admission",
+  "engineEquivalence": "PASS: 212600 calls, 1695200 stereo samples, exact PCM32 and entire state; ramps/chunks/zero level/STOP/release/restart/phase wrap/nulls/invalid size",
+  "recipe": {
+    "subscriptions": 7,
+    "contributions": 2,
+    "typedSymbols": "pass",
+    "scope": "source contract only; not package or loader validation"
+  },
+  "coldfire": {
+    "objects": 6,
+    "machineAbiBytes": 80,
+    "startAbiBytes": 16,
+    "lateCombineAndMcf54455Guard": "pass",
+    "compiler": "m68k-elf-gcc (GCC) 16.2.0"
+  }
+}

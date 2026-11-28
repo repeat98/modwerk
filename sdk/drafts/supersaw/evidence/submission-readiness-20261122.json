@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-11-22",
+  "remoteMainPrefix": "c07f3b1c",
+  "workflowDocsChangedSincePinnedBase": false,
+  "githubRepository": "https://github.com/jokobol/SuperSAW-OT",
+  "configuredOrigin": "https://github.com/repeat98/modwerk.git",
+  "matchingPublicClaimCount": 0,
+  "matchingOpenPRsInFirst100": 0,
+  "limitations": [
+    "No authenticated GitHub account or write capability verified.",
+    "No exhaustive open-PR pagination or issue search performed.",
+    "Local contribution dossier has not been pushed."
+  ],
+  "externalWritesPerformed": false
+}

@@ -1,0 +1,5 @@
+Fichiers officiels 1.40C présents localement, vérifiés par le décodeur utilisé pour les tests.
+Ces fichiers ne sont pas inclus dans cette archive.
+
+34695b606eb00e1b4dded5fd0c4b66f3a460522a632e47d7416dbd220599e1ad  OCTATRACK_OS1.40C.bin
+0a8d2d2b35c2cc78fa338576adc1af0cbc094cef973255103165c73edd87f2b6  OCTATRACK_OS1.40C.syx

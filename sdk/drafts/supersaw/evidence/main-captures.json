@@ -1,0 +1,61 @@
+{
+  "scope": "native base and two interpreted DSP cores, original synthetic SuperSAW audio; emulator only",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "sampleRate": 44100,
+  "channels": 2,
+  "format": "PCM16",
+  "tailWindowFrames": 4410,
+  "captures": [
+    {
+      "label": "held",
+      "frames": 13374,
+      "peak": 1395,
+      "tailPeak": 1199,
+      "sha256": "57c9ada956d45d5eb407cd90414015de3479ed8c38ed3685f7395c4689ea3ab5"
+    },
+    {
+      "label": "func-stop",
+      "frames": 19554,
+      "peak": 1715,
+      "tailPeak": 1386,
+      "sha256": "ea267bdea04182fff2f3223ee3f9a0173d874bc1eef5d88f316ae7fed8460721"
+    },
+    {
+      "label": "release",
+      "frames": 44271,
+      "peak": 1006,
+      "tailPeak": 0,
+      "sha256": "0804c11f84a8584e67436e806e5b1102fca1e9f19106eccc4770f084cebf8e04"
+    },
+    {
+      "label": "restarted",
+      "frames": 13374,
+      "peak": 1233,
+      "tailPeak": 1180,
+      "sha256": "addcea5eed6dc9810ce579772e0ed8e645eb10b27409e9170ced3d123e89638e"
+    },
+    {
+      "label": "stopped",
+      "frames": 34561,
+      "peak": 860,
+      "tailPeak": 0,
+      "sha256": "10ed6c8b74175576615aa18ab3b669d2452aea8b70bf636f831306e234deb9d5"
+    },
+    {
+      "label": "after-stop",
+      "frames": 13374,
+      "peak": 2001,
+      "tailPeak": 1901,
+      "sha256": "ebe4c582e8341870a245e07003288f26e24bc69b8a1a9dfb5aee2bad253a35bc"
+    },
+    {
+      "label": "after-stop-release",
+      "frames": 44272,
+      "peak": 1154,
+      "tailPeak": 0,
+      "sha256": "95df8e5907801f4b34e7de388ad500188719dc7352b29ebf5314c693ce4d0db7"
+    }
+  ],
+  "hardwareTested": false,
+  "audioFilesIncluded": false
+}

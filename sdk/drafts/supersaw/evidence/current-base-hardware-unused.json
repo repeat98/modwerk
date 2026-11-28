@@ -1,0 +1,122 @@
+{
+  "base": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a",
+  "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+  "before": {
+    "ticks": 28005,
+    "frames": 1295894,
+    "cpu": 336,
+    "tracks5to8": 419,
+    "peak5to8": 420,
+    "tracks1to4": 327,
+    "peak1to4": 337
+  },
+  "samples": [
+    {
+      "ticks": 28076,
+      "frames": 1298650,
+      "cpu": 340,
+      "tracks5to8": 419,
+      "peak5to8": 420,
+      "tracks1to4": 327,
+      "peak1to4": 337
+    },
+    {
+      "ticks": 28136,
+      "frames": 1301406,
+      "cpu": 342,
+      "tracks5to8": 419,
+      "peak5to8": 420,
+      "tracks1to4": 327,
+      "peak1to4": 337
+    },
+    {
+      "ticks": 28197,
+      "frames": 1304162,
+      "cpu": 336,
+      "tracks5to8": 419,
+      "peak5to8": 420,
+      "tracks1to4": 327,
+      "peak1to4": 337
+    },
+    {
+      "ticks": 28257,
+      "frames": 1306918,
+      "cpu": 337,
+      "tracks5to8": 419,
+      "peak5to8": 420,
+      "tracks1to4": 327,
+      "peak1to4": 337
+    },
+    {
+      "ticks": 28317,
+      "frames": 1309674,
+      "cpu": 337,
+      "tracks5to8": 419,
+      "peak5to8": 420,
+      "tracks1to4": 327,
+      "peak1to4": 337
+    },
+    {
+      "ticks": 28377,
+      "frames": 1312431,
+      "cpu": 341,
+      "tracks5to8": 419,
+      "peak5to8": 420,
+      "tracks1to4": 327,
+      "peak1to4": 337
+    },
+    {
+      "ticks": 28438,
+      "frames": 1315187,
+      "cpu": 342,
+      "tracks5to8": 419,
+      "peak5to8": 420,
+      "tracks1to4": 327,
+      "peak1to4": 337
+    },
+    {
+      "ticks": 28498,
+      "frames": 1317943,
+      "cpu": 342,
+      "tracks5to8": 419,
+      "peak5to8": 420,
+      "tracks1to4": 327,
+      "peak1to4": 337
+    },
+    {
+      "ticks": 28558,
+      "frames": 1320699,
+      "cpu": 341,
+      "tracks5to8": 419,
+      "peak5to8": 420,
+      "tracks1to4": 327,
+      "peak1to4": 337
+    },
+    {
+      "ticks": 28618,
+      "frames": 1323455,
+      "cpu": 341,
+      "tracks5to8": 419,
+      "peak5to8": 420,
+      "tracks1to4": 327,
+      "peak1to4": 337
+    }
+  ],
+  "after": {
+    "ticks": 28620,
+    "frames": 1324837,
+    "cpu": 349,
+    "tracks5to8": 419,
+    "peak5to8": 429,
+    "tracks1to4": 327,
+    "peak1to4": 337
+  },
+  "undoConfirmed": true,
+  "assignedToTrack": false,
+  "audioTested": false,
+  "keepPerformed": false,
+  "physicalRebootTested": false,
+  "hardwareTested": true,
+  "scope": "unused RAM lifecycle only; no sound, assignment, persistence or CPU cost qualification",
+  "at": "2026-11-22T15:13:51.349Z"
+}

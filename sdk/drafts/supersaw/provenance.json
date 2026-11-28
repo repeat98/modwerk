@@ -1,0 +1,77 @@
+{
+  "version": "0.32.0-source-draft",
+  "status": "not-installable",
+  "coreRevision": "18c1296",
+  "sdkRevision": "b52d11e00a124a7e1ae35d23eff5b4d072ab961f",
+  "engine": {
+    "adapter.c": "38a0f650c9dc32d8cd2f61a91f0183980219eea3016c0b8692b7946cf559f16b",
+    "adapter.h": "e1d90ff69d85c7158b1af4c9dbc075bb6265fd7c0069eae4e5ef252f3bb77a14",
+    "ot_records.c": "22a94a3493ded2d315c85de4077af529ccc21d07e521f9c65f95898576aa4438",
+    "ot_records.h": "e789a5d9624e6d078996cd7a28d53724d2450d4f31a73ad81936e2539cd2aca7",
+    "machine.c": "55d6a94815d7efc86319236b54731e47cf4a8a9c0094ea050bb8e5689bfd5fac",
+    "machine.h": "9a30bca197c4fe6911ced5bc0547acf17911115f6afd8e3a5e4ae8a4283b5954",
+    "saw_fixed.h": "7ed3e61aec0f9b438e201079f2615286c5eaba037adf5033cb3e42ce75def4b0",
+    "tables.h": "72129f068ef8f33251d74c8611809d37331ce58f96a0bf9028be257f20c0d662",
+    "amp_tables.h": "aa097a2c74cf94b559c004122fafcd600de900371038d2c0290f2370ad590d40",
+    "pitch_fraction.h": "dc9d1f3c27f2ed227f002e16b240dfcbf3aa3fbcdae794b00945553ab89c31d0",
+    "test_render_equivalence.c": "dfe66cad6f74a115315b00afa91543aebc778bea80444d1026174564980e48d8",
+    "test_reference_render.c": "900913f808326e1259753fdd4cbdb6a02974a50b84b8180f566cf5289b719511"
+  },
+  "hardwareTested": true,
+  "usbLifecycleTested": true,
+  "cpuPercent": null,
+  "sdkFiles": {
+    "sdk_include/modwerk_events.h": "199371299eacb80d8757c88ee1d300274d0e8d943adf3a91972f82ef8ba5da22",
+    "sdk_include/modwerk_page.h": "19f02c99b474ea05c3e3741d4e323bc3139a2748b46aa1427af6ad2b0e2e448c",
+    "sdk_include/modwerk_sample_editor.h": "48c0aa9a2227cc59cc6a88fadc7712b48f3fd999b46d263f30975986ae66db12"
+  },
+  "blockers": [
+    "Complete current-base lifecycle qualification: unassigned RAM Trial/Undo passed and T1 sound was reported, but timed audition rollback failed.",
+    "Matched physical renderer/rest CPU cost and current-base coexistence qualification; historical multi-track listening is not isolated cost.",
+    "Native Save Project, battery-backed SRAM persistence and physical power cycle",
+    "Parts/patterns/projects, saved duplicate signatures, mutes/scenes/live record on the USB bridge",
+    "Modwerk review and public integration; no catalogue submission"
+  ],
+  "sdkEventContractRevision": "b52d11e00a124a7e1ae35d23eff5b4d072ab961f",
+  "virtualUsbLoaderTested": true,
+  "virtualAssignmentTested": true,
+  "hardwareMidiSetup": {
+    "source": "reported by Jose",
+    "interface": "MT4",
+    "output": "MT4 Port 1",
+    "cable": "MT4 OUT 1 -> Octatrack MIDI IN",
+    "sysexRecoveryTested": false
+  },
+  "virtualDspManualStopTested": true,
+  "baseSourceRevision": "af8863684854884565f177e871fd567b57bc5403",
+  "emulatedColdRestoreTested": true,
+  "hardwareBaseInstallation": {
+    "baseIdentityPrefix": "27c9d36f",
+    "source": "user installation and supplied Modwerk screenshots",
+    "downloadSha256": "44cb5b245c789f512ec015945a50f971dcb5d259c8c86e6a45b2d7fbbb825707",
+    "modulesReported": 0,
+    "moduleTrialTested": false
+  },
+  "hardwareTestScope": "unused and manual T1 RAM trials with verified Undo; first sound and STOP reported by user; exact active-voice cost and persistence unqualified",
+  "usbLifecycleScope": "unused install/Trial/Undo with original identity and empty inventory restored; no Keep or reboot",
+  "hardwareFirstSoundReported": true,
+  "hardwareStopSilencesReported": true,
+  "hardwareListeningTrialUndoConfirmed": true,
+  "currentBaseTrials": {
+    "base": "6d23e888c47ab959762044c4facaa0b2b55fed85527284f38f3cea4d80beb58a",
+    "displayVersion": "0.7.13",
+    "packageSha256": "52df3143854f203044dde02d82a634bf2e5d5e1723c1adcd8c0e11a7afe2f476",
+    "unassignedTrialUndo": "passed, native journal",
+    "t1Sound": "positive, user report",
+    "timedAuditionUndo": "failed needs-recovery; do not count as passed",
+    "subsequentState": "normal/known identity/empty inventory already at recovery check entry",
+    "keepTested": false,
+    "physicalRebootTested": false,
+    "records": [
+      "evidence/current-base-hardware-unused.json",
+      "evidence/current-base-listening-user-report.json",
+      "evidence/current-base-hardware-listen-interrupted.json",
+      "evidence/current-base-hardware-recovery.json"
+    ]
+  }
+}

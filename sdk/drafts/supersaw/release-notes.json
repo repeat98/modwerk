@@ -1,0 +1,54 @@
+[
+  {
+    "version": "0.32.0-source-draft",
+    "date": "2026-11-15",
+    "changes": [
+      "SW/1 absent-machine protection integrated in a separate local base branch; 13 host tests pass and the original base fails the new regression.",
+      "Private CF set install/Keep, restore, protected occupied removal and later empty-set restore pass across three fresh emulator processes.",
+      "All twelve signed source bytes survive project loading while the module is absent and after restore.",
+      "Fixture preparation rejects legacy Part layouts, removes donor sample references and requires native load completion.",
+      "Both private core and full beta profiles pass 18 DSP/USB checks with 7 MAIN captures; hardware installation, SRAM persistence and resource cost remain unqualified."
+    ]
+  },
+  {
+    "version": "0.31.0-source-draft",
+    "date": "2026-11-15",
+    "changes": [
+      "Corrected emulator idle accounting; native assignment and occupied retirement guards now pass without changing firmware thresholds.",
+      "Added queued native voice-reset notification with generation tickets and restart regression tests.",
+      "Native key STOP silences stopped-transport manual play at emulated MAIN; FUNC+STOP, new-note restart and release also pass.",
+      "Prepared and host-tested an unapplied SW/1 base protection proposal.",
+      "Added French hardware preparation and official recovery guide; no installable firmware or physical trial."
+    ]
+  },
+  {
+    "version": "0.30.0-source-draft",
+    "date": "2026-11-14",
+    "changes": [
+      "Private SDK package passes relocation, typed START and both strict stock-free scans.",
+      "Virtual USB Trial, Undo, reinstall, Keep and unused-module removal pass through an in-memory controller.",
+      "Fixed bank-address bounds to match the base; added native regression cases.",
+      "Full assignment remains blocked by the CPU guard in the frame-off fixture; no physical CPU claim.",
+      "Source archive only; DSP rendering, occupied retirement, reboot and physical hardware remain unqualified."
+    ]
+  },
+  {
+    "version": "0.29.0-source-draft",
+    "date": "2026-11-14",
+    "changes": [
+      "MIDI and chromatic take-hook source recipes added without shared-site patches.",
+      "Matched note releases are queued to the audio renderer; old generation tickets are ignored.",
+      "Targeted ColdFire fixture checks notes, release, packet splitting and STOP callbacks.",
+      "Private base reconstruction and short RTOS boot passed separately.",
+      "Sources only: whole-base module loading, USB lifecycle, DSP output and hardware qualification remain pending."
+    ]
+  },
+  {
+    "version": "0.28.0-source-draft",
+    "date": "2026-11-14",
+    "changes": [
+      "Initial USB source bridge with unchanged V0.27 engine, SDK page controls and typed START record.",
+      "Host regression and ColdFire compilation passed; no installable package."
+    ]
+  }
+]
