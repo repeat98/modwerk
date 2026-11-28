@@ -52,7 +52,7 @@ import firmware_codec
 firmware_codec.use_elekloader(sys.argv[2])
 from elekloader.patch import build,PatchError
 try:
- outputs,manifest=build(sys.argv[3],sys.argv[4:],version='ELEKLOADER',log=lambda _:None)
+ outputs,manifest=build(sys.argv[3],sys.argv[4:],version='MODWERK',log=lambda _:None)
  print(json.dumps({'ok':True,'hashes':{k:hashlib.sha256(v).hexdigest() for k,v in outputs.items()},'main_sha256':manifest['main_sha256'],'main_len':manifest['main_len']}))
 except PatchError as e:
  print(json.dumps({'ok':False,'error':str(e)}))
@@ -84,7 +84,7 @@ for (const selection of selections) {
     proofs.push({ ids, status: 'matching-refusal', problems }); console.log(label + ': matching refusal'); continue
   }
   assert.equal(native.ok, true, label + ': Python refuses but TypeScript checks successfully')
-  const built = await builder.build(prepared.enabled, 'ELEKLOADER', 'ELEKLOADER.syx')
+  const built = await builder.build(prepared.enabled, 'MODWERK', 'MODWERK.syx')
   assert(built.ok, label + ': ' + built.error)
   const work = join(destination, ids.map(id => id.replace(/[^a-z0-9-]/g, '_')).join('_')); mkdirSync(work)
   const files = []
@@ -93,7 +93,7 @@ for (const selection of selections) {
     const bytes = new Uint8Array(file.data), ext = file.name.split('.').pop()
     assert.equal(sha(bytes), file.sha256); assert.equal(file.sha256, native.hashes[ext], label + ': Python/TypeScript full-file parity')
     const parsed = new ElekFile(bytes)
-    assert.equal(sha(parsed.section(3)), native.main_sha256); assert.equal(parsed.version, 'ELEKLOADER')
+    assert.equal(sha(parsed.section(3)), native.main_sha256); assert.equal(parsed.version, 'MODWERK')
     const target = join(work, file.name); writeFileSync(target, bytes)
     assert.equal(sha(readFileSync(target)), file.sha256, 'saved candidate hash')
     files.push({ name: relative(destination, target), bytes: bytes.length, sha256: file.sha256 })

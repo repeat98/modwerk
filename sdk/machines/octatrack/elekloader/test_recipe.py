@@ -246,14 +246,14 @@ class RuntimeSlotTests(unittest.TestCase):
         self.host_test('test_boot.c', 'loader.c', 'runtime.c')
 
     def test_usb_base_update_on_the_host(self):
-        """flash.c (the base writing its own container to NOR) against an image the kit's own codec packed
-        (vendor/elekloader/kit codec/aplib.ts, run through Node): test_flash.c reads the fixture."""
+        """flash.c (the base writing its own container to NOR) against an image the browser builder's packer packed
+        (src/engine/elektron/codec/pack.ts, run through Node): test_flash.c reads the fixture."""
         import pathlib, random, shutil, struct, subprocess, tempfile
         node = shutil.which('node')
         if not node:
             self.skipTest('no node')
         here = pathlib.Path(__file__).resolve().parent
-        kit = here.parents[3] / 'vendor/elekloader/kit/src/codec/aplib.ts'
+        kit = here.parents[3] / 'src/engine/elektron/codec/pack.ts'
         rng = random.Random(7)
         os_first, os_veroff, run_off = 0x4fefffe4, 0xde648, 0xe2000
         bootloader = (0x400de1e0 - 0x40000400, 0x400e21e0 - 0x40000400)

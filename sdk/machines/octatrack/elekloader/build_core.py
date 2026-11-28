@@ -22,6 +22,9 @@ import firmware_codec  # noqa: E402
 _spec = importlib.util.spec_from_file_location('modwerk_usb_post', HERE / 'usb_post.py')
 usb_post = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(usb_post)
 VERSION = '0.3.1-modwerk-dev.1'
+# The update name the resident bootloader shows while flashing (the ELEK header's ten-character field, right-justified);
+# src/engine/elekloader/octatrack-base.ts writes the same.
+UPDATE_NAME = 'MODWERK'
 # Resident controller trust: association, the scoped write lease, its resolver and the board-compiled policy table.
 CONTROLLER_POLICY_SOURCES = ('controller_policy.c', 'controller_policy.h', 'controller_association.c', 'controller_association.h',
                              'controller_write_lease.c', 'controller_write_lease.h', 'controller_write_policy.c',
@@ -1671,10 +1674,9 @@ def main():
     FX_IDS, FX_WORDS = args.fx_ids, (args.fx_ids + 31) // 32
     os.environ['ELEKLOADER_CROSS'] = args.cross
     upstream = args.upstream.resolve()
-    pin = json.loads((APP / 'vendor/elekloader/kit/kit.json').read_text())['commit']
-    if git(upstream, 'rev-parse', 'HEAD') != pin or git(upstream, 'status', '--porcelain', '--untracked-files=no'):
-        parser.error('Use the exact clean tracked Elekloader checkout pinned by Modwerk.')
     firmware_codec.use_elekloader(upstream)
+    import firmware_builder
+    builder_version = firmware_builder.__version__
     from elekloader import dsp, formats, elemod, patch
     from elekloader.sdk import build as sdk
     stock, device, release = formats.load(str(args.stock))
@@ -1702,7 +1704,7 @@ def main():
         at = guard['address'] - device.main_load
         if at < 0 or sha(image[at:at+guard['length']]) != guard['sha256']:
             raise ValueError('Logger stock ABI guard failed: ' + key)
-    original_core = upstream / 'mods/core-ot'
+    original_core = HERE / 'core-ot'  # the Octatrack core's boot copier, hook bus and gate, and its recipe
     recipe = json.loads((original_core / 'mod.json').read_text())
     for name in ('core-ot.s', 'bus.s', 'gate.s'):
         shutil.copyfile(original_core / name, source / name)
@@ -2476,7 +2478,7 @@ modwerk_retained_end:
                       'arena_base','__arena_pages','__arena_fill','__arena_clear',
                       'ev_tick','ev_draw','ev_key','ev_enc','ev_midi','ev_frame'}:
         raise ValueError('Core has unexpected unresolved imports: ' + str(mod.imports))
-    outputs, manifest = patch.build(str(args.stock), [path], version='ELEKLOADER')
+    outputs, manifest = patch.build(str(args.stock), [path], version=UPDATE_NAME)
     mapping = manifest.pop('_map')
     # MAIN stores .run packed (run_pack.py): the linked image again without its plain copy, repacked and verified as
     # patch.build does, so the RAM boot bound and every hash below are the packed image's.
@@ -2528,7 +2530,7 @@ modwerk_retained_end:
     print('Packed base: %d bytes, %d under what a flash slot holds' % (slot, FLASH_SLOT_BYTES - slot))
     (out/'MAIN.raw').write_bytes(main_out)
     report = dict(schema=1, kind='modwerk-elekloader-base-prototype', coreVersion=VERSION,
-                  upstream=pin, sources=inputs, configuration=configuration, configurationHash=identity,
+                  builder=builder_version, sources=inputs, configuration=configuration, configurationHash=identity,
                   dspLoader={t: {k: (hex(v) if isinstance(v, int) else v) for k, v in dsp_layout[t].items() if k not in ('words', 'shared', 'residentUploadRecords')} for t in dsp_layout} if dsp_layout else None,  # no stock words in proofs
                   residentDspBoot=resident_boot_prepared['receipt'] if resident_boot_prepared else None,
                   savedSetExport=saved_set_proof, zeroState=zero_proof, runPack=run_proof,

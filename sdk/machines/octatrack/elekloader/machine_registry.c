@@ -181,7 +181,7 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
 #define CPU_DEFAULT 12u
 /* The prices bound a Part's renders at their worst. What else an installed set costs the frame interrupt (modules' hooks,
  * effects' ColdFire work, a DSP voice's glue) and what a machine costs in the frames between its worst ones no price
- * knows. So every module pick is also judged by the frame share the unit would play at with it (status.c,
+ * knows. So every module pick, and a machine a paste brings (arrivals()), is also judged by the frame share the unit would play at with it (status.c,
  * modwerk_status_pick_busy, against mw_frame_line, its longest frame): a machine by what one track of it adds there, as the site measured
  * it (frame_cost below), else by its measured meter cost (reserved[1]) or its price, a machine's renders being frame
  * interrupt time either way. Admitted by the meter instead, SYNTIZ took a Part from 50.7 % to 65.2 % of the frame and the
@@ -322,10 +322,16 @@ static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, 
 }
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* for diagnostics, as the guard's skips */
 volatile uint8_t mw_cpu_track_refusals[8]; /* each track's refusals, wrapping: diag.c names the tracks refused since its last CPU record */
+/* Which check refused, and what (diag.c's DETAIL record): of mw_cpu_refusals, the ones status.c's frame line made (the
+ * rest are the Part budget's, below), and the last refusal: its name (modwerk_label4) and why: status.c's WHY_* in the
+ * low byte (4: the Part budget), the track or slot in the next, bit 16 a machine. In the field (0.8.x, November 2026)
+ * 274 refusals on 28 units could not be told apart by check or by module. */
+volatile uint32_t mw_cpu_line_refusals, mw_cpu_pick_label, mw_cpu_pick_why;
 static void cpu_refuse(unsigned track, const Machine *who, unsigned booked);
 static void cpu_refuse(unsigned track, const Machine *who, unsigned booked)
 {
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track, ++mw_cpu_track_refusals[track];
+    mw_cpu_pick_label = modwerk_label4(who->label), mw_cpu_pick_why = 1u << 16 | track << 8 | 4u;
     modwerk_status_cpu_refused(track, who->label, 10u * booked, 10u * cpu_price(who), 10u * mw_cpu_allowance);
 }
 /* The PROTECT machines this base knows by signature (module-adapters/machine-ports.json; sdk/tests checks the list).
@@ -663,6 +669,37 @@ static void leave(Part *part, Part *mirror, unsigned track, const Machine *old)
     if (!old->assign && old->flags & MODWERK_MACHINE_PROTECT) flex_defaults(part, mirror, track);
     if (charged[track] == old) release(track); /* a priced machine that took the track was charged in its place */
 }
+/* A paste or a Part reload brings a machine onto a track of the Part that stays: judged against the frame line as a pick
+ * of it would be (status.c), and past it the track renders the silent source with the CPU FULL box until its machine
+ * changes. A tester pasted Amiga next to FM Synth where its pick was refused (CPU FULL, PART IS BUSY); that Part then
+ * clicked at pattern changes, and played clean with FLEX in its place. A Part or bank change and a project load bring
+ * another pattern, whose stock the picks were never judged on, and an install (a restore, a trial, MODULES) machines
+ * the Part already named: those stay the predicted brake's (status.c). */
+extern volatile uint32_t modwerk_project_loaded; /* fxmap.c: each completed project load */
+static const Part *arrival_part;
+static uint32_t arrival_load, arrival_epoch;
+static const Machine *arrived[8]; /* each track's machine as the last tick or pick left it */
+static uint8_t frame_over;        /* tracks a paste brought past the frame line */
+static uint8_t arrivals(const Machine *const *owners, const uint8_t over)
+{
+    const Part *part = current_part();
+    uint32_t epoch = modwerk_runtime_owner_epoch();
+    if (part != arrival_part || modwerk_project_loaded != arrival_load || epoch != arrival_epoch || modwerk_fxmap_loading()) {
+        arrival_part = part, arrival_load = modwerk_project_loaded, arrival_epoch = epoch, frame_over = 0;
+        for (unsigned t = 0; t < 8; ++t) arrived[t] = owners[t];
+        return 0;
+    }
+    for (unsigned t = 0; t < 8; ++t) {
+        const Machine *who = owners[t], *was = arrived[t];
+        if (who == was) continue;
+        arrived[t] = who, frame_over &= (uint8_t)~(1u << t);
+        if (!who || over >> t & 1u) continue; /* gone, or already past the price allowance */
+        uint32_t add = frame_cost(who, !elsewhere(part, t, who), asleep(who)), gone = was ? frame_cost(was, !elsewhere(part, t, was), 0) : 0u;
+        if (modwerk_status_pick_busy(t, elsewhere(part, t, who) ? 2u : 1u, who->label, add, gone, 0)) frame_over |= (uint8_t)(1u << t);
+        else modwerk_status_cpu_entered(add), modwerk_status_cpu_left(gone);
+    }
+    return frame_over;
+}
 /* Tracks that became a priced machine without an assignment (a project load, a Part change, a paste) are charged
  * here, and tracks charged to another machine than their own move to it; tracks no longer one are released. A track
  * its core cannot carry stays uncharged and renders silence. */
@@ -672,6 +709,7 @@ static void charge(const Machine *const *m, unsigned n)
     const Machine *owners[8];
     uint8_t over;
     unsigned booked = cpu_bill(m, n, current_part(), 8, &over, owners);
+    uint8_t pasted = arrivals(owners, over);
     for (unsigned t = 0; t < 8; ++t) {
         const Machine *who = owners[t];
         if (who && !who->source_kind) who = 0;
@@ -683,7 +721,7 @@ static void charge(const Machine *const *m, unsigned n)
             cpu_refuse(t, owners[t], booked);
             break;
         }
-    mw_cpu_refused = cpu_warned = over, mw_cpu_booked = booked;
+    mw_cpu_refused = (uint8_t)((cpu_warned = over) | pasted), mw_cpu_booked = booked;
 }
 /* Stock loads a track's live parameters from its Part (0x40001f18: bank, Part, track) where a commit changes the
  * stored type. A module machine is FLEX underneath, so FLEX <-> machine keeps the type and the live copy would stay on
@@ -737,6 +775,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
             modwerk_runtime_rest_poll();
         }
         if (old != next) mc_assigned(next), modwerk_status_cpu_entered(add), guard_forget(track);
+        if (part == arrival_part) arrived[track] = next, frame_over &= (uint8_t)~(1u << track); /* judged here: no paste */
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
         if (next->assign) return next->assign(part, track, 1);
@@ -1166,6 +1205,14 @@ volatile uint32_t mw_late_over;
  * switch), but a module-heavy Part could keep one going; past WAIT_RUN in a row the brake silences the module machines,
  * which ends it. The wait itself never stops: an entry let through in the window is what stalls the DSP for good. */
 #define WAIT_RUN 16u
+/* Of the waits since boot, for diag.c's DETAIL record: the ones after a frame interrupt that ran LATE_LONG or more,
+ * the shape of the stall the wait exists for (an entry 131 to 162 µs late after a 465 to 530 µs frame, above), and the
+ * ones under LATE_MID late, which wait only since LATE_LO came down from 110 µs. A wait is a click, so the field has
+ * to show how many the window could spare. Counted before the wait's loop, which runs to a time: the wait absorbs the
+ * work and no frame is longer for it. */
+#define LATE_MID 14520u  /* 110 µs */
+#define LATE_LONG 59400u /* 450 µs */
+volatile uint32_t mw_late_after_long, mw_late_low;
 static uint32_t entry_at, entry_late, wait_run;
 /* The last eight entries' lateness, DTCN3 counts, as this clock saw it: diag.c keeps them with a stall ("MWLR"). The
  * stall trace is stamped later in the frame (dl_frame), so the two can differ by tens of µs. */
@@ -1187,6 +1234,8 @@ void mw_frame_enter(void)
         mw_late_hits = mw_late_hits + 1u;
         if (mw_late_wait_on) {
             uint32_t need = LATE_HI - l, waited;
+            if (mw_frame_last >= LATE_LONG) mw_late_after_long = mw_late_after_long + 1u;
+            if (l < LATE_MID) mw_late_low = mw_late_low + 1u;
             do waited = DTCN3 - now; while (waited < need);
             mw_late_waits = mw_late_waits + 1u, mw_frame_skips = mw_frame_skips + 1u;
             if (waited > mw_late_wait_max) mw_late_wait_max = waited;

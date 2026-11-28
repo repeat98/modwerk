@@ -117,27 +117,28 @@ def main():
     font = image[PANEL_ADDRESS_DELTA + FONT - BASE:PANEL_ADDRESS_DELTA + FONT + FONT_BYTES - BASE]
     assert len(font) == FONT_BYTES
     name = re.search(r"FIRMWARE_VERSION = '([^']+)'", (ROOT / 'src/engine/protocol.ts').read_text()).group(1)
-    assert re.fullmatch(r'[A-Z0-9. ]{10}', name), 'The boot name must fit the panel letter range and ten cells'
+    assert re.fullmatch(r'[A-Z0-9. ]{1,10}', name), 'The boot name must fit the panel letter range and ten cells'
+    name = name.rjust(10)  # the ELEK header right-justifies it
     output.mkdir(parents=True)
     with tempfile.TemporaryDirectory(prefix='modwerk-panel-') as scratch:
         scratch = Path(scratch)
         card = scratch / 'empty.img'
         card.write_bytes(empty_card(scratch / 'empty'))
         rows = [capture(args.emulator.resolve(), args.image.resolve(), card, output, key, text, font)
-                for key, text in [('lowercase', 'Elekloader'), ('fixed', name), ('previous', 'OCTAMOD79 ')]]
+                for key, text in [('lowercase', name.strip().capitalize().rjust(10)), ('fixed', name), ('previous', 'OCTAMOD79 ')]]
     proof = {
         'kind': 'original-MKII-panel-renderer-headless-capture', 'sourceImageSha256': sha(image),
         'headlessEmulatorSha256': sha(args.emulator.read_bytes()), 'panelVersion': 8,
         'panelImageSha256': PANEL_HASH, 'captures': rows,
         'method': 'Boot the actual MAIN image as MKII with an empty disposable FAT16 card. Execute the unchanged embedded panel draw-character instructions through --step call at 0x400d9a62; PC-relative calls execute the original copied routines. Map the original panel font at its absolute address and seed the resident loader page 7 / cell 6 cursor. Capture actual GPIO/LCD command and data writes via --watch-mem and decode them to 128x64 pixels. Verify all 80 transmitted columns against the original panel font, then crop the observed ten cells at integer scale 8. No replacement glyphs, drawn labels or instruction patches.',
-        'diagnosis': 'Lowercase codes select symbols, patterns or filled blocks. Uppercase ELEKLOADER renders letters in the same ten cells.',
+        'diagnosis': 'Lowercase codes select symbols, patterns or filled blocks. Uppercase ' + name.strip() + ' renders letters in the same ten cells.',
         'limits': ['Panel renderer function capture, not a full resident-loader boot or physical device.',
                    'MKI panel firmware/font is absent from MAIN and was not emulated.',
                    'No module state, audio or persistence qualification changed.'],
         'firmwareAndFontDataKeptPrivate': True,
     }
     (output / 'verification.json').write_text(json.dumps(proof, indent=2) + '\n')
-    print('Three original panel-renderer captures passed; ELEKLOADER fits without clipped cells.')
+    print('Three original panel-renderer captures passed; ' + name.strip() + ' fits without clipped cells.')
 
 
 if __name__ == '__main__':

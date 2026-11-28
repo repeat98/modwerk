@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, describeUsbGone, freezeSamples, parseDeviceLog, usbGone } from './device-log'
+import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, describeDetail, describeUsbGone, freezeSamples, parseDeviceLog, usbGone } from './device-log'
 import { DSP_REPORT_NAMES, describeStallFrames, describeStallPacket, describeStallPackets, stallLateness } from '../../community/octatrack-diagnostics-contract'
 import { validateDiagnostic } from '../../../server/octatrack-diagnostics'
 
@@ -50,6 +50,19 @@ describe('the unit’s diagnostics log', () => {
     expect(freezeSamples(parsed.incidents[0])).toEqual([0x40a9fea6, 0x40a9feb4, 0x40a9feb4, 0x40a9feb4].map(pc =>
       ({ pc, sr: 0x2000, level: 0, tcb: 0x46c7bed8, task: 'UI task 0x40061a94, priority 1' })))
     expect(freezeSamples(parsed.incidents[1])).toEqual([{ pc: 0x40015526, sr: 0x2500, level: 5, tcb: 0x460ddde4, task: 'engine task 0x4008445c (card jobs), priority 1' }])
+  })
+  it('reads which check refused, what for, and what the held late entries were (DETAIL)', () => {
+    const parsed = parseDeviceLog(log(view => {
+      const i = INCIDENTS
+      view.setUint32(i, 9); view.setUint32(i + 4, 12); view.setUint32(i + 8, 600); view.setUint32(i + 12, 2 << 16 | 5) // 5 frame line, 2 Part budget
+      view.setUint16(i + 16, 16); view.setUint16(i + 18, 3); view.setUint16(i + 20, 40); view.setUint16(i + 22, 61) // after long, barely late, the start's
+      view.setUint8(i + 24, 0); view.setUint8(i + 25, 151)
+      view.setUint32(i + 80, 0x54415045); view.setUint32(i + 84, 13 << 8 | 1) // "TAPE", T6 FX2, the Part is busy
+    }))!
+    expect(parsed.incidents.map(r => r.kind)).toEqual(['detail'])
+    expect(describeDetail(parsed.incidents[0])).toBe('CPU refusals since the start: 5 by the frame line, 2 by the Part budget; the last for TAPE (effect on T6 FX2: the Part is busy). ' +
+      'Late entries held since the first tick: 3 after a frame of 450 µs or more, 40 less than 110 µs late; the start itself held 61 and had 151 later than the wait can hold')
+    expect(validateDiagnostic({ id: crypto.randomUUID(), event: 'device_log', phase: 'ready', log: { loads: [], incidents: parsed.incidents } })).toBeTruthy()
   })
   it('reads which side gave up when the host’s USB frames stopped (USB_GONE, #2290)', () => {
     const parsed = parseDeviceLog(log(view => {

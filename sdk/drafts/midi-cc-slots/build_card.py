@@ -84,9 +84,7 @@ def main():
     for name in ['stock','upstream','output']:p.add_argument('--'+name,type=Path,required=True)
     args=p.parse_args();out=args.output.resolve()
     if out.exists() or any((parent/'.git').exists() for parent in [out,*out.parents]):p.error('Choose a new output outside every Git checkout')
-    upstream=args.upstream.resolve();pin=json.loads((APP/'vendor/elekloader/kit/kit.json').read_text())['commit']
-    git=lambda *cmd:subprocess.check_output(['git','-C',str(upstream),*cmd],text=True).strip()
-    if git('rev-parse','HEAD')!=pin or git('status','--porcelain','--untracked-files=no'):p.error('Use the exact clean Elekloader checkout pinned by the app')
+    upstream=args.upstream.resolve()
     sys.path.insert(0,str(APP/'sdk'))
     import firmware_codec
     firmware_codec.use_elekloader(upstream)
@@ -104,7 +102,7 @@ def main():
         if sha(original[address-device.main_load:address-device.main_load+n])!=digest:raise ValueError('Stock-copy guard failed')
     module=out/f'midi-mode2-{CARD_VERSION}.elemod';module.write_text(json.dumps(document,indent=1)+'\n')
     os.environ['ELEKLOADER_CROSS']='m68k-elf-'
-    core,_=sdk.build(str(upstream/'mods/core-ot'),str(args.stock),str(out/'core'))
+    core,_=sdk.build(str(APP/'sdk/machines/octatrack/elekloader/core-ot'),str(args.stock),str(out/'core'))
     # Shared card-platform branding, independent of the MIDI implementation.
     spec=importlib.util.spec_from_file_location('modwerk_card_art',APP/'sdk/runtime/startup/build.py')
     artwork=importlib.util.module_from_spec(spec);spec.loader.exec_module(artwork)

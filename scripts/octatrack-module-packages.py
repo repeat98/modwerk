@@ -100,7 +100,7 @@ def check_packages(builder):
         if entry.get('standalone'):
             recipe = standalone_runtime.reviewed(APP, name)
             current = standalone_runtime.sources(APP, upstream, name)
-            has_upstream = (upstream / 'elekloader/sdk/octabam.py').is_file()
+            has_upstream = True  # the builder's files are in the repository
             for detail in recipe_differences(recipe['sources'], current, has_upstream):
                 print(f'{name} standalone recipe: {detail}', file=sys.stderr)
         if not available:

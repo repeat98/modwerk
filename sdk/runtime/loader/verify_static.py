@@ -101,7 +101,7 @@ def main():
     from elekloader import formats, patch
     parsed, device, _ = formats.load(str(args.stock))
     stock = formats.main_image(parsed, device)
-    outputs, manifest = patch.build(str(args.stock), [str(args.core), str(args.elemod)], version='ELEKLOADER',
+    outputs, manifest = patch.build(str(args.stock), [str(args.core), str(args.elemod)], version='MODWERK',
                                     log=lambda *a, **k: None)
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / 'linked.bin').write_bytes(outputs['bin'])

@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Keep verified developer checkouts of upstream Octabam, Elekloader, rytm-emu and Ziddle outside Git.
+"""Keep verified developer checkouts of upstream Octabam, rytm-emu and Ziddle outside Git.
 
     npm run upstream:tools                 # check out the pinned commits
-    npm run upstream:tools -- --for octatrack  # only Octabam and Elekloader
+    npm run upstream:tools -- --for octatrack  # only Octabam
     npm run upstream:tools -- --update     # move rytm-emu to upstream main first
     npm run upstream:tools -- --dir DIR    # default ~/.cache/modwerk-upstream
 
 Octabam and rytm-emu are pinned in sdk/upstream-tools.json. Octabam's pin is
 frozen: Modwerk no longer follows it, and the checkout stays for its DSP
-assembler, emulator and hardware tools. Elekloader follows
-the vendored kit's commit, so the browser builder and the Python SDK cannot
-drift apart. rytm-emu is the Analog Rytm MKII emulator the capture guide uses;
+assembler, emulator and hardware tools. rytm-emu is the Analog Rytm MKII emulator the capture guide uses;
 a hand-made clone falls behind its fixes, so take it from here. Ziddle,
 Berbasoft's Zoom effect emulator, has no Git upstream: its source archive is
 pinned by address and SHA-256, and a newer archive is pinned by hand.
@@ -176,21 +174,13 @@ def main():
             print('rytm-emu pin %s %s.' % ('moved to' if moved else 'already at', head[:7]))
         pins = json.loads(PINS.read_text())
         if args.instrument in (None, 'octatrack'):
-            kit = json.loads((APP / pins['elekloader']['commitFrom']).read_text())
             octabam = sync('octabam', pins['octabam']['repository'], pins['octabam']['commit'], base, True)
-            elekloader = sync('elekloader', pins['elekloader']['repository'], kit['commit'], base, False)
             print('octabam     %s (%s)  %s  repaired: %s' % (pins['octabam']['commit'][:7], pins['octabam']['updated'],
                                                             octabam, ', '.join(adapter.TOOLS)))
-            print('elekloader  %s (kit %s)  %s' % (kit['commit'][:7], kit['version'], elekloader))
             count = sum(p.is_file() for p in (octabam / 'tools/hw').iterdir())
             print('Hardware tools (%d): %s/tools/hw' % (count, octabam))
             print('Recorder:    swiftc -O %s/tools/hw/rec.swift -o %s/tools/rec' % (octabam, octabam))
             print('Emulator and DSP assembler: run "make setup" then "make emu-cf" in %s (builds into its ignored vendor/).' % octabam)
-            if args.update:
-                main_head = git(elekloader, 'ls-remote', 'origin', 'refs/heads/main').split()[0]
-                if main_head != kit['commit']:
-                    print('Elekloader main (%s) is ahead of kit %s. The kit and catalogue follow releases: '
-                          'npm run elekloader:update -- elekloader-kit-<version>.zip' % (main_head[:7], kit['version']))
         if args.instrument in (None, 'rytm'):
             rytm = pins['rytm-emu']
             rytm_emu = sync('rytm-emu', rytm['repository'], rytm['commit'], base, False)

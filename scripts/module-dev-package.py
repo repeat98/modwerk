@@ -232,8 +232,6 @@ def main():
         if missing:
             sys.exit('ColdFire code needs m68k-elf binutils on PATH; missing: ' + ', '.join('m68k-elf-' + t for t in missing) +
                      ' (docs/ADD_A_MODULE.md, The fast loop).')
-        if not (a.upstream / 'elekloader').is_dir():
-            sys.exit('No Elekloader checkout at %s: run npm run upstream:tools, or give --upstream.' % a.upstream)
         args += ['--octabam', a.id, '--upstream', str(a.upstream)] + (['--pinned'] if published.get('pinned') else [])
     with tempfile.TemporaryDirectory(prefix='modwerk-dev.') as work:
         if m.dsp:

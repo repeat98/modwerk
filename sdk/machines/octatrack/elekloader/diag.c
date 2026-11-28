@@ -30,6 +30,8 @@ extern volatile uint32_t mw_frame_skips;                          /* ... and the
 extern volatile uint32_t mw_late_over;                            /* ... and the entries later than the wait can hold */
 extern volatile uint16_t mw_late_ring[8];                         /* ... and the last entries' lateness */
 extern volatile uint32_t mw_late_count;
+extern volatile uint32_t mw_late_after_long, mw_late_low;        /* ... and of the held ones, after a long frame, and barely late */
+extern volatile uint32_t mw_cpu_line_refusals, mw_cpu_pick_label, mw_cpu_pick_why; /* which check refused last, and what */
 extern volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs;   /* ep0.c: the attach watchdog (usb_attach.h) */
 extern const uint8_t modwerk_base_digest[32];       /* the base's identity (build_core.py) */
 
@@ -138,7 +140,7 @@ static int32_t settings_check(unsigned i)
 static volatile uint8_t keys[16];
 static volatile uint32_t key_count;
 static volatile uint32_t started, ticks;
-static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at, brakes, reoffers, frame_skips, late_overs, skip_at, hushes, hush_at;
+static uint32_t n, cpu_sum, cpu_peak, d0_sum, d0_peak, d1_sum, d1_peak, played, hot_run, hot_count, hot_at, sheds, shed_at, cpu_refusals, cpu_at, brakes, reoffers, frame_skips, late_overs, skip_at, hushes, hush_at, start_skips, start_overs, start_long, start_low;
 static volatile uint32_t frame_gap, tick_gap; /* the frame interrupt's window maxima: DTCN3 counts between frames, frames without a tick */
 static volatile uint16_t trace[DIAG_TRACE_FRAMES][2]; /* the last frames (diag.h's struct diag_trace), in ordinary memory */
 static volatile uint32_t traced;
@@ -180,6 +182,19 @@ static void add(volatile struct diag_log *l, unsigned kind, uint32_t a, int with
     volatile struct diag_incident *r = slot(l);
     if (with_context) context(r, kind); else bare(r, kind);
     r->boot = l->boot, r->second = ticks / 60u, r->a = a;
+    push(l, r);
+}
+/* What a CPU and a LATE record cannot say (diag.h's DETAIL): one for the tick's records. */
+static uint32_t most(uint32_t v) { return v < 0xffffu ? v : 0xffffu; }
+static void add_detail(volatile struct diag_log *l)
+{
+    volatile struct diag_incident *r = slot(l);
+    uint32_t line = mw_cpu_line_refusals, all = mw_cpu_refusals;
+    bare(r, DIAG_DETAIL);
+    r->boot = l->boot, r->second = ticks / 60u, r->a = most(all > line ? all - line : 0u) << 16 | most(line);
+    r->screen = mw_cpu_pick_label, r->tempo24 = mw_cpu_pick_why;
+    r->cpu = (uint16_t)most(mw_late_after_long - start_long), r->dsp0 = (uint16_t)most(mw_late_low - start_low), r->dsp1 = (uint16_t)most(start_skips);
+    r->machine[0] = (uint8_t)(most(start_overs) >> 8), r->machine[1] = (uint8_t)most(start_overs);
     push(l, r);
 }
 /* The frame interrupt's freeze, into the incidents (it keeps its own boot and second). */
@@ -353,7 +368,9 @@ void modwerk_diag_tick(void)
 static void diag_tick(void)
 {
     volatile struct diag_log *l = LOG;
-    if (!started) { start(l); stalls = stall_count(); started = 1; return; }
+    /* The late entries of stock's own start, before this first tick (tens to 172 on units), make no incident: logged at
+     * second 0 they held back the session's first real one for HOT_GAP. The counts stay since boot. */
+    if (!started) { start(l); stalls = stall_count(); frame_skips = start_skips = mw_frame_skips, late_overs = start_overs = mw_late_over; start_long = mw_late_after_long, start_low = mw_late_low; started = 1; return; }
     test_freeze();
     ticks = ticks + 1u;
     uint32_t stalled = stall_count(); /* a stall record since the last tick: keep the frames before it */
@@ -362,6 +379,7 @@ static void diag_tick(void)
     uint32_t skipped = mw_frame_sheds; /* the frame guard skipped a render: at most one incident in HOT_GAP */
     if (skipped != sheds && (!shed_at || ticks - shed_at >= HOT_GAP))
         add(l, DIAG_SHED, (mw_frame_shed_tracks & 0xffu) << 24 | (skipped & 0xffffffu), 1), shed_at = ticks, sheds = skipped;
+    unsigned detail = 0;
     uint32_t refusals = mw_cpu_refusals; /* the CPU budget refused a machine: the tracks and the count, as the skips */
     if (refusals != cpu_refusals && (!cpu_at || ticks - cpu_at >= HOT_GAP)) {
         /* Which tracks since the last CPU record, so the record's `machine` says whose price it was: their counters
@@ -370,7 +388,7 @@ static void diag_tick(void)
         static uint8_t seen[8];
         uint32_t recent = 0;
         for (unsigned t = 0; t < 8u; ++t) if (mw_cpu_track_refusals[t] != seen[t]) seen[t] = mw_cpu_track_refusals[t], recent |= 1u << t;
-        add(l, DIAG_CPU, (mw_cpu_refusal_tracks & 0xffu) << 24 | recent << 16 | (refusals < 0xffffu ? refusals : 0xffffu), 1), cpu_at = ticks, cpu_refusals = refusals;
+        add(l, DIAG_CPU, (mw_cpu_refusal_tracks & 0xffu) << 24 | recent << 16 | (refusals < 0xffffu ? refusals : 0xffffu), 1), cpu_at = ticks, cpu_refusals = refusals, detail = 1;
     }
     uint32_t braked = mw_frame_brakes; /* the brake caught the frame interrupt falling behind: each time, with the tracks shed */
     if (braked != brakes) add(l, DIAG_BRAKE, (mw_frame_shed_tracks & 0xffu) << 24 | (braked & 0xffffffu), 1), brakes = braked;
@@ -380,7 +398,8 @@ static void diag_tick(void)
      * one incident in HOT_GAP. */
     uint32_t held = mw_frame_skips, over = mw_late_over;
     if ((held != frame_skips || over != late_overs) && (!skip_at || ticks - skip_at >= HOT_GAP))
-        add(l, DIAG_LATE, (over < 255u ? over : 255u) << 24 | (held < 0xffffffu ? held : 0xffffffu), 1), skip_at = ticks, frame_skips = held, late_overs = over;
+        add(l, DIAG_LATE, (over < 255u ? over : 255u) << 24 | (held < 0xffffffu ? held : 0xffffffu), 1), skip_at = ticks, frame_skips = held, late_overs = over, detail = 1;
+    if (detail) add_detail(l);
     uint32_t reoffered = mw_usb_reoffers; /* the host never enumerated the unit and it offered itself again: each time, the controller then */
     if (reoffered != reoffers) { if (!reoffers) add(l, DIAG_USB, mw_usb_reoffer_regs, 1); reoffers = reoffered; } /* a boot's first: five with no host would crowd the log */
     volatile struct diag_usb_gone *g = USB_GONE; /* the host's frames stopped while one was expected: once its samples are in */

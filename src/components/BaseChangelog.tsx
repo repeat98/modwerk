@@ -12,6 +12,15 @@ type BaseRelease = {
 const releases: Record<'octatrack' | 'rytm' | 'zoom', [BaseRelease, ...BaseRelease[]]> = {
   octatrack: [
     {
+      version: '0.8.4', title: 'Clearer answers from MODULES, and MODWERK on the update screen', note: '2026-11-27-octatrack-base-0-8-4',
+      changes: [
+        { area: 'MODULES', detail: 'Switching modules while the sequencer is paused or held by MIDI STOP now says STOP PLAYBACK FIRST instead of BUSY: TRY AGAIN, and a busy card says CARD BUSY: TRY AGAIN.' },
+        { area: 'CPU', detail: 'A module machine pasted onto a track, or brought back by a Part reload, is checked against the CPU line the same way as picking it, so it can no longer push a full pattern over.' },
+        { area: 'Update screen', detail: 'The Octatrack shows MODWERK while it installs a base or a module set.' },
+        { area: 'Reports', detail: 'Diagnostics say which check refused a module pick and what kind each late audio frame was, and the start no longer reports a late frame of its own.' },
+      ],
+    },
+    {
       version: '0.8.3', title: 'A point of CPU back in every frame', note: '2026-11-25-octatrack-part-read-sram',
       changes: [
         { area: 'CPU', detail: 'Every audio frame costs about one point of CPU less: the frame interrupt reads the playing Part from fast on-chip memory. On an MKII it fell from 37.0 to 36.0 % on a busy pattern and from 29.8 to 28.8 % stopped. Found and measured by Laslo.' },

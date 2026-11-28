@@ -90,7 +90,7 @@ export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 export interface DiagnosticLive { samples: number; cpu?: [number, number]; dsp1to4?: [number, number]; dsp5to8?: [number, number] }
 export const DIAGNOSTIC_UNRESPONSIVE = ['usb', 'ui'] as const
 /** `device_log`: records from the unit's own log (diag.h), uploaded at the next connection. */
-export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu', 'brake', 'usb', 'late', 'restore', 'freeze_pc', 'usb_gone'] as const
+export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu', 'brake', 'usb', 'late', 'restore', 'freeze_pc', 'usb_gone', 'detail'] as const
 /** `frameGap`: the window's longest time between two audio frames, µs (log version 2); `tickGap` its longest run of
  * frames without a UI tick. */
 export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [number, number]; dsp1to4: [number, number]; dsp5to8: [number, number]; samples: number; playing: number; frameGap?: number; tickGap?: number }
@@ -309,6 +309,17 @@ export function usbGone(r: DeviceIncident): { stopped: number; ticks: number; ep
 }
 const UF_STATES = ['settled', 'reconnect due', 'off the bus', 'back on the bus']
 const USB_FLAGS = ['fresh', 'configured', 'USB DISK', 'RAM boot armed', 'reconnecting', 'receiving', 'host heard <10 s']
+const CPU_WHY = ['change one first', 'the Part is busy', 'unused modules', 'a USB stream', 'the Part budget']
+/** One line a person reads from a DETAIL record (diag.h, bases from 0.8.4): which check made the CPU refusals and what
+ * the last one was for, then what kind the held late entries were, and how many the start itself brought. */
+export function describeDetail(r: DeviceIncident): string {
+  const name = String.fromCharCode(...[24, 16, 8, 0].map(shift => r.screen >>> shift & 0xff).filter(Boolean))
+  const slot = r.tempo24 >>> 8 & 0xff, machine = r.tempo24 >>> 16 & 1
+  const refused = r.a ? `CPU refusals since the start: ${r.a & 0xffff} by the frame line, ${r.a >>> 16} by the Part budget; the last for ${name || 'an unnamed pick'} ` +
+    `(${machine ? 'machine' : 'effect'} on T${slot % 8 + 1}${machine ? '' : slot > 7 ? ' FX2' : ' FX1'}: ${CPU_WHY[r.tempo24 & 0xff] ?? 'why ' + (r.tempo24 & 0xff)}). ` : ''
+  return refused + `Late entries held since the first tick: ${r.cpu} after a frame of 450 µs or more, ${r.dsp5to8} less than 110 µs late; ` +
+    `the start itself held ${r.dsp1to4} and had ${r.machines[0] << 8 | r.machines[1]} later than the wait can hold`
+}
 /** One line a person reads: which side gave up (no VBUS: the host's port; SUSP: suspended; pull-up off: the unit). */
 export function describeUsbGone(r: DeviceIncident): string {
   const g = usbGone(r)

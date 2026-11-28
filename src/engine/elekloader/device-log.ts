@@ -1,5 +1,5 @@
 import { DEVICE_INCIDENTS, type DeviceCrash, type DeviceIncident, type DeviceLoad, type DeviceStall } from '../../community/octatrack-diagnostics-contract.ts'
-export { describeUsbGone, freezeSamples, usbGone } from '../../community/octatrack-diagnostics-contract.ts'
+export { describeDetail, describeUsbGone, freezeSamples, usbGone } from '../../community/octatrack-diagnostics-contract.ts'
 
 /** The unit's diagnostics log (sdk/machines/octatrack/elekloader/diag.h), as the ColdFire stores it: big-endian. */
 export const DEVICE_LOG_REQUEST = 37
