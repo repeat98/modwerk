@@ -23,9 +23,11 @@ Follow `docs/ADD_A_MODULE.md` and the rules in `AGENTS.md`, in this order.
    - its UI claims;
    - on the Octatrack, the base and USB lifecycle (`docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle`);
    - for a new FX, one effect per module (`docs/module-guides/effects.md#one-effect-per-module`): a set of different effects becomes one module each, and a stock site they share a hook first;
-   - for a new FX, a DSP budget measured against SPRING REV.
+   - for a new FX, a DSP budget measured against SPRING REV;
+   - on the Octatrack, its ColdFire budget (`docs/module-guides/README.md#keep-the-coldfire-cheap`): for each piece of work, where it runs (a key press, the DSP, once a step, or every frame), how often and what it may cost. Steer to the cheapest place the idea allows. A machine render is planned at a stock track's cost (about 7 % of a frame). When the idea needs more than that, tell the developer before building and offer the cheaper version.
 6. **Scaffold and build.** Use `npm run module:new` (the guide's "Choose your path"), work in its fast loop, and run `npm run module:doctor -- <id>` until it is green.
    - An Octatrack module scaffolds into `sdk/drafts/<id>/`, where it stays until it is qualified. `npm run module:dev -- <id>` builds it and tries it on the unit (`--watch` on every save); `npm run module:doctor -- --draft <id>` judges it as experimental, and `--release` as a release.
+   - Measure the first prototype that runs on the unit against the plan's ColdFire budget: `npm run device:price -- <draft .mwrm>` (a machine or an effect: `--curve T1,T3,T6,T7`). Over budget, change the design now, not at release.
    - `module:new` claims the module on the agent board for the signed-in developer (`npm run board -- login` once) and refuses one someone else holds; the doctor's `board claim` line stays red until the claim is theirs.
    - A new hook, table or migration number gets its claim as soon as you pick it: `npm run board -- claim hook <machine>/<index>` or `claim migration <number>` (`docs/AGENT_BOARD.md`).
    - Once a commit shows the direction, push and open a draft pull request (`gh pr create --draft`, `docs/DEVELOPER_WORKFLOW.md#open-a-draft-early`), and push as you go. A draft is how a prototype is shared to work on together: never hold it back to polish it first.
