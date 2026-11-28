@@ -93,8 +93,15 @@ async function claudeSessionFile(id = process.env.CLAUDE_CODE_SESSION_ID) {
 }
 /** The transcript of the session running now: Claude Code's by its session id, otherwise the most recently written one
  * for this checkout. */
+export function agentFromTranscriptPath(file) {
+  if (!file) return null
+  if (/[\\/]\.codex[\\/]|rollout-/.test(file)) return 'codex'
+  if (/[\\/]agent-transcripts[\\/].*\.jsonl$/i.test(file)) return 'cursor'
+  return null
+}
+
 export async function findTranscript({ file, agent } = {}) {
-  if (file) return { file, agent: agent ?? (/[\\/]\.codex[\\/]|rollout-/.test(file) ? 'codex' : 'claude-code') }
+  if (file) return { file, agent: agent ?? agentFromTranscriptPath(file) ?? 'claude-code' }
   const current = agent === 'codex' ? null : await claudeSessionFile()
   if (current) return { file: current, agent: 'claude-code' }
   const claude = agent === 'codex' ? null : await newest(await claudeCandidates())

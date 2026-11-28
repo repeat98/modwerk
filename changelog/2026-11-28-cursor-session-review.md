@@ -1,0 +1,1 @@
+Development: `/modwerk-post-eval` can read Cursor `agent-transcripts/*.jsonl` files (`npm run session -- review --file PATH`), so session review and share prompts are not blind on Cursor the way they were for Claude Code and Codex only.

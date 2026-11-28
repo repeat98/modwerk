@@ -17,6 +17,34 @@ const DENIED = /^\s*The user doesn't want to proceed with this tool use/
 /** What a developer writes when the agent got something wrong or had to be told twice (English and German). The agent
  * reads each match and judges it; a false match costs a line. */
 const FRICTION = /^\s*(?:no|nope|nein|stop|wait|halt|wrong|falsch)\b|\b(?:again|I said|I told you|already (?:said|told)|not what I|that's not|doesn't work|does not work|didn't work|still (?:broken|not|doesn't|fails|failing|red|wrong)|why (?:did|do|didn't|don't|are|is) you|you (?:forgot|missed|ignored)|too (?:slow|long)|takes? (?:\w+ )?(?:so|too) long|why (?:\w+ )*so (?:long|slow)|wtf|ffs|nochmal|schon wieder|immer noch|funktioniert nicht|geht nicht|warum (?:hast|machst|ist)|dauert (?:\w+ )?(?:zu|so) lange)\b|\?!/i
+const CURSOR_TIMESTAMP = /<timestamp>([^<]+)<\/timestamp>/
+const CURSOR_SKIP = /^\s*(?:<(?:available_subagent|user_info|system_reminder|open_and_recently_viewed_files|git_status)|# AGENTS\.md instructions)/
+
+const cursorPrompt = text => {
+  const body = (text.match(/<user_query>\s*([\s\S]*?)\s*<\/user_query>/) ?? [])[1] ?? text
+  return body.replace(CURSOR_TIMESTAMP, '').trim()
+}
+const cursorTime = text => { const m = text.match(CURSOR_TIMESTAMP); return m ? time(m[1].trim()) : null }
+const cursorToolName = name => (name === 'Shell' ? 'Bash' : str(name))
+const cursorToolInput = (name, input) => {
+  if (!record(input)) return {}
+  if (name === 'Shell') return { command: input.command, description: input.description }
+  if (name === 'Read' || name === 'Write' || name === 'StrReplace') return { file_path: input.path, description: input.description }
+  if (name === 'Grep') return { pattern: input.pattern, description: input.path ?? input.description }
+  if (name === 'Glob') return { pattern: input.glob_pattern, description: input.target_directory }
+  return input
+}
+function nextCursorUserAt(lines, index) {
+  for (let j = index + 1; j < lines.length; j++) {
+    let row
+    try { row = JSON.parse(lines[j]) } catch { continue }
+    if (!record(row) || row.role !== 'user' || !record(row.message)) continue
+    const text = (Array.isArray(row.message.content) ? row.message.content.filter(record) : []).map(part => str(part.text)).join('\n')
+    const at = cursorTime(text)
+    if (at !== null) return at
+  }
+  return null
+}
 
 /** Every tool call of one transcript in order: `{ tool, label, start, seconds, failed }`, `seconds` null while it has no
  * result. Subagent turns are left out, as in a shared session. */
@@ -33,7 +61,8 @@ export function readCalls(lines, agent = 'claude-code') {
   }
   // Pasted text is someone else's words (a tester's message, a log): only the developer's own count as friction.
   const human = (text, at) => { if (INTERRUPT.test(text)) interrupts++; else { prompts++; said.push({ at, text: text.replace(/<pasted_content\b[^>]*>[\s\S]*?<\/pasted_content>/g, '[pasted]').trim() }) } }
-  for (const line of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    const line = lines[lineIndex]
     let row
     try { row = JSON.parse(line) } catch { continue }
     if (!record(row)) continue
@@ -51,6 +80,35 @@ export function readCalls(lines, agent = 'claude-code') {
       } else if (item.type === 'message' && item.role === 'user') {
         const text = (Array.isArray(item.content) ? item.content.filter(record) : []).map(part => str(part.text)).join('\n')
         if (text.trim() && !/^\s*(?:<environment_context>|<user_instructions>|# AGENTS\.md instructions)/.test(text)) human(text, at)
+      }
+      continue
+    }
+    if (agent === 'cursor') {
+      const role = str(row.role)
+      if (!record(row.message)) continue
+      const blocks = Array.isArray(row.message.content) ? row.message.content.filter(record) : []
+      const text = blocks.filter(block => block.type === 'text').map(block => str(block.text)).join('\n')
+      if (role === 'user') {
+        const at = cursorTime(text)
+        if (at !== null) { first ??= at; last = at }
+        const prompt = cursorPrompt(text)
+        if (prompt && !CURSOR_SKIP.test(prompt)) human(prompt, at)
+        continue
+      }
+      if (role === 'assistant') {
+        const uses = blocks.filter(block => block.type === 'tool_use')
+        if (!uses.length) continue
+        const startAt = cursorTime(text) ?? last
+        const endAt = nextCursorUserAt(lines, lineIndex) ?? startAt
+        const span = startAt !== null && endAt !== null && endAt > startAt ? (endAt - startAt) / uses.length : 0
+        uses.forEach((block, index) => {
+          const id = `cursor-${lineIndex}-${index}`
+          const toolAt = startAt !== null ? startAt + span * index : null
+          const doneAt = startAt !== null ? startAt + span * (index + 1) : null
+          begin(id, cursorToolName(block.name), cursorToolInput(block.name, block.input), toolAt)
+          end(id, doneAt ?? toolAt, false)
+        })
+        if (endAt !== null) last = endAt
       }
       continue
     }
