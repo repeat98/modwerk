@@ -2,7 +2,7 @@
   "schema": 1,
   "module": "micro-timing",
   "version": "0.1.1-experimental",
-  "sourceSha256": "143f53b646d6fc10fb814ec537544b493eb7cba925b3feb85c8d18f4c3e6fdc5",
+  "sourceSha256": "ba4b86b0ad755f8a16b7a8da0971b5e859695228483f5a9b8362637af72f4f76",
   "kind": "coldfire",
   "trigger": "key",
   "cycles": {

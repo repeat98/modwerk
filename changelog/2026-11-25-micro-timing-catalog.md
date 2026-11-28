@@ -1,0 +1,1 @@
+Module: first catalog release of Micro Timing (0.1.1-experimental). TRACK TRIG EDIT gains MICRO T under TRIGS; LEVEL rewrites every step on the selected audio or MIDI track. The remembered row lives with the module and clears on power cycle. USB-only package.

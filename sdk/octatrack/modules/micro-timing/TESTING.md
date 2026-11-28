@@ -1,8 +1,91 @@
 # Micro Timing per track testing
 
+## Publication package (0.1.1-experimental)
+
+Catalogue USB package `public/octatrack-modules/micro-timing/0.1.1-experimental.mwrm`:
+ABI 7, 2926 B, module `36200ffc`, sha256
+`8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47`, title
+**Micro Timing**. Keep Accept on 18 November 2026 used
+`f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292`
+(title `Micro Timing pe`). The two packages differ only in the 16-byte title
+field; ColdFire image sha256
+`08b92351ea2097a9b26578eeebe72968b22df25c650f2a60fbcdd816bc103fbc` and
+module id match. Upstream no longer ships `npm run module:verify` (card
+composer verify removed); this module is listed `usbOnly` like Butter Fingers
+and Screen Off — USB package + native source accounting, not a card
+`module-build.json` row.
+
 ## Commands and exact revision
 
 Stock guards for the TRACK TRIG EDIT sites in `manifest.py` match original OS 1.40C (`section_3_MAIN_OS.bin` SHA-256 `164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`) as hashed locally from the developer's own extract. Those bytes are not in this folder. `npm run module:verify` has not been run. A USB package of commit `dbc0652b4` was built on 18 November 2026 and is not in this folder.
+
+## `npm run test:procedure -- micro-timing` (package `8958a66f…`)
+
+Owner ask on #2193 (26 November 2026): run the published package
+`8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47` on a
+unit, check LEVEL on an audio track and on a MIDI track, and record whether
+the development-twin rollback refusal returns with TRACK TRIG EDIT open and
+with it closed.
+
+**Ran 28 November 2026 (Europe/London), tip `f88922eff471`**, package
+`8958a66f…`, MKII OS 1.40C. Steps 1–9 and rollbacks recorded first; LEVEL
+rows below were **re-dug the same day** on tip after that tip (no PC; twin
+stayed on `dce64a781f8581b4`). No Accept / `device_keep`.
+
+| Step | Result |
+| --- | --- |
+| 1–4 software / compat / build / cost-model | **PASS** (`PYTHONUTF8=1` on Windows) |
+| 5 emulator | not run (`--no-emulator`) |
+| 6 unit-read | **PASS** (C02 Part 1, working = saved; empty inventory) |
+| 7 `device:test` | **PASS** (Windows trial rollback via recover after SIGINT unsupported) |
+| 8 soak 120 s | **PASS** |
+| 9 `device:price` | **PASS** on twin `dce64a781f8581b4` (`--dev` + guard): at rest frame **+0**, cpu **+0**; wrote `evidence/cpu-price.json`. Staged via step base `4e9a87ea…` (RAM) then guard twin (MAIN 1338730 > prior twin’s 1.25 MiB stage) |
+| 10 put-back | empty inventory after recover |
+| Emulator / Keep / power cycle | not this pass |
+
+Twin path for step 9: `npm run octatrack:base -- --stock OS.bin --step --out STEP` →
+`device boot STEP` → `device boot` `dev-twin-base63-guard-2026-11-26`
+(`dce64a781f8581b4`). No flash. Prior SPOS twin `cdfb0c2755afedfd` has no
+guard; larger `--dev` twins would not stage from it.
+
+### MICRO T row dig (same tip / package / twin)
+
+Earlier LEVEL rows on this package were recorded **FAIL** (stock
+TRIGS/SLIDE/SWING/REC.TRG only). Re-probe on `dce64a781f8581b4` with Keep-safe
+trial of `8958a66f…`:
+
+- Mid-trial MEM: list-length poke `0x4007c07a` = `48780005` (stock was
+  `48780004`); names LEA `0x4007b7f2` rewritten off stock `47f9400b2e66…`.
+- LCD: **MIDI TRIG EDIT** shows TRIGS / **MICRO T** / SWING;
+  **TRACK TRIG EDIT** shows TRIGS / **MICRO T** / SLIDE / SWING (REC.TRG
+  still scrolls under the four-row window).
+- LEVEL on TRACK: footer `MT1:ON GRID` → `MT1:+23/384`
+  (`evidence/media/hw-catalog-track-level-plus23-mop246.png`).
+- LEVEL on MIDI: from +23, LEVEL −23 → `MT1:ON GRID`
+  (`evidence/media/hw-catalog-midi-level-ongrid-mop246.png`).
+  **MIDI negative offsets:** same signed range as audio. The −23 step was
+  returning from `+23/384` to 0 (`ON GRID`), not a MIDI-only clamp. A
+  negative absolute micro-timing value works on MIDI tracks the same way.
+- Rolled back; inventory empty. No Accept.
+
+**Root cause of the earlier FAIL:** not a package or site defect — sites
+apply and MICRO T is present. The first LEVEL pass mis-read a stock-looking
+page (wrong open / timing). No source fix required.
+
+### Edge cases
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| LEVEL while playing | LEVEL rewrites every step through the stock writer while transport runs | Keep-safe trial; LEVEL with transport not required for owner row | **not run: transport playing not required for owner LEVEL row; at-rest LEVEL PASS** |
+| Part change | remembered row is module bss; Part change must not leave a stale row or hang | `device:test` Part switches inside step 7 | **PASS** (scripted; no hang) |
+| MIDI button | MIDI on/off selects which track LEVEL writes | Keep-safe trial; MIDI toggle between TRACK and MIDI TRIG EDIT | **PASS** (both pages show MICRO T; LEVEL moves shared footer) |
+| USB removal while TRACK TRIG EDIT open | earlier Keep remove was refused (RUNTIME_UI_OPEN) with that key layer up | not this pass | **not run: USB remove with TRIG EDIT open not exercised** |
+| Power cycle | remembered row must clear; trig offsets must stay | not this pass (no Accept) | **not run: no Accept / power cycle this pass** |
+| Beside other TRACK TRIG EDIT / key-layer modules | shared gesture and screen claim | compat step 2 | **PASS** (0 conflicts); hardware beside others not run |
+| LEVEL audio track | owner-required: confirm LEVEL on audio with this package | Keep-safe trial on `dce64a78…`; TRACK TRIG EDIT · MICRO T; LEVEL | **PASS** — MICRO T present; footer `MT1:ON GRID` → `MT1:+23/384` |
+| LEVEL MIDI track | owner-required: confirm LEVEL on MIDI with this package | same trial; MIDI TRIG EDIT · MICRO T; LEVEL −23 | **PASS** — MICRO T present; footer returns `MT1:ON GRID` |
+| Rollback with TRACK TRIG EDIT open | prior twin trial rollback refused (needs-recovery) | Keep-safe Undo with TRACK TRIG EDIT / MIDI TRIG EDIT open | **PASS** (rolled back; inventory `[]`) on both twins |
+| Rollback with TRACK TRIG EDIT closed | compare open vs closed key layer | Keep-safe Undo after NO closed the key layer | **PASS** (rolled back; inventory `[]`) |
 
 ## What was reported
 

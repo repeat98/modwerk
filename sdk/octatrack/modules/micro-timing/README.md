@@ -1,10 +1,10 @@
-# Micro Timing per track
+# Micro Timing
 
 Version: `0.1.1-experimental` · author: [@jonathanwardle1992-beep](https://github.com/jonathanwardle1992-beep)
 
 **TRACK TRIG EDIT gains a MICRO T row.** LEVEL sets the micro timing of every step on the selected track, in the stock fraction, as the pot turns.
 
-**Experimental.** The author reported the LEVEL behaviour on a private MICRO T9 card. On 18 November 2026 this package was kept over USB on an MKII, and after a power cycle the person reported the footer on grid. It has not been flashed as a card image.
+**Experimental.** The author reported the LEVEL behaviour on a private MICRO T9 card. On 18 November 2026 package `f5b9682175f295875dbecb66a18524c205ba526d88e9bd7dc9cdd7d270d01292` was kept over USB on an MKII, and after a power cycle the person reported the footer on grid. The listed catalogue package `8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47` matches that ColdFire image; only the 16-byte title field differs (`Micro Timing`). It has not been flashed as a card image.
 
 ## Overview
 
@@ -28,21 +28,19 @@ LEVEL changes it only while MICRO T is the selected row. Other rows keep their o
 
 ## Usage
 
-### Quick tutorial: offset every step on this track
+Anyone with the module can set a whole track's micro timing from TRACK TRIG
+EDIT. Audio and MIDI stay separate. The same offset lands on every step
+without opening MICRO TIMING once per trig. One extra row stays in the
+four-row window; the fraction sits in the footer. Omit the module to stop
+using it — there is no separate off switch; trig values already written
+remain in the pattern. TRIGS, SLIDE, SWING and REC.TRG stay. Play Start and
+Track Mutes use a different menu and can be chosen with this one.
+
+## Quick tutorial
 
 1. Grid record, then FUNC+BANK (FUNCTION on MKI). Highlight MICRO T, under TRIGS.
 2. Turn LEVEL. The footer fraction moves, and every step on this track takes that micro timing.
 3. Press the MIDI button and turn LEVEL again to set the MIDI track. The audio track keeps the value it already had.
-
-To stop using it, leave the module out of the build. There is no separate off switch: while it is installed, LEVEL on that row writes.
-
-### What changes in a stock flow
-
-- **What changes and for whom.** Anyone with the module can set a whole track's micro timing from TRACK TRIG EDIT. Audio and MIDI stay separate.
-- **Why.** The same offset on every step, without opening MICRO TIMING once per trig.
-- **What you see and do differently.** One extra row. Four rows on screen. The fraction sits in the footer.
-- **Turning it off.** Omit the module. Trig values already written remain in the pattern.
-- **Neighbouring flows.** TRIGS, SLIDE, SWING and REC.TRG stay. Play Start and Track Mutes use a different menu and can be chosen with this one.
 
 ## Compatibility and limitations
 
@@ -61,4 +59,15 @@ jonathanwardle1992-beep: behaviour, ColdFire source and documentation. MIT, [LIC
 
 ## Screens and audio
 
-`media/ot-micro-t.png` is TRACK TRIG EDIT with MICRO T highlighted, still on grid (`MT1:ON GRID`). `media/ot-micro-t-step.png` is the same row after one LEVEL step (`MT1:+1/384`). `media/ot-micro-t-midi.png` is MIDI TRIG EDIT: SLIDE is gone and the footer still shows that step, because LEVEL was not turned again. `media/ot-rec-trg.png` is the audio page after scrolling: REC.TRG is on the bottom row and TRIGS has left the top. All four are headless `ot_emu` LCD pixels of this package, not a unit result. The module makes no sound of its own; it changes when notes and locks fall.
+Real LCD captures from the headless emulator on a private native build of this
+source. They show the interface, not hardware behaviour or sound. The module
+makes no sound of its own; it changes when notes and locks fall.
+
+1. ![TRACK TRIG EDIT with MICRO T highlighted under TRIGS, a dashed lane and a cursor on the centre mark, footer MT1:ON GRID.](media/ot-micro-t.png)
+   While grid recording, press FUNC+BANK (FUNCTION on MKI) and highlight MICRO T under TRIGS. The pictured row is still on grid.
+2. ![TRACK TRIG EDIT with MICRO T highlighted, the cursor one step right of centre, footer MT1:+1/384.](media/ot-micro-t-step.png)
+   With MICRO T highlighted, turn LEVEL one step. That fraction is what LEVEL on this row writes to the track.
+3. ![MIDI TRIG EDIT with MICRO T highlighted; SLIDE is absent; footer still MT1:+1/384.](media/ot-micro-t-midi.png)
+   Press MIDI. The page title becomes MIDI TRIG EDIT and SLIDE leaves the list. LEVEL was not turned again in this frame.
+4. ![TRACK TRIG EDIT scrolled so MICRO T, SLIDE and SWING sit above a highlighted REC.TRG row.](media/ot-rec-trg.png)
+   From MICRO T, press DOWN until the list scrolls. REC.TRG appears on the bottom row of the same four-row window.

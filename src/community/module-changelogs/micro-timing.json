@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-18",
+    "changes": [
+      "First catalog release: TRACK TRIG EDIT gains MICRO T under TRIGS (four-row window; REC.TRG scrolls into view).",
+      "LEVEL rewrites every step on the selected audio or MIDI track through the stock micro-timing writer.",
+      "MIDI button off writes the audio track; MIDI on writes the MIDI track and leaves the audio track alone.",
+      "The remembered MICRO T row lives with the module; a power cycle clears it so the row starts on grid again.",
+      "Offsets already written on the trigs stay in the pattern. Loads over USB as a usbOnly package."
+    ]
+  }
+]

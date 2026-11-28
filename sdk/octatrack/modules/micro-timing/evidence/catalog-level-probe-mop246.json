@@ -1,0 +1,46 @@
+{
+  "base": "dce64a781f8581b44579ce50d4c92b6b084fa485e76f1dc596161baeb69ee02f",
+  "package": "8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47",
+  "shots": [
+    {
+      "name": "B02-first-open",
+      "path": "C:\\Users\\Roy Walker\\AppData\\Local\\Cursor\\AgentStores\\cursor_agent_stores\\bc-13426b7a-69ff-4179-b40a-c789304a35d3\\files\\internal\\mt-2193-micro-t-probe\\B02-first-open.png",
+      "rowMode": 1
+    },
+    {
+      "name": "B03-after-midi-toggle-open",
+      "path": "C:\\Users\\Roy Walker\\AppData\\Local\\Cursor\\AgentStores\\cursor_agent_stores\\bc-13426b7a-69ff-4179-b40a-c789304a35d3\\files\\internal\\mt-2193-micro-t-probe\\B03-after-midi-toggle-open.png",
+      "rowMode": 1
+    },
+    {
+      "name": "B04-sideA-micro-t",
+      "path": "C:\\Users\\Roy Walker\\AppData\\Local\\Cursor\\AgentStores\\cursor_agent_stores\\bc-13426b7a-69ff-4179-b40a-c789304a35d3\\files\\internal\\mt-2193-micro-t-probe\\B04-sideA-micro-t.png",
+      "rowMode": 1
+    },
+    {
+      "name": "B05-sideA-level-plus1",
+      "path": "C:\\Users\\Roy Walker\\AppData\\Local\\Cursor\\AgentStores\\cursor_agent_stores\\bc-13426b7a-69ff-4179-b40a-c789304a35d3\\files\\internal\\mt-2193-micro-t-probe\\B05-sideA-level-plus1.png",
+      "rowMode": 1
+    },
+    {
+      "name": "B06-sideA-level-plus23",
+      "path": "C:\\Users\\Roy Walker\\AppData\\Local\\Cursor\\AgentStores\\cursor_agent_stores\\bc-13426b7a-69ff-4179-b40a-c789304a35d3\\files\\internal\\mt-2193-micro-t-probe\\B06-sideA-level-plus23.png",
+      "rowMode": 1
+    },
+    {
+      "name": "B07-sideB-open",
+      "path": "C:\\Users\\Roy Walker\\AppData\\Local\\Cursor\\AgentStores\\cursor_agent_stores\\bc-13426b7a-69ff-4179-b40a-c789304a35d3\\files\\internal\\mt-2193-micro-t-probe\\B07-sideB-open.png",
+      "rowMode": 1
+    },
+    {
+      "name": "B08-sideB-micro-t",
+      "path": "C:\\Users\\Roy Walker\\AppData\\Local\\Cursor\\AgentStores\\cursor_agent_stores\\bc-13426b7a-69ff-4179-b40a-c789304a35d3\\files\\internal\\mt-2193-micro-t-probe\\B08-sideB-micro-t.png",
+      "rowMode": 1
+    },
+    {
+      "name": "B09-sideB-level-minus23",
+      "path": "C:\\Users\\Roy Walker\\AppData\\Local\\Cursor\\AgentStores\\cursor_agent_stores\\bc-13426b7a-69ff-4179-b40a-c789304a35d3\\files\\internal\\mt-2193-micro-t-probe\\B09-sideB-level-minus23.png",
+      "rowMode": 1
+    }
+  ]
+}
