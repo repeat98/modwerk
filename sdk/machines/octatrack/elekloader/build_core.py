@@ -1674,10 +1674,9 @@ def main():
     FX_IDS, FX_WORDS = args.fx_ids, (args.fx_ids + 31) // 32
     os.environ['ELEKLOADER_CROSS'] = args.cross
     upstream = args.upstream.resolve()
-    pin = json.loads((APP / 'vendor/elekloader/kit/kit.json').read_text())['commit']
-    if git(upstream, 'rev-parse', 'HEAD') != pin or git(upstream, 'status', '--porcelain', '--untracked-files=no'):
-        parser.error('Use the exact clean tracked Elekloader checkout pinned by Modwerk.')
     firmware_codec.use_elekloader(upstream)
+    import firmware_builder
+    builder_version = firmware_builder.__version__
     from elekloader import dsp, formats, elemod, patch
     from elekloader.sdk import build as sdk
     stock, device, release = formats.load(str(args.stock))
@@ -1705,7 +1704,7 @@ def main():
         at = guard['address'] - device.main_load
         if at < 0 or sha(image[at:at+guard['length']]) != guard['sha256']:
             raise ValueError('Logger stock ABI guard failed: ' + key)
-    original_core = upstream / 'mods/core-ot'
+    original_core = HERE / 'core-ot'  # the Octatrack core's boot copier, hook bus and gate, and its recipe
     recipe = json.loads((original_core / 'mod.json').read_text())
     for name in ('core-ot.s', 'bus.s', 'gate.s'):
         shutil.copyfile(original_core / name, source / name)
@@ -2531,7 +2530,7 @@ modwerk_retained_end:
     print('Packed base: %d bytes, %d under what a flash slot holds' % (slot, FLASH_SLOT_BYTES - slot))
     (out/'MAIN.raw').write_bytes(main_out)
     report = dict(schema=1, kind='modwerk-elekloader-base-prototype', coreVersion=VERSION,
-                  upstream=pin, sources=inputs, configuration=configuration, configurationHash=identity,
+                  builder=builder_version, sources=inputs, configuration=configuration, configurationHash=identity,
                   dspLoader={t: {k: (hex(v) if isinstance(v, int) else v) for k, v in dsp_layout[t].items() if k not in ('words', 'shared', 'residentUploadRecords')} for t in dsp_layout} if dsp_layout else None,  # no stock words in proofs
                   residentDspBoot=resident_boot_prepared['receipt'] if resident_boot_prepared else None,
                   savedSetExport=saved_set_proof, zeroState=zero_proof, runPack=run_proof,
