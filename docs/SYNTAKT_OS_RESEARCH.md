@@ -157,7 +157,7 @@ Surveyed in 1.42 and confirmed in 1.40 through the function alignment. No displa
 | SSI DMA interrupt (channel 54, vector 174) | 0x40084464 | 0x400832a4 | 8 | `33ebd8d6…063837` | identical | interrupt, level 6 |
 | Periodic callback registration (the 8.33 ms service; a mod can call it instead of patching) | 0x40002de8 | 0x40002de8 | 8 | `efa23c0a…09ecf5` | identical | task |
 
-Not found in the original survey: the frame buffer and draw path (the display DMA stream on channel 15 was a 1,000-byte control stream to the FPGA configuration master, not pixels), and project load/save entries (only transfer-header validator 0x400b728e, project version ≤ 13, sound version ≤ 7). These remain **unknown here**. Native Song/sequence codecs and bounded sequencer-step paths on **1.42** are now recorded in §4.5; they do not establish the complete project transaction.
+The original survey did not resolve the frame buffer or draw path. Project load/save now has a [bounded native OS 1.42 execution record](verification/2026-11-28-syntakt-project-lifecycle.md): full-file transfers and A/B LOAD controls with full slot-128 readback after success or post-activation write failure. It qualifies no core hook or physical durability. Native Song/sequence codecs and sequencer-step paths are in §4.5.
 
 ### 4.5 Native sequencer research, OS 1.42 (27 November 2026)
 
