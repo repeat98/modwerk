@@ -426,10 +426,30 @@ shared MIDI receiver lives in [`usbmidi_rx.s`](usbmidi_rx.s), beside its upstrea
 Both reset/session-end paths retire its old session before continuing to the
 audio/stock handler, and SET_CONFIGURATION flushes EP2 before rewriting its
 queue heads. The file stays as imported: `receiver_source` in
-`base_usb_functions.py` adds, at two guarded seams, the one change the base
-makes to it: while DIN clock runs (the UART's last `0xF8` stamp is under the
-clock handler's 167 ms resync gap old), USB clock, transport and song position
-are dropped, so the two clocks never add up to double the tempo.
+`base_usb_functions.py` adds, at guarded seams, the base's three changes to it:
+
+- **DIN clock wins.** While DIN clock runs (the UART's last `0xF8` stamp is under the
+  clock handler's 167 ms resync gap old), USB clock, transport and song position
+  are dropped, so the two clocks never add up to double the tempo.
+- **A USB message keeps DIN's running status** (`DIN_STATE`). Both inputs feed one
+  stock FIFO and framer, which keeps one running status, one "second data byte
+  pending" flag and a half-received message at its buffer's write index. A USB
+  channel or system common event is framed on its own, DIN's state saved before
+  and put back after, so a DAW's USB program change between a DIN sender's
+  running-status notes no longer turns DIN's later data bytes into program
+  changes (pattern changes). A DIN SysEx the event cuts is dropped whole.
+  `sdk/tests/test_usb_midi_shared_framer.py` runs the built receiver against a
+  model of the framer's state.
+- **USB MIDI rests in DISK MODE** (`DISK_HOLD`, called from `ep0.c`'s tick). Stock's
+  dormant USB MIDI buffers (the encoder's packet at `0x4ecc8000`, the receive dTD
+  at `0x4ecc9000`) lie inside DISK MODE's read buffer at `0x4ecb8000`. While DISK MODE
+  is open the sender stays busy, EP2 is flushed and the receiver is not primed, and
+  what queued meanwhile is dropped at the end. `usbmidi_up` is left alone: the
+  attach watchdog reads it as "configured". `mw_usb_midi_disk_holds` counts holds.
+
+Not yet on a unit: whether Modwerk's base shows the torn blocks (a computer reading one large file
+several times in 1 MB uncached requests, playing with CLOCK SEND on, and comparing each 64 KB block
+across the reads), and the running-status case with a DAW on USB and a sender on DIN.
 The legacy card module retains its own earlier source until its
 separate, versioned update; a base fix does not update that card download.
 
@@ -608,6 +628,14 @@ and hash, and copies the image over `0x40000400`; anything else boots the
 flashed base. Ported from Octabam's REMIX SWITCH (PR #655 at `879cecb`,
 MIT); the DSP park is its source unchanged. Any host on the vendor interface
 can trigger it without a confirmation on the unit: development only.
+
+Before the soft reset the base stops the USB controller (USBCMD.RS = 0, about
+50 ms for the host to see an unplug), then resets it (USBCMD.RST, a bounded
+wait for it to clear). A soft reset leaves the controller configured from the
+old session; with RS alone about 5 of 16 RAM boots still came back with no USB
+(22 November 2026). The reset is not yet measured on a unit: compare
+`scripts/octatrack-bootsoak.mjs` runs on a twin with and without it, and count
+"no USB, unit running" apart from boots that hang.
 
 ### Updating the base over USB (flash.c)
 

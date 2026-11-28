@@ -664,6 +664,9 @@ volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs;
 #ifdef MODWERK_USB_FUNCTIONS
 extern volatile uint8_t usbmidi_up;
 static unsigned enumerated(void) { return usbmidi_up; }
+/* usbmidi_rx.s (base_usb_functions.py DISK_HOLD): USB MIDI rests while DISK MODE is open, because stock's dormant
+ * USB MIDI buffers lie inside DISK MODE's read buffer and a packet tore the blocks a computer read. */
+void mw_usb_midi_disk(int open);
 #else
 static unsigned enumerated(void) { return DEVICEADDR >> 25; }
 #endif
@@ -736,6 +739,9 @@ static void ep0_tick(void)
         modwerk_usb_function_host(); /* and it is back after the base's own reconnect */
 #endif
     } else if (host_quiet < HOST_TIMEOUT_TICKS) ++host_quiet;
+#ifdef MODWERK_USB_FUNCTIONS
+    mw_usb_midi_disk(modwerk_machine_usb_disk());
+#endif
     /* The attach watchdog (above): a link stock's USB DISK MODE, the base's own reconnect or an armed RAM boot owns is
      * theirs, also at the end of a drop. */
     {

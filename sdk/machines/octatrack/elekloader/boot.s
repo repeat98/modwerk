@@ -34,7 +34,7 @@
 | that another base's gate runs (the flashed one runs after every reset).
         .set    RESERVE_LO,  0x40a955e0
         .set    RESERVE_HI,  0x41495de0
-        .set    USBCMD,      0xfc0b0140     | bit 0 RS: the controller runs (D+ pulled up)
+        .set    USBCMD,      0xfc0b0140     | bit 0 RS: the controller runs (D+ pulled up); bit 1 RST: reset it
 
         .set    ST_BOOT,     0x424f4f54     | "BOOT" handed over
         .set    ST_SIZE,     0x53495a45     | "SIZE"
@@ -235,7 +235,20 @@ modwerk_boot_reset:
         move.l  #0x00a00000,%d0         | ~50 ms (REMIX SWITCH's 0x00400000 is ~20)
 6:      subq.l  #1,%d0
         bne.s   6b
-        lea     (modwerk_boot_stage+UNCACHED).l,%a1
+        | Then the controller itself reset (RST, bit 1; it clears when done),
+        | so the next image's start-up finds it as after a power-on and not
+        | configured from this session: a soft reset does not reset it.
+        | Bounded: a controller that never clears RST must not stop the boot.
+        move.l  (USBCMD).l,%d0
+        bset    #1,%d0
+        move.l  %d0,(USBCMD).l
+        move.l  #0x00100000,%d1
+5:      move.l  (USBCMD).l,%d0
+        btst    #1,%d0
+        beq.s   4f
+        subq.l  #1,%d1
+        bne.s   5b
+4:      lea     (modwerk_boot_stage+UNCACHED).l,%a1
         move.l  #RS_RCR,%d0
         move.l  %d0,(MB_RESET,%a1)
         move.b  #0x80,%d0
