@@ -81,6 +81,11 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
         description: 'The virtual Octatrack panel and emulator improvements, including interactive execution, timing, card write-back and audio taps, retained through octabam.',
         links: [repo('timhastie/octa-panel')],
       },
+      {
+        name: 'elekloader', author: 'irpina and contributors',
+        description: 'The earlier vendored TypeScript kit for Digitakt and Digitone browser builds, and the original shared cores and package format that Modwerk’s machine stack started from. Its public ABI and adaptation guides also informed Modwerk’s core research. Builds now run on Modwerk’s own builder, bases and cores.',
+        links: [repo('irpina/elekloader')],
+      },
     ],
   },
   {
