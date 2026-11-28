@@ -353,4 +353,17 @@ typedef void modwerk_ev_audio_frame_prepare(void);
 #define MODWERK_EV_FRAME_DEADLINE 62
 typedef unsigned modwerk_ev_frame_deadline(uint32_t deadline, unsigned rest);
 
+/* ot_lfo_pmtr_dest (table, contribute {"to": "ot_lfo_pmtr_dest", "order", "data"}): audio LFO SETUP PMTR past stock 0-29: the base owns the page count, SETUP formatter, the PMTR beq that skipped WAVE's descriptor-count clamp, and dest store; dest lea is coded but not claimed yet (FM Synth overlap). The UI task (SETUP) and the audio LFO engine (destination resolve): short, no firmware call that can block. Contribute one struct modwerk_lfo_pmtr_dest. index must be unique among contributors and >= 30; the first record for an index wins. words points at eight track-indexed halfwords the LFO engine stores into. Optional after_store runs on the audio path after mw_lfo_pmtr_store writes *word (NULL = engine write only; peers must not claim 0x4000d07a). Room 16. Published SETUP count is 30 + number of unique contributed indexes (clamped to room). Dest store own/jmp at 0x4000d07a length 6 (move.w d0,(a1) + subq.l #1,4(sp); rejoin 0x4000d080) -> mw_lfo_pmtr_store (MOP-70/71). Resolve reloads MACSR/ACC1/ACC2 and takes track from a4. Dest lea at 0x4000d042 (pad_to=8) is implemented in lfo_pmtr_dest.s but not claimed in this land: published FM Synth po_lfo3b still overlaps at 0x4000d03e pad 8; a follow-up claims the lea with the companion migrate to 0x4000d03a (fork 6210dacde). SETUP encoder (MOP-34 twin live-patch): own/poke 0x4003923c length 2, stock 6734 (beq.s to 0x40039272) -> 4e71 nop; fall-through 0x4003923e (move.l d5,-(sp)). Not a detour at function entry 0x40038e04. Do not invent other addresses. */
+#define MODWERK_OT_LFO_PMTR_DEST 63
+typedef void modwerk_lfo_pmtr_after_store(uint16_t *word); /* audio path; publish live state from *word */
+struct modwerk_lfo_pmtr_dest {
+    uint16_t index;                  /* destination index; 30-38 reserved for parked drafts */
+    uint16_t flags;                  /* MODWERK_LFO_PMTR_* */
+    const char *label;               /* SETUP string (PROB, RST, …), NUL-padded short name */
+    uint16_t *words;                 /* 8 live halfwords, one per audio track (LFO store form) */
+    modwerk_lfo_pmtr_after_store *after_store; /* optional; NULL = no peer publish */
+};
+#define MODWERK_LFO_PMTR_ABI 2u
+#define MODWERK_LFO_PMTR_AUDIO 1u     /* audio LFO page only (MIDI twin later) */
+
 #endif

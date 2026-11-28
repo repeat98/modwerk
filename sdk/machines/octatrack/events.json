@@ -2464,6 +2464,55 @@
    "raisers": [],
    "raisedByBase": true,
    "orderEvidence": "Each subscriber keeps its own copy of the deadline; none reads another's. Owner approved 22 November 2026 for Tape Echo and every ColdFire effect after it."
-  }
+  },
+ {
+  "event": "ot_lfo_pmtr_dest",
+  "index": 63,
+  "kind": "table",
+  "site": null,
+  "length": 0,
+  "record": 12,
+  "key": null,
+  "room": 16,
+  "declaration": "typedef void modwerk_lfo_pmtr_after_store(uint16_t *word); /* audio path; publish live state from *word */\nstruct modwerk_lfo_pmtr_dest {\n    uint16_t index;                  /* destination index; 30-38 reserved for parked drafts */\n    uint16_t flags;                  /* MODWERK_LFO_PMTR_* */\n    const char *label;               /* SETUP string (PROB, RST, …), NUL-padded short name */\n    uint16_t *words;                 /* 8 live halfwords, one per audio track (LFO store form) */\n    modwerk_lfo_pmtr_after_store *after_store; /* optional; NULL = no peer publish */\n};\n#define MODWERK_LFO_PMTR_ABI 2u\n#define MODWERK_LFO_PMTR_AUDIO 1u     /* audio LFO page only (MIDI twin later) */",
+  "when": "audio LFO SETUP PMTR past stock 0-29: the base owns the page count, SETUP formatter, the PMTR beq that skipped WAVE's descriptor-count clamp, and dest store; dest lea is coded but not claimed yet (FM Synth overlap)",
+  "context": "the UI task (SETUP) and the audio LFO engine (destination resolve): short, no firmware call that can block",
+  "contract": "Contribute one struct modwerk_lfo_pmtr_dest. index must be unique among contributors and >= 30; the first record for an index wins. words points at eight track-indexed halfwords the LFO engine stores into. Optional after_store runs on the audio path after mw_lfo_pmtr_store writes *word (NULL = engine write only; peers must not claim 0x4000d07a). Room 16. Published SETUP count is 30 + number of unique contributed indexes (clamped to room). Dest store own/jmp at 0x4000d07a length 6 (move.w d0,(a1) + subq.l #1,4(sp); rejoin 0x4000d080) -> mw_lfo_pmtr_store (MOP-70/71). Resolve reloads MACSR/ACC1/ACC2 and takes track from a4. Dest lea at 0x4000d042 (pad_to=8) is implemented in lfo_pmtr_dest.s but not claimed in this land: published FM Synth po_lfo3b still overlaps at 0x4000d03e pad 8; a follow-up claims the lea with the companion migrate to 0x4000d03a (fork 6210dacde). SETUP encoder (MOP-34 twin live-patch): own/poke 0x4003923c length 2, stock 6734 (beq.s to 0x40039272) -> 4e71 nop; fall-through 0x4003923e (move.l d5,-(sp)). Not a detour at function entry 0x40038e04. Do not invent other addresses.",
+  "order": "lower first, then module id: SETUP scroll order among extended destinations. Drafts: PROB 30 order 10, RST 31 order 20, … TSTR 38 order 90.",
+  "subscribers": [],
+  "orderEvidence": "Coordinator lock LFO SETUP indexes 30–38 (TEMPO 39) on the fork; upstream hook index for this table is 63 (append after ev_frame_deadline). No catalogue module contributes on first land. Dest lea deferred pending FM Synth companion migrate. Port of fork scaffold 141322f42 through after_store ABI 2, without the lea claim from 6210dacde.",
+  "sites": [
+   {
+    "site": "0x4000d07a",
+    "length": 6,
+    "guard": "05513c90a3f4765378f011e125ede9c6eb20d8fdd856ecc65c5f8a7f8bcfb4ee",
+    "op": "jmp",
+    "target": "mw_lfo_pmtr_store",
+    "what": "audio LFO destination store (move.w d0,(a1) + subq.l #1,4(sp)); rejoin 0x4000d080 (OS 1.40C; MOP-70)"
+   },
+   {
+    "site": "0x4003923c",
+    "length": 2,
+    "guard": "c874bc29e99f2e67290d6cdb1caa2a67a4d8ec079434fef4eaa0715e902f4ac1",
+    "op": "own",
+    "what": "LFO page-2 encoder: nop PMTR beq (stock 6734) so SETUP uses WAVE's descriptor-count clamp; fall-through 0x4003923e (MOP-34 twin, OS 1.40C)"
+   },
+   {
+    "site": "0x4003bf64",
+    "length": 8,
+    "guard": "88c3015bea265af524001c19cb4e3b9743131f26f46f5d0e58dfb2f8622283c1",
+    "op": "jmp",
+    "target": "mw_lfo_pmtr_format",
+    "what": "audio LFO PMTR formatter: contributed indexes print their SETUP label (guards from trig-prob manifest, OS 1.40C)"
+   },
+   {
+    "site": "0x400d38a8",
+    "length": 4,
+    "guard": "560231689713a5933b6c8ac3e6b2f243730e49e1c6b0c610c41e8e8dad26044c",
+    "op": "own",
+    "what": "audio LFO page PMTR count word: base publishes 30+n from contributions"
+   }
+  ]
+ }
  ]
 }
