@@ -1,0 +1,1 @@
+- Keep the shared builder's existing device keys covered when adding another machine.
