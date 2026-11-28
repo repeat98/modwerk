@@ -28,17 +28,6 @@ import syntizApproval from '../../sdk/approvals/syntiz-build-approval.json'
 import ungemachApproval from '../../sdk/approvals/ungemach-build-approval.json'
 import sdkCatalog from '../../sdk/catalog.json'
 import packageManifest from '../engine/assets/octatrack-module-packages.json'
-import activeLoadEvidence from '../../docs/verification/2026-11-21-octatrack-active-load.json'
-
-// A version can be rebound to a new Base without retaining its package bytes.
-// Keep numerical expectations for matching recordings and explicitly refuse to
-// present old measurements as observations of an unrecorded package.
-const activePackageRecorded = (id: string) => {
-  const record = activeLoadEvidence.measurements.find(row => row.module === id)
-  const entry = packageManifest.packages.find(row => row.id === id)
-  return !!record && !!entry && record.version === entry.version &&
-    [record.releasePackageSha256, (record as { reboundReleasePackageSha256?: string }).reboundReleasePackageSha256].includes(entry.sha256)
-}
 
 const draft = () => parseModuleDocument(example)
 const rated = () => parseModuleDocument({ ...example, resources: { ...example.resources, impact: resourceImpactFixture() } })
@@ -123,17 +112,11 @@ describe('module resource gauges', () => {
     expect(lofiMemory).toMatchObject({ value: '11.926 kB', status: 'Accounted total', score: null })
     expect(lofiMemory.description).toContain((memory.sharedBytes / 1000) + ' kB shared')
     expect(lofiMemory.description).toContain((memory.perInstanceBytes / 1000) + ' kB per instance')
-    if (activePackageRecorded(outputMatrix.id)) {
-      expect(moduleResourceIndicators(outputMatrix)[1]).toMatchObject({
+    expect(moduleResourceIndicators(outputMatrix)[1]).toMatchObject({
       value: '+6.8 pp', status: 'Measured · T5–8', score: 6.8, maximum: 100, fill: 6.8,
       benchmark: { value: hookPrice.worstCase + ' cycles per sample for one instance', source: 'sdk/octatrack/modules/output-matrix/' + hookPrice.report },
     })
-      expect(moduleResourceIndicators(outputMatrix)[0].benchmark?.value).toBe('13.1% of a frame added with ALL routes in MATRIX mode')
-    } else {
-      expect(moduleResourceIndicators(outputMatrix)[1].status).toBe('Estimated')
-      expect(moduleResourceIndicators(outputMatrix)[1]).not.toMatchObject({ hardware: true })
-      expect(moduleResourceIndicators(outputMatrix)[0].benchmark).toBeUndefined()
-    }
+    expect(moduleResourceIndicators(outputMatrix)[0].benchmark?.value).toBe('13.1% of a frame added with ALL routes in MATRIX mode')
     expect(moduleResourceIndicators(bbd)[1]).toMatchObject({
       value: '+10.8 pp', status: 'Measured · T1–4',
       benchmark: { value: bbdPrice + ' instructions per sample per instance', basis: 'instr./sample · Emulator' },
@@ -151,19 +134,12 @@ describe('module resource gauges', () => {
       const document = MODULE_DOCUMENTS.find(module => module.id === id)!
       const [cpu] = moduleResourceIndicators(document)
       expect(cpu, id).toMatchObject({ value: first, status: 'Measured · first track' })
-      if (id === 'amiga' || activePackageRecorded(id))
-        expect(cpu.benchmark?.value, id).toContain(active.slice(0, -1) + '% of a frame added with')
-      else expect(cpu.benchmark, id).toBeUndefined()
+      expect(cpu.benchmark?.value, id).toContain(active.slice(0, -1) + '% of a frame added with')
     }
     // POLY8's booked curve was read on 0.3.4, not the published 0.3.3: its active load, as before
     const [poly8] = moduleResourceIndicators(MODULE_DOCUMENTS.find(module => module.id === 'poly8')!)
     expect(poly8).toMatchObject({ value: '41.9%', status: 'Measured · in use' })
-    if (activePackageRecorded(analog.id))
-      expect(moduleResourceIndicators(analog)[1]).toMatchObject({ value: '+5.6 pp', status: 'Measured · T1–4' })
-    else {
-      expect(moduleResourceIndicators(analog)[1].status).toBe('Estimated')
-      expect(moduleResourceIndicators(analog)[1]).not.toMatchObject({ hardware: true })
-    }
+    expect(moduleResourceIndicators(analog)[1]).toMatchObject({ value: '+5.6 pp', status: 'Measured · T1–4' })
     // the active reading is bound to its version; a base-bound module's booked cost is the base's, whatever version it runs
     expect(moduleResourceIndicators({ ...analog, version: '99.0.0' })[0]).toMatchObject({ value: '24.4%', benchmark: undefined })
     const amiga = MODULE_DOCUMENTS.find(module => module.id === 'amiga')!
@@ -174,18 +150,13 @@ describe('module resource gauges', () => {
     for (const record of directDspEvidence.modules) {
       const document = MODULE_DOCUMENTS.find(module => module.id === record.module)
       if (document?.version !== record.version) continue
-      const entry = record.module === 'usb-audio-out-tracks-main-cue' ? packageManifest.usbAudio.configurable
-        : packageManifest.packages.find(pkg => pkg.id === record.module)!
-      if (record.packageSha256 && entry.sha256 !== record.packageSha256) {
-        expect(moduleResourceIndicators(document)[1].status).toBe('Estimated')
-        expect(moduleResourceIndicators(document)[1].value).not.toBe('0 cycles')
-        continue
-      }
       expect(moduleResourceIndicators(document)[1]).toMatchObject({
         value: '0 cycles', status: 'Module code · ColdFire', score: null, source: record.source,
       })
       expect(moduleResourceIndicators({ ...document, version: '99.0.0' })[1].status).toBe('Estimated')
       if (!record.packageSha256) continue
+      const entry = record.module === 'usb-audio-out-tracks-main-cue' ? packageManifest.usbAudio.configurable
+        : packageManifest.packages.find(pkg => pkg.id === record.module)!
       const bytes = readFileSync('public/' + entry.path)
       expect(createHash('sha256').update(bytes).digest('hex')).toBe(record.packageSha256)
       expect(bytes.readUInt32BE(32)).toBe(0)
@@ -247,12 +218,6 @@ describe('module resource gauges', () => {
 
   it('shows the incremental Sidechain DSP load against stock compression', () => {
     const sidechain = MODULE_DOCUMENTS.find(module => module.id === 'sidechain-compressor')!
-    if (!activePackageRecorded(sidechain.id)) {
-      expect(moduleResourceIndicators(sidechain)[1].status).toBe('Estimated')
-      expect(moduleResourceIndicators(sidechain)[1]).not.toMatchObject({ hardware: true })
-      expect(moduleResourceIndicators(sidechain)[1].value).not.toBe('+1.8 pp')
-      return
-    }
     expect(moduleResourceIndicators(sidechain)[1]).toMatchObject({ value: '+1.8 pp', status: 'Measured · T5–8' })
     expect(moduleResourceIndicators(sidechain)[1].description).toContain('compared with stock COMPRESSOR')
   })

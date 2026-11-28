@@ -1,11 +1,4 @@
-SDK tests: resident transport checks derive the unsupported feature probe,
-per-core masks and exact reset boundaries from the declared DSP ledger.
-Adding a supported feature no longer makes an unknown-feature test request
-valid. Packet, refusal, ACK, timeout and generator-drift checks remain intact.
-No instrument code or packages change.
-Native fixtures link the real returning descriptor validator and model no active
-returning processor; legacy volatile work remains blocked. Published-service
-and selected-tool expectations follow their declared metadata, and malformed
-registry coverage uses an actually invalid kind. Existing assertions remain enabled.
-Resource tests preserve measured values for recorded package hashes and require
-unmeasured fallbacks for unrecorded rebindings; no measurement data is changed.
+Native transport tests derive unknown bits, per-core masks and reset boundaries independently from the DSP registry.
+Main retains fixed key-bus-only, tool-list, memory-ownership and measured-resource expectations.
+Legacy fixtures link the real metadata parser with no active returning processor; malformed-kind coverage uses an invalid kind.
+Packet, refusal, ACK, timeout and generator-drift checks remain intact. No instrument code, measurement record or package changes.

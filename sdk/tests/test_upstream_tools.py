@@ -115,13 +115,11 @@ class InstrumentSetup(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             base = pathlib.Path(tmp)
             (base / 'octabam/tools/hw').mkdir(parents=True)
-            declared = json.loads((pathlib.Path(__file__).resolve().parents[1] / 'upstream-tools.json').read_text())
-            octatrack_repos = ['octabam'] + (['elekloader'] if 'elekloader' in declared else [])
             for selection, repos, archive in [
-                    (['--for', 'octatrack'], octatrack_repos, False),
+                    (['--for', 'octatrack'], ['octabam', 'elekloader'], False),
                     (['--for', 'rytm'], ['rytm-emu'], False),
                     (['--for', 'zoom'], [], True),
-                    ([], [*octatrack_repos, 'rytm-emu'], True)]:
+                    ([], ['octabam', 'elekloader', 'rytm-emu'], True)]:
                 with self.subTest(selection=selection), \
                      mock.patch.object(sys, 'argv', ['upstream:tools', '--dir', tmp, *selection]), \
                      mock.patch.object(tools, 'sync', side_effect=lambda name, *_: base / name) as sync, \
