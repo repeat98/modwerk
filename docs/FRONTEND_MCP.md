@@ -148,7 +148,9 @@ the device.
 self-test or meter job. Bases without MWLD request 30 return `supported: false`.
 Unavailable or stale meter windows return null rather than zero load. The hub
 keeps at most 150 readings, samples every two seconds, and pauses outside the
-visible load panel or during USB sync. The beta hub now places this panel on
+visible load panel or during USB sync. Every eighth sample it also reads the
+log's last page alone for the frame guard's skip count, and Status says the unit
+is dropping sound at 50 skips or more in a minute. The beta hub now places this panel on
 Status, alongside the cached self-test/card record; `device_status` reads that
 same diagnostic record. Its Backups page uses the fixed saved-file export
 below, and Samples remains a local frontend work in progress.
