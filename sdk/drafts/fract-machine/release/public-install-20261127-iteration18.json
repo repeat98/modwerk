@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "hardware": true,
+  "scope": "INSTALL_INTEGRITY_UNDO_ONLY",
+  "packageSha256": "f8063d691afc26ab4fe69a3fa709d2b12c68d93b203f0a84536d1755d33755c4",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "sourceRevision": "afe5084a96f6a91f0fe727d1470eb9de5fa7bb2f",
+  "seconds": 45,
+  "integrity": {
+    "state": "passed",
+    "intact": 1,
+    "modules": 1
+  },
+  "trialFaultLogged": false,
+  "rolledBack": true,
+  "finalPhase": "normal",
+  "finalGeneration": 2,
+  "finalInventory": [],
+  "finalMissing": [],
+  "finalSet": "87f28e38d5fe18c3f6133158ddb0369f9b62f2a46b0ada8c8fc19de1ca9885e8",
+  "norSlots": {
+    "layout": "two",
+    "running": 1,
+    "fellBack": false,
+    "confirmed": true,
+    "slots": [
+      {
+        "generation": 8,
+        "whole": true,
+        "confirmed": true,
+        "tries": 1
+      },
+      {
+        "generation": 10,
+        "whole": true,
+        "confirmed": true,
+        "tries": 1
+      }
+    ]
+  },
+  "audioQualified": false,
+  "releaseQualified": false,
+  "keep": false,
+  "norWritten": false,
+  "limits": "Original native project; no module audio/control test on public base. Last eight-Part memory comparison was before this RAM boot; no public MEM driving. Original28CFcontrol files verified before boot; no whole-card/audio-library hash."
+}

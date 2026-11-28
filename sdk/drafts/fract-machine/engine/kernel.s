@@ -39,7 +39,8 @@
 |
 | Registers in the loop: a0 the PCM, a1 the accumulator, a2 the segment's
 | end in it, a3 the step (negative falling), a4 left << 16, a5 the span, a6
-| the loop; d0 env, d1/d3 samples, d2 the phase p, d4 delta, d5 the next
+| the loop (or cached coefficient in the short loop); d0 env, d1/d3
+| samples, d2 the phase p (shifted in the short loop), d4 delta, d5 the next
 | segment's phase, d6 gain_l, d7 gain_r. 44(sp) holds the span's end.
 | d2-d7/a2-a6 are saved and restored. Only addressing forms make
 | image-check admits: no scale-8, word-index or memory-indirect operands. No
@@ -53,6 +54,21 @@
         add.l %a4,%d0
         swap %d0
         add.l %a3,%d2
+        .endm
+
+| Short windows cross segments every few samples. Compute the
+| interpolation directly instead of dividing to find each segment's end.
+| Cache a coefficient until its segment changes. a6 points at it,
+| d4 holds its delta in the low word, a4 is left << 16. d2 is the low
+| 24 phase bits shifted left 8, a3 the signed step shifted left 8. ADD.L
+| sets carry on a rising wrap and clears carry on a falling borrow. Test
+| the span end before reloading, including when the final phase is zero.
+        .macro SHORT_ENV
+        move.l %d2,%d0
+        swap %d0
+        mulu.w %d4,%d0
+        add.l %a4,%d0
+        swap %d0
         .endm
 
 | One channel of one frame: the sample in the low word of \reg.
@@ -70,8 +86,14 @@
 | predecrementing reads. Chosen once a span: a6 takes the loop, then the
 | first segment; each segment's frames end at a2.
 | One frame, shared by the odd prefix and paired body.
-        .macro FRAME fmt, scaled, op, dir=0
+        .macro FRAME fmt, scaled, op, dir=0, direct=0
+        .if \direct != 2
+        .if \direct
+        SHORT_ENV
+        .else
         ENV
+        .endif
+        .endif
         .if \fmt == 0
         .if \dir
         move.b (%a0),%d1
@@ -131,6 +153,91 @@
         .endif
         .endm
 
+
+| Advance a cached coefficient; only after the caller proves a sample
+| remains. On a paired body's first frame that follows from the even tail.
+        .macro SHORT_LOAD fall
+        .if \fall
+        subq.l #2,%a6
+        .else
+        addq.l #2,%a6
+        .endif
+        mvz.w (%a6),%d0
+        mvz.w 2(%a6),%d4
+        sub.l %d0,%d4
+        swap %d0
+        movea.l %d0,%a4
+        .endm
+
+| One optional odd frame, then pairs. The first frame of each pair needs
+| no end comparison: the second frame is guaranteed by the even tail.
+        .macro SHORT_LOOP fmt, scaled, op, dir, fall
+        move.l %a2,%d0
+        sub.l %a1,%d0
+        btst #3,%d0
+        beq.w .Lshort_pair\@
+        FRAME \fmt,\scaled,\op,\dir,1
+        add.l %a3,%d2
+        .if \fall
+        bcc.s .Lshort_odd_cross\@
+        .else
+        bcs.s .Lshort_odd_cross\@
+        .endif
+        cmpa.l %a2,%a1
+        beq.w .Lspan_next
+        bra.w .Lshort_pair\@
+.Lshort_odd_cross\@:
+        cmpa.l %a2,%a1
+        beq.w .Lspan_next
+        SHORT_LOAD \fall
+.Lshort_pair\@:
+        FRAME \fmt,\scaled,\op,\dir,1
+        add.l %a3,%d2
+        .if \fall
+        bcs.s .Lshort_second\@
+        .else
+        bcc.s .Lshort_second\@
+        .endif
+        SHORT_LOAD \fall
+.Lshort_second\@:
+        FRAME \fmt,\scaled,\op,\dir,1
+        add.l %a3,%d2
+        .if \fall
+        bcc.s .Lshort_pair_cross\@
+        .else
+        bcs.s .Lshort_pair_cross\@
+        .endif
+        cmpa.l %a2,%a1
+        bne.w .Lshort_pair\@
+        bra.w .Lspan_next
+.Lshort_pair_cross\@:
+        cmpa.l %a2,%a1
+        beq.w .Lspan_next
+        SHORT_LOAD \fall
+        bra.w .Lshort_pair\@
+        .endm
+
+| A constant segment (including the one-frame peak) needs no phase or
+| interpolation in its sample loop. Lspan_go already advanced d5 for the
+| next segment; Lspan_fit consumes the entire call. d0 stays the gain.
+        .macro FLAT_LOOP fmt, scaled, op, dir
+        move.l %a4,%d0
+        swap %d0
+        move.l %a2,%d3
+        sub.l %a1,%d3
+        btst #3,%d3
+        beq.w .Lflat_pair\@
+        FRAME \fmt,\scaled,\op,\dir,2
+        cmpa.l %a2,%a1
+        beq.w .Lspan_next
+.Lflat_pair\@:
+        FRAME \fmt,\scaled,\op,\dir,2
+        FRAME \fmt,\scaled,\op,\dir,2
+        cmpa.l %a2,%a1
+        bne.w .Lflat_pair\@
+        bra.w .Lspan_next
+        .endm
+
         .macro LOOP fmt, scaled, op, dir=0
         .if \dir && \fmt == 1
         addq.l #6,%a0
@@ -142,11 +249,27 @@
         addq.l #4,%a0
         .endif
         move.l 12(%a5),%d0
+        cmpi.l #0x00280000,%d0
+        bcs.w .Lshort_normal\@
+        bsr.w og_short_setup
+        tst.l %d0
+        beq.w .Lshort_normal\@
+        cmpi.l #2,%d0
+        beq.w .Lflat\@
+        tst.l %d0
+        bmi.w .Lshort_fall\@
+        SHORT_LOOP \fmt,\scaled,\op,\dir,0
+.Lshort_fall\@:
+        SHORT_LOOP \fmt,\scaled,\op,\dir,1
+.Lshort_normal\@:
+        move.l 12(%a5),%d0
         cmpi.l #0x00020000,%d0
         bhi.w 3f
         lea 1f(%pc),%a6
         bra.w .Lspan_seg
-1:      move.l %a2,%d0
+1:      tst.l %d4
+        beq.w .Lflat\@
+        move.l %a2,%d0
         sub.l %a1,%d0
         btst #3,%d0
         beq.w 2f
@@ -160,10 +283,14 @@
         bra.w .Lspan_next
 3:      lea 4f(%pc),%a6
         bra.w .Lspan_seg
-4:      FRAME \fmt,\scaled,\op,\dir
+4:      tst.l %d4
+        beq.w .Lflat\@
+5:      FRAME \fmt,\scaled,\op,\dir
         cmpa.l %a2,%a1
-        bne.s 4b
+        bne.s 5b
         bra.w .Lspan_next
+.Lflat\@:
+        FLAT_LOOP \fmt,\scaled,\op,\dir
         .endm
 
 | The four formats for one PAN scaling and add/store; the format is in d0.
@@ -182,16 +309,16 @@
         LOOP 1,\scaled,\op,\dir
         .endm
 
-| The span into registers (above), its end on the stack; the format is
+| Entry preflight supplied a0=span,d0=count. Save the loop registers and
+| the span end on the stack; the format is
 | left in d0.
         .macro PROLOGUE
         lea -48(%sp),%sp
         movem.l %d2-%d7/%a2-%a6,(%sp)
-        movea.l 52(%sp),%a5
+        movea.l %a0,%a5
         movea.l (%a5),%a0
         movea.l 4(%a5),%a1
         move.l 8(%a5),%d5
-        mvz.w 32(%a5),%d0
         lsl.l #3,%d0
         lea (%a1,%d0.l),%a2
         move.l %a2,44(%sp)
@@ -222,12 +349,20 @@
         .even
         .global og_mix_span
 og_mix_span:
+        movea.l 4(%sp),%a0
+        mvz.w 32(%a0),%d0
+        cmpi.l #1,%d0
+        beq.w og_mix_one
         PROLOGUE
         ENTRY 0
 
         .even
         .global og_mix_span_reverse
 og_mix_span_reverse:
+        movea.l 4(%sp),%a0
+        mvz.w 32(%a0),%d0
+        cmpi.l #1,%d0
+        beq.w og_mix_one
         PROLOGUE
         ENTRY 1
 
@@ -242,11 +377,9 @@ og_mix_span_reverse:
         move.l #0x00ffffff,%d0
         and.l %d2,%d0
         movea.l 16(%a5),%a4             | the attack half
-| Long windows usually keep a whole source span in one envelope segment.
-| Check its LAST used phase; if it fits, the next segment phase is unused
-| and neither the division nor the segment-end construction is needed.
-        cmpi.l #0x00020000,%d1
-        bhi.s .Lspan_rising_split
+| Check the LAST used phase at every SIZE. Native pitch and trig splits
+| often leave a short span even when the window step is large. If it fits,
+| neither division nor segment-end construction is needed.
         move.l 44(%sp),%d3
         sub.l %a1,%d3
         lsr.l #3,%d3
@@ -291,8 +424,6 @@ og_mix_span_reverse:
         move.l #0x00ffffff,%d0
         and.l %d2,%d0
         movea.l 20(%a5),%a4             | the release half
-        cmpi.l #0x00020000,%d1
-        bhi.s .Lspan_falling_split
         move.l 44(%sp),%d3
         sub.l %a1,%d3
         lsr.l #3,%d3
@@ -337,6 +468,174 @@ og_mix_span_reverse:
         bne.w .Lspan_seg
         movem.l (%sp),%d2-%d7/%a2-%a6
         lea 48(%sp),%sp
+        rts
+
+| Private assembly helper, called after the mixer's register save. Its
+| custom convention clobbers d0-d5/a3-a4/a6; no additional save frame. It
+| accepts a whole span strictly inside one half, so the direct loop never
+| reads beyond a table's peak entry or needs a segment continuation.
+        .global og_short_setup
+        .hidden og_short_setup
+og_short_setup:
+        move.l 8(%a5),%d5
+        move.l 12(%a5),%d1
+        cmpi.l #0x00800000,%d1
+        bcc.w .Lshort_reject
+        cmp.l 24(%a5),%d5
+        beq.w .Lshort_reject
+        bcc.s .Lshort_falling
+        mvz.w 32(%a5),%d3
+        subq.l #1,%d3
+        mulu.l %d1,%d3
+        add.l %d5,%d3
+        cmp.l 24(%a5),%d3
+        bcc.w .Lshort_reject
+        move.l %d5,%d2
+        movea.l %d1,%a3
+        movea.l 16(%a5),%a6
+        moveq #1,%d1
+        bra.s .Lshort_prepare
+.Lshort_falling:
+        move.l #0x80000000,%d2
+        sub.l %d5,%d2
+        neg.l %d1
+        movea.l %d1,%a3
+        movea.l 20(%a5),%a6
+        moveq #-1,%d1
+.Lshort_prepare:
+        move.l %d2,%d3
+        moveq #24,%d0
+        lsr.l %d0,%d3
+        lea (%a6,%d3.l*2),%a6
+        mvz.w (%a6),%d0
+        mvz.w 2(%a6),%d4
+        sub.l %d0,%d4
+        swap %d0
+        movea.l %d0,%a4
+| Authored SHPE halves are monotone. If both end segments are the same
+| constant pair, every phase between them has exactly this gain. Restrict
+| the shortcut to our table; arbitrary caller tables retain the direct loop.
+        tst.l %d4
+        bne.w .Lshort_variable
+        move.l %a6,%d3
+        subi.l #og_shape_gain,%d3
+        cmpi.l #6240,%d3
+        bcc.w .Lshort_variable
+        mvz.w 32(%a5),%d3
+        subq.l #1,%d3
+        move.l %a3,%d0
+        mulu.l %d0,%d3
+        add.l %d2,%d3
+        move.l %d2,%d0
+        moveq #24,%d5
+        lsr.l %d5,%d0
+        lsr.l %d5,%d3
+        sub.l %d0,%d3
+        move.l (%a6,%d3.l*2),%d5
+        move.l %a4,%d0
+        move.l %d0,%d3
+        swap %d3
+        or.l %d3,%d0
+        cmp.l %d0,%d5
+        bne.s .Lshort_variable
+        moveq #2,%d0
+        rts
+.Lshort_variable:
+        lsl.l #8,%d2
+        move.l %a3,%d0
+        lsl.l #8,%d0
+        movea.l %d0,%a3
+        move.l %d1,%d0
+        rts
+.Lshort_reject:
+        moveq #0,%d0
+        rts
+
+| One sample has no PCM direction or segment continuation. Use only
+| caller-saved d0/d1/a0/a1, with one four-byte temporary (first left, then
+| envelope). PAN keeps the same intermediate signed truncation, including
+| exact unity256. No callee-saved register frame is needed on this path.
+        .even
+        .global og_mix_one
+        .hidden og_mix_one
+og_mix_one:
+        move.l 8(%a0),%d0
+        cmp.l 24(%a0),%d0
+        beq.w .Lone_peak
+        bcs.s .Lone_rising
+        move.l #0x80000000,%d1
+        sub.l %d0,%d1
+        move.l %d1,%d0
+        movea.l 20(%a0),%a1
+        bra.s .Lone_interp
+.Lone_rising:
+        movea.l 16(%a0),%a1
+.Lone_interp:
+        move.l %d0,%d1
+        lsr.l #8,%d1
+        lsr.l #8,%d1
+        lsr.l #8,%d1
+        lea (%a1,%d1.l*2),%a1
+        mvz.w (%a1)+,%d1
+        move.l %d1,-(%sp)
+        mvz.w (%a1),%d1
+        sub.l (%sp),%d1
+        lsr.l #8,%d0
+        mulu.w %d1,%d0
+        swap %d0
+        add.l (%sp)+,%d0
+        bra.s .Lone_decode
+.Lone_peak:
+        move.l %d0,%d1
+        lsr.l #8,%d1
+        lsr.l #8,%d1
+        lsr.l #8,%d1
+        movea.l 16(%a0),%a1
+        mvz.w (%a1,%d1.l*2),%d0
+.Lone_decode:
+        move.l %d0,-(%sp)
+        movea.l (%a0),%a1
+        mvz.b 34(%a0),%d0
+        cmpi.l #2,%d0
+        bcs.s .Lone_24
+        beq.s .Lone_mono16
+        move.l (%a1),%d0
+        move.l %d0,%d1
+        swap %d0
+        bra.s .Lone_pan
+.Lone_mono16:
+        move.w (%a1),%d0
+        move.l %d0,%d1
+        bra.s .Lone_pan
+.Lone_24:
+        tst.l %d0
+        beq.s .Lone_mono24
+        move.w (%a1),%d0
+        move.l 2(%a1),%d1
+        lsr.l #8,%d1
+        bra.s .Lone_pan
+.Lone_mono24:
+        move.b (%a1),%d0
+        lsl.l #8,%d0
+        move.b 1(%a1),%d0
+        move.l %d0,%d1
+.Lone_pan:
+        muls.w 28(%a0),%d0
+        asr.l #8,%d0
+        muls.w 30(%a0),%d1
+        asr.l #8,%d1
+        muls.w 2(%sp),%d0
+        muls.w 2(%sp),%d1
+        addq.l #4,%sp
+        movea.l 4(%a0),%a1
+        tst.b 35(%a0)
+        beq.s .Lone_add
+        move.l %d0,(%a1)
+        move.l %d1,4(%a1)
+        rts
+.Lone_add:
+        add.l %d0,(%a1)
+        add.l %d1,4(%a1)
         rts
 
 | Exact fused source-end seam: same Q31 window segments and PAN as above.
@@ -459,7 +758,8 @@ og_mix_span_reverse:
         SEAM_LOOP 1,\scaled,\op,\dir
         .endm
 
-| The span into registers (above), its end on the stack; the format is
+| Entry preflight supplied a0=span,d0=count. Save the loop registers and
+| the span end on the stack; the format is
 | left in d0.
         .macro SEAM_PROLOGUE
         lea -56(%sp),%sp

@@ -1,0 +1,29 @@
+{
+  "status": "OWN_MEMORY_AND_CALLBACK_STACK_ACCOUNTED; DEV_ACTIVE_USB_FAILED_RELEASE_BASE_UNTESTED",
+  "packageSha256": "f291ba64755853538d965a90eb467291b91a790672cbd1b6b50f6dfd98590e73",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "codeAndInitializedDataBytes": 65932,
+  "zeroInitializedStateBytes": 636,
+  "imagePlusBssBytes": 66568,
+  "runtimeHeaderBytes": 754,
+  "alignmentBytes": 22,
+  "residentPoolExtentBytes": 67344,
+  "sameCandidateReplacementPeakPoolBytes": 134688,
+  "oldCandidateReplacementPeakPoolBytes": 134720,
+  "packageBytes": 67252,
+  "relocations": 240,
+  "stockCopies": 3,
+  "stack": {
+    "maxOwnCallbackBytes": 632,
+    "method": "GCC -fstack-usage plus reviewed acyclic own-call graph; 48/56-byte assembly frames, zero-local short-Hann helper; 4-byte call return PCs",
+    "scope": "Own frames of one callback activation, including outgoing arguments and entry return PC. Excludes stock/base frames, interrupt prologues, task stacks and interrupted callbacks. Not a whole-system stack reserve.",
+    "report": "resource-audit-20261127-iteration11.json"
+  },
+  "worstCaseColdFireCycles": null,
+  "dspCodeWordsAdded": 0,
+  "dspStateWordsAdded": 0,
+  "hardware": "Iteration11 development twin failed active4chUSB stress (+4 trial skips); released-base package physically untested. Earlier standalone passes retain their own package scopes.",
+  "details": "resources.md",
+  "previousCandidateVersion": "0.1.5-experimental",
+  "previousCandidatePackageSha256": "bd1f581bba63166bf07620a541ab3d646612ed8140e472e5fac381bb42d2bb01"
+}

@@ -18,52 +18,52 @@ import tempfile
 
 MODULE = Path(__file__).resolve().parents[1]
 ROOT = MODULE.parents[2]
-IMAGE_SHA = 'a80a7032c23c5e76fd1943f3bcd07ba5e3bbca215942bf1e35298f292c87e577'
-PACKAGE_SHA = 'c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29'
-# Compared with the local native proof for base eb667962. These files govern
+IMAGE_SHA = 'f771665a61ca60650ed66a25d70bf69f900e6735e4fb4caf5f9b0bb1e25875bf'
+PACKAGE_SHA = 'f8063d691afc26ab4fe69a3fa709d2b12c68d93b203f0a84536d1755d33755c4'
+# Base 0.8.2 loader inputs. These files govern
 # the struct layout/allocation formula but need not change the module image.
 LOADER_INPUTS = {
     'sdk/runtime/loader/loader.h': 'f105ada3121166179bd8ac199883e5185916329ea427eb0e8c64338eeaa50b01',
-    'sdk/runtime/loader/loader.c': '69bbdf33558eddb7cba344f550ce6ab06bfc4d0986ea950b988b681d1ed41d8a',
+    'sdk/runtime/loader/loader.c': 'c0128cf05d77809835a288b97e0c02df32aa2b3e48a47735e060870651aa47fc',
 }
 
 # Every register-indirect call in this exact image, resolved against its
 # containing C/assembly source and the register definitions in the disassembly.
 # The three assembly JMPs are local loop continuations, not recursive calls.
 INDIRECT = {
-    0x18cc: (),
-    0x194e: (),
-    0x2502: (),
-    0x3528: ('ui_pixel',),
-    0x36cc: ('page_text',),
-    0x36dc: ('page_text',),
-    0x3752: ('modwerk_page_put32.constprop.0',),
-    0x375a: ('modwerk_page_put32.constprop.0',),
-    0x3780: ('modwerk_page_put32.constprop.0',),
-    0x3790: ('modwerk_page_put32.constprop.0',),
-    0x3798: ('modwerk_page_put32.constprop.0',),
-    0x37ba: ('page_word',),
-    0x37c6: ('page_word',),
-    0x37e2: ('page_word',),
-    0x3c6a: ('og_pool_signed',),
-    0x3c7a: ('og_grain_layout_upgrade',),
-    0x3f9a: ('ui_unsigned',),
-    0x3ff2: ('ui_unsigned',),
-    0x4058: ('ui_text',),
-    0x40c8: ('ui_text',),
-    0x4116: ('ui_text',),
-    0x426e: ('ui_pixel',),
-    0x427c: ('ui_pixel',),
-    0x438a: ('ui_pixel',),
-    0x46fc: ('ui_peak',),
-    0x475e: ('ui_peak',),
-    0x47ae: ('fract_ui_pool_title_context',),
-    0x47c8: ('fract_ui_pool_title_context',),
-    0x4824: ('og_machine_owns',),
-    0x4834: ('fract_ui_machine_icon',),
-    0x48e6: ('og_pan_root',),
-    0x48f2: ('og_pan_root',),
-    0x54b6: ('og_mix_span', 'og_mix_span_reverse', 'og_join_span', 'og_join_span_reverse'),
+    0x5854: (),
+    0x58ce: (),
+    0x65f2: (),
+    0x76ca: ('ui_column_bits',),
+    0x7866: ('page_text',),
+    0x7876: ('page_text',),
+    0x78ec: ('modwerk_page_put32.constprop.0',),
+    0x78f4: ('modwerk_page_put32.constprop.0',),
+    0x791a: ('modwerk_page_put32.constprop.0',),
+    0x792a: ('modwerk_page_put32.constprop.0',),
+    0x7932: ('modwerk_page_put32.constprop.0',),
+    0x7954: ('page_word',),
+    0x7960: ('page_word',),
+    0x797c: ('page_word',),
+    0x7e04: ('og_pool_signed',),
+    0x7e14: ('og_grain_layout_upgrade',),
+    0x8134: ('ui_unsigned',),
+    0x818c: ('ui_unsigned',),
+    0x81f2: ('ui_text',),
+    0x8262: ('ui_text',),
+    0x829e: ('ui_text',),
+    0x82e8: ('ui_column_bits',),
+    0x84ae: ('ui_column_bits',),
+    0x8824: ('ui_peak',),
+    0x8886: ('ui_peak',),
+    0x88d6: ('fract_ui_pool_title_context',),
+    0x88f0: ('fract_ui_pool_title_context',),
+    0x894c: ('og_machine_owns',),
+    0x895c: ('fract_ui_machine_icon',),
+    0x8eba: ('og_mix_span', 'og_mix_span_reverse', 'og_join_span', 'og_join_span_reverse'),
+    0x8f20: ('og_mix_span', 'og_mix_span_reverse', 'og_join_span', 'og_join_span_reverse'),
+    0x9340: ('og_locate',),
+    0x95ce: ('og_locate',),
 }
 EXTERNAL = {
     0x40004008: 'native FLEX render',
@@ -71,10 +71,10 @@ EXTERNAL = {
     0x4004d948: 'native browser redraw',
     0x40054cd8: 'native parameter publication',
     0x4007893c: 'native browser leave',
-    0x40ae101c: 'base stock-pool open',
+    0x40ae20dc: 'base stock-pool open',
 }
 ASM_FRAMES = {'og_mix_span': 48, 'og_mix_span_reverse': 48,
-              'og_join_span': 56, 'og_join_span_reverse': 56}
+              'og_join_span': 56, 'og_join_span_reverse': 56, 'og_short_setup': 0, 'og_mix_one': 4}
 
 
 def run(argv):
@@ -155,7 +155,7 @@ def own_stack(work, cross, text_end):
                      'chain': depth(name)[1]}
               for name in sorted(graph)}
     return {'method': 'GCC -fstack-usage plus reviewed acyclic own-call graph; '
-                      '48/56-byte assembly leaves; 4-byte JSR return PCs',
+                      '48/56-byte regular/joined assembly frames, 4-byte single-frame leaf, zero-local short-Hann helper; 4-byte call return PCs',
             'perEntry': bounds, 'maxOwnCallbackBytes': max(
                 value['bytesIncludingEntryReturnPC'] for value in bounds.values()),
             'externalBoundaries': boundaries,

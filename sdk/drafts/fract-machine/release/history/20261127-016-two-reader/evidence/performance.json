@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "module": "fract-machine",
+  "version": "0.1.6-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": null,
+    "method": "CPU cycles and static worst-case bound NOT MEASURED; targeted diagnostic guard observations do not establish a worst-case bound."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "Normal development9b86:20matched windows across16/24mono/stereo,quiet/default/extreme conditions; max observed active-minus-quiet mean33.5points vscharge40. Inclusive guard percentages do not give exclusive module cycles/static worst-case. See matched-price report."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": 120,
+    "seconds": 122.23282695899252,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": 0,
+    "droppedExplanation": "Current exact9b86 run:22moving-control windows over122.233s,guard0\u21920 including finalSTOP. Earlier byte-identical prototype had two separately scoped passes.",
+    "method": "FR27TW2A06/Part2:64native locks,3LFOs, MAIN/PAN/SRNG motion,16-bit mono88200frame source. CoreAudio4ch active at bothends, MAIN/CUE nonzero; recorder closed normally. No listening/dropout approval."
+  },
+  "scope": {
+    "packageSha256": "9b86e74087dc4a7495a86850b0dcc3f45881335285d8519e1b4e3f03366e0a60",
+    "baseIdentity": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+    "ownerMethod": "https://github.com/repeat98/modwerk/pull/1274#issuecomment-6705531953",
+    "waiver": "NOT_GRANTED",
+    "hardware": "PARTIAL_STAGE1: format/USB/settledPart/allowedtrack cases passed; fixed procedure failed T5 restriction and onePart4timeout. Whole retained trial had twoCPU>=90%/1s notes, nofault logged. Released-base8c96 physically untested."
+  }
+}

@@ -5,6 +5,7 @@
 #include "base_binding.h"
 #include "native_source.h"
 #include "cpu_profile.h"
+#include "chunk.h"
 #ifdef OG_MACHINE_SOURCE_TRANSPORT
 #ifndef OG_MACHINE_PROTOTYPE
 #error "Source capture requires the experimental machine gate"
@@ -174,7 +175,7 @@ int og_machine_render(unsigned track, unsigned ping, unsigned start, unsigned en
 #endif
     for (unsigned i = 0; i < segments; ++i) {
         if (counts[i]) {
-            int accepted = og_machine_chunk(track, &source, &controls,
+            int accepted = og_machine_chunk_inline(track, &source, &controls,
                 OG_PACKET_AUDIO(audio), counts[i]) == OG_MACHINE_RENDERED;
             if (accepted) rendered = 1;
 #ifdef OG_MACHINE_SOURCE_TRANSPORT

@@ -1,0 +1,63 @@
+{
+  "scope": "QEMU instruction semantics only; no timing/hardware qualification",
+  "baseline": "0.1.4 kernel",
+  "candidate": "0.1.5 short-span fit at all SIZE steps",
+  "cases": [
+    {
+      "format": 0,
+      "reverse": false,
+      "spans": 2048,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 1,
+      "reverse": false,
+      "spans": 2048,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 2,
+      "reverse": false,
+      "spans": 2048,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 3,
+      "reverse": false,
+      "spans": 2048,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 0,
+      "reverse": true,
+      "spans": 2048,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 1,
+      "reverse": true,
+      "spans": 2048,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 2,
+      "reverse": true,
+      "spans": 2048,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    },
+    {
+      "format": 3,
+      "reverse": true,
+      "spans": 2048,
+      "audioAndGuardWordsIdentical": true,
+      "calleeSavedRegistersPreserved": true
+    }
+  ]
+}

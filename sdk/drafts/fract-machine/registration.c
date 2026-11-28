@@ -92,7 +92,13 @@ static uint32_t og_machine_page(const volatile uint8_t *slot) {
 static unsigned og_machine_admit(const volatile uint8_t *part, unsigned track) {
     if (!og_machine_base_ready()) return 0;
 #if defined(OG_MACHINE_SOURCE_STAGE) || defined(OG_MACHINE_GRAIN_ONLY)
+    /* The all-track profile keeps one state owner, on either DSP core.
+     * Legacy grain/source prototypes retain their four-track contract. */
+#ifdef OG_MACHINE_ALL_TRACKS
+    if (track >= 8) return 0;
+#else
     if (track >= 4) return 0;
+#endif
     for (unsigned t = 0; t < 8; ++t) {
         const volatile uint8_t *sig = part + 60u + 30u * t;
         if (t != track && part[0x22u + t] == 1 &&
@@ -122,6 +128,8 @@ const struct modwerk_machine og_machine_descriptor = {
     .pool_open = og_pool_open, .pool_left = og_pool_left,
     .ui_tick = og_machine_ui_tick,
     .track_page = og_machine_page, .leave = og_machine_leave, .render = og_machine_render,
+    /* Rounded above the measured four-format active-minus-quiet mean. */
+    .reserved = {40},
 #ifdef OG_MACHINE_SOURCE_STAGE
     /* Executed DSP instruction evidence, not a physical cycle claim. Shared
      * admission applies its existing markup and stock FX reserves unchanged. */

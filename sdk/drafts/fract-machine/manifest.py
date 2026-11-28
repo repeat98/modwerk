@@ -10,7 +10,7 @@ MODULE = Module(
     name="fract-machine", key="FRACT", kind=Kind.CF_PATCH,
     category=Category.MACHINES, author="ex1010",
     author_url="https://github.com/ex1010",
-    doc="Source draft: three-grain track machine; no public installable package.",
+    doc="Source draft: two-grain track machine; no public installable package.",
     proof=Proof.UNTESTED,
     proof_note="Short private hardware audition reported; exact public build and release lifecycle unqualified.",
     gates=(Gate("modules/fract-machine/verify.py", remix_arg=False),),

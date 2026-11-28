@@ -1,5 +1,39 @@
 [
   {
+    "version": "0.1.7-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "Allows the single FRACT owner on any audio track T1\u2013T8, including both DSP cores.",
+      "Keeps the two-grain engine and saved Part format; exact-build qualification is in progress."
+    ]
+  },
+  {
+    "version": "0.1.6-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "Uses two overlapping grains with the existing POS, SIZE, REVS, SPRD, SHPE, PTCH, PAN and SRNG controls.",
+      "Retains saved Part compatibility; the texture and output level change from the three-grain prototype.",
+      "Remains an unlisted candidate while full hardware qualification is completed."
+    ]
+  },
+  {
+    "version": "0.1.5-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "Reduces work during SIZE and PAN modulation, shortest Hann grains and waveform drawing while preserving sample output and controls.",
+      "Remains an unlisted draft; USB-audio stress still fails and release qualification is incomplete."
+    ]
+  },
+  {
+    "version": "0.1.4-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "Declares a measured 40% CPU budget for the three-grain machine.",
+      "Prepares FRACT for Modwerk base 0.8.2.",
+      "Remains an unlisted draft while hardware qualification is completed."
+    ]
+  },
+  {
     "version": "0.1.3-experimental",
     "date": "2026-11-25",
     "changes": [

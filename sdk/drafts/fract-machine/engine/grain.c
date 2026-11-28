@@ -1,5 +1,9 @@
 /* Sample coordinates stay in frames, including at long sample lengths. */
 #include "grain.h"
+/* Two live readers share the existing three-slot, 128-byte storage ABI. */
+#define OG_ENGINE_READERS 2
+enum { OG_LIVE_GRAINS=OG_ENGINE_READERS };
+_Static_assert(OG_ENGINE_READERS<=OG_MAX_GRAINS,"Live readers fit the storage ABI");
 #include "sizes.h"
 #include "window.h"
 #ifdef OG_MACHINE_CPU_PROFILE
@@ -8,7 +12,7 @@
 #ifdef OG_NATIVE_STAGE_ONE
 #include "source.h"
 #endif
-/* Density is the first control: 127, three heads a third of a length
+/* Density is the first control: 127, two heads a half of a length
  * apart, is what DENS 127 gives (source.c, og_densities); lower densities
  * space births og_hop apart, the historical DENS schedule. OG_FIXED_DENSITY
  * pins it at 127 for a scalar differential oracle. */
@@ -18,6 +22,9 @@
 #define DENSITY(p) ((unsigned)(p)[0])
 #endif
 #define SPREAD(p) ((unsigned)(p)[4])
+#ifdef OG_NATIVE_STAGE_ONE
+#define OG_NATIVE_PAN_TABLE
+#endif
 #include "pan.h"
 OgGrain og_state={0};
 uint32_t og_owner=8;
@@ -31,13 +38,13 @@ uint32_t og_size(unsigned value) {
     return og_length((value>127?127:value)>>1);
 }
 #endif
-/* Birth spacing: a third of the length at density 127 (no division), else
- * ceil(127*length/(3*density)); 0 schedules no birth. length*127 stays
+/* Birth spacing: a half of the length at density 127 (no division), else
+ * ceil(127*length/(2*density)); 0 schedules no birth. length*127 stays
  * below 2^24. */
 uint32_t og_hop(uint32_t length,unsigned density) {
     if (!density) return 0;
-    return density==127?(length+OG_MAX_GRAINS-1u)/OG_MAX_GRAINS:
-        (length*127u+OG_MAX_GRAINS*density-1u)/(OG_MAX_GRAINS*density);
+    return density==127?(length+OG_LIVE_GRAINS-1u)/OG_LIVE_GRAINS:
+        (length*127u+OG_LIVE_GRAINS*density-1u)/(OG_LIVE_GRAINS*density);
 }
 static uint32_t scale(uint32_t n,unsigned v) {
     return (n/127)*v+(n%127)*v/127;
@@ -90,10 +97,10 @@ static void advance_scan(OgGrain *s,uint32_t frames,int rate,unsigned count) {
     s->scan=(uint32_t)next;
 }
 #endif
-/* A successful birth puts its reader's index in *born (OG_MAX_GRAINS: none). */
+/* A successful birth puts its reader's index in *born (OG_LIVE_GRAINS: none). */
 static uint32_t birth(OgGrain *s,uint32_t frames,const uint8_t *p,unsigned *born) {
     uint32_t wait=~0u;
-    for (unsigned g=0;g<OG_MAX_GRAINS;++g) {
+    for (unsigned g=0;g<OG_LIVE_GRAINS;++g) {
         OgHead *h=s->head+g;
         if (h->length) {
             uint32_t remaining=h->length-h->age;
@@ -136,7 +143,9 @@ static uint32_t birth(OgGrain *s,uint32_t frames,const uint8_t *p,unsigned *born
         /* POS (plus SCAN/SPRD) is the span's centre. An even number of
          * frames has its centre half a frame to the right. Reduce before
          * subtracting: a grain may circle a source shorter than SIZE. */
-        uint32_t left=((h->length-1u)/2u)%frames;
+        uint32_t distance=h->length-1u;
+        uint32_t left=distance/2u;
+        if (left>=frames) left%=frames;
         target=target>=left?target-left:frames-(left-target);
         h->start=h->cursor=target;
         /* SHPE: the window this grain keeps for life, so an edit never
@@ -153,10 +162,17 @@ static uint32_t birth(OgGrain *s,uint32_t frames,const uint8_t *p,unsigned *born
             x^=(x<<7)&65535u;x^=x>>9;x^=(x<<8)&65535u;
             h->rev_seed=(uint16_t)x;
             reverse=(x*127u>>16)<p[OG_REV];
-            if (reverse) h->start=h->cursor=(target+h->length-1u)%frames;
+            if (reverse) {
+                /* Both reduced coordinates are below frames, so one
+                 * subtraction wraps the endpoint without a division. */
+                if (distance>=frames) distance%=frames;
+                uint32_t endpoint=target+distance;
+                if (endpoint>=frames) endpoint-=frames;
+                h->start=h->cursor=endpoint;
+            }
         }
         h->reverse=(uint8_t)reverse;
-        h->step=(1u<<31)/(h->length-1);
+        h->step=og_step(p[1]>>1);
         pan_birth(s,h,p[5]);
         /* Round upward so an odd-length head retires before reuse. */
         return og_hop(h->length,DENSITY(p));
@@ -169,6 +185,9 @@ static uint32_t birth(OgGrain *s,uint32_t frames,const uint8_t *p,unsigned *born
  * link no libgcc): exact while c*a fits 32 bits, else c drops just enough
  * low bits, a relative error below 2^-8. */
 static uint32_t rescale(uint32_t c,uint32_t a,uint32_t b) {
+    /* a <= 2^23 by the velocity bound above: this product cannot overflow.
+     * Short pending births avoid the overflow-test division. */
+    if (c<512u) return c*a/b;
     unsigned shift=0;
     while ((c>>shift)>0xffffffffu/a) ++shift;
     return ((c>>shift)*a/b)<<shift;
@@ -180,26 +199,28 @@ static uint32_t rescale(uint32_t c,uint32_t a,uint32_t b) {
  * SIZE asks (at most 2,004 frames for row 16), so no SIZE move plays a
  * window faster than a birth may. Hann, row 0, is admitted at every SIZE.
  * Rescale the pending birth from the old SIZE's to the new SIZE's window
- * phase to preserve three-way overlap; with no grain sounding, it stays.
+ * phase to preserve two-way overlap; with no grain sounding, it stays.
  * At density 127 the product stays below 2^31 (exact); a sparse DENS can
  * leave a pending wait of many lengths, rescaled within 2^-8. Floor can
  * advance a pending birth by less than one frame; occupied heads retry at
  * their first retirement. */
 static void retime(OgGrain *s,unsigned old_size,unsigned length) {
-    unsigned step=(1u<<31)/(length-1),live=0,wait=~0u;
-    for(unsigned g=0;g<OG_MAX_GRAINS;++g) {
+    unsigned size=s->params[1]>>1;
+    unsigned step=length==og_length(size)?og_step(size):(1u<<31)/(length-1u);
+    unsigned live=0,wait=~0u;
+    for(unsigned g=0;g<OG_LIVE_GRAINS;++g) {
         OgHead *h=s->head+g;
         if(!h->length)continue;
         unsigned own=step;
         if(h->shape) {
             uint32_t shortest=og_length(og_shape_floor[h->shape-1]);
-            if(length<shortest) own=(1u<<31)/(shortest-1);
+            if(length<shortest) own=og_step(og_shape_floor[h->shape-1]);
         }
         unsigned life=((1u<<31)-h->phase)/own+1;
         h->length=h->age+life;h->step=own;live=1;
         if(life<wait)wait=life;
     }
-    if(live && s->countdown) s->countdown=rescale(s->countdown,(1u<<31)/(og_length(old_size)-1),step);
+    if(live && s->countdown) s->countdown=rescale(s->countdown,og_step(old_size),step);
     if(DENSITY(s->params)==127 && s->countdown>wait)s->countdown=wait;
 }
 
@@ -290,7 +311,15 @@ static unsigned mix_head(
         else {cursor+=n;if (cursor==frames) cursor=0;}
         for (unsigned end=j+n;j<end;) {
             unsigned k=end-j;
-            if (j<fill && j+k>fill) k=fill-j;
+            if (j<fill && j+k>fill) {
+                unsigned tail=j+k-fill;
+                if (tail<=2) {
+                    /* Adding to a zeroed new tail is the same sum as storing
+                     * there. Avoid a second tiny call at the fill boundary. */
+                    for(unsigned z=fill;z<j+k;++z)acc[2*z]=acc[2*z+1]=0;
+                    fill=j+k;
+                } else k=fill-j;
+            }
             span->pcm=a;span->acc=acc+2*j;span->phase=phase;
             span->frames=(uint16_t)k;span->first=(uint8_t)(j>=fill);
             mix(span);
@@ -303,9 +332,8 @@ static unsigned mix_head(
     place->page=page;place->remaining=remaining;
     return fill;
 }
-/* The native engine: the same schedule, births, retiming, SCAN clock, PAN
- * and entry ramp as 0.9.6's packet engine at unity, frame for frame. Births
- * fall on span starts; within a span every live head mixes independently.
+/* The two-reader native engine follows the per-frame scalar schedule below.
+ * Births fall on span starts; within a span each live head mixes independently.
  * Each head's fields are read once a span and written back once. */
 void og_engine(OgGrain *s,const OgSource *src,const uint8_t *p,int32_t *audio,unsigned count) {
     uint32_t frames=src->frames;
@@ -316,9 +344,9 @@ void og_engine(OgGrain *s,const OgSource *src,const uint8_t *p,int32_t *audio,un
 #endif
     /* The clamped controls go to the state, as 0.9.6 kept them; the call
      * reads its stack copy. */
-    uint8_t q[OG_PARAMS];
+    uint8_t q[OG_PARAMS] __attribute__((aligned(4)));
     for (unsigned k=0;k<OG_PARAMS;++k) q[k]=p[k]>127?127:p[k];
-    for (unsigned k=0;k<6;++k) s->params[k]=q[k];
+    __builtin_memcpy(s->params,q,sizeof s->params);
     if (size!=(unsigned)(q[1]>>1)) retime(s,size,og_size(q[1]));
     /* A density edit keeps the pending birth's place in its interval (the
      * historical DENS rule): the wait scales by old/new, rounded up.
@@ -335,8 +363,8 @@ void og_engine(OgGrain *s,const OgSource *src,const uint8_t *p,int32_t *audio,un
     uint32_t countdown=s->countdown;
     OgJoin join={0,{0,0}};
     OgSpan span;
-    OgPlace places[OG_MAX_GRAINS];
-    for (unsigned g=0;g<OG_MAX_GRAINS;++g) places[g].remaining=0;
+    OgPlace places[OG_LIVE_GRAINS];
+    for (unsigned g=0;g<OG_LIVE_GRAINS;++g) places[g].remaining=0;
     for (unsigned base=0;base<count;) {
         int32_t *acc=audio+2*base;
         int16_t dry[2*OG_CHUNK];
@@ -352,15 +380,30 @@ void og_engine(OgGrain *s,const OgSource *src,const uint8_t *p,int32_t *audio,un
 #endif
         }
         for (unsigned i=0;i<chunk;) {
+            /* With fixed SCAN, a scheduled birth while every reader is
+             * occupied changes no state: birth() only returns the first
+             * retirement. Skip that failed event and its unnecessary mix
+             * split, but only when it would occur inside this call. */
+            if (!rate && q[0] && countdown<chunk-i) {
+                unsigned occupied=0;uint32_t first=~0u;
+                for (unsigned g=0;g<OG_LIVE_GRAINS;++g) {
+                    const OgHead *h=s->head+g;
+                    if (!h->length) break;
+                    ++occupied;
+                    uint32_t wait=h->length-h->age;
+                    if (wait<first) first=wait;
+                }
+                if (occupied==OG_LIVE_GRAINS && countdown<first) countdown=first;
+            }
             if (!countdown && q[0]) {
 #ifdef OG_MACHINE_CPU_PROFILE_DETAIL
                 uint32_t birth_at=og_cpu_clock();
 #endif
                 if (rate) og_scan_advance(s,frames,rate,base+i-advanced);
                 advanced=base+i;
-                unsigned born=OG_MAX_GRAINS;
+                unsigned born=OG_LIVE_GRAINS;
                 countdown=birth(s,frames,q,&born);
-                if (born<OG_MAX_GRAINS) places[born].remaining=0;
+                if (born<OG_LIVE_GRAINS) places[born].remaining=0;
 #ifdef OG_MACHINE_CPU_PROFILE_DETAIL
                 og_cpu_grain_phase_end(OG_CPU_GRAIN_BIRTH,birth_at);
 #endif
@@ -370,7 +413,7 @@ void og_engine(OgGrain *s,const OgSource *src,const uint8_t *p,int32_t *audio,un
                 if (m>countdown) m=countdown;
                 countdown-=m;
             }
-            for (unsigned g=0;g<OG_MAX_GRAINS;++g) {
+            for (unsigned g=0;g<OG_LIVE_GRAINS;++g) {
                 OgHead *h=s->head+g;
                 uint32_t length=h->length;
                 if (!length) continue;
@@ -483,12 +526,12 @@ void og_grain_all(OgGrain *s,uint32_t frames,const uint8_t *p,int32_t *audio,
 #ifndef OG_FIXED_DENSITY
     unsigned previous_density=s->params[0];
 #endif
-    uint8_t q[OG_PARAMS];
+    uint8_t q[OG_PARAMS] __attribute__((aligned(4)));
     for (unsigned k=0;k<OG_PARAMS;++k) q[k]=p[k]>127?127:p[k];
 #ifdef OG_FIXED_DENSITY
     q[0]=127;
 #endif
-    for (unsigned k=0;k<6;++k) s->params[k]=q[k];
+    __builtin_memcpy(s->params,q,sizeof s->params);
     p=q;
     unsigned density=DENSITY(p);
     /* Preserve the pending launch phase through density automation. Repeated
@@ -512,7 +555,7 @@ void og_grain_all(OgGrain *s,uint32_t frames,const uint8_t *p,int32_t *audio,
             --s->countdown;
         }
         int32_t sum[2]={0,0};
-        for (unsigned g=0;g<OG_MAX_GRAINS;++g) {
+        for (unsigned g=0;g<OG_LIVE_GRAINS;++g) {
             OgHead *h=s->head+g;
             if (!h->length) continue;
             int32_t pcm[2];read(context,h->cursor,pcm);

@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "module": "fract-machine",
+  "version": "0.1.5-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": null,
+    "method": "CPU cycles and static worst-case bound NOT MEASURED. See release/hardware-20261127.md; normal development build still fails active-USB stress."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "No current-build full matched matrix. Iteration11 development twin fails active four-channel USB audio. Earlier standalone and diagnostic results retain their own package scopes."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": 120,
+    "seconds": 3.6190329999662936,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": 4,
+    "droppedExplanation": "Current iteration11: first moving-control check found2 new skipped T1 renders;4 through STOP and the complete trial. No current120s USB pass.",
+    "method": "A06:64 verified native locks, three LFOs, MAIN/PAN/SRNG motion, verified16-bit mono FLEX source, active MAIN+CUE4ch recording. Stopped at first guard failure; no new crash/error/DSP stall. No listening or dropout pass."
+  },
+  "scope": {
+    "packageSha256": "70131adde2cb026f7fd5f7097391dfc7cece89cdc051eccca9ed97b2ad0b6a45",
+    "baseIdentity": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+    "ownerMethod": "https://github.com/repeat98/modwerk/pull/1274#issuecomment-6705531953",
+    "waiver": "NOT_GRANTED",
+    "hardware": "PARTIAL_FAILED_STAGE1 for iteration11; released-base f291 physically untested. Private two-reader9b86 completed two targeted active4chUSB runs without new guard skips, separately scoped in hardware report. Original state restored."
+  }
+}

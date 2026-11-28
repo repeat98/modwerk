@@ -1,0 +1,7 @@
+{
+  "indirectSites": 33,
+  "callerOpcodeRegisterOrderIdentical": true,
+  "changedAssembly": "cached Hann coefficient within existing saved register frame; table reload is guarded by span end",
+  "ownStackExtra": 0,
+  "policy": "same reviewed target graph at independently disassembled new addresses"
+}

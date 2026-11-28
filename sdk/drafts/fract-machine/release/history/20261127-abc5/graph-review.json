@@ -1,0 +1,15 @@
+{
+  "indirectSites": 33,
+  "unchangedCallerOpcodeOrder": true,
+  "unchangedOperandSites": 31,
+  "changedRegisters": {
+    "0x9248": "a0 from LEAog_locate0xa046",
+    "0x9506": "a1 from saved LEAog_locate0xa046"
+  },
+  "mixSites": {
+    "0x8dae": "d4 from a3, selector only og_mix_span/reverse and og_join_span/reverse",
+    "0x8e16": "same d4 selector"
+  },
+  "sourceChange": "Coalesce only state-free failed births inside one fixed-SCAN call; strict scalar full-state/audio parity18880callbacks",
+  "manualReview": "UI/assembly source unchanged; all engine selector LEAs reviewed, no new target or recursion"
+}

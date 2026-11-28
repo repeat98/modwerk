@@ -1,4 +1,4 @@
-/* One native owner, three fixed sample-reading heads. No audio allocation. */
+/* One native owner, two live heads in three fixed storage slots. No audio allocation. */
 #ifndef GRNYV1_GRAIN_H
 #define GRNYV1_GRAIN_H
 #include <stddef.h>

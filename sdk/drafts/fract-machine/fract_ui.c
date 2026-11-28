@@ -137,13 +137,26 @@ static void ui_pixel(uint32_t frame[256], unsigned x, unsigned y, unsigned ink) 
     else if (ink) *word |= bit;
     else *word &= ~bit;
 }
+static void ui_column_bits(uint32_t frame[256], unsigned x, unsigned y,
+                           unsigned bits, unsigned ink) {
+    if (bits==1u) {ui_pixel(frame,x,y,ink);return;}
+    if (x < 8u || x >= 120u || y >= 56u) return;
+    uint32_t lower=0,upper=0;
+    if (y<32u) {
+        lower=(uint32_t)bits<<y;
+        if (y>25u) upper=(uint32_t)bits>>(32u-y);
+    } else upper=(uint32_t)bits<<(y-32u);
+    lower&=~1u;upper&=0x00ffffffu;
+    if (ink==2) {frame[2u*x+1u]^=lower;frame[2u*x]^=upper;}
+    else if (ink) {frame[2u*x+1u]|=lower;frame[2u*x]|=upper;}
+    else {frame[2u*x+1u]&=~lower;frame[2u*x]&=~upper;}
+}
 static void ui_text(uint32_t frame[256], unsigned x, unsigned y,
                     const char *s, unsigned ink) {
     for (;*s;++s) {
         unsigned c=(unsigned char)*s,w=ui_width(c);uint32_t glyph=ui_glyph(c);
         for (unsigned col=0;col<w;++col,glyph>>=5)
-            for (unsigned row=0;row<5;++row)
-                if (glyph&(1u<<row)) ui_pixel(frame,x+col,y+row,ink);
+            if (glyph&31u) ui_column_bits(frame,x+col,y,glyph&31u,ink);
         x+=w+1u;
     }
 }
@@ -196,7 +209,7 @@ void fract_ui_overview_draw(uint32_t frame[256], const FractUiOverview *v) {
         ui_text(frame,x,y,text,1);
         if (v->active&(1u<<k))
             for (unsigned xx=x-1;xx<=x+width;++xx)
-                for (unsigned yy=y-1;yy<=y+5;++yy) ui_pixel(frame,xx,yy,2);
+                ui_column_bits(frame,xx,y-1u,127u,2);
     }
     if (!v->frames) {ui_text(frame,44,28,"LOAD SAMPLE",1);return;}
     unsigned peak=1;
@@ -219,7 +232,8 @@ void fract_ui_overview_draw(uint32_t frame[256], const FractUiOverview *v) {
     for (unsigned i=0;i<108u;++i) {
         unsigned distance=i>centre?i-centre:centre-i;
         if (v->length>=v->frames || distance<=radius || 108u-distance<=radius) {
-            ui_pixel(frame,10u+i,17,1);ui_pixel(frame,10u+i,43,1);
+            frame[2u*(10u+i)+1u]|=1u<<17;
+            frame[2u*(10u+i)]|=1u<<11;
         }
     }
     if (v->sounding) for (unsigned g=0;g<3;++g) if (v->readers[g]<v->frames) {
@@ -227,9 +241,7 @@ void fract_ui_overview_draw(uint32_t frame[256], const FractUiOverview *v) {
         unsigned sum=v->left[g]+v->right[g];
         unsigned y=24u+(sum?v->right[g]*12u/sum:6u);
         for (unsigned xx=x-1;xx<=x+1;++xx)
-            for (unsigned yy=y-1;yy<=y+1;++yy)
-                if (!v->reverse[g] || xx==x-1 || xx==x+1 || yy==y-1 || yy==y+1)
-                    ui_pixel(frame,xx,yy,2);
+            ui_column_bits(frame,xx,y-1u,v->reverse[g] && xx==x?5u:7u,2);
     }
 }
 static FractUiOverview fract_ui_overview = {

@@ -1,30 +1,30 @@
 {
   "schema": 1,
   "id": "fract-machine",
-  "bytes": 31948,
-  "imageBytes": 30416,
+  "bytes": 67284,
+  "imageBytes": 65964,
   "bssBytes": 636,
-  "relocations": 227,
+  "relocations": 240,
   "eventWords": 38,
-  "sha256": "c56e79076b170e76c53f46286a3d31aa8d8c51f9d52070836b1ca75fa37f8e29",
-  "authoredImageSha256": "a80a7032c23c5e76fd1943f3bcd07ba5e3bbca215942bf1e35298f292c87e577",
-  "reviewedImageSha256": "d343d813e212ff9d8c4595cac479efb57da0047edd89ce8bd6ef1ff16e828a3f",
-  "baseIdentity": "eb6679620d0c9ed7ad277598fc0df185e767dfbd0e7eb99bb1518ade9df8a4f0",
-  "basePackageSha256": "390f74e9b8f362ccd24172cc5672e5262dec1a2877323ed7a8ac368378d4753a",
+  "sha256": "f8063d691afc26ab4fe69a3fa709d2b12c68d93b203f0a84536d1755d33755c4",
+  "authoredImageSha256": "f771665a61ca60650ed66a25d70bf69f900e6735e4fb4caf5f9b0bb1e25875bf",
+  "reviewedImageSha256": "2604a572c063c971b90ec2754727420a552218e7549d956d341d7fc72bdfa618",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "basePackageSha256": "236fa80e212e6b02909d9f7fba3ee75b425827efa81d4c9b5770fada7f7661ff",
   "baseRunOrigin": 1084839424,
   "baseImports": [
     {
-      "offset": 14816,
+      "offset": 31610,
       "name": "mw_stock_pool_open",
       "addend": 0
     }
   ],
-  "stockCopies": 9,
+  "stockCopies": 3,
   "stockFills": 0,
   "stockVerification": "PASS",
-  "hardware": "NOT_RUN",
-  "version": "0.1.3-experimental",
-  "qualification": "PENDING_CURRENT_BUILD_HARDWARE_TIMING_STRESS_INTEGRATION_AND_FIRST_RELEASE_APPROVAL",
-  "hardwareReport": "qualification-20261125.md",
-  "previousHardwarePackage": "6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874"
+  "hardware": "INSTALL_INTEGRITY_UNDO_ONLY",
+  "version": "0.1.7-experimental",
+  "qualification": "DEVELOPMENT_AUDIO_OBSERVED_PUBLIC_INSTALL_ONLY_FULL_QUALIFICATION_PENDING",
+  "hardwareReport": "qualification-20261127-iteration18.md",
+  "hardwareEvidence": "public-install-20261127-iteration18.json"
 }

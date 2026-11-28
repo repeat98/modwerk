@@ -1,0 +1,110 @@
+{
+ "base": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+ "scene": "Octatrack MKII; FR27T18 A16 empty pick/A04 T1+T5 dense; one FRACT owner on T1; native saved Part1 before; USB audio companion absent",
+ "inputs": {
+  "transport": "playing"
+ },
+ "seconds": 8,
+ "readings": 3,
+ "slot": "T1",
+ "measuredAt": "2026-11-27T05:06:30.365Z",
+ "results": [
+  {
+   "id": "fract-machine",
+   "version": "file",
+   "packageSha256": "125c0ab3c7ac9b5cf8afc45710bca68ef62f8e55b34c8bb6fa20e6ae2379a165",
+   "before": {
+    "frame": 33.5,
+    "frameMax": 69.4,
+    "frames": 67301,
+    "skipped": 0,
+    "cpu": 45.1,
+    "dsp1to4": 11.8,
+    "dsp5to8": 21.7,
+    "dsp1to4Peak": 13,
+    "dsp5to8Peak": 22.7,
+    "readings": 3,
+    "spread": {
+     "frame": 0,
+     "cpu": 0.1,
+     "dsp1to4": 0.2,
+     "dsp5to8": 0,
+     "frameMax": 3.3,
+     "dsp1to4Peak": 0,
+     "dsp5to8Peak": 0.8
+    }
+   },
+   "atRest": {
+    "frame": 33.5,
+    "frameMax": 68.9,
+    "frames": 67272,
+    "skipped": 0,
+    "cpu": 45.3,
+    "dsp1to4": 11.9,
+    "dsp5to8": 21.7,
+    "dsp1to4Peak": 13,
+    "dsp5to8Peak": 29,
+    "readings": 3,
+    "spread": {
+     "frame": 0,
+     "cpu": 0.1,
+     "dsp1to4": 0,
+     "dsp5to8": 0,
+     "frameMax": 2.8,
+     "dsp1to4Peak": 0.1,
+     "dsp5to8Peak": 7.1
+    }
+   },
+   "atRestAdds": {
+    "frame": 0,
+    "cpu": 0.2,
+    "dsp1to4": 0.1,
+    "dsp5to8": 0,
+    "dsp1to4Peak": 0,
+    "dsp5to8Peak": 6.3
+   },
+   "curve": {
+    "tracks": [
+     "T1"
+    ],
+    "points": [
+     68.9,
+     97.2
+    ],
+    "adds": [
+     28.3
+    ],
+    "first": 28.3,
+    "each": 28.3,
+    "notes": [
+     "the Part's CPU allowance at 400 % for the curve's picks, back to 45 % for the admission runs"
+    ],
+    "admission": [
+     {
+      "pattern": "empty",
+      "number": 16,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 48.8,
+      "frame": 30.8,
+      "dropped": 0,
+      "stalls": 0
+     },
+     {
+      "pattern": "medium",
+      "number": 4,
+      "track": "T1",
+      "seconds": 8,
+      "admitted": true,
+      "frameMax": 96.3,
+      "frame": 61.7,
+      "dropped": 0,
+      "stalls": 0
+     }
+    ]
+   },
+   "rolledBack": true
+  }
+ ]
+}

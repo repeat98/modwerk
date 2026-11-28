@@ -1,0 +1,70 @@
+{
+  "oldPackage": "3871d90e345db70977f247185fdc121085e4026215e8c089840e3ba5e2a9d9a5",
+  "newPackage": "54d42f5affc4a6c45cdeb5d15814c632a57c630eaeac9121f945b5732f4d6aba",
+  "units": [
+    {
+      "unit": 0,
+      "executableSections": 3,
+      "identical": true
+    },
+    {
+      "unit": 1,
+      "executableSections": 3,
+      "identical": true
+    },
+    {
+      "unit": 2,
+      "executableSections": 2,
+      "identical": true
+    },
+    {
+      "unit": 3,
+      "executableSections": 33,
+      "identical": true
+    },
+    {
+      "unit": 4,
+      "executableSections": 2,
+      "identical": true
+    },
+    {
+      "unit": 5,
+      "executableSections": 7,
+      "identical": true
+    },
+    {
+      "unit": 6,
+      "executableSections": 2,
+      "identical": true
+    },
+    {
+      "unit": 7,
+      "executableSections": 2,
+      "identical": true
+    },
+    {
+      "unit": 8,
+      "executableSections": 5,
+      "identical": true
+    },
+    {
+      "unit": 9,
+      "executableSections": 3,
+      "identical": true
+    },
+    {
+      "unit": 10,
+      "executableSections": 1,
+      "identical": true
+    }
+  ],
+  "imageBytes": 30416,
+  "imageDifferences": [
+    {
+      "offset": 23113,
+      "old": 0,
+      "new": 40
+    }
+  ],
+  "scope": "Same development base. All executable sections identical; one descriptor CPU-price byte changes. This is not a timing rerun."
+}

@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "id": "fract-machine",
+  "bytes": 67252,
+  "imageBytes": 65932,
+  "bssBytes": 636,
+  "relocations": 240,
+  "eventWords": 38,
+  "sha256": "f291ba64755853538d965a90eb467291b91a790672cbd1b6b50f6dfd98590e73",
+  "authoredImageSha256": "1fb132d26fb7d4cb9269116a7c4f2f49e901866bdafad8f3f9a6e4f7deeafff2",
+  "reviewedImageSha256": "0b2308ef4885807c6b877739225ffbd263b98dae391cba1980ce6708979e50d0",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "basePackageSha256": "236fa80e212e6b02909d9f7fba3ee75b425827efa81d4c9b5770fada7f7661ff",
+  "baseRunOrigin": 1084839424,
+  "baseImports": [
+    {
+      "offset": 31402,
+      "name": "mw_stock_pool_open",
+      "addend": 0
+    }
+  ],
+  "stockCopies": 3,
+  "stockFills": 0,
+  "stockVerification": "PASS",
+  "hardware": "NOT_RUN",
+  "version": "0.1.5-experimental",
+  "qualification": "BLOCKED_DEV_ACTIVE_USB_FAILURE_RELEASE_BASE_UNTESTED",
+  "hardwareReport": "qualification-20261127-iteration11.md"
+}

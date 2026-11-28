@@ -1,0 +1,28 @@
+{
+  "status": "OWN_MEMORY_AND_CALLBACK_STACK_ACCOUNTED; HARDWARE_QUALIFICATION_PARTIAL",
+  "packageSha256": "ee63420569f637d78d3eabba6b209366d76db4a1587e460996cfd1a8b7ff8865",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "codeAndInitializedDataBytes": 52428,
+  "zeroInitializedStateBytes": 636,
+  "imagePlusBssBytes": 53064,
+  "runtimeHeaderBytes": 754,
+  "alignmentBytes": 22,
+  "residentPoolExtentBytes": 53840,
+  "sameCandidateReplacementPeakPoolBytes": 107680,
+  "oldCandidateReplacementPeakPoolBytes": 85664,
+  "packageBytes": 53852,
+  "relocations": 244,
+  "stockCopies": 5,
+  "stack": {
+    "maxOwnCallbackBytes": 696,
+    "method": "GCC -fstack-usage plus reviewed acyclic own-call graph; 48/56-byte assembly frames, zero-local short-Hann helper; 4-byte call return PCs",
+    "scope": "Own frames of one callback activation, including outgoing arguments and entry return PC. Excludes stock/base frames, interrupt prologues, task stacks and interrupted callbacks. Not a whole-system stack reserve.",
+    "report": "resource-audit-20261127.json"
+  },
+  "worstCaseColdFireCycles": null,
+  "dspCodeWordsAdded": 0,
+  "dspStateWordsAdded": 0,
+  "hardware": "Development twin: standalone120s no new sheds; active4-channel USB audio failed. Exact released-base package physically untested. See hardware-20261127.md.",
+  "details": "resources.md",
+  "previousCandidateVersion": "0.1.4-experimental"
+}

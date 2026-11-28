@@ -1,0 +1,27 @@
+{
+  "status": "OWN_MEMORY_AND_CALLBACK_STACK_ACCOUNTED; TIMING_NOT_QUALIFIED",
+  "packageSha256": "6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874",
+  "baseIdentity": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
+  "codeAndInitializedDataBytes": 30260,
+  "zeroInitializedStateBytes": 636,
+  "imagePlusBssBytes": 30896,
+  "runtimeHeaderBytes": 528,
+  "alignmentBytes": 0,
+  "residentPoolExtentBytes": 31424,
+  "sameCandidateReplacementPeakPoolBytes": 62848,
+  "oldCandidateReplacementPeakPoolBytes": 63200,
+  "packageBytes": 31772,
+  "relocations": 222,
+  "stockCopies": 9,
+  "stack": {
+    "maxOwnCallbackBytes": 712,
+    "method": "GCC -fstack-usage plus reviewed acyclic own-call graph; 48/56-byte assembly leaves; 4-byte JSR return PCs",
+    "scope": "Own frames of one callback activation, including outgoing arguments and entry return PC. Excludes stock/base frames, interrupt prologues, task stacks and interrupted callbacks. Not a whole-system stack reserve.",
+    "report": "resource-audit.json"
+  },
+  "worstCaseColdFireCycles": null,
+  "dspCodeWordsAdded": 0,
+  "dspStateWordsAdded": 0,
+  "hardware": "FUNCTIONAL_CHECK_RECORDED; TIMING_MEASUREMENTS_PENDING",
+  "details": "resources.md"
+}

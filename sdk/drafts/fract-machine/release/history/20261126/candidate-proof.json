@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "id": "fract-machine",
+  "bytes": 31948,
+  "imageBytes": 30416,
+  "bssBytes": 636,
+  "relocations": 227,
+  "eventWords": 38,
+  "sha256": "bec65df07ae21e76c707247fd97f9851cc424c6d8f6e27ca414d18d9727c9454",
+  "authoredImageSha256": "7bdba3f66da8d38a830d0aa76271a3ba5ac55e6d48aad8553bef811c2f7592ea",
+  "reviewedImageSha256": "3fbdbf27df8d6ede0ae66ac0553c8f44d003e2764639eb858d0ed5cf0782104f",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "basePackageSha256": "236fa80e212e6b02909d9f7fba3ee75b425827efa81d4c9b5770fada7f7661ff",
+  "baseRunOrigin": 1084839424,
+  "baseImports": [
+    {
+      "offset": 14816,
+      "name": "mw_stock_pool_open",
+      "addend": 0
+    }
+  ],
+  "stockCopies": 9,
+  "stockFills": 0,
+  "stockVerification": "PASS",
+  "hardware": "NOT_RUN",
+  "version": "0.1.4-experimental",
+  "qualification": "PENDING_CURRENT_BUILD_HARDWARE_COMPLETION_AND_FIRST_RELEASE_APPROVAL",
+  "hardwareReport": "qualification-20261126.md",
+  "previousHardwarePackage": "3871d90e345db70977f247185fdc121085e4026215e8c089840e3ba5e2a9d9a5"
+}

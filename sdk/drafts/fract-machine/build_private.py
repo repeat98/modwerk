@@ -105,7 +105,7 @@ def compile_source(args, base, work):
         '-fno-unwind-tables', '-fomit-frame-pointer', '-ffunction-sections', '-fdata-sections',
         '-Wall', '-Wextra', '-Werror', '-DOG_MACHINE_PROTOTYPE',
         '-DOG_MACHINE_START_EXTENSION', '-DOG_NATIVE_STAGE_ONE', '-DOG_MACHINE_BASE_BOUND',
-        '-DOG_MACHINE_GRAIN_ONLY',
+        '-DOG_MACHINE_GRAIN_ONLY', '-DOG_MACHINE_ALL_TRACKS',
         *['-I' + str(p) for p in includes]]
     run = lambda argv: subprocess.run(list(map(str, argv)), check=True, capture_output=True)
     sources = [DRAFT / (n + '.c') for n in
@@ -117,8 +117,8 @@ def compile_source(args, base, work):
     objects = []
     for source in sources:
         obj = work / (source.stem + '.o')
-        # The bounded packet renderer is a frame hot path. Other units use Os.
-        optimize = ['-O2'] if source.stem == 'render' else []
+        # Packet adaptation and grain mixing both run in the frame interrupt.
+        optimize = ['-O2'] if source.stem in ('render', 'grain') else []
         run([args.cross + 'gcc', *flags, *optimize, '-I' + str(work), '-c', source, '-o', obj])
         objects.append(obj)
     m68k_codegen.check_mcf54455(objects, args.cross + 'objdump')

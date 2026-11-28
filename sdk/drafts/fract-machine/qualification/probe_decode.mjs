@@ -43,7 +43,7 @@ export class RenderProbeDecoder {
       wholeInterruptGuardShareUs: w[9] * 1e6 / timerHz, shedsSinceBoot: w[10],
       peakContext: { track: (w[11] >>> 16 & 7) + 1, start: w[11] >>> 8 & 31, end: w[11] & 31 },
       maxCallsPerBlock: w[12],
-      limits: 'Observed callback intervals include the native FLEX call and timer/call overhead; counter bookkeeping after the second timer read is excluded. The base frame peak includes the full wrapper and is since boot. Own peaks are lifetime values. Guard share also pays base/other-track work. Not CPU cycles, a static bound, a window frame benchmark or automatic qualification.'
+      limits: 'Observed callback intervals include the native FLEX call and timer/call overhead; counter bookkeeping after the second timer read is excluded. The base frame peak includes the full wrapper and is since boot unless an external guard read reset it; the operator must record that scope. Own peaks are lifetime values. Guard share also pays base/other-track work. Not CPU cycles, a static bound, a window frame benchmark or automatic qualification.'
     };
   }
 }

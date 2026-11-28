@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "imageSha256": "946269ba64233b44e64f300d0b05f68ef7f81d404f10cf2d7d6fbc66578cb6a5",
+  "sources": {
+    "module/base_binding.c": "217dc052fbdffd80733c852550596fa6f1207d7921647a25f89077a23f5bbf7e",
+    "module/base_binding.h": "ba584ceb7b5616a819db330303fc89228f75254aa9cd2158a77fd550a4a05e61",
+    "module/control_layout.h": "4085f97129fbaf36fe808fba8081bdfbe5b5d175dd47f857d08bc2e98d2e708f",
+    "module/cpu_profile.h": "4fc9ced2fa683f30d3f3c59516a769b41b5dab85ff2f3dacb9126d9aa113ee20",
+    "module/engine/grain.c": "ee48a5e915ae51a4dfa78c8c1623076ae41b77cb9a4f599734ccb69f23354a87",
+    "module/engine/kernel.h": "ffd5a9cd274145db26cc988afacce5e007d35c79a36ce8a44914e281ae861d17",
+    "module/engine/kernel.s": "c6787a09ecb6c66d81ca06f4afde61d055f592e252baf0900eef14ba038148a0",
+    "module/engine/page_coordinates.h": "59720b052ab4e43b00ef48a9a292baea3f862bda9c818470e64b929b5a1f5b54",
+    "module/engine/pitch.c": "be00d669d7d8f15a12016a3cc6eb34abb30c8eede8e2c201ab6cce90476bee0b",
+    "module/engine/source.c": "df2abb3a8b6201cff01ee8b380d61c2535390d7f1c04204ebe3b22157bc0a0d6",
+    "module/fract_ui.h": "c70699b713c4ae0a1f3720e4b34bce546de40ac43feaebfb141c93e43659bb3a",
+    "module/machine.c": "4877588007cd5f7cda73bcf4d925f03b70379f07b19f3405aca27d6564eff36f",
+    "module/machine.h": "5d77969beb3aa41b359facfa9d4e267d3d986f2d306c9264a65b1d2cc98cb854",
+    "module/native_source.h": "071d9aee84067d5c165606e555d007c737a8c7aef99811ed3fce926e1ee9f8ab",
+    "module/registration.c": "4c9c91def244eaaaff0db7999a05a68dc15ff602131cd752ed35d3fc45fa7301",
+    "module/render.c": "fa4cff0f3b0aa8df3db966bbb9d777b874e39052c12679a814b11d3968f134ce",
+    "module/render.h": "2c81a00122910d8ec71d44917246e5b69fd6ca68e53772700f3c6672d3ffa773",
+    "module/runtime-build.json": "dcad8b276952718b61fb59cca207c8634098e94c15c9f965a4ffb30b9fabd10e",
+    "module/runtime.json": "10e2234c9a3fcceda4407f51a546bf29b206d298cd7ea0c50e846b0cc046a204",
+    "module/sample_pool.h": "157769f26f7ff4f8b0fb5f1cf42701a95e31616312c9ab234e958080e864b5e9",
+    "module/selection.h": "d7d46f2187f63d3aa7c69d9017d63d7917a94cb99e3ff0e2bcf15f883d8a9b41",
+    "module/start.c": "e1e7e805090a2022f1bea33fe4f98f4b4698d91edb3388df7e2701e2547990c3",
+    "module/support/control.c": "f4035fa092840db61b7cbb7141e1af8cefebd91875748e9c4b05ad9c6fae62e4",
+    "module/support/grain.h": "accd83129e5d243abcfe6ddb27d3bee9440b3d1c25e2c98aff4e56c87c2f22d3",
+    "module/support/pan.h": "e1d966ea6d71083fa3001997147999e45088001d6c9f7f32225c2dfd5d69047b",
+    "module/support/pan_gains.h": "c6c798f10a88d1908039112cafb3cd6cde8644afc01e43c154b49e9c7d3eb421",
+    "module/support/shapes.h": "fec26545e613ea7fa60a0d27f1aa906e864ea439ff5d82b7c1dbf3b00496e77a",
+    "module/support/sizes.h": "b3368e27e4cf2e37d586adf624aec1e78778bd7d9001abf383f3a7dbadecfbd5",
+    "module/support/source.h": "75bbfd34bc9da1bf315650516eb3118c6472d6a845a56f471d3b39cd70d54771",
+    "module/support/window.h": "e14b013792e21cb7b326c7593d64151cbe61984d231799399c5b2b2addae4005",
+    "sdk/runtime/logging/freestanding.c": "698d66b43a956e789c8b3057375a195db12e9a88968d2fbb3c7ce09a8021b575"
+  },
+  "copies": [
+    {
+      "offset": 15432,
+      "length": 18,
+      "address": 1073759904,
+      "sha256": "21fa9b2f73fd45425816040111feafeef4bc4894e08875d45b73907959f9b968",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 15588,
+      "length": 12,
+      "address": 1073851016,
+      "sha256": "bf5430043c8a12a1b41ec5885c35df271f94f8fcb710a4631e301dd2358ca193",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 16150,
+      "length": 12,
+      "address": 1073851016,
+      "sha256": "bf5430043c8a12a1b41ec5885c35df271f94f8fcb710a4631e301dd2358ca193",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 19874,
+      "length": 12,
+      "address": 1074093666,
+      "sha256": "cd309c74b16baa09c3d70ddd23ce1bd3fec58f9facb94cd9ca93eaeabcab993b",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 19886,
+      "length": 13,
+      "address": 1073821810,
+      "sha256": "a517b1ff860128401ddcb25f632699d7ba2288ca974b6dbfa3999254aff49af6",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    }
+  ],
+  "fills": [],
+  "baseImports": [
+    {
+      "offset": 19860,
+      "name": "mw_stock_pool_open",
+      "addend": 0
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "id": "fract-machine",
+  "bytes": 67396,
+  "imageBytes": 65980,
+  "bssBytes": 636,
+  "relocations": 242,
+  "eventWords": 38,
+  "sha256": "66f8a8404531461fbc1c91cf75e61e07e3540166b1df1cb77163dc8510aae272",
+  "authoredImageSha256": "4e15c677d2529ddfa644128d1bc49ea81bd68c2d521b628a11b5a89cf679cc8d",
+  "reviewedImageSha256": "fc97e66acf4f59e4d81827cc5213933400e3d14be3623f3cbc514a2613ff4552",
+  "baseIdentity": "24e480c435a41324872a259d4ed335c972ba868a917ad3499de359acdc849ac5",
+  "basePackageSha256": "236fa80e212e6b02909d9f7fba3ee75b425827efa81d4c9b5770fada7f7661ff",
+  "baseRunOrigin": 1084839424,
+  "baseImports": [
+    {
+      "offset": 31310,
+      "name": "mw_stock_pool_open",
+      "addend": 0
+    }
+  ],
+  "stockCopies": 5,
+  "stockFills": 0,
+  "stockVerification": "PASS",
+  "hardware": "NOT_RUN"
+}

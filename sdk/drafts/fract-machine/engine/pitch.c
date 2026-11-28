@@ -7,6 +7,8 @@
 #include "window.h"
 #ifdef OG_NATIVE_STAGE_ONE
 #include "kernel.h"
+#define OG_PAN_STORAGE
+#include "pan_gains.h"
 #ifndef U8
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U16(a) (*(volatile uint16_t *)(uintptr_t)(a))

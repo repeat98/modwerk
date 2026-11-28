@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "version": "0.1.6-experimental",
+  "sourceInputsRevision": "0de973642fbd33e28f46de8f310419f74458dd5e",
+  "developmentPackage": "9b86e74087dc4a7495a86850b0dcc3f45881335285d8519e1b4e3f03366e0a60",
+  "developmentBase": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+  "releasedBasePackage": "8c9603a42e6a4ab369d8bfe94fe1f5275a9b4a2c48b285323deb829d486294f0",
+  "releasedBaseHardware": "NOT_RUN",
+  "stage1": "INCOMPLETE_FAILED_FIXED_PROCEDURE",
+  "fixedProcedureFailures": [
+    "T5 deliberately unsupported by unchanged single-ownerT1\u2013T4 policy",
+    "OnePart4 switch did not become active; cause not established; separate12withNO/500mssettle passed"
+  ],
+  "formatMatrix": {
+    "status": "FOUR_FORMAT_MEAN_PRICE_CHECK_OBSERVED_PASS",
+    "packageSha256": "9b86e74087dc4a7495a86850b0dcc3f45881335285d8519e1b4e3f03366e0a60",
+    "baseIdentity": "46c30886a7e8f3f6091622b6c09acd20edad8ec91cc60d1daee60852123f3e4f",
+    "rows": [
+      {
+        "format": "16m",
+        "mode": 2,
+        "flexMean": 31.6,
+        "flexQuietMean": 25.1,
+        "fractQuietMean": 31.0,
+        "defaultAdded": 28.3,
+        "extremeAdded": 32.1
+      },
+      {
+        "format": "16s",
+        "mode": 3,
+        "flexMean": 31.8,
+        "flexQuietMean": 27.1,
+        "fractQuietMean": 31.0,
+        "defaultAdded": 29.0,
+        "extremeAdded": 32.9
+      },
+      {
+        "format": "24m",
+        "mode": 0,
+        "flexMean": 31.7,
+        "flexQuietMean": 27.1,
+        "fractQuietMean": 31.0,
+        "defaultAdded": 28.7,
+        "extremeAdded": 32.2
+      },
+      {
+        "format": "24s",
+        "mode": 1,
+        "flexMean": 31.7,
+        "flexQuietMean": 27.1,
+        "fractQuietMean": 31.0,
+        "defaultAdded": 29.1,
+        "extremeAdded": 33.5
+      }
+    ],
+    "declaredPrice": 40,
+    "largestObservedActiveMinusQuietMean": 33.5,
+    "conditions": "Normal package; FR27TW2 banksA\u2013D,Part1native FLEXloop2/TSTRoff,Part3FRACTdefaults/Part4extreme;120BPM64T1trigs;44.1k88200frames;3swarm+6smeasured perwindow;4chUSBcompanion installed,CoreAudio recorder idle. Source mode and voice slot verified eachwindow.",
+    "limits": "Observed mean charge only; no static worst-case/peak guarantee, listening or whole-system headroom claim."
+  },
+  "activeUsb": {
+    "seconds": 122.23282695899252,
+    "controlWindows": 22,
+    "guardBefore": 0,
+    "guardAfter": 0,
+    "recorderExit": 0,
+    "fourChannelsActiveAtStartAndEnd": true,
+    "wholeTrial": "standardUndo normalgen4,emptyinventory;twoCPU>=90%/1s notes,nofault logged"
+  },
+  "partTransitions": "12_TRANSITIONS_PASS_WITH500MS_SETTLE",
+  "allowedTracks": "T2_T3_T4_SINGLE_OWNER_AND_SECOND_REFUSAL_OBSERVED_PASS",
+  "audio": {
+    "seconds": 124.65632653061225,
+    "nonzeroAll4Channels": true,
+    "allChannelExactZeroFrames": 0,
+    "repeatedBlockCounts": {
+      "16": {
+        "constantBlocks": 2713,
+        "varyingRepeatedBlocks": 60
+      },
+      "64": {
+        "constantBlocks": 1,
+        "varyingRepeatedBlocks": 0
+      }
+    },
+    "interpretation": "Most repeats are constant plateaux;60varying16frame repeats have at most2distinct values perchannel in inspectedexamples. No synchronized audio oracle/listening, so no dropout clearance."
+  },
+  "restoration": "RESTORED:8Parts exact before finalRAMboot,existingPart1difference preserved;28CFhashes exact after clean read-onlyfsck/remount; ownprojectsremoved/ejected. Independent final readback:released0.8.2base24e480c4,normalgen0,inventory[],missing[],set87f28e38,NORrunningconfirmedslot1gen10/oldslot0gen8,nofallback. Released-baseMEMunavailable; no postbootPartdump claimed.",
+  "approval": "NoKeep/NOR/waiver/releaseapproval"
+}
