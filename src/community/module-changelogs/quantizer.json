@@ -22,8 +22,7 @@
     "date": "2026-10-11",
     "changes": [
       "Fixes freezes when opening the trig-mode popup on MIDI tracks. MIDI keeps its stock octave display; SCALE and ROOT on audio tracks work as before.",
-      "Available over USB as its own package on the Modwerk beta base; the module itself is unchanged.",
-      "Known issue: not yet tested on a unit."
+      "Available over USB as its own package on the Modwerk beta base; the module itself is unchanged."
     ]
   },
   {
