@@ -2,6 +2,7 @@
 import contextlib
 import importlib.util
 import io
+import itertools
 import json
 import pathlib
 import re
@@ -117,34 +118,61 @@ class UsbProbeHost(unittest.TestCase):
         self.assertEqual(len(poller.errors), 1)
         self.assertTrue(all(out is None for _, _, out in poller.samples))
 
-    def test_cli_writes_report_after_thread_shutdown(self):
+    def run_cli(self, clock, t_end=None):
+        """Run main() on synthetic counters and a fake clock; return (exit, report, stdout).
+
+        Playback ends once the poller has taken five polls, so the result
+        never depends on the host's timer resolution or scheduling."""
+        reads = []
+
         def read(_device, ep3out):
+            reads.append(ep3out)
             names = probe.IN_RING_NAMES if ep3out else probe.AUDIO_NAMES
             return dict.fromkeys(names, 0)
 
         def play(*_args):
-            time.sleep(0.04)
+            deadline = time.time() + 10
+            while len(reads) < 10 and time.time() < deadline:
+                time.sleep(0.002)
             return {"wall_s": 0.04, "cycles": 1, "requested_s": 0.04,
-                    "t_end": time.monotonic()}
+                    "t_end": clock() if t_end is None else t_end}
 
         with tempfile.TemporaryDirectory() as temp:
             report = pathlib.Path(temp) / "synthetic.json"
             argv = ["usb_probe.py", "--unit", "mkii", "--duration", "0.04",
                     "--poll-interval", "0.002", "--json", str(report)]
+            out = io.StringIO()
             with patch.object(sys, "argv", argv), \
+                 patch.object(probe.time, "monotonic", clock), \
                  patch.object(probe, "find_device", return_value=object()), \
                  patch.object(probe, "find_output_device", return_value=(0, 2)), \
                  patch.object(probe, "read_counters", side_effect=read), \
                  patch.object(probe, "run_sustained", side_effect=play), \
                  patch.object(probe, "host_fingerprint", return_value={"fixture": True}), \
-                 contextlib.redirect_stdout(io.StringIO()):
-                self.assertEqual(probe.main(), 0)
-            result = json.loads(report.read_text())
-            self.assertEqual(result["host"], {"fixture": True})
-            self.assertEqual(result["unit"], "mkii")
-            # No draining is a failure, even though the recorder process
-            # itself exits successfully. Exit code is not qualification.
-            self.assertEqual(result["verdict"], "MATCHES_REPORTED_FAILURE")
+                 contextlib.redirect_stdout(out):
+                code = probe.main()
+            return code, json.loads(report.read_text()), out.getvalue()
+
+    def test_cli_writes_report_after_thread_shutdown(self):
+        # Every clock read is a millisecond later, so the poll span is never 0.
+        ticks = itertools.count()
+        code, result, _ = self.run_cli(lambda: next(ticks) * 0.001)
+        self.assertEqual(code, 0)
+        self.assertEqual(result["host"], {"fixture": True})
+        self.assertEqual(result["unit"], "mkii")
+        # No draining is a failure, even though the recorder process
+        # itself exits successfully. Exit code is not qualification.
+        self.assertEqual(result["verdict"], "MATCHES_REPORTED_FAILURE")
+
+    def test_cli_reports_zero_poll_span_without_rates(self):
+        # A coarse clock (Windows) can give every open poll the same time.
+        code, result, out = self.run_cli(lambda: 0.0, t_end=1.0)
+        self.assertEqual(code, 0)
+        self.assertEqual(result["summary"]["ep3_in"]["poll_span_s"], 0)
+        self.assertIsNone(result["summary"]["ep3_in"]["drain_ratio"])
+        self.assertIn("drained n/a/s, ratio n/a", out)
+        # No span is no drain evidence: neither clean nor the failure.
+        self.assertEqual(result["verdict"], "AMBIGUOUS")
 
     def test_counter_payloads_are_exact_big_endian_and_direction_specific(self):
         for ep3out in (False, True):

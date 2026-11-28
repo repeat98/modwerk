@@ -77,6 +77,18 @@ class UpstreamCheckouts(unittest.TestCase):
             (path / item).write_bytes(original)
         self.sync()
 
+    def test_a_checkout_with_superseded_repairs_is_repaired_again(self):
+        path = self.sync()
+        spec = tools.adapter.TOOLS["usb_probe.py"]
+        text = (IMPORTED / "usb_probe.py").read_text()
+        for old, new in spec["edits"][:4]:  # the repairs before 28 Nov 2026
+            text = text.replace(old, new)
+        tool = path / "tools/hw/usb_probe.py"
+        tool.write_bytes(text.encode())
+        self.assertIn(tools.sha(tool.read_bytes()), spec["superseded"])
+        self.sync()
+        self.assertEqual(tools.sha(tool.read_bytes()), spec["output"])
+
     def test_update_moves_a_plain_pin_and_keeps_it_unedited(self):
         self.pins.write_text(json.dumps({"rytm-emu": {"repository": self.url, "commit": self.first, "updated": "x"}}))
         tools.sync("rytm-emu", self.url, self.first, self.base, False)
