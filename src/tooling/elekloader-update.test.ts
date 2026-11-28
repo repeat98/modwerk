@@ -36,23 +36,23 @@ describe('the elekloader update', () => {
   })
   it('lists what changed between two catalogs and what is left to do by hand', () => {
     const pin = (id: string, version: string, os = '1.53', device = 'digitakt-mk1') => ({ file: `${id}-${version}.elemod`, sha256: sha(text(id + version)), id, version, device, os })
-    const before = { revision: 'a', cores: [pin('core', '2.1')], mods: [pin('digislicer', '2.1'), pin('digisophie', '1.1.13')] }
-    const after = { revision: 'b', cores: [pin('core', '2.1')], mods: [pin('digislicer', '2.2'), pin('digifresh', '0.1', '1.43', 'digitone-mk1')] }
+    const before = { revision: 'a', cores: [pin('core', '2.1')], mods: [pin('digiperform', '2.1'), pin('digistring', '1.1.13')] }
+    const after = { revision: 'b', cores: [pin('core', '2.1')], mods: [pin('digiperform', '2.2'), pin('digifresh', '0.1', '1.43', 'digitone-mk1')] }
     const changes = catalogChanges(before, after)
     expect(changes.map(describeChange)).toEqual([
       'digifresh for digitone-mk1 OS 1.43: added 0.1 (digifresh-0.1.elemod)',
-      'digislicer for digitakt-mk1 OS 1.53: 2.1 (digislicer-2.1.elemod) -> 2.2 (digislicer-2.2.elemod)',
-      'digisophie for digitakt-mk1 OS 1.53: 1.1.13 (digisophie-1.1.13.elemod) removed',
+      'digiperform for digitakt-mk1 OS 1.53: 2.1 (digiperform-2.1.elemod) -> 2.2 (digiperform-2.2.elemod)',
+      'digistring for digitakt-mk1 OS 1.53: 1.1.13 (digistring-1.1.13.elemod) removed',
     ])
     // a second core for one OS is added beside the first, not in its place
     const twoCores = catalogChanges(before, { ...before, cores: [...before.cores, pin('core', '2.2')] })
     expect(twoCores.map(describeChange)).toEqual(['core for digitakt-mk1 OS 1.53: added 2.2 (core-2.2.elemod)'])
-    const manifest = { components: [{ id: 'digisophie', usedIn: ['vendor/elekloader/catalog/digisophie-1.1.12.elemod'] }, { id: 'digi-mods', usedIn: ['vendor/elekloader/catalog'] }] }
+    const manifest = { components: [{ id: 'digistring', usedIn: ['vendor/elekloader/catalog/digistring-1.1.12.elemod'] }, { id: 'digi-mods', usedIn: ['vendor/elekloader/catalog'] }] }
     expect(followUps(fileURLToPath(new URL('../..', import.meta.url)), changes, manifest)).toEqual([
-      'sdk/digitakt/modules/digislicer/modwerk.module.json: bring its version, releases and memory in line with the catalog, then run npm run modules:generate.',
-      'sdk/digitakt/modules/digisophie/modwerk.module.json: digisophie left the catalog for OS 1.53. Remove those releases, or the module, then run npm run modules:generate.',
+      'sdk/digitakt/modules/digiperform/modwerk.module.json: bring its version, releases and memory in line with the catalog, then run npm run modules:generate.',
+      'sdk/digitakt/modules/digistring/modwerk.module.json: digistring left the catalog for OS 1.53. Remove those releases, or the module, then run npm run modules:generate.',
       "digitone/digifresh is in the catalog but not in Modwerk's library: add sdk/digitone/modules/digifresh/ to offer it, or leave it out of the catalog (--library).",
-      'vendor/licenses/manifest.json: "digisophie" names vendor/elekloader/catalog/digisophie-1.1.12.elemod, which is gone.',
+      'vendor/licenses/manifest.json: "digistring" names vendor/elekloader/catalog/digistring-1.1.12.elemod, which is gone.',
     ])
   })
   it('cuts a full catalog to the library, with what its mods require (--library)', () => {
@@ -199,7 +199,7 @@ describe('elekloader update CLI', { timeout: 60_000 }, () => {
     try {
       const catalog = JSON.parse(readFileSync(join(root, 'vendor/elekloader/catalog/catalog.json'), 'utf8')) as { revision: string; mods: { id: string }[] }
       catalog.revision = 'b'.repeat(40)
-      catalog.mods = catalog.mods.filter(mod => mod.id !== 'digisophie')
+      catalog.mods = catalog.mods.filter(mod => mod.id !== 'digistring')
       const catalogPath = join(root, 'update.json')
       writeFileSync(catalogPath, JSON.stringify(catalog))
       const script = join(root, 'scripts', failure === 'notice generation' ? 'licenses.mjs' : 'elekloader-vendor.ts')

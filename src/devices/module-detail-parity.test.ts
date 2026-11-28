@@ -61,15 +61,15 @@ describe('module detail parity across machines', () => {
     }
   })
 
-  it('credits DigiSophie’s developer separately from its original algorithm author', () => {
-    const mod = DIGI_MODS.find(mod => mod.device === 'digitakt' && mod.id === 'digisophie')!
+  it('credits STRING’s developer separately from the author of the work it follows', () => {
+    const mod = DIGI_MODS.find(mod => mod.device === 'digitakt' && mod.id === 'digistring')!
     const html = render(digiPage(mod))
-    expect(html).toContain('by Sjoerd (Soejrd)')
-    expect(html).toContain('href="https://github.com/soejrd/digisophie"')
-    expect(html).toContain('Matt Estela (@mestela) — original Sophie for Schwung algorithm')
-    expect(html).toContain('For @soejrd')
-    expect(html).not.toContain('>by Matt Estela')
-    expect(html).not.toContain('For @mestela')
+    expect(html).toContain('by Alez22')
+    expect(html).toContain('href="https://github.com/Alez22/digistring"')
+    expect(html).toContain('soejrd — Sophie for Digitakt, whose RAM addresses and pitch lookup STRING follows.')
+    expect(html).toContain('For @Alez22')
+    expect(html).not.toContain('>by soejrd')
+    expect(html).not.toContain('For @soejrd')
   })
 
   it('keeps missing processor measurements distinct from zero load', () => {
@@ -130,7 +130,7 @@ describe('module detail parity across machines', () => {
 
   it('offers the report form on both Digi machines with public delivery, private configuration, and machine-specific fields', () => {
     for (const machine of ['digitakt', 'digitone'] as const) {
-      const mod = DIGI_MODS.find(mod => mod.device === machine && mod.id === 'digihealth')!
+      const mod = DIGI_MODS.find(mod => mod.device === machine && mod.id === { digitakt: 'digiperform', digitone: 'kitbank' }[machine])!
       const html = render(digiPage(mod), member)
       for (const name of ['title', 'model', 'flash', 'os', 'moduleVersion', 'steps', 'expected', 'actual']) {
         expect(html).toContain('name="' + name + '"')
