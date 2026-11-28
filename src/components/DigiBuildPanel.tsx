@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { DownloadedBuildOverview } from '../community/HardwareFeedbackCheckIn'
 import { builtModules } from '../community/build-follow-up'
@@ -8,7 +8,8 @@ import { trackFirmwareDownload } from '../community/usage'
 import { noteSupportInstall } from '../community/support-prompt'
 import { SupportLine } from './SupportDialog'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
-import { BUILDER_SOURCE, buildLogText, builtLock, planBuild } from '../engine/elekloader/machine-build'
+import { BUILDER_SOURCE, baseIdentity, buildLogText, builtLock, planBuild } from '../engine/elekloader/machine-build'
+import type { HostedBase } from '../../server/base-images'
 import { digiDownloadsOpen } from '../engine/elekloader/protocol'
 import { hasBetaUi } from '../community/beta-access'
 import { useCommunity } from '../community/context'
@@ -53,9 +54,30 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
   const downloadName = result ? 'Modwerk-' + device.id + '-' + result.files[0].name : ''
   const approvalKey = JSON.stringify([device.id,ready ? firmware.firmware?.sha256 : '',[...moduleIds].sort(),shown])
   const riskAccepted = accepted === approvalKey
+  // Modwerk's hosted base (docs/HOSTED_BASES.md) for a selection with no modules while no OS file is chosen.
+  const hostedIdentity = !ready && !moduleIds.length && downloadsEnabled ? baseIdentity(device.id, []) : undefined
+  const [hostedImages, setHostedImages] = useState<readonly HostedBase[]>([]), [hostedState, setHostedState] = useState<'idle' | 'loading' | 'saved' | string>('idle')
+  useEffect(() => {
+    if (!hostedIdentity) return
+    let live = true
+    void import('../config/hosted-bases').then(({ hostedBases }) => hostedBases().then(images => { if (live) setHostedImages(images) }))
+    return () => { live = false }
+  }, [hostedIdentity])
+  const hosted = hostedIdentity ? hostedImages.find(image => image.machine === device.id && image.identity === hostedIdentity && !image.step) : undefined
+  const offerHosted = !!hostedIdentity && !!hosted, knowsHostedRecovery = !!hosted && recoveryKnown === hosted.sha256
+  async function downloadHosted() {
+    if (!hosted) return
+    setHostedState('loading')
+    try {
+      const { downloadHostedBase } = await import('../config/hosted-bases')
+      const image = await downloadHostedBase(hosted, device.name + ' OS file')
+      save(image.buffer, hosted.file); setHostedState('saved'); noteSupportInstall()
+    } catch (error) { setHostedState(error instanceof Error ? error.message : 'The prebuilt base did not download.') }
+  }
   const versionError = /^[\x20-\x7e]*$/.test(shown) && shown.length === length ? '' : 'Use exactly ' + length + ' plain characters.'
   const busy = state.phase === 'loading' || state.phase === 'checking' || state.phase === 'building'
-  const message = !ready ? 'Add your original ' + device.name + ' OS file under Base firmware. Builds run in this browser; nothing is uploaded.'
+  const message = offerHosted ? 'No OS file needed for the base alone: download Modwerk’s prebuilt base. To build with modules, add your own ' + device.name + ' OS file under Base firmware.'
+    : !ready ? 'Add your original ' + device.name + ' OS file under Base firmware. Builds run in this browser; nothing is uploaded.'
     : missing.length ? missing.join(', ') + (missing.length === 1 ? ' is' : ' are') + ' not available for OS ' + release + '. Remove ' + (missing.length === 1 ? 'it' : 'them') + ' or use another OS file.'
     : state.phase === 'idle' ? 'Check this selection with the builder. The first check loads the build engine once.'
     : state.phase === 'loading' ? 'Loading the build engine…'
@@ -89,9 +111,13 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
         {(state.phase === 'ready' || state.phase === 'failed' || state.phase === 'built') && <label className="version-field build-version"><span>OS version shown on the unit</span>
           <input value={shown} maxLength={length} spellCheck={false} aria-invalid={!!versionError} aria-describedby="digi-version-help" onChange={event => setVersion(event.target.value)} />
           <small id="digi-version-help">{versionError || 'Shown instead of the stock version, so you can tell the builds apart.'}</small></label>}
+        {offerHosted && <RecoveryNotice machine={device.id} steps={device.firmware?.recovery} checked={knowsHostedRecovery} onChange={checked => setRecoveryKnown(checked ? hosted!.sha256 : '')}/>}
+        {offerHosted && !['idle', 'loading', 'saved'].includes(hostedState) && <p className="file-error" role="alert">{hostedState}</p>}
+        {offerHosted && hostedState === 'saved' && <p className="success-note" role="status">Download requested. Check your browser’s downloads folder, then install it with Elektron Transfer.</p>}
         {result && downloadsEnabled && <RecoveryNotice machine={device.id} steps={result.recovery || device.firmware?.recovery} checked={knowsRecovery} onChange={checked => setRecoveryKnown(checked ? result.sha256 : '')}/>}
       </div>
       <div className="build-actions">
+        {offerHosted && <button className="button button-primary" disabled={!riskAccepted || !knowsHostedRecovery || hostedState === 'loading'} onClick={() => void downloadHosted()}><Icon name="download" size={16}/>{hostedState === 'loading' ? 'Downloading…' : 'Download Modwerk base .syx'}</button>}
         {busy ? <button className="button button-quiet" onClick={cancel}>Cancel build</button> : result && downloadsEnabled ? <button className="button button-primary" disabled={!riskAccepted || !knowsRecovery} onClick={() => { save(result.files[0].data, downloadName); setDownloaded(key); if (state.phase === 'built') { noteSupportInstall(); const ids=state.moduleIds.map(id => device.id + '-' + id);trackFirmwareDownload(ids, device.id);if (device.id === 'digitakt' || device.id === 'digitone') followDownloads(ids, { machine: device.name, os: release ?? '', modules: builtModules(ids) }) } }}><Icon name="download" size={16}/>Download .syx</button> : null}
         {!busy && (state.phase === 'ready' || state.phase === 'failed' || state.phase === 'built'
           ? <button className={'button ' + (result ? 'button-quiet' : 'button-primary')} disabled={!!versionError || !riskAccepted} onClick={() => void build(shown)} aria-describedby="digi-build-status"><Icon name="sliders" size={16} />{result ? 'Build again' : 'Build firmware'}</button>

@@ -8,18 +8,19 @@ agreement privately; it is not recorded in the repository.
 
 | What | Where |
 | --- | --- |
-| Machines | Every Elektron machine with a Modwerk base (`sdk/machines/*/base-binding.json`). Live for the Octatrack; Digitakt II, Analog Rytm MKII and Model:Cycles follow once their build runs on Modwerk's own builder (`src/engine/elektron`), which the storage and route already serve |
+| Machines | Every Elektron machine with a Modwerk base (`sdk/machines/*/base-binding.json`). Octatrack, Digitakt II, Analog Rytm MKII (the plain variant, which a set without modules builds on) and Model:Cycles. On the last three the hosted image is the page's build with no modules, in its default display version |
 | Images | The base alone, one image per published base identity (the Octatrack's step bases included). No module sets |
 | Built | Only on the owner's computer, from the owner's own OS file, with the same builder the site uses: `npm run base:publish` |
 | Stored | The private R2 bucket `modwerk-base-images` (binding `BASES`), never in Git, GitHub Actions or the site's assets |
 | Served | `GET /api/bases` (the manifest: machine, identity, layout, SHA-256, size; public) and `GET /api/bases/<machine>/<identity>` (the image; verified members), `server/base-images.ts` |
 | Checked | The site (`src/config/hosted-bases.ts`) refuses an image whose identity is not the published one for its layout or whose bytes differ from the manifest; the Octatrack's IDENTIFY then confirms the identity on the unit |
-| Site | The Octatrack install guide offers the hosted base while no OS file is chosen, and keeps "Use my own OS 1.40C file" |
+| Site | The Octatrack install guide offers the hosted base while no OS file is chosen, and keeps "Use my own OS 1.40C file". The other machines' build panel (`DigiBuildPanel`) offers it for a selection with no modules while no OS file is chosen, where downloads are open for the machine; a selection with modules still builds from the musician's own file |
 
 ## Publish
 
 ```sh
 npm run base:publish -- --stock /path/to/OCTATRACK_OS1.40C.bin
+npm run base:publish -- --machine digitakt-ii --stock /path/to/Digitakt_II_OS1.17.syx   # also analog-rytm-mkii, model-cycles
 ```
 
 It builds every image the site asks for (the base and its step base, both with USB Audio off while USB Audio is a module) with the browser's own path

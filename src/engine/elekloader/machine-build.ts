@@ -63,12 +63,17 @@ export function rytmVariant(moduleIds: readonly string[], fxIds: readonly string
 export function baseVariant(machine: ElekloaderMachine, moduleIds: readonly string[]) {
   return MODWERK_BASES[machine]?.variant(moduleIds)
 }
+/** The identity of the Modwerk base variant a selection builds on (base-binding.json), or undefined for a machine
+ * without one. With no modules it is the base a hosted image holds (docs/HOSTED_BASES.md). */
+export function baseIdentity(machine: ElekloaderMachine, moduleIds: readonly string[]) {
+  const base = MODWERK_BASES[machine]
+  return base?.variants[base.variant(moduleIds)]
+}
 /** The catalogue with this machine's cores cut to the base variant the selection needs (by identity): none when the
  * catalogue does not serve it, so the build fails closed. Other machines' cores and every mod stay. */
 export function selectionCatalog(machine: ElekloaderMachine, moduleIds: readonly string[], catalog: Catalog = BUILDER_CATALOG): Catalog {
-  const base = MODWERK_BASES[machine]
-  if (!base) return catalog
-  const identity = base.variants[base.variant(moduleIds)]
+  const identity = baseIdentity(machine, moduleIds)
+  if (!identity) return catalog
   return { ...catalog, cores: catalog.cores.filter(core => core.device !== MACHINE_DEVICE[machine] || core.sha256 === identity) }
 }
 
