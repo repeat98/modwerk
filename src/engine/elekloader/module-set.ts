@@ -118,6 +118,7 @@ const HEADERS: Record<number, number> = { 6: 68, 7: 72, 8: 76, 9: 80, 10: 80 }
  * historical published bindings provide the key bus. Never expose a draft-only
  * service merely because it appears in the current source registry. */
 const KEY_BUS_FEATURE = dspSites.features.find(feature => feature.name === 'keybus')?.bit ?? 0
+const TRACK_PROCESSOR_FEATURE = dspSites.features.find(feature => feature.name === 'track-processor')?.bit ?? 0
 export const BASE_DSP_FEATURES: number = (baseBinding as { dspFeatures?: number }).dspFeatures ?? KEY_BUS_FEATURE
 const knownDspFeatures = dspSites.features.reduce((mask, feature) => mask | feature.bit, 0)
 if (!Number.isInteger(BASE_DSP_FEATURES) || BASE_DSP_FEATURES < 0 || BASE_DSP_FEATURES > 65535 || (BASE_DSP_FEATURES & ~knownDspFeatures))
@@ -140,6 +141,10 @@ const SITE_RECORD = 74, CLAIM_RECORD = 12, ENTRY_RECORD = 8
 function requirements(entry: RuntimePackage, group = false) {
   const abi = entry.abi ?? ('octabam' in entry && entry.octabam ? 7 : 6), sites = entry.sites ?? 0, copies = entry.copies ?? 0, fills = entry.fills ?? 0
   const requires = entry.requires ?? 0, claims = entry.claims ?? 0, entries = entry.entries ?? 0
+  // The returning contract is one ABI10 engine, not an ordinary key-bus reader.
+  // Reject an impossible descriptor before asking the unit to stage its bytes.
+  if ((requires & TRACK_PROCESSOR_FEATURE) && (requires !== TRACK_PROCESSOR_FEATURE || abi !== 10 || entries !== 1))
+    throw invalidPackage()
   // An engine (ABI 10 hook entries) runs only for a controller its base trusts, so only a base-bound package has one.
   if (![6, 7, 8, 9, 10].includes(abi) || !bounded(sites, 128) || !bounded(copies, 128) || !bounded(fills, 64) ||
       !bounded(entry.features ?? 0, 65535) || !bounded(entry.requiresCapabilities ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
