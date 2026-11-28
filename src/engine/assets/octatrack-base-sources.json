@@ -15,7 +15,7 @@
   "elekloader/gate.s": "d2981fef0b8132eabe21893e85fc62ef704b188378dc5b72e9caed88c29def50",
   "elekloader/mod.json": "d08358f2e39e02b1e8bfaf17db2b86d5ca97d15a4fd681ce44df25f5c3bea43c",
   "scripts/octatrack-module-page.mjs": "8faa5b3822f2de023a8cad593d863bea36ed9bbd4c6d3c48b77c02d5844b672c",
-  "sdk/firmware_codec/__init__.py": "0864c063d8c45793479098c425dbd4ec34b7d14acf781c1eaa8f65805e5016ca",
+  "sdk/firmware_codec/__init__.py": "13ee47247df188eb398d59f758c083bb1791ec3a2959e964395a8b760cc8a1db",
   "sdk/firmware_codec/aplib.py": "b1c6473b3bc81cfa4301f599693e7959c78fa0b033ba8c3d31f560fcc41e4d2a",
   "sdk/firmware_codec/coldfire.py": "c3b3736273ced01afd89cd75dd7ba78f6a3b0e0800971173bbc16e89bf1f56be",
   "sdk/firmware_codec/elz.py": "417eb28fbadcfdfb4f4efa56a7c88d7f4d248953f668fb308f56796acb37049f",
