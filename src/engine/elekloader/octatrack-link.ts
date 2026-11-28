@@ -4,13 +4,13 @@
 // undo it. The base itself undoes anything not kept when USB goes quiet or away,
 // so every failure here ends in "unplug to undo" at worst.
 import { runSelftest, waitUntilSaved } from './selftest.ts'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import { UploadDeviceError, UploadSession, UploadUnconfirmedError } from './upload-session.ts'
 import type { UploadResultName } from './upload-wire.ts'
 import { findVendorInterface, RuntimeFeature, UsbVendorTransport, VendorTransportError, type BaseSlots, type ControlDevice, type MissingModule, type OffModule, type RestoreReport, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
-import * as formats from '../../../vendor/elekloader/kit/src/formats.ts'
-import type { ElekFile } from '../../../vendor/elekloader/kit/src/elek.ts'
-import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
+import * as formats from '../elektron/firmware-formats.ts'
+import type { ElekFile } from '../elektron/octatrack-container.ts'
+import { OCTATRACK } from '../elektron/devices.ts'
 import type { OctatrackDiagnostic, DiagnosticReading, DiagnosticSyncStep } from '../../community/octatrack-diagnostics-contract'
 import { isStagingCommand } from '../../community/octatrack-diagnostics-contract'
 import type { Ep0Diagnostics } from './upload-usb.ts'
@@ -662,6 +662,8 @@ export class OctatrackLink {
   }
   /** The unit's own diagnostics log (diag.c); background diagnostics call this only after explicit consent. */
   deviceLog(signal?: AbortSignal, allowed: () => boolean = () => true) { return this.read('diagnostics log', transport => transport.deviceLog(signal), signal, allowed) }
+  /** The frame guard's renders dropped since the start and their tracks, in one transfer. */
+  sheds(signal?: AbortSignal, allowed: () => boolean = () => true) { return this.read('dropped sound count', transport => transport.sheds(signal), signal, allowed) }
   /** Private recovery export: holds one link lock for both fixed saved files, with no card writes. */
   savedBackup(signal?: AbortSignal) { return this.read('saved module files', transport => transport.savedBackup(signal), signal) }
   /** The modules the unit's project names that are not installed, while it is idle ([] from a base without MISSING);

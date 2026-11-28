@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
-import { loadAny } from '../../../vendor/elekloader/kit/src/patch.ts'
+import { sha } from '../elektron/bytes.ts'
+import { loadAny } from '../elektron/firmware-build.ts'
 import metadata from '../assets/stock-dsp-metadata.json' with { type: 'json' }
 import type { StockDspCore } from '../stock-dsp.ts'
 import { baseIdentity, buildBase, fillBase, type BaseFill } from './octatrack-base.ts'
