@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-layer",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-28",
+  "changes": [
+    "First release. FUNC + SMPL picks the sample's engine for each sound: SAMPLER (stock) or TRANSIENT, a punch or soft attack, a decay, a band and a shift for the sample alone, before its DAC."
+  ],
+  "runtimeSourceSha256": "cbcb7789c9d6ec548f100570fb39bec8aaeb55c79b48f96a1fbf70a4442c8947",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-layer/sample-layer-0.1.0-experimental-os1.74.elemod",
+      "sha256": "d6e2fb0a907b2aa8b0679e2ce1ad0428e501b0a12f1c391190a9daf08c774c96"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-layer/TESTING.md",
+  "requires": []
+}
