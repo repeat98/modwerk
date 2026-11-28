@@ -855,13 +855,13 @@
   },
   "cx-osc": {
    "sources": {
-    "sdk/octabam/modules/cx-osc/manifest.py": "71659ea5a5c7b051f93bf22edf33aeee843e6be6fc3c04fef68d4e434c598fb5",
-    "sdk/octabam/modules/cx-osc/standalone/machine.s": "9b15fdef4dc24041b55592d06c32dc32ff005b441348056c16021018c7091423",
-    "sdk/octabam/modules/cx-osc/standalone/poly.s": "8ef712b2cc3008b2a7002f83d675fc1979f8119b7d0d42e3d5d9054a0262c93e",
-    "sdk/octabam/modules/cx-osc/upstream/cxosc/page.s": "f84e1e141d1fe9155e1b270795462618ded88660feab2b0a0e52120ea8c11332",
-    "sdk/octabam/modules/cx-osc/cx_registration.s": "a59e2d0e534990d93f3e7cfcbcc0e9bfa8c76c42ceff0292b7d5eb9877f58f4b"
+    "sdk/drafts/cx-osc/manifest.py": "71659ea5a5c7b051f93bf22edf33aeee843e6be6fc3c04fef68d4e434c598fb5",
+    "sdk/drafts/cx-osc/standalone/machine.s": "9b15fdef4dc24041b55592d06c32dc32ff005b441348056c16021018c7091423",
+    "sdk/drafts/cx-osc/standalone/poly.s": "8ef712b2cc3008b2a7002f83d675fc1979f8119b7d0d42e3d5d9054a0262c93e",
+    "sdk/drafts/cx-osc/upstream/cxosc/page.s": "f84e1e141d1fe9155e1b270795462618ded88660feab2b0a0e52120ea8c11332",
+    "sdk/drafts/cx-osc/cx_registration.s": "a59e2d0e534990d93f3e7cfcbcc0e9bfa8c76c42ceff0292b7d5eb9877f58f4b"
    },
-   "why": "CX OSC registers cx_machine through runtime.json contribute; machine-list detours in standalone/machine.s drop at package build. Engine frame-builder hooks stay detoured until base take events exist; shared sites with FM Synth are group-owned in compatibility.json and the configurator refuses both."
+   "why": "Draft only: not catalog-listed until FM engine take hooks land and FM Synth and CX OSC subscribe. runtime.json contributes cx_machine; engine sites stay detoured in the draft until then."
   }
  }
 }

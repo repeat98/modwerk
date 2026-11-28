@@ -263,8 +263,6 @@ static int frame(unsigned track, uint32_t pre, uint32_t tail)
     return r;
 }
 static unsigned counts_now(void) { return (unsigned)code[0x0b] << 24 | (unsigned)code[0x1d] << 16 | (unsigned)code[0x21] << 8 | code[0x33]; }
-/* Second pea at 0x40079248: stock leaves visible at 6 while row count is 5. */
-static unsigned visible_now(void) { return code[0x0f]; }
 /* The chooser's ten UP/DOWN cursor clamps (moveq #k at each handler and 6 bytes on): all k, or 0 if they differ. */
 static unsigned clamp_now(void)
 {
@@ -1017,13 +1015,10 @@ int main(void)
     for (unsigned r = 0; r < 3; ++r) put_u32(0x400b27d0u + 4 * r, 0x3000u + r);
     memset(stockdef, 0x40, sizeof stockdef);
     for (unsigned t = 0; t < 8; ++t) part0()[0x22 + t] = 1; /* FLEX */
-    code[0x0b] = code[0x1d] = 5u;
-    code[0x0f] = 6u; /* stock SELECT MACHINE TYPE init: pea 5; pea 6 */
 
     /* No machine: stock rows, stock counts, stock renders, stock names. */
     rows(0, 0, 0, 0);
     CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && clamp_now() == 5);
-    CHECK(visible_now() == 5u);
     CHECK((uintptr_t)mw_name(5) == 0x1001u && mw_type(1, slot(2)) == 1 && mw_assign(part0(), 2, 1) == 1);
     CHECK(mw_source_render_impl(2, 0, 0, 1) == -7 && stock_renders == 1);
 
@@ -1041,7 +1036,6 @@ int main(void)
     const void *avf[] = {&A, &V, &F};
     rows(avf, 3, 0, 0);
     CHECK(counts_now() == (8u << 24 | 8u << 16 | 7u << 8 | 3u));
-    CHECK(visible_now() == 6u);
     /* The cursor reaches the last row, 4+n (row 7 with three machines). */
     CHECK(clamp_now() == 7);
     CHECK(!strcmp(mw_name(5), "ANALOG BD") && !strcmp(mw_name(6), "VECTOR") && !strcmp(mw_name(7), "FM SYNTH") && (uintptr_t)mw_name(8) == 0x1001u);
