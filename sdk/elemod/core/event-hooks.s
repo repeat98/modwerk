@@ -80,6 +80,7 @@ mw_hook_\event:
         render_hook render_out
 
         .ifdef MW_BASE
+        .ifndef MW_NO_RENDER_VOICES
         | ev_render_voices: as the render hooks, handlers get the base's track blocks.
         .globl mw_hook_render_voices
 mw_hook_render_voices:
@@ -91,6 +92,7 @@ mw_hook_render_voices:
         emac_restore
         event_restore
         jmp mw_resume_render_voices
+        .endif
         .else
 
         | CI emits zero placeholders. Only the local stock reader fills them.

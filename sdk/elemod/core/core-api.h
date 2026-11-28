@@ -16,6 +16,9 @@ typedef void (*mw_settings_handler)(void *menu);
 typedef void (*mw_render_handler)(void);
 typedef void (*mw_voice_handler)(int voice, int track, void *event);
 typedef int (*mw_hold_handler)(void *brain, void *event, int track);
+typedef int (*mw_cc_handler)(int track, int cc, int value, int flags);
+typedef void (*mw_queue_handler)(void *event, int time);
+typedef void (*mw_leds_handler)(void *mgr);
 
 struct mw_machine {
     mw_u32 id;
