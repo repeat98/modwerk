@@ -22,7 +22,7 @@ agreement privately; it is not recorded in the repository.
 npm run base:publish -- --stock /path/to/OCTATRACK_OS1.40C.bin
 ```
 
-It builds every image the site asks for (the base and the step base for each layout) with the browser's own path
+It builds every image the site asks for (the base and its step base, both with USB Audio off while USB Audio is a module) with the browser's own path
 (`published-base.ts`), checks each identity against the committed pins, and uploads image and manifest entry with the
 owner's `wrangler` login (`--dry-run` builds and checks without uploading). Create the bucket once with
 `npx wrangler r2 bucket create modwerk-base-images`. Run it after a base release is live, from a checkout of the deployed revision. An image

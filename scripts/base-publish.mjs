@@ -13,7 +13,6 @@ import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { buildPublishedBase } from '../src/engine/elekloader/published-base.ts'
 import { baseLayout, baseName, buildLayout } from '../src/engine/elekloader/base-variants.ts'
-import { STEP_IDENTITIES } from '../src/engine/elekloader/base-step.ts'
 import { USB_AUDIO_PACKAGED } from '../src/config/usb-audio.ts'
 
 const BUCKET = 'modwerk-base-images', MANIFEST = 'manifest.json'
@@ -27,10 +26,12 @@ const files = { false: { package: join(current, 'octatrack-base.elemod'), varian
 const load = async (name, step) => readFileSync(files[step][name], 'utf8')
 const wrangler = (...rest) => execFileSync('npx', ['wrangler', 'r2', 'object', ...rest, '--remote'], { cwd: root, stdio: ['ignore', 'pipe', 'inherit'] })
 
-/** Every image the site asks for: the base it builds, and the step base for each layout. */
+/** Every image the site asks for: the base it builds, and the step base for a unit too old to take it. */
 export async function publishedImages(stock) {
   const images = []
-  for (const [layout, step] of [[buildLayout(), false], ...Object.keys(STEP_IDENTITIES).map(layout => [layout, true])]) {
+  // The guide asks for exactly the layout buildLayout gives (USB Audio off while USB Audio is a module), step or not.
+  for (const step of [false, true]) {
+    const layout = buildLayout(undefined, step)
     const built = await buildPublishedBase(stock, load, layout, step)
     if (!step && baseLayout(built.base) !== built.layout) throw new Error('The base built as ' + built.base + ', which this checkout does not publish. Use a checkout of the deployed revision.')
     const name = (step ? 'modwerk-step-base-' : 'modwerk-base-') + baseName(built.base) + '-' + built.layout + '.bin'
