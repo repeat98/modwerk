@@ -1,177 +1,168 @@
-| SPDX-License-Identifier: GPL-2.0-or-later
-| core: the boot copier and the hook bus every other mod builds on.
-| ColdFire V4 (MCF5441x); assemble with -mcpu=54455. Shared by the device
-| cores that use this hook bus. The SETTINGS and render hooks are in settings.s and
-| render.s, for the devices that have those sites. The addresses below are
-| not here: each device's mod.json gives them as "defsym", so a missing one
-| fails the build instead of using another device's.
-|
-|   DRAWALL      ViewController::drawAll(ctrl, Bitmap&)
-|   KEYDISP      Brain::key(brain, KeyEvent*)
-|   ENCDISP      Brain::enc(brain, EncoderEvent*)
-|   DTMR0        DMA timer 0 mode;  PPMSR0: the peripheral clock set register
-|                (neither, with NO_DTIM0: the core leaves DTIM0 alone)
-|   VBR_FN       what the OS entry's call at 0x40000538 called
-|
-| .boot runs where the bootstrap unpacks it (appended to MAIN OS), once,
-| from the OS entry's call at 0x40000538: before the OS zeroes its .bss and
-| turns the caches on. It copies the DDR image the linker built to its run
-| address, zeroes .bss, starts DTIM0 if nothing has, and goes on to the
-| call it replaced. The linker defines the __run_*/__bss_* symbols.
-|
-| Each shared site calls the handlers mods subscribe to its event, from a
-| table the linker builds (docs/ADAPTING.md, "The hook bus"): a list of
-| pointers ending in 0. Handlers use the C convention. The sites are in
-| mod.json; the comments below give the Digitakt mk1's.
+| SPDX-License-Identifier: GPL-3.0-or-later
+| Modwerk hook bus: the boot copier and the UI events (ev_tick, ev_draw, ev_key, ev_enc).
+| One source for the Digitakt II, the Analog Rytm MKII and the Model:Cycles; each machine's
+| recipe mod.json chooses the addresses and switches with --defsym (see the machine's guide).
+| Tables are the linker's collections: 4-byte handler addresses, ended by a zero entry.
 
-| ============================ .boot =======================================
-        .section .boot, "ax"
-        .globl  boot
-boot:
-        lea     __run_load, %a0         | where the DDR image was unpacked
-        lea     __run_start, %a1        | where it runs
-        move.l  #__run_words, %d0
-1:      move.l  (%a0)+, (%a1)+
-        subq.l  #1, %d0
-        bne.s   1b
-        lea     __bss_start, %a1        | DDR holds noise at power-on
-        move.l  #__bss_words, %d0
-        beq.s   3f
-2:      clr.l   (%a1)+
-        subq.l  #1, %d0
-        bne.s   2b
-3:
+        .ifndef DRAWALL
+        .error "core.s: DRAWALL is not defined for this machine"
+        .endif
+        .ifndef KEYDISP
+        .error "core.s: KEYDISP is not defined for this machine"
+        .endif
+        .ifndef ENCDISP
+        .error "core.s: ENCDISP is not defined for this machine"
+        .endif
+        .ifndef VBR_FN
+        .error "core.s: VBR_FN is not defined for this machine"
+        .endif
         .ifndef NO_DTIM0
-        | DTIM0: the OS reads its counter as a 132 MHz time base and never
-        | starts it, so something before the OS does. Start it only if it is
-        | held in reset: rewriting DTMR0 while it runs would stop it. A core
-        | that defines NO_DTIM0 (the Digitakt II's) leaves it as stock does.
-        move.w  DTMR0, %d0
-        btst    #0, %d0
-        bne.s   4f
-        move.b  #0x1C, %d0
-        move.b  %d0, PPMSR0             | its clock on
-        clr.l   %d0
-        move.w  %d0, DTMR0
-        moveq   #3, %d0
-        move.w  %d0, DTMR0              | bus clock, free running
-4:
+        .ifndef DTMR0
+        .error "core.s: DTMR0 is not defined (or set NO_DTIM0)"
         .endif
-        .ifdef  BOOT_CACR
-        | The Model:Cycles' bootstrap leaves the instruction and branch caches
-        | on (CACR 0x0008c000), and they do not see the copy above: code it
-        | wrote may run from stale lines. Invalidate both before running any
-        | (core-mc: BOOT_CACR = 0x000cc100, the bootstrap's own value).
-        nop
-        move.l  #BOOT_CACR, %d0
-        movec   %d0, %cacr
-        nop
+        .ifndef PPMSR0
+        .error "core.s: PPMSR0 is not defined (or set NO_DTIM0)"
         .endif
-        .ifdef  BOOT_INIT
-        | A device's own boot work, before the OS reads its data (core-ar2:
-        | the machines mods add, machines.c; core-mc: ev_boot, boot.s). The
-        | DDR image is in place.
-        jsr     core_boot_init
-        .endif
-        .ifdef  VBR_FN2
-        | Model:Cycles and Model:Samples: the site is two calls, the SRAM
-        | copy (VBR_FN) and the .bss clear (VBR_FN2). The DDR image above
-        | lies in what the clear zeroes, so it is copied out first.
-        jsr     VBR_FN
-        jmp     VBR_FN2                 | its rts returns past the site
-        .else
-        jmp     VBR_FN                  | its rts returns to 0x4000053e
         .endif
 
-| ============================ .run ========================================
+| boot: reached by jsr from the boot site, once, before the OS clears its .bss.
+| Copies the DDR image, clears .bss, starts DTIM0, invalidates the caches, runs
+| core_boot_init, then hands over to the call(s) the site displaced.
+        .section .boot, "ax"
+        .globl boot
+boot:
+        lea -16(%sp), %sp
+        movem.l %d0-%d1/%a0-%a1, (%sp)
+        movea.l #__run_load, %a0
+        movea.l #__run_start, %a1
+        move.l #__run_words, %d0
+        beq.s .Lcopied
+.Lcopy:
+        move.l (%a0)+, (%a1)+
+        subq.l #1, %d0
+        bne.s .Lcopy
+.Lcopied:
+        movea.l #__bss_start, %a1
+        move.l #__bss_words, %d0
+        beq.s .Lcleared
+.Lclear:
+        clr.l (%a1)+
+        subq.l #1, %d0
+        bne.s .Lclear
+.Lcleared:
+        .ifndef NO_DTIM0
+        | A running timer keeps running: rewriting its mode would stop it.
+        move.w DTMR0, %d0
+        btst #0, %d0
+        bne.s .Ltimer
+        moveq #0x1c, %d0
+        move.b %d0, PPMSR0
+        moveq #0, %d0
+        move.w %d0, DTMR0
+        moveq #3, %d0
+        move.w %d0, DTMR0
+.Ltimer:
+        .endif
+        .ifdef BOOT_CACR
+        move.l #BOOT_CACR, %d0
+        nop
+        movec %d0, %cacr
+        nop
+        .endif
+        .ifdef BOOT_INIT
+        jsr core_boot_init
+        .endif
+        movem.l (%sp), %d0-%d1/%a0-%a1
+        lea 16(%sp), %sp
+        .ifdef VBR_FN2
+        | Two displaced calls: the first returns here, the second to the site's nop.
+        jsr VBR_FN
+        jmp VBR_FN2
+        .else
+        jmp VBR_FN
+        .endif
+
         .section .run, "ax"
 
-| ---- ev_tick: the 30 Hz compose check -------------------------------------
-| At 0x4000a770 (was: jsr 0x400ca34c, which returns ctrl->dirty, byte +0x20,
-| in d0). (sp) = return, 4(sp) = the view controller. UI task. Handlers:
-| f(ctrl); one that wants the frame recomposed sets ctrl+0x20.
-        .globl  core_tick
+| core_tick(ctrl): every ev_tick handler as f(ctrl), then the recompose flag at ctrl+0x20.
+        .globl core_tick
 core_tick:
-        move.l  %a2, -(%sp)
-        lea     ev_tick, %a2
-1:      move.l  (%a2)+, %d0
-        beq.s   2f
-        move.l  8(%sp), -(%sp)          | ctrl
+        lea -8(%sp), %sp
+        movem.l %a2-%a3, (%sp)
+        movea.l 12(%sp), %a3
+        lea ev_tick, %a2
+.Ltick:
+        move.l (%a2)+, %d0
+        beq.s .Lticked
         movea.l %d0, %a0
-        jsr     (%a0)
-        addq.l  #4, %sp
-        bra.s   1b
-2:      movea.l (%sp)+, %a2
-        movea.l 4(%sp), %a0             | what 0x400ca34c returns
-        move.b  0x20(%a0), %d0
+        move.l %a3, -(%sp)
+        jsr (%a0)
+        addq.l #4, %sp
+        bra.s .Ltick
+.Lticked:
+        moveq #0, %d0
+        move.b 0x20(%a3), %d0
+        movem.l (%sp), %a2-%a3
+        lea 8(%sp), %sp
         rts
 
-| ---- ev_draw: on top of every composed frame ------------------------------
-| At 0x4000a7d6 (was: jsr 0x400ca382, drawAll(ctrl, bmp)). (sp) = return,
-| 4(sp) = ctrl, 8(sp) = the frame's Bitmap. d2-d7/a2-a6 must survive.
-| Handlers: f(bmp, ctrl), in order, each over the last.
-        .globl  core_draw
+| core_draw(ctrl, bitmap): the stock composer, then every ev_draw handler as f(bitmap, ctrl).
+        .globl core_draw
 core_draw:
-        move.l  8(%sp), -(%sp)
-        move.l  8(%sp), -(%sp)
-        jsr     DRAWALL                 | every visible view, as before
-        addq.l  #8, %sp
-        move.l  %a2, -(%sp)
-        lea     ev_draw, %a2
-1:      move.l  (%a2)+, %d0
-        beq.s   2f
-        move.l  8(%sp), -(%sp)          | ctrl
-        move.l  16(%sp), -(%sp)         | bmp
+        lea -12(%sp), %sp
+        movem.l %a2-%a4, (%sp)
+        movea.l 16(%sp), %a3
+        movea.l 20(%sp), %a4
+        move.l %a4, -(%sp)
+        move.l %a3, -(%sp)
+        jsr DRAWALL
+        addq.l #8, %sp
+        lea ev_draw, %a2
+.Ldraw:
+        move.l (%a2)+, %d0
+        beq.s .Ldrawn
         movea.l %d0, %a0
-        jsr     (%a0)
-        addq.l  #8, %sp
-        bra.s   1b
-2:      movea.l (%sp)+, %a2
+        move.l %a3, -(%sp)
+        move.l %a4, -(%sp)
+        jsr (%a0)
+        addq.l #8, %sp
+        bra.s .Ldraw
+.Ldrawn:
+        movem.l (%sp), %a2-%a4
+        lea 12(%sp), %sp
         rts
 
-| ---- ev_key, ev_enc: the UI main loop's key and encoder dispatch -----------
-| At 0x4000b770 (was: jsr 0x400084fe) and 0x4000b7ba (was: jsr 0x40008550).
-| (sp) = return, 4 brain, 8 the event. Handlers: f(brain, event) -> d0
-| nonzero when they took it; then nothing after them sees it, stock
-| included.
-        .globl  core_key, core_enc
-core_key:
-        move.l  %a2, -(%sp)
-        lea     ev_key, %a2
-        bsr.s   dispatch
-        movea.l (%sp)+, %a2
-        tst.l   %d0
-        bne.s   1f
-        jmp     KEYDISP                 | the stock path, same stack
-1:      rts
-
-core_enc:
-        move.l  %a2, -(%sp)
-        lea     ev_enc, %a2
-        bsr.s   dispatch
-        movea.l (%sp)+, %a2
-        tst.l   %d0
-        bne.s   1f
-        jmp     ENCDISP
-1:      rts
-
-| dispatch: a2 = the table; 12(sp) brain, 16(sp) event (after its return
-| address and the caller's saved a2). -> d0 = the first nonzero result, or 0.
-dispatch:
-1:      move.l  (%a2)+, %d0
-        beq.s   2f
-        move.l  16(%sp), -(%sp)         | the event
-        move.l  16(%sp), -(%sp)         | brain
+| core_key(brain, event), core_enc(brain, event): handlers in order as f(brain, event);
+| the first nonzero d0 takes the input and is returned. Otherwise the stock dispatcher
+| runs on the caller's own stack, as if called directly. No static state: re-entrant.
+        .macro input name, table, stock
+        .globl \name
+\name:
+        move.l %a2, -(%sp)
+        lea \table, %a2
+.Lnext\@:
+        move.l (%a2)+, %d0
+        beq.s .Lstock\@
         movea.l %d0, %a0
-        jsr     (%a0)
-        addq.l  #8, %sp
-        tst.l   %d0
-        beq.s   1b
-2:      rts
+        move.l 12(%sp), -(%sp)
+        move.l 12(%sp), -(%sp)
+        jsr (%a0)
+        addq.l #8, %sp
+        tst.l %d0
+        beq.s .Lnext\@
+        movea.l (%sp)+, %a2
+        rts
+.Lstock\@:
+        movea.l (%sp)+, %a2
+        jmp \stock
+        .endm
 
-| ============================ .bss ========================================
-        .section .bss
+        input core_key, ev_key, KEYDISP
+        input core_enc, ev_enc, ENCDISP
+
+| Target of every weak import nothing defines: 16 bytes that always read as zero.
+        .section .bss, "aw", @nobits
         .balign 4
-| What a weak import resolves to when no mod provides it: reads as zero.
-        .globl  core_zero
-core_zero:  .skip 16
+        .globl core_zero
+core_zero:
+        .space 16

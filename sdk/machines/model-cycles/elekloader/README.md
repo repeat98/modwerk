@@ -1,8 +1,10 @@
 # Model:Cycles base source
 
 Modwerk's base for Model:Cycles OS 1.13 starts from core-mc 0.3 at `f20ffda`, the commit of
-[Elekloader v0.11.0](https://github.com/elekloader/elekloader/releases/tag/v0.11.0). The imported `core-mc/`, the
-shared `core/core.s` and `../include/model-cycles/` are byte-for-byte copies; the
+[Elekloader v0.11.0](https://github.com/elekloader/elekloader/releases/tag/v0.11.0). The imported `core-mc/` and
+`../include/model-cycles/` are byte-for-byte copies; `core/core.s` is Modwerk's own hook bus (GPL-3.0-or-later, 28 November
+2026), the Digitakt II's `core.s` byte for byte, with core-mc's `mod.json` choosing the boot's two displaced calls, the
+cache invalidation and `core_boot_init`; the
 [import record](../../../imports/core-mc-source-f20ffda.json) lists each file and its SHA-256. core-mc is drumkilla's,
 on irpina's hook bus. Its firmware locations (0.2), `ev_boot` and the boot cache invalidation (0.3) came in through
 Elekloader #192 to #194. The pinned kit's SDK has core-mc 0.1 and no Model:Cycles headers, so the headers come with the

@@ -35,23 +35,56 @@ def binding_of(machine, config):
     return json.loads(path.read_text())
 
 
+# Modwerk's own hook bus (28 November 2026) took the place of these imported files, at the same paths: the import
+# records stay as history, and the source tests below pin every other imported file.
+HOOK_BUS = {
+    "sdk/machines/digitakt-ii/elekloader/core/core.s",
+    "sdk/machines/digitakt-ii/elekloader/core/settings.s",
+    "sdk/machines/digitakt-ii/elekloader/core/fast.s",
+    "sdk/machines/analog-rytm-mkii/elekloader/core/core.s",
+    "sdk/machines/analog-rytm-mkii/elekloader/core/settings.s",
+    "sdk/machines/analog-rytm-mkii/elekloader/core/render.s",
+    "sdk/machines/model-cycles/elekloader/core/core.s",
+}
+
+
+def still_imported(record):
+    return [item for item in record["files"] if item["to"] not in HOOK_BUS]
+
+
+def release_sources(release, record):
+    """The release's build record without the hook bus files Modwerk replaced."""
+    replaced = {pathlib.Path(item["from"]).name for item in record["files"] if item["to"] in HOOK_BUS}
+    return {name: value for name, value in release["build"]["sources"].items() if name not in replaced}
+
+
 class MachineBases(unittest.TestCase):
+    def test_hook_bus_is_modwerk_s_one_source(self):
+        # One bus: the same core.s on every machine (switches come from each recipe's defsyms), one settings.s.
+        for name in ("core.s", "settings.s"):
+            copies = {sha(APP / path) for path in HOOK_BUS if path.endswith("/" + name)}
+            self.assertEqual(len(copies), 1, name)
+        for path in HOOK_BUS:
+            self.assertTrue((APP / path).read_text().startswith("| SPDX-License-Identifier: GPL-3.0-or-later\n"), path)
+
     def test_rytm_base_is_core_ar2_0_7_source_unchanged(self):
         record = json.loads((APP / "sdk/imports/core-ar2-source-fb58292.json").read_text())
-        for item in record["files"]:
+        for item in still_imported(record):
             self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
-        # The ten sources the release was built from, by its own build record.
+        # The sources the release was built from, by its own build record, but for the hook bus.
         release = json.loads((APP / "vendor/elekloader/catalog/core-ar2-0.7.elemod").read_text())
-        imported = {pathlib.Path(item["from"]).name: item["sha256"] for item in record["files"]}
-        self.assertEqual({name: imported[name] for name in release["build"]["sources"]}, release["build"]["sources"])
+        imported = {pathlib.Path(item["from"]).name: item["sha256"] for item in still_imported(record)}
+        sources = release_sources(release, record)
+        self.assertEqual(len(sources), 7)
+        self.assertEqual({name: imported[name] for name in sources}, sources)
 
     def test_digitakt_ii_base_source_is_core_dt2_1_1_unchanged(self):
         record = json.loads((APP / "sdk/imports/core-dt2-source-0df8409.json").read_text())
         self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
-        for item in record["files"]:
+        for item in still_imported(record):
             self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
-        # Every source mod.json builds, and its header, is in the record.
-        imported = {item["to"] for item in record["files"]}
+        # Every source mod.json builds, and its header, is in the record or is Modwerk's hook bus.
+        imported = {item["to"] for item in record["files"]} | HOOK_BUS
         folder = APP / "sdk/machines/digitakt-ii/elekloader/core-dt2"
         mod = json.loads((folder / "mod.json").read_text())
         for source in mod["sources"]:
@@ -61,18 +94,20 @@ class MachineBases(unittest.TestCase):
     def test_model_cycles_base_source_is_core_mc_0_3_unchanged(self):
         record = json.loads((APP / "sdk/imports/core-mc-source-f20ffda.json").read_text())
         self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
-        for item in record["files"]:
+        for item in still_imported(record):
             self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
-        imported = {item["to"] for item in record["files"]}
+        imported = {item["to"] for item in record["files"]} | HOOK_BUS
         folder = APP / "sdk/machines/model-cycles/elekloader/core-mc"
         mod = json.loads((folder / "mod.json").read_text())
         for source in mod["sources"]:
             self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
         self.assertIn("sdk/machines/model-cycles/include/model-cycles/core.h", imported)
-        # The three sources the release was built from, by its own build record.
+        # The sources the release was built from, by its own build record, but for the hook bus.
         release = json.loads((APP / "vendor/elekloader/catalog/core-mc-0.3.elemod").read_text())
-        hashes = {pathlib.Path(item["from"]).name: item["sha256"] for item in record["files"]}
-        self.assertEqual({name: hashes[name] for name in release["build"]["sources"]}, release["build"]["sources"])
+        hashes = {pathlib.Path(item["from"]).name: item["sha256"] for item in still_imported(record)}
+        sources = release_sources(release, record)
+        self.assertEqual(len(sources), 2)
+        self.assertEqual({name: hashes[name] for name in sources}, sources)
 
     def test_model_cycles_hooks_are_the_sites_the_base_builds(self):
         # events.json is the registry: hooks 0-4 are core-mc's own sites, unchanged, and every later one is a site

@@ -1,104 +1,95 @@
-| SPDX-License-Identifier: GPL-2.0-or-later
-| core: the SETTINGS menu's hook (ev_settings) and core_additem. Built with
-| core.s by the cores whose device has the site. Addresses come from each
-| target's mod.json; the site comments below give the Digitakt mk1's:
-|
-|   OP_NEW       operator new(size) -> d0
-|   ITEM_CTOR    MenuItem(this, label, select, draw, change, id, step)
-|   MENU_ADD     Menu::addItem(menu, item)
-|   FN_MGR       a std::function manager for a 4-byte function pointer
-|   SETTINGS_RET where the SETTINGS item builder goes on after its site
-|
-| With ROW_POOL set (core-dn1, from 4.1.1), core_additem takes the item's
-| storage from core_row_new and adds it with core_row_add (rows.s), which
-| keep the rows off the heap: see rows.s for why. The calls are as long as
-| the ones they replace, so every label here stays where it was.
+| SPDX-License-Identifier: GPL-3.0-or-later
+| Modwerk hook bus: the SETTINGS (Rytm: GLOBAL) menu event ev_settings and core_additem.
+| One source for the Digitakt II and the Analog Rytm MKII; addresses come from --defsym.
+
+        .ifndef SETTINGS_RET
+        .error "settings.s: SETTINGS_RET is not defined for this machine"
+        .endif
+        .ifndef OP_NEW
+        .error "settings.s: OP_NEW is not defined for this machine"
+        .endif
+        .ifndef ITEM_CTOR
+        .error "settings.s: ITEM_CTOR is not defined for this machine"
+        .endif
+        .ifndef MENU_ADD
+        .error "settings.s: MENU_ADD is not defined for this machine"
+        .endif
+        .ifndef FN_MGR
+        .error "settings.s: FN_MGR is not defined for this machine"
+        .endif
 
         .section .run, "ax"
 
-| ---- ev_settings: the SETTINGS menu's rows ---------------------------------
-| At 0x40058800 in the item builder 0x400583fc (was: movea.l (a2),a0 ;
-| pea 2.w), by jmp, after the last row and before the selection is
-| restored; a2 = the menu. Handlers: f(menu), which add rows with
-| core_additem(menu, row).
-        .globl  core_settings
+| core_settings: reached by jmp from the menu builder, after its last row, menu in a2.
+| Runs every ev_settings handler as f(menu), then the two displaced effects (a0 = the
+| menu's vtable, push 2) and continues the builder at SETTINGS_RET.
+        .globl core_settings
 core_settings:
-        move.l  %a3, -(%sp)
-        lea     ev_settings, %a3
-1:      move.l  (%a3)+, %d0
-        beq.s   2f
-        move.l  %a2, -(%sp)             | the menu
+        move.l %a3, -(%sp)
+        lea ev_settings, %a3
+.Lrow:
+        move.l (%a3)+, %d0
+        beq.s .Lrows
         movea.l %d0, %a0
-        jsr     (%a0)
-        addq.l  #4, %sp
-        bra.s   1b
-2:      movea.l (%sp)+, %a3
-        movea.l (%a2), %a0              | the instructions this replaced
-        pea     2.w
-        jmp     SETTINGS_RET
+        move.l %a2, -(%sp)
+        jsr (%a0)
+        addq.l #4, %sp
+        bra.s .Lrow
+.Lrows:
+        movea.l (%sp)+, %a3
+        movea.l (%a2), %a0
+        pea 2
+        jmp SETTINGS_RET
 
-| core_additem(Menu*, row*): a 0x54-byte MenuItem with four std::function
-| objects, the callbacks from row: label, select, draw, change.
-        .globl  core_additem
+| core_additem(menu, row): appends a stock MenuItem whose four callbacks are row's
+| {label, select, draw, change}. Select and change get the menu as their functor payload.
+| Frame: 4 x 16-byte std::function objects at 0..63, saved a2-a4 at 64, then the caller's.
+        .globl core_additem
 core_additem:
-        link    %a6, #-64
-        lea     -12(%sp), %sp
-        movem.l %d2/%a2-%a3, (%sp)
-        movea.l 8(%a6), %a2
-        movea.l 12(%a6), %a3
-        lea     -64(%a6), %a0           | label: no payload
-        clr.l   (%a0)
-        clr.l   4(%a0)
-        move.l  #FN_MGR, %d0
-        move.l  %d0, 8(%a0)
-        move.l  (%a3), %d0
-        move.l  %d0, 12(%a0)
-        lea     -48(%a6), %a0           | select: payload = the menu
-        move.l  %a2, (%a0)
-        clr.l   4(%a0)
-        move.l  #FN_MGR, %d0
-        move.l  %d0, 8(%a0)
-        move.l  4(%a3), %d0
-        move.l  %d0, 12(%a0)
-        lea     -32(%a6), %a0           | draw: no payload
-        clr.l   (%a0)
-        clr.l   4(%a0)
-        move.l  #FN_MGR, %d0
-        move.l  %d0, 8(%a0)
-        move.l  8(%a3), %d0
-        move.l  %d0, 12(%a0)
-        lea     -16(%a6), %a0           | change: payload = the menu
-        move.l  %a2, (%a0)
-        clr.l   4(%a0)
-        move.l  #FN_MGR, %d0
-        move.l  %d0, 8(%a0)
-        move.l  12(%a3), %d0
-        move.l  %d0, 12(%a0)
-        pea     0x54.w
-        .ifdef  ROW_POOL
-        jsr     core_row_new
-        .else
-        jsr     OP_NEW
-        .endif
-        addq.l  #4, %sp
-        move.l  %d0, %d2
-        pea     8.w
-        pea     -1.w
-        pea     -16(%a6)
-        pea     -32(%a6)
-        pea     -48(%a6)
-        pea     -64(%a6)
-        move.l  %d2, -(%sp)
-        jsr     ITEM_CTOR
-        lea     28(%sp), %sp
-        move.l  %d2, -(%sp)
-        move.l  %a2, -(%sp)
-        .ifdef  ROW_POOL
-        jsr     core_row_add
-        .else
-        jsr     MENU_ADD
-        .endif
-        addq.l  #8, %sp
-        movem.l -76(%a6), %d2/%a2-%a3
-        unlk    %a6
+        lea -76(%sp), %sp
+        movem.l %a2-%a4, 64(%sp)
+        movea.l 80(%sp), %a2
+        movea.l 84(%sp), %a3
+        moveq #0, %d0
+        move.l #FN_MGR, %d1
+        move.l %d0, 0(%sp)
+        move.l %d0, 4(%sp)
+        move.l %d1, 8(%sp)
+        move.l 0(%a3), 12(%sp)
+        move.l %a2, 16(%sp)
+        move.l %d0, 20(%sp)
+        move.l %d1, 24(%sp)
+        move.l 4(%a3), 28(%sp)
+        move.l %d0, 32(%sp)
+        move.l %d0, 36(%sp)
+        move.l %d1, 40(%sp)
+        move.l 8(%a3), 44(%sp)
+        move.l %a2, 48(%sp)
+        move.l %d0, 52(%sp)
+        move.l %d1, 56(%sp)
+        move.l 12(%a3), 60(%sp)
+        pea 0x54
+        jsr OP_NEW
+        addq.l #4, %sp
+        tst.l %d0
+        | No memory: skip the row rather than construct at address 0.
+        beq.s .Lnoitem
+        movea.l %d0, %a4
+        | ITEM_CTOR(item, &label, &select, &draw, &change, -1, 8), pushed last argument first.
+        pea 8
+        pea -1
+        pea 56(%sp)
+        pea 44(%sp)
+        pea 32(%sp)
+        pea 20(%sp)
+        move.l %a4, -(%sp)
+        jsr ITEM_CTOR
+        lea 28(%sp), %sp
+        move.l %a4, -(%sp)
+        move.l %a2, -(%sp)
+        jsr MENU_ADD
+        addq.l #8, %sp
+.Lnoitem:
+        movem.l 64(%sp), %a2-%a4
+        lea 76(%sp), %sp
         rts
