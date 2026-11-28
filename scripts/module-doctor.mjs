@@ -31,7 +31,6 @@ import { BASES, PACKAGES, formatRetestQueue, packageHistory, retestQueue } from 
 import { RELEASE_COST_FROM, atRestStatus, cpuPriceStatus, frameCostStatus, readCpuPricePending, releaseDate } from './module-cpu-price.mjs'
 import { moduleTestFiles, runModuleTests } from './module-tests.mjs'
 import { qualifyProblems } from './module-qualify.mjs'
-import { freeFx2Ids } from './module-list.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -283,7 +282,6 @@ function octatrack(id) {
   const clashes = compatProblems?.filter(problem => problem.modules.includes(id)) ?? []
   const compared = withId.length > 0 || (entry && !paused)
   if (!compatProblems) fail('cross-compatibility', 'the gate did not run: ' + ((compat.stderr || compat.error?.message || '').trim().split('\n').pop() || 'no output'), 'install Python 3.12+, then npm run modules:compat')
-  else if (clashes.length && clashes[0].text.includes('FX2 id') && !freeFx2Ids(root).length) fail('cross-compatibility', clashes[0].text + ', and no FX2 id is left: stock and the listed modules hold 0x04-0x1f, all the build takes', 'a new effect waits until the build takes ids past 0x1f (docs/OCTATRACK_MORE_EFFECT_IDS.md); ask the owner on Discord')
   else if (clashes.length) fail('cross-compatibility', clashes.length + ' clash(es), first: ' + clashes[0].text, clashes[0].fix + ' (' + clashes[0].guide + '); npm run modules:compat -- --with ' + id + ' lists every one')
   else if (!compared) info('cross-compatibility', 'compared with every other module once it is listed and not paused (npm run modules:compat)')
   else ok('cross-compatibility', 'installs beside every other active module and the base (npm run modules:compat' + (entry && !paused ? '' : ' -- --with ' + id) + ')')
