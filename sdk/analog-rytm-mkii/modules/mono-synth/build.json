@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/machine.c",
+    "src/ms_dsp.c",
+    "src/ms_gate.c",
+    "src/amp_follow.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_amp_record",
+      "fn": "ms_amp_follow",
+      "order": 80
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_machines",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:mono_synth_machine",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "mw_voices",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:mono_synth_voice",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "mw_machine_sections",
+      "order": 50,
+      "data": "280b0000",
+      "relocs": []
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "machine:40",
+    "ui:SYNTH page of the SY MONO machine"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}

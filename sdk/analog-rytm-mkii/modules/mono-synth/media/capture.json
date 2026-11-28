@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "mono-synth",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-27T18:40:00Z",
+  "imageSha256": "d8532a31ac6f69e417f27739ec74293495fcdc9554a8ac3de8d39644060c875f",
+  "build": "Modwerk's linker (scripts/link-image.mjs): the Modwerk development base's voices variant 879c6c23 + this folder's SY MONO 0.1.0-experimental, materialised against stock OS 1.74, --version SM04",
+  "unit": {
+    "model": "Analog Rytm MKII",
+    "boot": "RAM boot over the development link (rytm_link.py ramboot); the flash held the development base SC02",
+    "owner": "chevyone"
+  },
+  "conditions": "The author's unit, the project already open, track 1 (BD) set to SY MONO by MIDI CC 15 = 40, then the link's key steps below. Frames are the unit's own 128x64 screen read over the link (rytm_link.py screen) at 3x, unmodified.",
+  "captures": [
+    {
+      "path": "media/machine-list.png",
+      "frame": "machine-list.png",
+      "plan": "rytm_link.py ramboot mono-synth-SM04.syx --label SM04; MIDI CC 15 = 40 on channel 1 (track 1's machine: SY MONO); rytm_link.py steps \"TRK+BD w600 png:select.png FUNC+SRC w600 png:machine-list.png NO w600 png:synth-t16.png PUSH_A w600 png:synth-t8.png PUSH_A*3 w400 png:back.png\"",
+      "sha256": "eb330b005911196230e1b6d46525c1166c526ff501bc18ececfccd37507f8327"
+    },
+    {
+      "path": "media/synth-t16.png",
+      "frame": "synth-t16.png",
+      "plan": "(the same steps) after NO closes the list",
+      "sha256": "d841e3f0ffaaddbb2e508306f20b4ed831b99cbb0d53b2f56c31530565c4cd53"
+    },
+    {
+      "path": "media/synth-t8.png",
+      "frame": "synth-t8.png",
+      "plan": "(the same steps) after one PUSH_A: the range steps to 8'",
+      "sha256": "0d1db7e31768ffdd466cdcb63476ac5fcf51a0face0e8762076f484c9149f286"
+    }
+  ]
+}
