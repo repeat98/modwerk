@@ -180,7 +180,18 @@ FX_IDS = {1: 0x40052798, 2: 0x4005252a}  # lea operands naming FX1_IDS and FX2_I
 def fx_name(slot, fx): return mem(u32(u32(FX_IDS[slot]) + 4 * fx) + 9, 16).split(b'\0')[0].decode('latin1').upper().replace(' ', '_')
 def chooser_names(slot):  # every effect's name in a chooser table (128 ids at most; a 0 ends a shorter table)
     table = mem(u32(FX_IDS[slot]), 4 * 128)
-    return [fx_name(slot, fx) for fx in range(128) if int.from_bytes(table[4 * fx:4 * fx + 4], 'big')]
+    names = []
+    for fx in range(128):
+        if not int.from_bytes(table[4 * fx:4 * fx + 4], 'big'):
+            break
+        try:
+            names.append(fx_name(slot, fx))
+        except RuntimeError:
+            # Listed id points at a descriptor the development image cannot read (tail of the chooser
+            # on release dev twins). Skip that index so the walk can still name installed packages;
+            # chooser_name matches by string, not by index.
+            continue
+    return names
 def chooser_name(names, name):
     """The chooser's name for an installed package: its page may say more than the package (Spectrum79 for Spectrum),
     or the same words in another order (RINGMOD SC for SC Ringmod)."""
