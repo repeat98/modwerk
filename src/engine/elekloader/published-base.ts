@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The base the site publishes for a layout, built from an OS file: one path for the browser's worker (session.ts) and
 // the owner's hosted images (scripts/base-publish.mjs), so a hosted image is byte for byte what the browser builds.
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import { buildBase, type BaseFill } from './octatrack-base.ts'
 import { buildLayout, DEFAULT_LAYOUT, variantPackage, type BaseLayout, type BaseVariants } from './base-variants.ts'
 import { STEP_ASSETS, STEP_DEFAULT_LAYOUT, STEP_IDENTITIES } from './base-step.ts'

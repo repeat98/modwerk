@@ -4,7 +4,7 @@
 export type {
   Device as BuilderDevice, Stock as BuilderStock, Mod as BuilderMod, Added as BuilderAdded, Check as BuilderCheck,
   VersionField as BuilderVersion, Output as BuilderFile, Log as BuilderLog, BuildResult as BuilderResult,
-} from '../../../vendor/elekloader/kit/src/kit/protocol.ts'
+} from '../elektron/builder-protocol.ts'
 export type BuilderMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii' | 'model-cycles'
 
 // Digitakt/Digitone mk1 downloads retain their owner-approved parity gate; Analog Rytm MKII (OS 1.74) downloads are owner-approved too.
