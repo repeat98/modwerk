@@ -28,6 +28,20 @@ On the unit (26 November 2026, Analog Rytm MKII, OS 1.74, flashed over Transfer)
 | Beside other modules (LFO RND, Improved AMP, Improved SMPL) | not tested |
 | Audio load measured | not tested |
 
+## Build SL24 (0.1.0-experimental, commit 230c1b92f): the list on SMPL's ENGINE page
+
+The review on #2253 asked to leave FUNC + SMPL to stock. SL22 to SL24 move the list to a third SAMPLE page (ENGINE, through `core_view_pages`). SL24: Modwerk's plain development base (dev, `6844766f`) plus sample-layer, sha256 `99cf7c7fccdddeb64597dd7e71c3880f0d7c7c01448e86b8296af9243a27a756`, ramSpare 48,136 B. RAM-booted over the USB link on 28 November 2026 (Analog Rytm MKII, OS 1.74); the flash kept an earlier test build.
+
+Observed by the agent over the link (screen captures, SL22 to SL24):
+
+- On SAMPLER, SMPL steps through stock's knobs, stock's waveform, then ENGINE (SL22, SL24).
+- ENGINE shows the centred SAMPLE ENGINE window with the cursor on the track's engine; DOWN moves it to TRANSIENT (SL24).
+- YES on TRANSIENT returns to SMPL's first page, which is TRANSIENT's page with the BAS/WID band (SL24).
+- SMPL on TRANSIENT's page goes straight to ENGINE, over the waveform page (SL24).
+- UP and YES on ENGINE set SAMPLER again and return to stock's first page (SL24).
+
+Reported by @chevyone after playing SL23 and SL24: "Funciona bien" (the ENGINE page, YES returning to the engine's page, NO and FUNC + SMPL). This is the tester's single report.
+
 ## Build SL20 (0.1.0-experimental, commit 108b8e4a8)
 
 Modwerk's plain development base (dev, `6844766f`) plus sample-layer, sha256 `3aa46eb277a64ad0196576ad041a11b9e41b6598e14dd3d19bfb7c7e539dceb8`, ramSpare 48,360 B. RAM-booted over the USB link on 28 November 2026 (Analog Rytm MKII, OS 1.74); the flash kept an earlier test build.
@@ -85,9 +99,10 @@ Build: revision `55b327d1380d`, package `sample-layer-SL20.syx` SHA-256 `3aa46eb
 | Case | Why this change makes it a risk | How run | Result |
 |---|---|---|---|
 | SAMPLER plays bit for bit as stock | the voice mixer's call is patched for every voice | host test of the render on neutral settings; played on the unit | pass |
-| FUNC + SMPL, then NO, SMPL or another key | the list takes keys from stock's SMPL flow | on the unit, SL20 | pass (reported) |
+| SMPL through stock's pages to ENGINE and back | a page added to stock's SAMPLE view | on the unit, SL22 and SL24, captured | pass |
+| YES on ENGINE, then SMPL on TRANSIENT's page | the module moves the view's page | on the unit, SL24, captured | pass |
+| NO on ENGINE, and FUNC + SMPL | the list must leave stock's keys alone | on the unit, SL23 and SL24 | pass (reported) |
 | A stock window (µTIME, RETRIG) over TRANSIENT's page | the band is drawn over stock's page | on the unit, SL14 | pass (reported) |
-| The list open over TRANSIENT's page | the band and the panel overlap | captured on the unit, SC09 | pass |
 | Kit save and power cycle | the engine lives in mod storage | on the unit, SL20 | pass (reported) |
 | Audio load with TRANSIENT on many voices | per-voice DSP in the audio interrupt | SL21's readout | pass: 93 % with 7 voices, the UI slow there |
 | A sound saved with a prototype engine | GRANULAR and SLICER are hidden | reasoned: no released sound can hold one | not run: only the author's test kits hold one |

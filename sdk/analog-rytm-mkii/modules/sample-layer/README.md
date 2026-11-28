@@ -16,7 +16,7 @@ The engine and its settings are saved with the sound.
 | Control | Action |
 | --- | --- |
 | SMPL | Steps through the SAMPLE pages as stock does, then the ENGINE page: stock's knobs, stock's waveform, ENGINE. On TRANSIENT: TRANSIENT's page, then ENGINE. |
-| ENGINE page | The engine list, a panel like SRC's machine list, with the cursor on the sound's engine. UP/DOWN or any knob moves the cursor, YES picks it, NO puts the cursor back. SMPL goes on to the first page. FUNC + SMPL is stock's sample list, as always. |
+| ENGINE page | The engine list, a SAMPLE ENGINE window in the middle of the page, with the cursor on the sound's engine. UP/DOWN or any knob moves the cursor, YES picks it and goes back to SMPL's first page (the engine's own), NO puts the cursor back. SMPL goes on to the first page. FUNC + SMPL is stock's sample list, as always. |
 
 TRANSIENT's page:
 
@@ -36,7 +36,7 @@ Choose the engine per sound, then shape the sample on TRANSIENT's page while a p
 
 ### Quick tutorial
 
-1. Put a sample on a BD track with an analog machine. Press SMPL until the ENGINE page (the third), pick TRANSIENT and press YES.
+1. Put a sample on a BD track with an analog machine. Press SMPL until the ENGINE page (the third), pick TRANSIENT and press YES: TRANSIENT's page opens.
 2. Turn PCH to the right while a pattern plays: the sample gets a sharper click on top of the analog body. Turn it to the left: the sample swells in softly.
 3. Turn DEC down: the sample is only the attack of the hit while the analog part rings on.
 4. Raise BAS and lower WID: the sample thins to a narrow band. Turn SHF up: the sample lands a little after the analog hit.
@@ -71,7 +71,7 @@ Original work by @chevyone, with Claude Code: no code, samples or tables from an
 
 ## Screens and audio
 
-- [The engine list](media/engine-list.png): the ENGINE page, SAMPLER and TRANSIENT, the cursor's engine in the title bar.
+- [The engine list](media/engine-list.png): the ENGINE page's SAMPLE ENGINE window, SAMPLER and TRANSIENT.
 - [TRANSIENT's page](media/transient-page.png): PCH, DEC, BR, SMP above the BAS/WID band, SHF and LEV.
 
 No audio recordings yet.

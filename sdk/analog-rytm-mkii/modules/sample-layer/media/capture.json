@@ -4,27 +4,27 @@
   "moduleId": "sample-layer",
   "moduleVersion": "0.1.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-28T00:40:00Z",
-  "imageSha256": "3aa46eb277a64ad0196576ad041a11b9e41b6598e14dd3d19bfb7c7e539dceb8",
-  "build": "Modwerk's linker (scripts/link-image.mjs): the Modwerk plain development base 6844766f + this folder's Sample Layer 0.1.0-experimental at 108b8e4a8, materialised against stock OS 1.74, --version SL20",
+  "capturedAt": "2026-11-28T14:05:00Z",
+  "imageSha256": "99cf7c7fccdddeb64597dd7e71c3880f0d7c7c01448e86b8296af9243a27a756",
+  "build": "Modwerk's linker (scripts/link-image.mjs): the Modwerk plain development base 6844766f + this folder's Sample Layer 0.1.0-experimental at 230c1b92f, materialised against stock OS 1.74, --version SL24",
   "unit": {
     "model": "Analog Rytm MKII",
     "boot": "RAM boot over the development link (rytm_link.py ramboot); the flash held an earlier test build",
     "owner": "chevyone"
   },
-  "conditions": "The author's unit, the project already open, the SD track selected with TRANSIENT as its engine, then the link's key steps below. Frames are the unit's own 128x64 screen read over the link (rytm_link.py screen) at 3x, unmodified.",
+  "conditions": "The author's unit, the project already open, the SD track selected on SAMPLER on SMPL's first page, then the link's key steps below. Frames are the unit's own 128x64 screen read over the link (rytm_link.py screen) at 3x, unmodified.",
   "captures": [
     {
       "path": "media/engine-list.png",
       "frame": "engine-list.png",
-      "plan": "rytm_link.py ramboot sample-layer-SL20.syx --label SL20; the SD track already playing TRANSIENT; rytm_link.py steps \"w1500 SMPL w500 FUNC+SMPL w600 png:engine-list.png NO w300 png:transient-page.png\"",
-      "sha256": "9a13b906a051477ffcb4adb7771024d0207ac237d2f849cedd766b9a600ec69a"
+      "plan": "rytm_link.py ramboot sample-layer-SL24.syx --label SL24; rytm_link.py steps \"w500 SMPL w600 SMPL w800 DOWN w700 YES w900 png:transient-page.png SMPL w800 png:engine-list.png UP w500 YES\" (the ENGINE page reached from TRANSIENT's page, TRANSIENT under the cursor)",
+      "sha256": "e481721d65527553f104d4da6d597712b09499c69ef4f909bc6eb1628d88ea10"
     },
     {
       "path": "media/transient-page.png",
       "frame": "transient-page.png",
-      "plan": "(the same steps) after NO closes the list",
-      "sha256": "fae57f6beafcc2f0a0a49f382ca55f2a83d646aad9efedab0f6013eecd8fb4d3"
+      "plan": "(the same steps) after YES on TRANSIENT, which returns to SMPL's first page",
+      "sha256": "d13575fc32939e49f1b50f6e742cee451051032d9cc4fa477d56a9e63257f08d"
     }
   ]
 }

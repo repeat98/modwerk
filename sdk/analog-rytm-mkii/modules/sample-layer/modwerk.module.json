@@ -28,7 +28,7 @@
       "SHF: the sample lands up to 30 ms after the analog hit."
     ],
     "usage": [
-      "Put a sample on a BD track with an analog machine. Press SMPL until the ENGINE page (the third), pick TRANSIENT and press YES.",
+      "Put a sample on a BD track with an analog machine. Press SMPL until the ENGINE page (the third), pick TRANSIENT and press YES: TRANSIENT's page opens.",
       "Turn PCH to the right while a pattern plays: the sample gets a sharper click on top of the analog body. Turn it to the left: the sample swells in softly.",
       "Turn DEC down: the sample is only the attack of the hit while the analog part rings on.",
       "Raise BAS and lower WID: the sample thins to a narrow band. Turn SHF up: the sample lands a little after the analog hit.",
@@ -39,8 +39,8 @@
     "location": "SMPL's third page (ENGINE) on any sound track: the engine list. TRANSIENT's page on SMPL, then ENGINE.",
     "steps": [
       "Select a track with a sample and press SMPL until the ENGINE page.",
-      "Choose TRANSIENT and press YES.",
-      "Press SMPL for TRANSIENT's page."
+      "Choose TRANSIENT and press YES: TRANSIENT's page opens.",
+      "Press SMPL again for the ENGINE page to change it."
     ],
     "screenshots": [
       "media/engine-list.png",
@@ -133,7 +133,7 @@
       "testedOn": "2026-11-28",
       "tester": "chevyone",
       "durationMinutes": null,
-      "summary": "0.1.0-experimental on chevyone's Analog Rytm MKII, OS 1.74, RAM-booted over the development link (SL03 to SL20 on the plain development base 6844766f; SL20 is this source). The author played TRANSIENT by ear and reported every control working, kit save and power cycle included; the list and the page were captured over the link.",
+      "summary": "0.1.0-experimental on chevyone's Analog Rytm MKII, OS 1.74, RAM-booted over the development link (SL03 to SL24 on the plain development base 6844766f; SL24 is this source, with the list on SMPL's ENGINE page). The author played TRANSIENT by ear and reported every control working, kit save and power cycle included; the list and the page were captured over the link.",
       "limitations": [
         "Ran from RAM on a development base with a USB test link, not the published base.",
         "Not run: the audio load with TRANSIENT on every voice, beside other Rytm modules in one image, rytm-emu."
@@ -143,12 +143,12 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host: the render bit for bit as stock when neutral, SHF's delays, PUNCH's pitch on a 1 kHz tone. Unit (author's MKII, RAM boot, SL03 to SL20): the list, TRANSIENT's page and every control, reported working by the author; captures over the link. Load and other modules beside it not measured.",
+    "summary": "Host: the render bit for bit as stock when neutral, SHF's delays, PUNCH's pitch on a 1 kHz tone. Unit (author's MKII, RAM boot, SL03 to SL24): the list, TRANSIENT's page and every control, reported working by the author; captures over the link. Load and other modules beside it not measured.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
-          "Put a sample on a BD track with an analog machine. Press SMPL until the ENGINE page (the third), pick TRANSIENT and press YES.",
+          "Put a sample on a BD track with an analog machine. Press SMPL until the ENGINE page (the third), pick TRANSIENT and press YES: TRANSIENT's page opens.",
           "Turn PCH to the right while a pattern plays: the sample gets a sharper click on top of the analog body. Turn it to the left: the sample swells in softly.",
           "Turn DEC down: the sample is only the attack of the hit while the analog part rings on.",
           "Raise BAS and lower WID: the sample thins to a narrow band. Turn SHF up: the sample lands a little after the analog hit.",
@@ -180,8 +180,8 @@
     {
       "path": "media/engine-list.png",
       "kind": "screenshot",
-      "caption": "The engine list (SMPL's ENGINE page): SAMPLER and TRANSIENT, with TRANSIENT under the cursor and named in the title bar.",
-      "alt": "A panel on the right with a waveform icon beside SAMPLER and a decay icon beside TRANSIENT, highlighted; TRANSIENT's page shows on the left.",
+      "caption": "The engine list on SMPL's ENGINE page: a centred SAMPLE ENGINE window with SAMPLER and TRANSIENT, TRANSIENT under the cursor.",
+      "alt": "A window titled SAMPLE ENGINE in the middle of the screen, a waveform icon beside SAMPLER and a decay icon beside TRANSIENT, which is highlighted.",
       "credit": "chevyone documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
@@ -189,8 +189,8 @@
         "type": "hardware",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "3aa46eb277a64ad0196576ad041a11b9e41b6598e14dd3d19bfb7c7e539dceb8",
-        "setup": "The author's Analog Rytm MKII running SL20 from RAM: the Modwerk plain development base (6844766f) and this folder's Sample Layer 0.1.0-experimental, linked by Modwerk on stock OS 1.74. The unit's 128x64 screen read over the development link at 3x. UI documentation only."
+        "imageSha256": "99cf7c7fccdddeb64597dd7e71c3880f0d7c7c01448e86b8296af9243a27a756",
+        "setup": "The author's Analog Rytm MKII running SL24 from RAM: the Modwerk plain development base (6844766f) and this folder's Sample Layer 0.1.0-experimental, linked by Modwerk on stock OS 1.74. The unit's 128x64 screen read over the development link at 3x. UI documentation only."
       }
     },
     {
@@ -205,8 +205,8 @@
         "type": "hardware",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "3aa46eb277a64ad0196576ad041a11b9e41b6598e14dd3d19bfb7c7e539dceb8",
-        "setup": "The author's Analog Rytm MKII running SL20 from RAM: the Modwerk plain development base (6844766f) and this folder's Sample Layer 0.1.0-experimental, linked by Modwerk on stock OS 1.74. The unit's 128x64 screen read over the development link at 3x. UI documentation only."
+        "imageSha256": "99cf7c7fccdddeb64597dd7e71c3880f0d7c7c01448e86b8296af9243a27a756",
+        "setup": "The author's Analog Rytm MKII running SL24 from RAM: the Modwerk plain development base (6844766f) and this folder's Sample Layer 0.1.0-experimental, linked by Modwerk on stock OS 1.74. The unit's 128x64 screen read over the development link at 3x. UI documentation only."
       }
     }
   ]
