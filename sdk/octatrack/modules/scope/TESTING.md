@@ -41,8 +41,7 @@ panel.
 ### 0.8.1 release base: open SCOPE while audio plays
 
 **Musician setup:** Modwerk **0.8.1** on the author's MKII (base id
-`eb6679620d0c9ed7…`, Elektron OS **1.40C**). Use the public beta base that
-ships **USB Audio** in the module set. Install catalog package
+`eb6679620d0c9ed7…`, Elektron OS **1.40C**). Install catalog package
 `f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273` with a
 **Keep** on the card (or accept Keep at the end of a RAM trial). Load a pattern
 that plays on at least one audio track (author uses bank B, pattern **B02**).
@@ -58,6 +57,35 @@ open the stock tempo window. Close with **[TEMPO]**, **[YES]**, or **[NO]**.
 | 26 Nov 2026 | `48522941…` (0.1.0, three stock sites) | By hand during a RAM trial on the same release base | **Pass (reported):** DOWN+TEMPO opens SCOPE; OSC, XY and ALL draw live audio; closes cleanly. See table below. |
 
 Release-base window proof for **0.2.0** is the 28 November row above.
+
+### CPU price with pattern playing and SCOPE open
+
+Catalog `resources.cpuPrice` comes from `npm run device:price -- scope
+--write`. For SCOPE, take the reading while the pattern plays and the SCOPE
+window stays open (`ev_usb_frame` runs every block in that state). The tool
+labels it "at rest" (no effect slot), but you open the window by hand.
+
+```sh
+# Development twin or release base; USB connected; pattern B02 (or your medium pattern) selected and playing.
+npm run device -- serve --share /tmp/modwerk-share.sock
+# Unset a stale MODWERK_DEV_SOCKET if an old procedure left one in the shell.
+env -u MODWERK_DEV_SOCKET MODWERK_SHARE_SOCKET=/tmp/modwerk-share.sock \
+  npm run device:price -- scope --write \
+  --base eb6679620d0c9ed7 \
+  --scene 'MKII, release base eb667962, bank B B02 playing, SCOPE window open (DOWN+TEMPO)' \
+  --share /tmp/modwerk-share.sock \
+  public/octatrack-modules/scope/0.2.0-experimental.mwrm
+```
+
+When the trial starts and the tool waits for readings, hold **DOWN** and press
+**TEMPO** so OSC shows a live trace. Keep the window open through each 8 s
+PLAY window (three readings by default). Close SCOPE only after the trial rolls
+back.
+
+The earlier `evidence/cpu-price.json` from test-procedure step 9 on base
+`311bb670` used the same transport-playing path with the window **closed**;
+its `scene` wrongly said transport stopped. Do not cite that row for the
+open-window catalog price.
 
 The procedure in `/private/tmp/scope-procedure-scope-020-20261127-2` tested
 SCOPE 0.2.0-experimental package SHA-256

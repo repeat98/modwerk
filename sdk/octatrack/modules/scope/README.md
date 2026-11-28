@@ -36,11 +36,10 @@ returns. Clip `!` appears only when the recent peak reaches 0 dBFS.
 
 ## Compatibility and limitations
 
-- **0.2.0** uses the Modwerk **0.8.1** beta base (Elektron OS **1.40C**). That
-  base can load **USB Audio** from the module set. SCOPE does not use an effect
-  slot and **works beside Tuner** in the same set.
-- **0.1.0** patched three stock sites and listed Tuner as a conflict; see PR
-  #2182.
+- **0.2.0** needs the public Modwerk **0.8.1** beta base (Elektron OS **1.40C**).
+  Install SCOPE from the catalog USB package. **No USB Audio module is
+  required.** SCOPE does not use an effect slot and **works beside Tuner** in
+  the same set.
 - Hold **[DOWN]** before **[TEMPO]**. TEMPO alone stays stock.
 - Standalone: Tuner is not required.
 - Shipped USB package `f8a1ffeb`. See [TESTING.md](TESTING.md) for which bases
@@ -53,9 +52,7 @@ See [TESTING.md](TESTING.md).
 ## Authorship and licences
 
 ilia-murzinov, MIT. See [LICENSE](LICENSE). The octabam copy under
-`upstream/modules/scope/` also carries edits by octabam's maintainers (its
-manifest's evidence records and README), under octabam's MIT licence (Sam
-Banks), kept as [upstream/LICENSE](upstream/LICENSE).
+`upstream/modules/scope/` is Sam Banks's MIT work; see [upstream/LICENSE](upstream/LICENSE).
 
 ## Screens and audio
 

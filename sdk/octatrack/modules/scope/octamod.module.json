@@ -8,7 +8,8 @@
   "author": {
     "github": "ilia-murzinov",
     "credits": [
-      "ilia-murzinov: SCOPE ColdFire unit, panel, documentation."
+      "ilia-murzinov: SCOPE ColdFire unit, panel and behaviour in octabam (upstream/modules/scope/); Modwerk hooks port and catalog documentation.",
+      "Sam Banks: octabam upstream tree and MIT licence (upstream/LICENSE)."
     ]
   },
   "nativeManifest": "manifest.py",
@@ -77,12 +78,11 @@
       "key:DOWN+TEMPO"
     ],
     "limitations": [
-      "0.2.0 targets the Modwerk 0.8.1 beta base (OS 1.40C). Install SCOPE from the catalog USB package on a base that includes USB Audio in the module set. Tuner can stay installed in the same set. Hold DOWN before TEMPO.",
-      "0.1.0-experimental patched three stock sites and listed Tuner as a conflict; see git history and PR #2182.",
+      "0.2.0 targets the public Modwerk 0.8.1 beta base (Elektron OS 1.40C). Install SCOPE from the catalog USB package. No separate USB Audio module is required. Tuner can stay installed in the same set. Hold DOWN before TEMPO.",
       "Hold DOWN before TEMPO. Pressing TEMPO alone opens the stock tempo window.",
       "XY uses a hotter vertical scale than OSC. Clip ! appears only when the recent peak reaches 0 dBFS.",
       "DRAM unit: on a card build without another DRAM module, choosing SCOPE creates the platform DRAM reserve from Flex sample RAM (same class of cost as Tuner).",
-      "No device:qualify run or monochrome UI captures yet. At-rest CPU price was measured on an MKII; the transport state during the B02 measurement is unresolved."
+      "Catalog CPU price is the frame-interrupt share with the pattern playing and SCOPE's window open (see evidence/cpu-price.json and TESTING.md)."
     ]
   },
   "resources": {
@@ -132,7 +132,7 @@
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
       "date": "2026-11-27",
-      "conditions": "the bank, pattern and Part the unit was on, transport stopped (test:procedure); base Octatrack base 311bb670, MKII, OS 1.40C; 3 readings of 8 s a state. Frame interrupt 32.9 % before, 33 % installed and used nowhere; CPU meter 45.1 % before, 45 % at rest.",
+      "conditions": "311bb670 test:procedure, pattern playing, window closed during readings (+0.1 % frame). Maintainer requested open-window rerun on eb667962; see TESTING.md before merge.",
       "source": "evidence/cpu-price.json"
     }
   },
@@ -222,7 +222,6 @@
         "limitations": [
           "Emulator cycles and load rows are not hardware timing.",
           "MAIN/CUE USB capture for dropouts was not run in the procedure.",
-          "Transport state during the at-rest CPU price on base 311bb670 is unresolved in the log.",
           "DRAM platform reserve when SCOPE is the only ColdFire unit is described in the README; not re-measured on every base."
         ],
         "report": "TESTING.md"
@@ -248,7 +247,7 @@
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
-    "declaration": "Original SCOPE ColdFire source and documentation by ilia-murzinov under MIT. No Elektron firmware, extracted routines or tables."
+    "declaration": "SCOPE unit and panel by ilia-murzinov under MIT; the octabam upstream tree under upstream/ is Sam Banks's MIT work (upstream/LICENSE). No Elektron firmware, extracted routines or tables."
   },
   "media": [
     {

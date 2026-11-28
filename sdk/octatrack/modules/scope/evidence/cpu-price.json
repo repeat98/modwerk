@@ -2,7 +2,7 @@
   "module": "scope",
   "version": "0.2.0-experimental",
   "base": "Octatrack base 311bb670, MKII, OS 1.40C",
-  "scene": "the bank, pattern and Part the unit was on, transport stopped (test:procedure)",
+  "scene": "test:procedure step 9, base 311bb670; pattern playing; SCOPE installed, window closed during automated readings (superseded for catalog price; see TESTING.md open-window run)",
   "inputs": {
     "transport": "playing"
   },

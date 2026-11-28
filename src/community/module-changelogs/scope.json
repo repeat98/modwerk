@@ -4,8 +4,7 @@
     "date": "2026-11-27",
     "changes": [
       "First library release: full-panel SCOPE on DOWN + TEMPO (OSC, XY, ALL) on the selected audio track, ported from octabam.",
-      "Works beside Tuner in the same set on the Modwerk 0.8.1 beta base (OS 1.40C), with USB Audio available in the module set.",
-      "Replaces the 0.1.0 draft approach that patched stock TEMPO, frame and UI sites and conflicted with Tuner."
+      "Works beside Tuner in the same set on the Modwerk 0.8.1 beta base (Elektron OS 1.40C). No USB Audio module required."
     ]
   }
 ]
