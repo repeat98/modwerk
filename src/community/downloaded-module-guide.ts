@@ -50,12 +50,6 @@ const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
     { title: 'Hear a variation.', text: 'Press PLAY. Press YES on the generator for a new seed; STOP/PLAY keeps the populated phrase.' },
     { title: 'Return to sample playback.', text: 'Stop playback and select normal FLEX or STATIC. The generated pattern stays in place. Expand the full instructions below for sample editing and the second SRC page.' },
   ] },
-  'digitakt-digisophie': { version: '1.2.0-experimental', steps: [
-    { title: 'Choose FUSE.', text: 'Select SOPHIE in FUNC + SRC and choose FUSE with MODEL. No sample is needed.' },
-    { title: 'Give notes an end.', text: 'Set SWEEP and FOLD to 0. On AMP, set HOLD to NOTE and choose a finite DEC; avoid INF. TRIG LEN sets when release begins.' },
-    { title: 'Shape the clang.', text: 'Add trigs and press PLAY. Adjust TUNE, then raise METAL and turn COLOR. Add FBK gradually.' },
-    { title: 'Finish the test.', text: 'Press STOP and let the AMP release finish. Remove example locks and return SWEEP and FOLD to 0.' },
-  ] },
   synth: { version: '0.1.5-experimental', steps: [
     { title: 'Choose FM SYNTH.', text: 'In a fresh project, select an audio track. Hold FUNC + SRC, choose FM SYNTH with UP/DOWN and press YES. No sample is needed.' },
     { title: 'Add harmonics.', text: 'Press SRC, set RATO to 1 and raise INDX from 0. The sine tone gains FM harmonics; PTCH changes pitch.' },

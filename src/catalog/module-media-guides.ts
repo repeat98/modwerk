@@ -564,32 +564,6 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
       }
     ]
   },
-  "digitakt-digisophie": {
-    "version": "1.1.13-experimental.2",
-    "screenshots": [
-      {
-        "path": "media/chooser.png",
-        "caption": "Press FUNC + SRC on an audio track, choose SOPHIE and press YES. It synthesizes its own sound; no sample is needed. Place trigs or use the keyboard to play it.",
-        "alt": "Digitakt machine chooser with SOPHIE selected."
-      },
-      {
-        "path": "media/fuse.png",
-        "caption": "Use knob B to choose the model, shown here as FUSE, for a bright metallic tone. Start with SWEEP and FOLD at 0; TUNE sets pitch, METAL and COLOR shape the harmonics, and FBK adds oscillator feedback. Raise feedback gradually.",
-        "alt": "SOPHIE SRC page with FUSE selected and TUNE, FOLD, SWEEP, METAL, FBK and COLOR."
-      },
-      {
-        "path": "media/amp.png",
-        "caption": "Press AMP, set HOLD to NOTE and choose a finite DEC so trig LEN determines when release begins. Play the pattern and shape its envelope here. Press STOP and let the release finish; DEC INF keeps notes from finishing normally.",
-        "alt": "Digitakt AMP page with ATK, HOLD, DEC, OVER, DEL, REV, PAN and VOL."
-      },
-      {
-        "path": "media/boom.png",
-        "caption": "Turn the model selector to BOOM for a rounded sine body with an FM attack. Compare it with FUSE at the same pitch, then try PIPE or SHARD, or lock MODEL on individual trigs.",
-        "alt": "SOPHIE SRC page with BOOM selected.",
-        "additional": true
-      }
-    ]
-  },
   "digitakt-digiutils": {
     "version": "1.9.1-experimental",
     "screenshots": [

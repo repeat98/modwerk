@@ -7,6 +7,5 @@ Each mod is a folder here: `modwerk.module.json`, README, TESTING, licence, `src
 | Module | Guide |
 | --- | --- |
 | [kitbank](kitbank/README.md) | One kit per bank, with per-pattern locks. |
-| [MUTINY](mutiny/README.md) | Euclidean, Turing Machine and acid generators on the synth tracks. |
 
 The guides cover controls, access steps, a practical tutorial and the existing evidence limits. The frontend reads the same descriptions from each module's manifest.

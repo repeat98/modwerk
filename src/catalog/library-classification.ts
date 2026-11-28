@@ -91,7 +91,6 @@ const modules: Readonly<Partial<Record<string, Classification>>> = {
   'digitakt/digimatrix': ['modulation', 'Modulation routing'],
   'digitakt/digieq': ['effects', 'Equalizer'],
   'digitakt/digiutils': ['system', 'Meter'],
-  'digitakt/digisophie': ['machines', 'Drum synthesis'],
   'digitakt/live-looper': ['machines', 'Looper'],
   'digitakt/sample-tools': ['playback', 'Sample editing'],
   'digitakt/euclidean': ['sequencing', 'Rhythm generation'],
