@@ -3,8 +3,8 @@ import assert from 'node:assert/strict'
 import { exportText, packageRecipe, reproducesExport } from './package-elemod-recipe.mjs'
 import { readFile } from 'node:fs/promises'
 
-const original = JSON.parse(await readFile(new URL('../sdk/imports/packages/digimono/digimono-0.13.2-experimental-os1.53.elemod', import.meta.url), 'utf8'))
-const plan = { schemaVersion: 1, machine: 'digitakt', id: original.id, version: original.version, release: original.target.os, module: { ...original, sites: [] }, sites: [], derive: null }
+const original = JSON.parse(await readFile(new URL('../sdk/imports/packages/euclidean/euclidean-1.1.6-os1.53.elemod', import.meta.url), 'utf8'))
+const plan = { schemaVersion: 1, machine: 'digitakt', id: original.id, version: original.version, release: original.target.os, module: { ...original, sites: [], resources: { ...original.resources, core: undefined } }, sites: [], derive: null }
 
 test('refuses recipes that depend on local stock data', () => {
   for (const extra of [{ derive: {} }, { stockResumes: [{}] }, { stockRoutineBindings: {} }]) assert.throws(() => packageRecipe({ ...plan, ...extra }), /source-only/)
@@ -13,14 +13,14 @@ test('refuses recipes that depend on local stock data', () => {
 
 test('explicit calls and pointer replacements retain hash guards and relocation offsets', () => {
   const sites = [
-    { addr: '0x40030daa', len: 6, stockSha256: original.sites[1].stock_sha256, op: 'jsr', target: 'digimono_sname' },
-    { addr: '0x401848dc', len: 4, stockSha256: '0'.repeat(64), op: 'ptr', target: 'digimono_sname' },
+    { addr: '0x40030daa', len: 6, stockSha256: original.sites[1].stock_sha256, op: 'jsr', target: 'euc_cleanup' },
+    { addr: '0x401848dc', len: 4, stockSha256: '0'.repeat(64), op: 'ptr', target: 'euc_cleanup' },
   ]
   const module = packageRecipe({ ...plan, sites })
   assert.equal(module.sites[0].new, '4eb900000000')
-  assert.deepEqual(module.sites[0].relocs, [[2, 'abs32', 'sym:digimono_sname', 0]])
+  assert.deepEqual(module.sites[0].relocs, [[2, 'abs32', 'sym:euc_cleanup', 0]])
   assert.equal(module.sites[0].stock_sha256, sites[0].stockSha256)
-  assert.deepEqual(module.sites[1].relocs, [[0, 'abs32', 'sym:digimono_sname', 0]])
+  assert.deepEqual(module.sites[1].relocs, [[0, 'abs32', 'sym:euc_cleanup', 0]])
   assert.throws(() => packageRecipe({ ...plan, sites: [{ ...sites[0], len: 4 }] }), /length/)
   assert.throws(() => packageRecipe({ ...plan, sites: [{ ...sites[0], stockSha256: 'bad' }] }))
 })
@@ -32,14 +32,14 @@ test('refuses a module from another version or OS', () => {
 
 test('exports explicit authored bytes and LEA with guards, and refuses partial instructions', () => {
   const guard = { addr: '0x40030daa', len: 6, stockSha256: 'a'.repeat(64) }
-  const lea = { ...guard, op: 'lea', register: 5, target: 'digimono_sname' }
+  const lea = { ...guard, op: 'lea', register: 5, target: 'euc_cleanup' }
   const bytes = { ...guard, op: 'bytes', new: '72084e714e71', kind: 'code' }
   assert.equal(packageRecipe({ ...plan, sites: [lea] }).sites[0].new, '4bf900000000')
   assert.equal(packageRecipe({ ...plan, sites: [bytes] }).sites[0].new, bytes.new)
   for (const site of [{ ...bytes, target: 'bad' }, { ...bytes, new: '4e714e714ef9' }, { ...lea, register: 8 }]) assert.throws(() => packageRecipe({ ...plan, sites: [site] }))
-  const pea = { ...guard, op: 'bytes', new: '487900000000', kind: 'code', relocs: [{ at: 2, target: 'digimono_sname' }] }
-  assert.deepEqual(packageRecipe({ ...plan, sites: [pea] }).sites[0].relocs, [[2, 'abs32', 'sym:digimono_sname', 0]])
-  for (const relocs of [[{ at: 0, target: 'digimono_sname' }], [{ at: 2, target: 'digimono_sname', addend: 1 }]]) assert.throws(() => packageRecipe({ ...plan, sites: [{ ...pea, relocs }] }))
+  const pea = { ...guard, op: 'bytes', new: '487900000000', kind: 'code', relocs: [{ at: 2, target: 'euc_cleanup' }] }
+  assert.deepEqual(packageRecipe({ ...plan, sites: [pea] }).sites[0].relocs, [[2, 'abs32', 'sym:euc_cleanup', 0]])
+  for (const relocs of [[{ at: 0, target: 'euc_cleanup' }], [{ at: 2, target: 'euc_cleanup', addend: 1 }]]) assert.throws(() => packageRecipe({ ...plan, sites: [{ ...pea, relocs }] }))
 })
 
 test('an export published without resources.core still reproduces, and nothing else may differ', () => {

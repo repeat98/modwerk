@@ -54,7 +54,7 @@ it('escapes catalog text in metadata and titles', () => {
 
 it.each(['./', '/octamod/'])('gives both Digi machines independent pages under %s', base => {
   for (const device of ['digitakt', 'digitone']) {
-    const id = { digitakt: 'digiutils', digitone: 'kitbank' }[device]
+    const id = { digitakt: 'euclidean', digitone: 'kitbank' }[device]
     const mod = DIGI_MODS.find(mod => mod.device === device && mod.id === id)
     const page = digiModulePageHtml(html, mod, 'module-thumbnails/digi.jpg', base)
     const root = 'https://modwerk.app/' + (base.startsWith('/') ? 'octamod/' : '')

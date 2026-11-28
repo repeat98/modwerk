@@ -28,8 +28,8 @@ describe('shared configuration links', () => {
   })
 
   it('defaults to the same set as the machine workspace', () => {
-    const first = { ...newConfiguration('Older Digitakt set', ['digiutils'], false, undefined, 'digitakt'), updatedAt: '2026-11-17T12:00:00.000Z' }
-    const recent = { ...newConfiguration('Current Digitakt set', ['digiutils'], false, undefined, 'digitakt'), updatedAt: '2026-11-18T12:00:00.000Z' }
+    const first = { ...newConfiguration('Older Digitakt set', ['digiperform'], false, undefined, 'digitakt'), updatedAt: '2026-11-17T12:00:00.000Z' }
+    const recent = { ...newConfiguration('Current Digitakt set', ['digiperform'], false, undefined, 'digitakt'), updatedAt: '2026-11-18T12:00:00.000Z' }
     const octatrack = newConfiguration('Octatrack set')
     const route = 'forum/new?category=configs&machine=digitakt', configurations = [first, recent, octatrack]
     expect(renderForum(route, true, configurations, octatrack)).toContain('<h2>Current Digitakt set</h2>')
@@ -47,7 +47,7 @@ describe('module issue entry points', () => {
     expect(html).toContain('Keep discussions for questions, tips, ideas and feedback.')
   })
 
-  it.each(['miniverb', 'synth', 'digitakt-digiutils', 'digitone-kitbank'])('turns old bug composer links for %s into the dedicated report entry point', id => {
+  it.each(['miniverb', 'synth', 'digitakt-digiperform', 'digitone-kitbank'])('turns old bug composer links for %s into the dedicated report entry point', id => {
     for (const member of [true, false]) {
       const html = renderForum('forum/new?category=issues&module=' + id, member)
       expect(html).toContain('Report a module issue')
@@ -67,7 +67,7 @@ describe('module issue entry points', () => {
   it('lets old bug links for machines without modules choose an affected module', () => {
     const html = renderForum('forum/new?category=issues&machine=syntakt')
     expect(html).toContain('value="miniverb"')
-    expect(html).toContain('value="digitakt-digiutils"')
+    expect(html).toContain('value="digitakt-digiperform"')
     expect(html).not.toContain('Publish thread')
   })
 

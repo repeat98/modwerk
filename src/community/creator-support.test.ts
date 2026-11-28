@@ -18,10 +18,10 @@ async function fixture() {
   const server = await testServer(); databases.push(server.db)
   const developerToken = 'd'.repeat(64), memberToken = 'b'.repeat(64)
   Object.assign(server.env, { GITHUB_OAUTH_CLIENT_ID: 'support-test', GITHUB_OAUTH_CLIENT_SECRET: 'synthetic-client-secret', GITHUB_OAUTH_CALLBACK_URL: 'https://api.example.test/api/developer/auth/callback' })
-  server.db.prepare('INSERT INTO users(id,display_name,github_id,github_login) VALUES(?,?,?,?)').run('developer', 'Developer', '42', 'gdeo607')
+  server.db.prepare('INSERT INTO users(id,display_name,github_id,github_login) VALUES(?,?,?,?)').run('developer', 'Developer', '42', 'ROMsets')
   server.db.prepare('INSERT INTO developer_sessions(token_hash,user_id,client_hash,expires) VALUES(?,?,?,?)').run(await digest(developerToken), 'developer', await digest('support-test:synthetic-client-secret'), Math.floor(Date.now() / 1000) + 600)
   // A matching forum username alone never grants developer ownership.
-  server.db.prepare('INSERT INTO users(id,display_name,username,email_verified) VALUES(?,?,?,1)').run('member', 'Member', 'gdeo607')
+  server.db.prepare('INSERT INTO users(id,display_name,username,email_verified) VALUES(?,?,?,1)').run('member', 'Member', 'ROMsets')
   server.db.prepare('INSERT INTO sessions(token_hash,user_id,expires) VALUES(?,?,?)').run(await digest(memberToken), 'member', Math.floor(Date.now() / 1000) + 600)
   async function call(path: string, method = 'GET', body?: unknown, token = '', member = '', origin = 'https://octamod.test') {
     const headers = new Headers({ Origin: origin, 'CF-Connecting-IP': '192.0.2.1' })
@@ -50,23 +50,23 @@ describe('creator support links', () => {
 
   it('persists separate links per machine, exposes only the public URL and removes the button’s destination', () => withDigitoneTwin(async () => {
     const f = await fixture()
-    for (const id of ['digitakt-digiutils', 'digitone-digiutils']) expect((await f.claim(id)).status).toBe(201)
-    expect((await f.save('digitakt-digiutils', 'https://ko-fi.com/creator')).status).toBe(200)
-    expect((await f.save('digitone-digiutils', 'https://ko-fi.com/otherpage')).status).toBe(200)
-    expect(await (await f.call('/modules/digitakt-digiutils/support')).json()).toEqual({ koFiUrl: 'https://ko-fi.com/creator', canEdit: false })
-    expect(await (await f.call('/modules/digitone-digiutils/support', 'GET', undefined, f.developerToken)).json()).toEqual({ koFiUrl: 'https://ko-fi.com/otherpage', canEdit: true })
-    expect((await f.save('digitakt-digiutils', '')).status).toBe(200)
-    expect(await (await f.call('/modules/digitakt-digiutils/support')).json()).toEqual({ koFiUrl: '', canEdit: false })
+    for (const id of ['digitakt-digiperform', 'digitone-digiperform']) expect((await f.claim(id)).status).toBe(201)
+    expect((await f.save('digitakt-digiperform', 'https://ko-fi.com/creator')).status).toBe(200)
+    expect((await f.save('digitone-digiperform', 'https://ko-fi.com/otherpage')).status).toBe(200)
+    expect(await (await f.call('/modules/digitakt-digiperform/support')).json()).toEqual({ koFiUrl: 'https://ko-fi.com/creator', canEdit: false })
+    expect(await (await f.call('/modules/digitone-digiperform/support', 'GET', undefined, f.developerToken)).json()).toEqual({ koFiUrl: 'https://ko-fi.com/otherpage', canEdit: true })
+    expect((await f.save('digitakt-digiperform', '')).status).toBe(200)
+    expect(await (await f.call('/modules/digitakt-digiperform/support')).json()).toEqual({ koFiUrl: '', canEdit: false })
     expect(f.db.prepare('SELECT action FROM developer_events WHERE action LIKE ?').all('support-link-%').map(item => item.action)).toEqual(['support-link-updated', 'support-link-updated', 'support-link-removed'])
   }))
 
   it('requires a current verified claim and validates URLs and bodies on the server', async () => {
-    const f = await fixture(), id = 'digitakt-digiutils'
+    const f = await fixture(), id = 'digitakt-digiperform'
     expect((await f.save(id, 'https://ko-fi.com/creator')).status).toBe(403)
     await f.claim(id)
     expect((await f.save(id, 'https://ko-fi.com/creator', '')).status).toBe(403)
     expect((await f.call('/modules/' + id + '/support', 'PATCH', { koFiUrl: 'https://ko-fi.com/creator' }, '', f.memberToken)).status).toBe(403)
-    expect((await f.save('digiutils', 'https://ko-fi.com/creator')).status).toBe(404)
+    expect((await f.save('digiperform', 'https://ko-fi.com/creator')).status).toBe(404)
     expect((await f.save('miniverb', 'https://ko-fi.com/creator')).status).toBe(403)
     expect((await f.save(id, 'https://example.com/creator')).status).toBe(400)
     expect((await f.call('/modules/' + id + '/support', 'PATCH', { koFiUrl: 'https://ko-fi.com/creator', user_id: 'member' }, f.developerToken)).status).toBe(400)
@@ -88,7 +88,7 @@ describe('creator support links', () => {
     const f = await fixture(), modules = COMMUNITY_MODULES.filter(module => module.author.toLowerCase() === 'repeat98')
     expect(modules.length).toBeGreaterThan(0)
     for (const module of modules) expect(await (await f.call('/modules/' + module.id + '/support')).json()).toEqual({ koFiUrl: 'https://ko-fi.com/jannikassfalg', canEdit: false })
-    expect(await (await f.call('/modules/digitakt-digiutils/support')).json()).toEqual({ koFiUrl: '', canEdit: false })
+    expect(await (await f.call('/modules/digitakt-digiperform/support')).json()).toEqual({ koFiUrl: '', canEdit: false })
     expect(defaultCreatorSupport('REPEAT98')).toBe('https://ko-fi.com/jannikassfalg')
     expect(defaultCreatorSupport('Jannik Aßfalg')).toBe('')
   })
@@ -128,7 +128,7 @@ describe('creator support links', () => {
   })
 
   it('hides links and rejects edits after revocation, suspension or catalog removal', async () => {
-    const f = await fixture(), id = 'digitakt-digiutils', module = communityModule(id)!, maintainers = module.maintainers
+    const f = await fixture(), id = 'digitakt-digiperform', module = communityModule(id)!, maintainers = module.maintainers
     await f.claim(id); await f.save(id, 'https://ko-fi.com/creator')
     f.db.prepare('UPDATE module_maintainers SET revoked=1 WHERE module_id=?').run(id)
     expect(await (await f.call('/modules/' + id + '/support')).json()).toEqual({ koFiUrl: '', canEdit: false })
@@ -162,7 +162,7 @@ describe('creator support links', () => {
     expect(html).not.toContain('<iframe')
     expect(html).not.toContain('<script')
     expect(renderToStaticMarkup(createElement(CreatorSupportButton, { url: 'javascript:alert(1)' }))).toBe('')
-    expect(renderToStaticMarkup(createElement(CreatorSupport, { id: 'digitakt-digiutils' }))).toBe('<div class="creator-support-slot"> </div>')
+    expect(renderToStaticMarkup(createElement(CreatorSupport, { id: 'digitakt-digiperform' }))).toBe('<div class="creator-support-slot"> </div>')
     expect(renderToStaticMarkup(createElement(CreatorSupport, { id: 'analog-bassdrum' }))).toContain('Support the creator on Ko-fi')
   })
 })

@@ -20,7 +20,7 @@ describe('module doctor', () => {
     expect(result.error).toBeUndefined()
     expect(result.stdout + result.stderr).not.toContain('✗')
     expect(result.status).toBe(0)
-    for (const id of ['miniverb', 'sidechain-compressor', 'analog-bassdrum', 'euclid', 'digiutils', 'kitbank']) expect(result.stdout).toContain(id)
+    for (const id of ['miniverb', 'sidechain-compressor', 'analog-bassdrum', 'euclid', 'digistring', 'kitbank']) expect(result.stdout).toContain(id)
     // The re-test queue is a report at the end: it lists, it never turns the run red.
     expect(result.stdout).toContain('Due for a re-run on the unit (a report: it fails nothing)')
   }, catalogCheckTimeout + 5000)

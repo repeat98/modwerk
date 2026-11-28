@@ -7,7 +7,7 @@ describe('closed page catalog', () => {
     ['all', 'library:all'], ['all/effects', 'library:all'], ['library', 'library:octatrack'],
     ['effects', 'library:octatrack'], ['configuration', 'configuration:octatrack'],
     ['digitakt', 'library:digitakt'], ['digitone/configuration', 'configuration:digitone'],
-    ['module/miniverb?report=1', 'module:miniverb'], ['digitakt/module/digiutils', 'module:digitakt-digiutils'],
+    ['module/miniverb?report=1', 'module:miniverb'], ['digitakt/module/digiperform', 'module:digitakt-digiperform'],
     ['module/private', 'unclassified'], ['digitone/module/unknown', 'unclassified'],
     ['module-set/secret-id', 'module-set'], ['community-module/secret-id', 'community-module'],
     ['forum?search=secret', 'forum'], ['forum/new', 'forum-compose'], ['forum/shoutbox', 'forum-shoutbox'],

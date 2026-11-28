@@ -7,7 +7,7 @@ import { IssueReport } from './IssueReport'
 import { DigiIssueReport } from './DigiIssueReport'
 import { ModuleDiscussionDialog } from './ModuleDiscussionDialog'
 
-const ids = ['', 'miniverb', 'digitakt-digiutils', 'digitone-kitbank']
+const ids = ['', 'miniverb', 'digitakt-digiperform', 'digitone-kitbank']
 beforeEach(() => {
   const items = new Map<string, string>()
   vi.stubGlobal('sessionStorage', { getItem: (key: string) => items.get(key) ?? null, setItem: (key: string, value: string) => items.set(key, value), removeItem: (key: string) => items.delete(key) })
@@ -33,12 +33,12 @@ describe('discussion drafts in issue reports', () => {
   })
 
   it('keeps drafts isolated between machines, retains them until success and clears only the reported module', () => {
-    saveDiscussionIssueDraft('digitakt-digiutils', { title: 'Digitakt display', body: 'Digitakt details' })
+    saveDiscussionIssueDraft('digitakt-digiperform', { title: 'Digitakt display', body: 'Digitakt details' })
     saveDiscussionIssueDraft('digitone-kitbank', { title: 'Digitone display', body: 'Digitone details' })
-    expect(readDiscussionIssueDraft('digitakt-digiutils')).toEqual({ title: 'Digitakt display', body: 'Digitakt details' })
-    expect(readDiscussionIssueDraft('digitakt-digiutils')?.body).toBe('Digitakt details')
-    clearDiscussionIssueDraft('digitakt-digiutils')
-    expect(readDiscussionIssueDraft('digitakt-digiutils')).toBeNull()
+    expect(readDiscussionIssueDraft('digitakt-digiperform')).toEqual({ title: 'Digitakt display', body: 'Digitakt details' })
+    expect(readDiscussionIssueDraft('digitakt-digiperform')?.body).toBe('Digitakt details')
+    clearDiscussionIssueDraft('digitakt-digiperform')
+    expect(readDiscussionIssueDraft('digitakt-digiperform')).toBeNull()
     expect(readDiscussionIssueDraft('digitone-kitbank')?.body).toBe('Digitone details')
   })
 
@@ -57,7 +57,7 @@ describe('discussion drafts in issue reports', () => {
     expect(readDiscussionIssueDraft('miniverb')?.body).toBe(body)
   })
 
-  it.each(['miniverb', 'digitakt-digiutils', 'digitone-kitbank'])('prefills %s with the title and full text while preserving the structured reporting fields', id => {
+  it.each(['miniverb', 'digitakt-digiperform', 'digitone-kitbank'])('prefills %s with the title and full text while preserving the structured reporting fields', id => {
     const body = 'The control changes unexpectedly.\nPlease investigate.'
     saveDiscussionIssueDraft(id, { title: 'Unexpected control change', body })
     const html = renderReport(id)
@@ -69,7 +69,7 @@ describe('discussion drafts in issue reports', () => {
     expect(html).toContain('Expected result')
   })
 
-  it.each(['miniverb', 'digitakt-digiutils'])('asks %s reporters only for a title, what happened and the device', id => {
+  it.each(['miniverb', 'digitakt-digiperform'])('asks %s reporters only for a title, what happened and the device', id => {
     const html = renderReport(id)
     expect(html.match(/<(?:input|textarea)[^>]*>/g)?.filter(tag => tag.includes(' required')).map(tag => tag.match(/name="(\w+)"/)?.[1])).toEqual(['title', 'actual'])
     expect(html).toMatch(/<details class="issue-report-more"><summary>Steps to reproduce <span>Optional/)

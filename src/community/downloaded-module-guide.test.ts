@@ -23,8 +23,8 @@ describe('downloaded module guides', () => {
       expect(guide.audio.every(item => item.captureType === 'audio')).toBe(true)
       expect([...guide.screenshots, ...guide.audio].map(item => item.path).sort()).toEqual(moduleMediaDocument(module.id)!.media.map(item => item.path).sort())
     }
-    const [digitakt, digitone] = builtModules(['digitakt-digiutils', 'digitone-kitbank'])
-    expect(downloadedModuleGuide(digitakt)?.thumbnail).toContain('/digitakt-digiutils/' + digitakt.version + '/')
+    const [digitakt, digitone] = builtModules(['digitakt-digiperform', 'digitone-kitbank'])
+    expect(downloadedModuleGuide(digitakt)?.thumbnail).toContain('/digitakt-digiperform/' + digitakt.version + '/')
     expect(downloadedModuleGuide(digitone)?.thumbnail).toContain('/digitone-kitbank/' + digitone.version + '/')
   })
   it('does not substitute current instructions or screenshots for an older or unknown build', () => {
@@ -50,7 +50,7 @@ describe('downloaded module guides', () => {
     }
   })
   it('gives longer guides titled first tests without losing their full instructions', () => {
-    for (const module of builtModules(['vector', 'synth', 'digitakt-digisophie', 'digitakt-digimono', 'digitakt-digiutils'])) {
+    for (const module of builtModules(['vector', 'synth'])) {
       const guide = downloadedModuleGuide(module)!
       expect(guide.hasQuickTest, module.id).toBe(true)
       expect(guide.steps.every(step => step.title && step.text), module.id).toBe(true)
@@ -60,10 +60,9 @@ describe('downloaded module guides', () => {
       expect(html, module.id).toContain('Full instructions &amp; more controls')
       for (const step of guide.usage) expect(html, module.id).toContain(renderToStaticMarkup(createElement('li', null, step)))
     }
-    const [mono, sophie, utils] = builtModules(['digitakt-digimono', 'digitakt-digisophie', 'digitakt-digiutils'])
-    expect(downloadedModuleGuide(mono)?.steps.map(step => step.text).join(' ')).toContain('Your build needs Digi Mono and digichain')
-    expect(downloadedModuleGuide(sophie)?.steps.map(step => step.text).join(' ')).toContain('finite DEC; avoid INF')
-    expect(downloadedModuleGuide(utils)?.steps.map(step => step.text).join(' ')).toContain('a short SONG press opens the normal popup')
+    const [vector, synth] = builtModules(['vector', 'synth'])
+    expect(downloadedModuleGuide(vector)?.steps.map(step => step.text).join(' ')).toContain('double-tap SRC, choose VECTOR')
+    expect(downloadedModuleGuide(synth)?.steps.map(step => step.text).join(' ')).toContain('No sample is needed')
   })
 })
 
@@ -109,10 +108,10 @@ describe('downloaded firmware overview', () => {
     expect(html).not.toContain('aria-label="Next screenshot"')
   })
   it('names the carousel, individual captures and keyboard navigation for larger galleries', () => {
-    const html = render(builtModules(['digitakt-digimono']))
-    expect(html).toContain('aria-roledescription="carousel" aria-label="Digi Mono screenshots"')
+    const html = render(builtModules(['digitakt-ram-machines']))
+    expect(html).toContain('aria-roledescription="carousel" aria-label="RAM Record and Playback screenshots"')
     expect(html.match(/aria-roledescription="slide"/g)).toHaveLength(2)
-    expect(html).toContain('Screenshots 1–2 of 7')
+    expect(html).toContain('Screenshots 1–2 of 8')
     expect(html).toContain('aria-label="Previous screenshot"')
     expect(html).toContain('aria-disabled="true"')
     expect(html).toContain('aria-label="Next screenshot"')

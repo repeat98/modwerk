@@ -119,13 +119,13 @@ describe('All machines library parity', () => {
 
   it('applies type and alphabetical sorting to the Digi groups', () => {
     const html = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props,
-      octatrackModules: [], family: 'Synthesis', sort: 'name',
+      octatrackModules: [], family: 'MIDI control', sort: 'name',
     }))
-    expect(html).toContain('Digi Mono')
-    expect(html).toContain('STRING')
-    expect(html.indexOf('View Digi Mono')).toBeLessThan(html.indexOf('View STRING'))
-    expect(html).not.toContain('View SOPHIE')
-    expect(html).not.toContain('View Digi utilities')
+    expect(html).toContain('CC Recall')
+    expect(html).toContain('FX Track')
+    expect(html.indexOf('View CC Recall')).toBeLessThan(html.indexOf('View FX Track'))
+    expect(html).not.toContain('View STRING')
+    expect(html).not.toContain('View Digi Perform')
   })
 })
 
@@ -150,16 +150,16 @@ describe('Digi library parity', () => {
     const releases = new Map(DIGI_MODS.map(mod => [mod, mod.updatedAt]))
     try {
       for (const mod of DIGI_MODS.filter(mod => mod.device === 'digitakt')) {
-        if (mod.id === 'digisophie') mod.updatedAt = '2026-10-08T00:00:00Z'
+        if (mod.id === 'digistring') mod.updatedAt = '2026-10-08T00:00:00Z'
         if (mod.id === 'live-looper') mod.updatedAt = '2026-10-07T00:00:00Z'
-        if (mod.id === 'digiutils') mod.updatedAt = '2026-10-01T00:00:00Z'
+        if (mod.id === 'digiperform') mod.updatedAt = '2026-10-01T00:00:00Z'
       }
       const all = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props, sort: DEFAULT_MODULE_SORT, statistics: null}))
       const digitakt = renderToStaticMarkup(createElement(DigiLibrary, {...props, device: {...DEVICES_BY_ID.digitakt, id: 'digitakt'}, selectedIds: [], onToggle: noop, sort: DEFAULT_MODULE_SORT, statistics: null}))
       for (const html of [all, digitakt]) {
         expect(html).toContain('<option value="updated" selected="">Recently updated</option>')
-        expect(html.indexOf('View SOPHIE')).toBeLessThan(html.indexOf('View Live Looper'))
-        expect(html.indexOf('View Live Looper')).toBeLessThan(html.indexOf('View Digi utilities'))
+        expect(html.indexOf('View STRING')).toBeLessThan(html.indexOf('View Live Looper'))
+        expect(html.indexOf('View Live Looper')).toBeLessThan(html.indexOf('View Digi Perform'))
       }
     } finally {
       for (const [mod, date] of releases) mod.updatedAt = date
@@ -170,14 +170,14 @@ describe('Digi library parity', () => {
 
   it.each(['liked', 'downloaded', 'working'])('shows and sorts %s statistics in both libraries without sharing counts across machines', sort => withDigitoneTwin(() => {
     const statistics = [
-      {module_id: 'digitakt-digisophie', average: 4.8, count: 5, likes: 19, downloads: 42, worksReports: 9, downloadsStarted: '2026-10-01T00:00:00Z'},
-      {module_id: 'digitakt-digiutils', average: 3.2, count: 2, likes: 8, downloads: 11, worksReports: 4, downloadsStarted: '2026-10-01T00:00:00Z'},
-      {module_id: 'digitone-digiutils', average: 2.5, count: 4, likes: 3, downloads: 7, worksReports: 2, downloadsStarted: '2026-10-01T00:00:00Z'},
+      {module_id: 'digitakt-digistring', average: 4.8, count: 5, likes: 19, downloads: 42, worksReports: 9, downloadsStarted: '2026-10-01T00:00:00Z'},
+      {module_id: 'digitakt-digiperform', average: 3.2, count: 2, likes: 8, downloads: 11, worksReports: 4, downloadsStarted: '2026-10-01T00:00:00Z'},
+      {module_id: 'digitone-digiperform', average: 2.5, count: 4, likes: 3, downloads: 7, worksReports: 2, downloadsStarted: '2026-10-01T00:00:00Z'},
     ]
     const all = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props, sort, statistics}))
     const digitakt = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, sort, statistics}))
     for (const html of [all, digitakt]) {
-      expect(html.indexOf('View SOPHIE')).toBeLessThan(html.indexOf('View Digi utilities'))
+      expect(html.indexOf('View STRING')).toBeLessThan(html.indexOf('View Digi Perform'))
       for (const value of ['aria-label="9 members report this module working, across versions"', count('19', 'likes'), count('42', 'downloads'), 'aria-label="4 members report this module working, across versions"', count('8', 'likes'), count('11', 'downloads')]) expect(html).toContain(value)
       expect(html).not.toContain('4.8 (5)')
       expect(html).not.toContain('counts are not available yet')
@@ -217,43 +217,43 @@ describe('Digi library parity', () => {
   })
 
   it('filters type together with search and sorts the Digi library by name', () => {
-    const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Synthesis', sort: 'name'}))
-    expect(html).toContain('View Digi Mono')
-    expect(html.indexOf('View Digi Mono')).toBeLessThan(html.indexOf('View STRING'))
-    expect(html).not.toContain('View SOPHIE')
-    expect(html).not.toContain('View Digi utilities')
-    const search = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Synthesis', query: 'string'}))
-    expect(search).toContain('View STRING')
-    expect(search).not.toContain('View Digi Mono')
+    const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'MIDI control', sort: 'name'}))
+    expect(html).toContain('View CC Recall')
+    expect(html.indexOf('View CC Recall')).toBeLessThan(html.indexOf('View FX Track'))
+    expect(html).not.toContain('View STRING')
+    expect(html).not.toContain('View Digi Perform')
+    const search = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'MIDI control', query: 'remap'}))
+    expect(search).toContain('View CC Remap')
+    expect(search).not.toContain('View CC Recall')
     const switched = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, family: 'Octatrack-only type'}))
-    expect(switched).toContain('View SOPHIE')
+    expect(switched).toContain('View STRING')
   })
 
-  it('finds DigiSophie by its developer in both libraries', () => {
-    for (const query of ['Sjoerd', 'soejrd']) {
+  it('finds STRING by its developer in both libraries', () => {
+    for (const query of ['Alez22', 'alez22']) {
       const digi = renderToStaticMarkup(createElement(DigiLibrary, { ...digiProps, query }))
       const all = renderToStaticMarkup(createElement(AllMachinesLibrary, { ...props, query, octatrackModules: [] }))
       for (const html of [digi, all]) {
-        expect(html).toContain('View SOPHIE')
-        expect(html).toContain('>Sjoerd (Soejrd)</a>')
-        expect(html).not.toContain('View Digi Mono')
-        expect(html).not.toContain('>Matt Estela</a>')
+        expect(html).toContain('View STRING')
+        expect(html).toContain('>Alez22</a>')
+        expect(html).not.toContain('View Digi Perform')
+        expect(html).not.toContain('>soejrd</a>')
       }
     }
   })
 
   it('limits comparison to three cards while permitting removal and scopes matching module IDs by machine', () => withDigitoneTwin(() => {
     if (MODULE_COMPARE_ENABLED) {
-      const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitakt-digiutils','digitone-digiutils','miniverb']}))
+      const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitakt-digiperform','digitone-digiperform','miniverb']}))
       expect(html).toContain('Compare (3)')
       expect(html).toContain('type="checkbox" checked=""')
       expect(html).toContain('type="checkbox" disabled=""')
-      const other = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitone-digiutils']}))
+      const other = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitone-digiperform']}))
       expect(other).not.toContain('type="checkbox" checked=""')
     }
-    const dialog = renderToStaticMarkup(createElement(ModuleComparison, {ids:['digitakt-digiutils','digitone-digiutils'], selected: [], digiSelected:{digitakt:['digiutils'],'digitakt-ii':[],digitone:[],'analog-rytm-mkii':[],'model-cycles':[]}, onToggle:noop,onToggleDigi:noop,onClose:noop}))
-    expect(dialog).toContain('href="/digitakt/module/digiutils/"')
-    expect(dialog).toContain('href="/digitone/module/digiutils/"')
+    const dialog = renderToStaticMarkup(createElement(ModuleComparison, {ids:['digitakt-digiperform','digitone-digiperform'], selected: [], digiSelected:{digitakt:['digiperform'],'digitakt-ii':[],digitone:[],'analog-rytm-mkii':[],'model-cycles':[]}, onToggle:noop,onToggleDigi:noop,onClose:noop}))
+    expect(dialog).toContain('href="/digitakt/module/digiperform/"')
+    expect(dialog).toContain('href="/digitone/module/digiperform/"')
     expect(dialog).toContain('aria-pressed="true"')
     expect(dialog).toContain('aria-pressed="false"')
     expect(dialog).toContain('Not measured')

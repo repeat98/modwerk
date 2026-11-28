@@ -280,11 +280,10 @@ the module's hardware/audio/timing qualification.
 
 For native encoder regressions, send successive small `turn A 1 40` events
 rather than assuming one large-delta packet represents repeated detents.
-Digi Mono's regression needed successive events to demonstrate a parameter
-change through the pinned emulator's native panel driver. Compare structured
-parameter values before/after actual panel input and check other tracks for
-isolation; do not inject parameter state. See
-[the encoder regression helper](../scripts/verify-digimono-encoder-layout.py).
+A parameter regression needs successive events to demonstrate a change through
+the pinned emulator's native panel driver. Compare structured parameter values
+before/after actual panel input and check other tracks for isolation; do not
+inject parameter state.
 These readbacks establish software parameter mapping, not audible behavior,
 hardware timing or save/reboot persistence.
 
@@ -304,7 +303,7 @@ capture script in an isolated sandbox with network and user credentials denied
 python3 scripts/capture-digi-module-ui.py \
   --emulator /path/to/reviewed/digiemu \
   --firmware /private/capture/custom.syx \
-  --plan sdk/digitakt/modules/digimono/media/capture-plan.txt \
+  --plan sdk/digitakt/modules/digistring/media/capture-plan.txt \
   --out /private/capture/new-session --fixture-loop
 ```
 

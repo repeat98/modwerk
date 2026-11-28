@@ -30,19 +30,6 @@ const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
     { title: 'Choose RPCH.', text: 'Hold FUNC and press SRC. Set TSTR on encoder E to RPCH, then press SRC to return.' },
     { title: 'Change project tempo.', text: 'Play the loop and change BPM. Speed and pitch move together. PTCH is disabled; RATE still works. Change TSTR back to leave Repitch.' },
   ] },
-  'digitakt-digimono': { version: '0.13.3-experimental', steps: [
-    { title: 'Choose a sine voice.', text: 'Your build needs Digi Mono and digichain. Select an audio track, press FUNC + SRC, choose MONO SIN and confirm with YES. No sample is needed.' },
-    { title: 'Set pitch and length.', text: 'On SRC, knob A (TUNE) sets pitch. Press SRC again: the controls should remain visible. Use AMP for a short decay; MONO SIN’s other SRC cells are unused.' },
-    { title: 'Play the keyboard.', text: 'Press FUNC + TRK and play the trig keys. Turn TUNE to hear the pitch change.' },
-    { title: 'Compare the sub controls.', text: 'Choose MONO SAW, then MONO PULSE. Both keep SUB1 on encoder G and SUB2 on H. PULSE uses D for PW, E for PWAD and F for PWRS.' },
-    { title: 'Return to samples.', text: 'Stop playback and leave keyboard mode. Choose ONESHOT in FUNC + SRC to restore sample playback.' },
-  ] },
-  'digitakt-digiutils': { version: '1.9.1-experimental', steps: [
-    { title: 'Open the scope.', text: 'Play a pattern with audio loaded. Hold the three-dots SONG key for about half a second.' },
-    { title: 'Compare the views.', text: 'Press the same key for the spectrum, then again for X-Y. Keep the same passage playing.' },
-    { title: 'Enlarge the signal.', text: 'Press YES for fullscreen. Change a track’s level on its usual page and compare the plot.' },
-    { title: 'Close the view.', text: 'Press NO and stop playback. Outside the utility, a short SONG press opens the normal popup.' },
-  ] },
   vector: { version: '0.3.2-experimental', steps: [
     { title: 'Choose VECTOR.', text: 'Select an audio track, double-tap SRC, choose VECTOR and press YES.' },
     { title: 'Assign a sample.', text: 'Choose STATIC or FLEX with UP/DOWN or LEVEL, then press RIGHT. Select a loaded, tuned sample and press YES to assign it.' },

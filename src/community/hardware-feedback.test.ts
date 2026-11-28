@@ -53,7 +53,7 @@ describe('hardware feedback on a later visit', () => {
   })
   it('replaces an older build of the same machine without losing a different machine', () => {
     rememberHardwareFeedback('alice', build, now)
-    const digi = { machine: 'Digitakt', os: '1.54', modules: builtModules(['digitakt-digimono']) }
+    const digi = { machine: 'Digitakt', os: '1.54', modules: builtModules(['digitakt-euclidean']) }
     rememberHardwareFeedback('alice', digi, now + 1)
     const newer = { ...build, modules: builtModules(['miniverb'], { miniverb: '0.0.3' }) }
     rememberHardwareFeedback('alice', newer, now + 2)

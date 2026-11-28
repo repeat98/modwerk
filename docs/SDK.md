@@ -82,7 +82,7 @@ The elemod build spec (`build.json`) is what Modwerk's toolchain compiles and li
 
 A patch site names its address, its length and the SHA-256 of the stock bytes it expects in the owner's own file. Stock bytes never appear in the repository. Steps that need the stock OS itself (`derive`) run only during the owner's local build, never in CI. The spec must agree with the manifest.
 
-Digitakt and Digitone modules such as SOPHIE are imported this way, with their authors' sources and licences, and pinned commits in [the import record](../sdk/imports/elemod-2026-10-04.json).
+Digitakt modules such as CC Assignment Names are imported this way, with their authors’ sources and licences, and pinned commits in [the import record](../sdk/imports/cc-names-2026-10-14.json).
 
 Octatrack modules move to contract v3 at their next version. Until then, contract v2 and its frozen eleven-module baseline stay exactly as they are.
 

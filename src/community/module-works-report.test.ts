@@ -11,11 +11,11 @@ describe('one-click working reports from a module page', () => {
     expect(moduleWorksReport('miniverb', saved)).toEqual({ testedModuleIds: ['miniverb'], build })
   })
   it('does not borrow an unrelated build’s instrument, OS or module versions', () => {
-    const build = { machine: 'Digitakt', os: '1.54', modules: [{ id: 'digitakt-digiutils', name: 'Digi utilities', version: '1.0.0' }] }
+    const build = { machine: 'Digitakt', os: '1.54', modules: [{ id: 'digitakt-digiperform', name: 'Digi utilities', version: '1.0.0' }] }
     expect(moduleWorksReport('miniverb', build)).toEqual({ testedModuleIds: ['miniverb'] })
   })
   it('supports all catalog instrument families and rejects unknown modules', () => {
-    for (const id of ['miniverb', 'digitakt-digiutils', 'digitone-kitbank']) expect(moduleWorksReport(id)).toEqual({ testedModuleIds: [id] })
+    for (const id of ['miniverb', 'digitakt-digiperform', 'digitone-kitbank']) expect(moduleWorksReport(id)).toEqual({ testedModuleIds: [id] })
     expect(() => moduleWorksReport('not-a-module')).toThrow('could not be found')
   })
 })

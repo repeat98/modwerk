@@ -155,7 +155,7 @@ describe('a report about a whole configuration', () => {
 
   it('reports a Digitakt configuration against the modules of that machine', async () => {
     const f = await fixture(), device = DEVICES_BY_ID.digitakt
-    const ids = ['digitakt-digiutils', 'digitakt-digieq'], natives = ids.map(id => communityModule(id)!)
+    const ids = ['digitakt-digiperform', 'digitakt-euclidean'], natives = ids.map(id => communityModule(id)!)
     const body = { title: 'Slow startup', actual: 'Takes a minute to boot.', visibility: 'forum', context: { machine: 'digitakt', model: device.variants?.[0] ?? device.name, flash: 'flashed', os: device.firmware!.releases[0], moduleVersion: natives[0].version, modules: natives.map(item => ({ id: item.moduleId, version: item.version })), keepStockFx2: null, build: '' } }
     expect((await f.post(body)).status).toBe(201)
     expect(f.db.prepare('SELECT module_id FROM issue_modules ORDER BY rowid').all()).toEqual(ids.map(id => ({ module_id: id })))
