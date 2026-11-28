@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * Original adapter for the public core_additem(menu, four-callback row) ABI.
  * The verified stock constructor copies these non-owning function records.
+ * The stock invoker hands a callback its record's payload: select and change
+ * read the menu from it, label and draw get none.
  */
 #include "core-api.h"
 
@@ -31,7 +33,7 @@ void core_additem(void *menu, const void *row)
     void (*const *callbacks)(void) = row;
     struct mw_menu_function functions[4];
     for (unsigned i = 0; i < 4; ++i) {
-        functions[i].payload = menu;
+        functions[i].payload = i == 1 || i == 3 ? menu : 0;
         functions[i].reserved = 0;
         functions[i].manager = callbacks[i] ? mw_stock_function_manager : 0;
         functions[i].invoke = callbacks[i];

@@ -1,6 +1,8 @@
 | SPDX-License-Identifier: GPL-3.0-or-later
-| Original SETTINGS/render adapters. Displaced instructions are filled locally.
-| Render-out precedes stock EMAC restoration, so handler EMAC state cannot leak.
+| Original SETTINGS/render adapters. Displaced instructions are filled locally,
+| or, assembled with MW_BASE, authored by the machine's base (mw_resume_*).
+| Each render hook saves and restores EMAC around its handlers, so handler EMAC
+| state cannot leak, wherever the stock restores its own.
 | EMAC access follows MCF54418RM 5.3.1.2 (rounding disabled for raw state).
         .section .run, "ax"
         .macro event_save
@@ -77,6 +79,20 @@ mw_hook_\event:
         render_hook render_in
         render_hook render_out
 
+        .ifdef MW_BASE
+        | ev_render_voices: as the render hooks, handlers get the base's track blocks.
+        .globl mw_hook_render_voices
+mw_hook_render_voices:
+        event_save
+        emac_save
+        pea mw_fw_track_blocks
+        jsr mw_dispatch_render_voices
+        addq.l #4, %sp
+        emac_restore
+        event_restore
+        jmp mw_resume_render_voices
+        .else
+
         | CI emits zero placeholders. Only the local stock reader fills them.
         .macro resume event
         .globl mw_resume_\event
@@ -87,3 +103,4 @@ mw_resume_\event:
         resume settings
         resume render_in
         resume render_out
+        .endif
