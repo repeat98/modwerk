@@ -1,0 +1,1 @@
+- Keep existing builder keys and release-note coverage checked when adding another machine.
