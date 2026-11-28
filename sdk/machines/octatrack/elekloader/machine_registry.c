@@ -194,7 +194,30 @@ volatile uint32_t mw_wake_mille = 30u;
 volatile uint32_t mw_cpu_allowance = 45u, mw_cpu_booked; /* percent of a frame; development bases may change the allowance */
 volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowance: the frame interrupt reads it whole */
 static uint8_t cpu_warned;          /* ... whose box already showed, as `warned` */
-static unsigned cpu_price(const Machine *m) { return m->reserved[0] ? m->reserved[0] : m->source_kind ? 0u : CPU_DEFAULT; }
+/* A machine's price: what the site measured one playing track of it to take (frame-costs.json's `price`, the mean
+ * share of the frame interrupt, sent as a cost entry under its module id with PRICE_BIT set), else its descriptor's
+ * (owner, 26 November 2026: FM Synth 0.1.5 named 4 and took 16.5 on a medium pattern, so a loaded Part carried eight).
+ * The Part's bill asks for each track every UI tick, so the prices are kept while the installed set (the loader's owner
+ * epoch, odd while a change runs) and the table stand. */
+#define PRICE_BIT 0x80000000u
+uint32_t modwerk_status_costs_key(void); /* status.c: the cost table as last checked */
+static const Machine *priced[ROWS - 5u];
+static uint8_t priced_at[ROWS - 5u];
+static unsigned priced_n;
+static uint32_t priced_epoch, priced_key;
+static int priced_ok;
+static unsigned cpu_price(const Machine *m)
+{
+    uint32_t epoch = modwerk_runtime_owner_epoch(), key = modwerk_status_costs_key();
+    if (!priced_ok || epoch != priced_epoch || key != priced_key) priced_n = 0, priced_ok = !(epoch & 1u), priced_epoch = epoch, priced_key = key;
+    for (unsigned i = 0; i < priced_n; ++i) if (priced[i] == m) return priced_at[i];
+    struct runtime_owner o; uint32_t use, wake;
+    unsigned p = m->reserved[0] ? m->reserved[0] : m->source_kind ? 0u : CPU_DEFAULT;
+    if (modwerk_runtime_owner_at((uintptr_t)m, &o) == 1 && modwerk_status_module_cost(o.module ^ PRICE_BIT, &use, &wake)) p = (use + 9u) / 10u;
+    if (p > 255u) p = 255u;
+    if (priced_ok && priced_n < ROWS - 5u) priced[priced_n] = m, priced_at[priced_n++] = (uint8_t)p;
+    return p;
+}
 static unsigned meter_cost(const Machine *m) { return m->reserved[1] ? m->reserved[1] : cpu_price(m); }
 /* What one more track of `who` adds to the longest frame, per mille of a frame: the site's measured `each`, and its
  * `first` extra on the Part's first track of it; a machine the table does not list, its measured meter cost or its
