@@ -7,3 +7,5 @@ Native fixtures link the real returning descriptor validator and model no active
 returning processor; legacy volatile work remains blocked. Published-service
 and selected-tool expectations follow their declared metadata, and malformed
 registry coverage uses an actually invalid kind. Existing assertions remain enabled.
+Resource tests preserve measured values for recorded package hashes and require
+unmeasured fallbacks for unrecorded rebindings; no measurement data is changed.

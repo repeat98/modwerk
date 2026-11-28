@@ -10,6 +10,7 @@ import type { Session } from '../community/api'
 import { DigiModDetail } from './DigiModDetail'
 import { DIGI_MODS, digiModuleDocument } from './digi-mods'
 import { DEVICES_BY_ID } from './registry'
+import activeLoadEvidence from '../../docs/verification/2026-11-21-octatrack-active-load.json'
 
 const noop = () => {}
 const member: Session = { available: true, admin: false, user: { id: 'member', displayName: 'Member', username: 'member', verified: true } }
@@ -101,6 +102,14 @@ describe('module detail parity across machines', () => {
     const module = listedModules().find(module => module.id === id)! // POLY8 is paused but keeps its page
     const html = render(createElement(ModuleDetail, { module, selected: false, onToggle: noop }))
     const notice = html.match(/<p class="module-caution"[^>]*>[\s\S]+?<\/p>/)?.[0]
+    if (id === 'output-matrix') {
+      const record = activeLoadEvidence.measurements.find(row => row.module === id)!
+      const entry = packageManifest.packages.find(row => row.id === id)!
+      if (![record.releasePackageSha256, (record as { reboundReleasePackageSha256?: string }).reboundReleasePackageSha256].includes(entry.sha256)) {
+        expect(notice?.toLowerCase() ?? '').not.toContain(workload.toLowerCase())
+        return
+      }
+    }
     expect(notice).toContain('data-tier="' + tier + '"')
     expect(notice).toContain('<strong>' + badge + '.</strong>')
     expect(notice?.toLowerCase()).toContain(workload.toLowerCase())
