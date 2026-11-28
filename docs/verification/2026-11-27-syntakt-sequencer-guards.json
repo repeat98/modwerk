@@ -1,0 +1,420 @@
+{
+  "date": "2026-11-27",
+  "stock_main_sha256": "1a9723b19fb54d0566c1f690379d2e6dfe43227f77e170ad731dd029430eb3e7",
+  "stock_main_bytes": 3442576,
+  "stock_container_sha256": "ded3c59fdb909eb9e2c3307b30a486452c8fa6947b12c14e0ce35a187b7f37c1",
+  "guards": [
+    {
+      "name": "sequencer_interrupt",
+      "address": "0x4008c99c",
+      "length": 8,
+      "sha256": "18abf11e60d193de9d75036145f7b44225871a547fe7f27afcbf14e2e0fccfb5",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "track_iteration",
+      "address": "0x4008d0ac",
+      "length": 6,
+      "sha256": "c3f54db97d6e73f844f209a295fe16ef07ad88f03561f1c085cde8a4facda06a",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "track_step_due",
+      "address": "0x4008d15c",
+      "length": 10,
+      "sha256": "bf0b998ad30128aec05b359297cb945e26851e652aeb0c65cd0f1ec0892331e9",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "track_post_iteration",
+      "address": "0x4008d1ca",
+      "length": 6,
+      "sha256": "491b59d2e59a4758c49433d8e1ddce8eb0718b310f0555bccaf4d8be13c06ee7",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "event_dequeue_call",
+      "address": "0x400a3b88",
+      "length": 6,
+      "sha256": "375f6ce6f787775fb84d15cbf655cd60fd5340dd3848008735563b671d300918",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "event_consumer",
+      "address": "0x400a3bf4",
+      "length": 6,
+      "sha256": "c958e7679bcce0f8c18caa4d3352fe48afc2e1b5b5def1002ea0ac2f02501325",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "sound_note_input",
+      "address": "0x400a42b6",
+      "length": 6,
+      "sha256": "15898aee88c310d76853566b3055120d73da914c97e2caadff67de61228a8390",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "accepted_trigger_mask",
+      "address": "0x400a4c3e",
+      "length": 6,
+      "sha256": "e4c6a658b7f2991513c6aaec8ba65d237f06598edd3d71e9256c17c824631baa",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "midi_input",
+      "address": "0x4010dc52",
+      "length": 6,
+      "sha256": "e172161aade1d9a96e82bab82be8c9662d7b43b2d376502c975d234f770f3da8",
+      "whole_instructions": true,
+      "pc_relative": true
+    },
+    {
+      "name": "event_alloc",
+      "address": "0x4011a686",
+      "length": 6,
+      "sha256": "f54938fe21c779ed7fc56e005a95664127cd0310bbcecd15d5f85fd74c1de534",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "event_copy",
+      "address": "0x4011a6f0",
+      "length": 8,
+      "sha256": "8d966ec8e3d2471a8c996291a885823171c35922b5e73817b6590d50f61cfdab",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "event_queue",
+      "address": "0x4011a8e6",
+      "length": 8,
+      "sha256": "d43e64e0210fdd98e9dd8476d7cea57c93492ec611d50eddcbf6fd90ea80cef7",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "event_queue_at",
+      "address": "0x4011a80c",
+      "length": 8,
+      "sha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "event_free",
+      "address": "0x4011a6bc",
+      "length": 6,
+      "sha256": "8d1503d38f264a9b0be0700a53c1e2e61354803cc529f54092a511ae826bca7f",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "lock_release",
+      "address": "0x4011a658",
+      "length": 6,
+      "sha256": "25f6cf58764096a92fba2355b3a003ad25d064d44e1e91102deb6abcadbed9d7",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "event_flush",
+      "address": "0x4011a950",
+      "length": 8,
+      "sha256": "784938370f9fb15c505636fe4e5a94b5efb1d9276ec09a27de55484f781bed1f",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "song_advance",
+      "address": "0x4011877c",
+      "length": 8,
+      "sha256": "8f96d172c43d6e9d5f2d435bd2b96f60df07aaf653786f343036ee418a71b004",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "song_predict",
+      "address": "0x401188f6",
+      "length": 8,
+      "sha256": "3f97f721445d08cd60eea3c71f03580aef2b61c8750a7c2a7942c416a3991848",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "song_current",
+      "address": "0x40118a18",
+      "length": 8,
+      "sha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "song_queue_row",
+      "address": "0x40118c0c",
+      "length": 6,
+      "sha256": "6a603b815d63e5efbfa19db6f2a2a85eef954d94e8b32f45c607626df4cf8fab",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "sequence_publish_a",
+      "address": "0x4008c438",
+      "length": 6,
+      "sha256": "111e51c60f8ae302ef7239cde65f3afc47840522b8ae65b52abfbd70dbb2de0b",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "sequence_publish_b",
+      "address": "0x4008cb08",
+      "length": 6,
+      "sha256": "111e51c60f8ae302ef7239cde65f3afc47840522b8ae65b52abfbd70dbb2de0b",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "sequence_publish_c",
+      "address": "0x4008d386",
+      "length": 6,
+      "sha256": "526d57117c3c61dc8a5320c4da10629626dd1560654e68808c01097a599bdb23",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "sequence_publish_d",
+      "address": "0x4008d6a6",
+      "length": 6,
+      "sha256": "cf8a28d52f2ff06369fc19b91a8ddc1a9ecc4cc77bda104d6fd65d10bf58c5a0",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "sequence_decode",
+      "address": "0x400a80c0",
+      "length": 8,
+      "sha256": "534e5693c800e439722db3cb8a0b817470f23c204088f74f23049608ad80afa9",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "sequence_encode",
+      "address": "0x400a8264",
+      "length": 8,
+      "sha256": "4997842f477c42235c625d7ba815c13fc3a07a0c57335d4361007e1288ff0795",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "sequence_notify",
+      "address": "0x40016d28",
+      "length": 8,
+      "sha256": "aafc8f979f6aeb11a4358bcf7b01706892acebe4c40d3e520f88528b3cac80a8",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "track_copy",
+      "address": "0x4002c32c",
+      "length": 8,
+      "sha256": "74c815be25e554835b3b514942da870c1b9c1d9a8aaaf82d5a113e31f7f467cb",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "track_paste",
+      "address": "0x4002b05a",
+      "length": 8,
+      "sha256": "935b6c20cef91b7190986ccb15d8e56d1357ea0ccaf4a4f9c2b4ab71bd57402a",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "track_clear_selected",
+      "address": "0x40029544",
+      "length": 8,
+      "sha256": "4997842f477c42235c625d7ba815c13fc3a07a0c57335d4361007e1288ff0795",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "note_trig_get",
+      "address": "0x4002787c",
+      "length": 8,
+      "sha256": "efa23c0a55aebcd8ffb29c8ba97d3970d8e88ed9c16272d7b5ea0b4e8309ecf5",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "lock_trig_get",
+      "address": "0x400278d8",
+      "length": 8,
+      "sha256": "efa23c0a55aebcd8ffb29c8ba97d3970d8e88ed9c16272d7b5ea0b4e8309ecf5",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "flag_get",
+      "address": "0x400272c4",
+      "length": 6,
+      "sha256": "25f6cf58764096a92fba2355b3a003ad25d064d44e1e91102deb6abcadbed9d7",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "note_trig_set",
+      "address": "0x40029f32",
+      "length": 8,
+      "sha256": "efa23c0a55aebcd8ffb29c8ba97d3970d8e88ed9c16272d7b5ea0b4e8309ecf5",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "lock_trig_set",
+      "address": "0x40029faa",
+      "length": 8,
+      "sha256": "efa23c0a55aebcd8ffb29c8ba97d3970d8e88ed9c16272d7b5ea0b4e8309ecf5",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "velocity_set",
+      "address": "0x40028362",
+      "length": 8,
+      "sha256": "98e0558643ec9d89c8b4e099a6a93a14abe647217f4c2de3e870a91b2058810f",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "microtiming_set",
+      "address": "0x40028456",
+      "length": 8,
+      "sha256": "98e0558643ec9d89c8b4e099a6a93a14abe647217f4c2de3e870a91b2058810f",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "song_write",
+      "address": "0x400a8bae",
+      "length": 8,
+      "sha256": "e1f0c30ba50be61a73c667d403a4df1aebf7d22838a172685f623adc914c8bfb",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "song_read",
+      "address": "0x400a8ab4",
+      "length": 8,
+      "sha256": "aafc8f979f6aeb11a4358bcf7b01706892acebe4c40d3e520f88528b3cac80a8",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "song_padding_call",
+      "address": "0x400a8ca2",
+      "length": 6,
+      "sha256": "04d4c530e8a9250a925fbe9ccc2e34c3725ed459bdefe0fcda7d61684c2d6319",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "song_insert",
+      "address": "0x40023fda",
+      "length": 8,
+      "sha256": "55ebac47d37ec4081d8f3ff6f33cffeb3b15e2b8db230d6c56fd728508bf4b86",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "song_delete",
+      "address": "0x40023afc",
+      "length": 8,
+      "sha256": "1a241bd7b3090391ae8bfc0352ae22425a70817ccd477fa5d7aba231b95b8bc9",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "song_clear",
+      "address": "0x40023c5e",
+      "length": 6,
+      "sha256": "8d1503d38f264a9b0be0700a53c1e2e61354803cc529f54092a511ae826bca7f",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "root_keys",
+      "address": "0x4000839e",
+      "length": 8,
+      "sha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "root_encoders",
+      "address": "0x400083f0",
+      "length": 6,
+      "sha256": "01e6e5f3a619e36e0e34eaca9d316463e13a52b0989c25a2b48f6aa362a6efba",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "lcd_frame",
+      "address": "0x40100992",
+      "length": 8,
+      "sha256": "3d6af2284560391a78174411e69a8af734bd6357632708610b7ab6fd18d2fa1a",
+      "whole_instructions": true,
+      "pc_relative": false
+    },
+    {
+      "name": "scene_smoothing_call",
+      "address": "0x400a4a7e",
+      "length": 6,
+      "sha256": "7cf85a64892c6dd49ceb3b5ded5f2ed417112baba455447fe0d9c069752d08a8",
+      "whole_instructions": true,
+      "pc_relative": false
+    }
+  ],
+  "replay": [
+    {
+      "test": "native_common_length_wrap",
+      "passed": 832,
+      "tracks": 13,
+      "lengths": "1..64"
+    },
+    {
+      "test": "native_per_track_length_wrap",
+      "passed": 78
+    },
+    {
+      "test": "post_iteration_runs_for_disabled_track_without_step",
+      "passed": 13
+    },
+    {
+      "test": "native_divider_due_and_not_due",
+      "passed": 182,
+      "speed_codes": 7
+    }
+  ],
+  "replay_cases": 1105,
+  "failures": 0,
+  "step_due_observations": 1001,
+  "wrap_callback_observations": 13,
+  "script_sha256": "bee044e882737102ca7a9f79359908fc0dbf6c81d88da710f7fd3011da79b0f1",
+  "limitations": [
+    "Bounded native branch replay, not whole interrupt or real clock integration.",
+    "No physical hardware, swing, microtiming, MIDI clock or deadlines qualified.",
+    "Instruction boundaries cross-checked against local ColdFire objdump; global inbound-edge safety not claimed.",
+    "Callable-entry guards are identity checks, not permission to install a hook at every helper."
+  ],
+  "scope": "Research identity windows only; not an installed hook list. All main-CPU OS1.42. No firmware or native bytes.",
+  "modwerk_main": "cbc4935da83d0c5c78e5602c2191cac3c495fd51",
+  "inbound_edges_globally_verified": false,
+  "modwerk_hardware_tested": false
+}
