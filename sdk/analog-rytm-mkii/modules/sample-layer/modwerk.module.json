@@ -171,11 +171,11 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Sample Layer thumbnail",
-      "alt": "Placeholder thumbnail for Sample Layer",
+      "caption": "SAMPLE LAYER",
+      "alt": "A sample's hit as stock plays it, dashed, and as TRANSIENT shapes it: later, sharper and shorter.",
       "credit": "chevyone",
       "license": "GPL-3.0-or-later",
-      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+      "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
     },
     {
       "path": "media/engine-list.png",
