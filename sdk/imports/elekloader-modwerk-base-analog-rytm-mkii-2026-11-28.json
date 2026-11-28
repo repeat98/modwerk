@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-analog-rytm-mkii-2026-11-28",
+  "about": "Modwerk's Analog Rytm MKII base for OS 1.74 with Modwerk's own hook bus (core/core.s, settings.s, render.s), built by npm run machine:base -- analog-rytm-mkii: plain (9af4adee), send-bus (9f677a80) and voices (5768f70f), each with the same sites, exports, imports and tables as the variant it follows (1c14b6b0, 3ece243b, dd771eae).",
+  "cores": [
+    {
+      "file": "modwerk-base-analog-rytm-mkii-9af4adee.elemod",
+      "sha256": "9af4adee9511147b977df4962519593e3381dd3fe63e5ebafc5b0e20b3d7b1b1",
+      "id": "core",
+      "version": "0.7",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "a30af9c70ddb2a1bf1ee12ead325fa1e86293535",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-9af4adee.elemod"
+      }
+    },
+    {
+      "file": "modwerk-base-analog-rytm-mkii-9f677a80.elemod",
+      "sha256": "9f677a8095b945008eb26452405bf54794580be89542a9bf8e3403c45ee961f8",
+      "id": "core",
+      "version": "0.7",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "a30af9c70ddb2a1bf1ee12ead325fa1e86293535",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-9f677a80.elemod"
+      }
+    },
+    {
+      "file": "modwerk-base-analog-rytm-mkii-5768f70f.elemod",
+      "sha256": "5768f70f65cfd45c8ea612117ad65008c7af4fd3c8883f758812675edf652dad",
+      "id": "core",
+      "version": "0.7",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "a30af9c70ddb2a1bf1ee12ead325fa1e86293535",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-5768f70f.elemod"
+      }
+    }
+  ],
+  "mods": []
+}

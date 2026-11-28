@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-digitakt-ii-2026-11-28",
+  "about": "Modwerk's Digitakt II base for OS 1.17 (371564c4) with Modwerk's own hook bus (core/core.s, settings.s, fast.s), built by npm run machine:base -- digitakt-ii. Same sites, exports, imports and tables as 948be0c4.",
+  "cores": [
+    {
+      "file": "modwerk-base-digitakt-ii-371564c4.elemod",
+      "sha256": "371564c4d0af82f5df0ca17d808e9f0a6c2155bba5eb1846eba838bb72a90b7e",
+      "id": "core",
+      "version": "1.1",
+      "device": "digitakt-mk2",
+      "os": "1.17",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "a30af9c70ddb2a1bf1ee12ead325fa1e86293535",
+        "path": "sdk/imports/packages/modwerk-base-digitakt-ii/modwerk-base-digitakt-ii-371564c4.elemod"
+      }
+    }
+  ],
+  "mods": []
+}

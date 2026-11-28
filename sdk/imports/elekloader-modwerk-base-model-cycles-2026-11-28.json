@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-model-cycles-2026-11-28",
+  "about": "Modwerk's Model:Cycles base for OS 1.13 (485c526a) with Modwerk's own hook bus (core/core.s), built by npm run machine:base -- model-cycles. Same sites, exports, imports and tables as 646706ff.",
+  "cores": [
+    {
+      "file": "modwerk-base-model-cycles-485c526a.elemod",
+      "sha256": "485c526a939f9f1cbb7cb732b29ac59561ad69296f35dccaf92b9c417d2196a6",
+      "id": "core",
+      "version": "0.3",
+      "device": "model-cycles",
+      "os": "1.13",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "a30af9c70ddb2a1bf1ee12ead325fa1e86293535",
+        "path": "sdk/imports/packages/modwerk-base-model-cycles/modwerk-base-model-cycles-485c526a.elemod"
+      }
+    }
+  ],
+  "mods": []
+}
