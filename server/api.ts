@@ -7,6 +7,7 @@ import { forumPublic } from './forum-public'
 import { forumMedia } from './forum-media'
 import { audioPreviewRoutes } from './audio-previews'
 import { avatarRoutes } from './avatars'
+import { baseImageRoutes } from './base-images'
 import { messageRoutes } from './messages'
 import { notificationRoutes, notifyModuleMaintainers, unsubscribe, withdrawModuleLike } from './notifications'
 import { notifyBugDevelopers, publicBugDetails } from './bug-reports'
@@ -132,6 +133,8 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if(support)return support
     const developer = await developerApi(request,db,user,admin,signedDeveloper,adminId,env)
     if(developer)return developer
+    const bases = await baseImageRoutes(request,env,user)
+    if(bases)return bases
     const avatar = await avatarRoutes(request,env,db,user)
     if(avatar)return avatar
     const media = await forumMedia(request,env,db,user,admin)

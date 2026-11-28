@@ -25,7 +25,7 @@ In the library, categories describe the instrument function a musician wants to 
 
 ## The workflow, in order
 
-1. Read the category guide, then [octabam's trap list](../../sdk/octabam/AGENTS.md) and its later [register](../../sdk/octabam/docs/TRAPS.md) before any DSP or ColdFire code.
+1. On the Octatrack, plan where the work runs on the ColdFire and what it may cost ([Keep the ColdFire cheap](#keep-the-coldfire-cheap)) before any code. Read the category guide, then [octabam's trap list](../../sdk/octabam/AGENTS.md) and its later [register](../../sdk/octabam/docs/TRAPS.md) before any DSP or ColdFire code.
 2. Follow [Add or port a module](../ADD_A_MODULE.md) for the folder, the manifest, the packages and the comparison with native octabam.
 3. Walk the guide's checklists: **Behave like the instrument** and **Integrate**, and for an effect **Sound quality** (aliasing, clipping, DC, idle behaviour). Tick an item only when you did it.
 4. Measure the [performance](#performance) and write `evidence/performance.json`: worst-case cycles, a benchmark against stock and a stress run. `npm run perf:audit -- check <that file>` must pass.
@@ -172,7 +172,7 @@ Collisions are caught automatically, so nothing ships incompatible without its a
 - **USB sets.** `npm run modules:compat` still refuses every byte collision, flagged or not: beta sets install whatever is chosen, so subscribe to a hook or [propose one](#propose-a-hook).
 - **Digitakt and Digitone.** `npm run modules:check` refuses two mods that patch overlapping bytes on a release both support unless one names the other in `compatibility.conflicts`. The website already refused those pairs; the flag makes the author's decision explicit.
 - **Who flags.** The module whose change makes the pair collide flags it in its own manifest: the newer module, or the one being updated, and it fixes the collision instead when that is no big refactor. Nobody edits another author's module to add a flag. A flag names an existing module id of the same machine; the check refuses any other. Changing only `compatibility.conflicts` needs no new module version, but still runs every check and needs a marked note in the module's changelog.
-- **Folding one module into another.** The absorbing module flags the absorbed one while both are listed, since they patch the same sites. On the elemod machines that flag is built into its package, so retiring the absorbed module later needs a new version only to drop it: retire it in the same pull request as the fold (Improved SMPL 0.6.0 and 0.6.1, #1649 and #1650; Improved Modulation 0.5.0, #2205). List the retired id in `RETIRED_DIGI_MODULE_IDS` (`src/devices/digi-mods.ts`) in the same change, so saved sets that name it still open. Handlers subscribed at the same order run by module id, then by their place in `build.json`: put the absorbed module's subscriptions first if its id sorted first, so its handlers keep running in the order they did.
+- **Folding one module into another.** The absorbing module flags the absorbed one while both are listed, since they patch the same sites. On the elemod machines that flag is built into its package, so retiring the absorbed module later needs a new version only to drop it: retire it in the same pull request as the fold (Improved SMPL 0.6.0 and 0.6.1, #1649 and #1650; Improved Modulation 0.5.0, #2205). List the retired id in `RETIRED_DIGI_MODULE_IDS` (`src/devices/retired-digi-modules.ts`) in the same change, so saved sets that name it still open; other modules' conflict lists may keep naming it, since their packages carry the flag. Handlers subscribed at the same order run by module id, then by their place in `build.json`: put the absorbed module's subscriptions first if its id sorted first, so its handlers keep running in the order they did.
 - **What no gate sees.** A flag can also name a limit the ledger cannot see, such as DSP placement or behaviour. Say why in the README's Compatibility section. `npm run module:doctor -- <id>` lists the collisions the ledger finds, so a flag that no longer applies can go at the next version.
 
 ### Shared sites still to build
@@ -210,6 +210,24 @@ Each problem is one line naming the modules, the byte ranges and what each one p
 ## Performance
 
 A module that is slow, or that only works when it is the only thing running, takes the room of every other module and of the stock instrument. So every new module carries `evidence/performance.json`: worst-case cycles, a benchmark against the closest stock effect and a stress run, which `npm run perf:audit` judges and `module:doctor` requires. A new FX aims for the cost of stock SPRING REV at its worst settings. Every Octatrack module also names its CPU price (`resources.cpuPrice`), measured on a unit; a machine's is its descriptor's `reserved[0]` too, and `modules:check` refuses a module without one. Read [MODULE_PERFORMANCE.md](../MODULE_PERFORMANCE.md) before you measure.
+
+### Keep the ColdFire cheap
+
+The Octatrack's ColdFire already runs stock at 40 to 75 % of its meter. A module that takes much more is refused on the patterns players actually use, or makes the knobs sluggish, and no later optimisation pass rescues a design that put its work in the wrong place. So **decide where the work runs before you write code**, put it in the plan the developer agrees to, and steer to the cheaper place whenever the idea allows. From cheapest to dearest:
+
+1. **On a key press or an edit.** A save, a slice, a lock or a rewrite applied when the player acts runs once, on the UI task ([`template key`](../MODULE_PERFORMANCE.md#measure-a-module)). Prefer it wherever the result can be computed then instead of while playing.
+2. **On the DSP.** Per-sample audio work belongs there. An effect never renders on the ColdFire (`module:doctor` refuses it), and the DSP has its own budget ([SPRING REV](../MODULE_PERFORMANCE.md#measure-a-module)).
+3. **Once a step or a trig.** A sequencer, a MIDI generator or a scene reacts to the step or the trig. It does not poll every frame or every tick.
+4. **Every frame, on the ColdFire:** a machine's render, the dearest thing a module can do. One stock FLEX track already takes about 7 % of a frame. FM Synth's track costs about 8 %, while Grain's first instance (33 %) and POLY8's (51 %) cannot be admitted beside a medium pattern and ship only on an owner waiver. Plan a machine at a stock track's cost: cap its voices, and drop the dearest work when the frame runs short.
+
+Write the plan's **ColdFire budget** as one line per piece of work: where it runs (1 to 4 above), how often, and what it may cost, against these references. A piece in place 4 states its per-track figure and how the module stays under it. If the idea only works in place 4 at a high cost, say so before building, and offer the cheaper version (fewer voices, work moved to a key press or to the DSP).
+
+While you build:
+
+- **Nothing in use, nothing spent.** Answer `ev_in_use` and mark your frame detours `"rests"` ([HOOKS.md](../../sdk/machines/octatrack/HOOKS.md)). Other hooks, a tick hook among them, are not rested by that: do their work only when something changed, never a scan, checksum or derivation on every tick.
+- **Module code runs uncached.** A loop over a pattern record or a 64-step table costs many times what it would in the base. On a knob turn, write only the bytes that change, in place, and never call a stock routine that rescans every track.
+- **Bound the render.** Time it with DTCN3 and cap the work as POLY8's voice governor does ([machines](machines.md)). Take a write lease only where a call writes, at most once a frame.
+- **Measure the first prototype, not only the release.** As soon as a draft runs on the unit, `npm run device:price -- <draft .mwrm>` (a machine or an effect: add `--curve T1,T3,T6,T7`) shows its cost at rest and in use, and a curve shows whether it is admitted on the medium pattern. Compare that with the plan's budget and change the design while that is still cheap. A release must stay at or under 0.2 points of the frame interrupt at rest (unless it rests) and 2 points of the CPU meter. Past either, or past its curve, `modules:check` refuses it ([performance](../MODULE_PERFORMANCE.md#measure-a-module)). The emulator measures no load: only a unit shows this.
 
 ## Digitakt and Digitone
 

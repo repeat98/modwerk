@@ -3330,14 +3330,12 @@ MIT license (tweaks/LICENSE-elektron-model-tweaks).
 
 ========================================================================
 
-elekloader's kit (vendored Digitakt/Digitone builder)
+elekloader kit (the formats Modwerk's firmware builder reads and writes)
 SPDX: GPL-3.0-or-later
-Used in: vendor/elekloader/kit; Digitakt/Digitone browser builder
-Notice source: vendor/elekloader/kit/NOTICE
-Notice source: vendor/elekloader/kit/LICENSE
+Used in: src/engine/elektron (Modwerk's firmware builder)
 Notice source: https://github.com/irpina/elekloader/tree/3b31ef3c0e43c810e3acd0be6257e2484b20fc40/js
 
-Modwerk ships this kit with src/codec/aplib.ts, src/codec/elz.ts, src/codec/transport.ts, src/isa/coldfire.ts replaced by Modwerk's own implementation (vendor/elekloader/README.md). They keep the formats of the code credited under "Code from other projects" below and were checked against outputs recorded from it, so that credit stays.
+Modwerk's firmware builder (src/engine/elektron) is Modwerk's own implementation of the package and firmware formats this kit reads and writes, checked byte for byte against its outputs. The kit's notice stays with it.
 
 elekloader
 Copyright (C) 2026 irpina and contributors
@@ -4080,7 +4078,7 @@ Public License instead of this License.  But first, please read
 
 ========================================================================
 
-Digitakt/Digitone mod releases (DIGISLICER, NEIGHBOR, digihealth, digitables, elekloader cores)
+Digitakt/Digitone core releases
 SPDX: GPL-2.0-or-later
 Used in: vendor/elekloader/catalog
 Notice source: vendor/elekloader/upstream-catalog.json
@@ -4432,74 +4430,6 @@ proprietary programs.  If your program is a subroutine library, you may
 consider it more useful to permit linking proprietary applications with the
 library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.
-
-========================================================================
-
-SOPHIE (digisophie) release
-SPDX: MIT
-Used in: vendor/elekloader/catalog/digisophie-1.1.13.elemod
-Notice source: sdk/digitakt/modules/digisophie/LICENSE
-
-SOPHIE (digisophie) 1.1.13 release by soejrd, built by the vendored elekloader builder, unmodified: https://github.com/soejrd/digisophie/releases/tag/v1.1.13
-
-MIT License
-
-Copyright (c) 2026 Matt Estela
-Copyright (c) 2026 digisophie contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-========================================================================
-
-digi1_mods releases (digichain, Digi EQ, Digi Matrix, Digi Mono, Digi Poly, Digi utilities)
-SPDX: MIT
-Used in: vendor/elekloader/catalog/digichain-1.6.elemod; vendor/elekloader/catalog/digichain-1.6-os1.54.elemod; vendor/elekloader/catalog/digieq-1.0.2-experimental-os1.53.elemod; vendor/elekloader/catalog/digieq-1.0.2-experimental-os1.54.elemod; vendor/elekloader/catalog/digimatrix-1.0b.elemod; vendor/elekloader/catalog/digimatrix-1.0b-os1.54.elemod; vendor/elekloader/catalog/digimono-0.13.3-experimental-os1.53.elemod; vendor/elekloader/catalog/digimono-0.13.3-experimental-os1.54.elemod; vendor/elekloader/catalog/digipoly-2.0.elemod; vendor/elekloader/catalog/digipoly-2.0-os1.54.elemod; vendor/elekloader/catalog/digiutils-1.9a.elemod; vendor/elekloader/catalog/digiutils-1.9a-os1.54.elemod; sdk/imports/packages/digimono/digimono-0.13.2-experimental-os1.53.elemod; sdk/imports/packages/digimono/digimono-0.13.2-experimental-os1.54.elemod; sdk/imports/packages/digimono/digimono-0.13.3-experimental-os1.53.elemod; sdk/imports/packages/digimono/digimono-0.13.3-experimental-os1.54.elemod
-Notice source: sdk/digitakt/modules/digichain/LICENSE
-
-digi1_mods releases by gdeo607, built by the vendored elekloader builder, unmodified and pinned by SHA-256 in vendor/elekloader/upstream-catalog.json to commit 35bacb3730d108e4dc48a7bd6de4c99ae9b161e6:
-- digichain 1.6, Digi EQ 1.0b, Digi Matrix 1.0b, Digi Mono 0.13b, Digi Poly 2.0 and Digi utilities 1.9a, each for Digitakt OS 1.53 and 1.54: https://github.com/gdeo607/digi1_mods/tree/35bacb3730d108e4dc48a7bd6de4c99ae9b161e6/elemods
-The imported sources and documentation are in sdk/digitakt/modules.
-
-MIT License (applies to the original code and documentation in this repository only)
-
-Copyright (c) 2026 the digi1_mods authors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-This license does NOT cover the manufacturer's operating system, which is
-copyrighted by its owner and is not part of this repository.
 
 ========================================================================
 

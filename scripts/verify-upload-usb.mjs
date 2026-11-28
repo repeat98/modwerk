@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../src/engine/elektron/bytes.ts'
 import { UploadSession, UploadUnconfirmedError } from '../src/engine/elekloader/upload-session.ts'
 import { UsbVendorTransport, VendorTransportError } from '../src/engine/elekloader/upload-usb.ts'
 

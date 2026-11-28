@@ -354,7 +354,7 @@ Every new library version passes the publication gate: at least `author-hardware
 **Porting an elekloader mod:**
 
 1. Take `elekloader-catalog.json` (and the kit zip when the kit changes) from an elekloader release, then run `npm run elekloader:update -- [elekloader-kit-<version>.zip --sha256 <hash>] elekloader-catalog.json [--library]`. It downloads each mod from its author's release, checks every hash, writes `vendor/elekloader/catalog/` and the lock, and prints what is left by hand. Details: [vendor/elekloader/README.md](../vendor/elekloader/README.md#updating). A module's id is its catalog id.
-2. Create `sdk/<machine>/modules/<id>/` with the same layout as [digihealth](../sdk/digitakt/modules/digihealth/):
+2. Create `sdk/<machine>/modules/<id>/` with the same layout as [CC Recall](../sdk/digitakt/modules/cc-recall/):
    - `modwerk.module.json`, with `source` pinned to the author's commit;
    - the author's source under `src/`, and `build.json`;
    - README, TESTING, and LICENSE with the author's own licence text;

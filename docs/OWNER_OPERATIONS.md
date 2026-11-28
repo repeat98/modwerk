@@ -8,6 +8,10 @@ Running the live Modwerk site is the owner's work: the complete issue-fix and re
 - The unit on this computer is a development unit, and agents need no OK from the owner to use it (owner, 20 November 2026): a session takes its turn through the queue and runs, without asking, rolled-back trials, `device:test`, `device:price`, RAM boots of development builds, driving it and captures. It also Keeps without asking when a test needs it (`device:qualify` does), on the card that is in the unit: never ask him to insert or swap a card. Before the first Keep it records the kept set (`inventory`) and the flashed base's identity, and when it is done it puts that set back and checks the inventory against the record. Flashing stays his, and so do power cycles: an agent never power-cycles the unit itself and asks for one only when a test cannot go on without it.
 - Disk space on the owner's computer runs out. Once a pull request you opened is merged or closed, remove its worktree with `git worktree remove` and delete the temporary folders you created for it, such as builds, renders and logs under `/private/tmp`. Keep anything with uncommitted or unpushed work, and leave folders another session created.
 
+## Ship a base
+
+When a machine's cumulative base draft (`base/<machine>-next`) is merged and live, publish its hosted images the same day, or the install guide asks everyone for their own OS file again until you do: from a checkout of the deployed `main`, `npm run base:publish -- --stock <your OS file>` uploads the new base and its step base ([hosted bases](HOSTED_BASES.md#publish)). The Octatrack's 0.8.4 (repeat98/modwerk#2333) is the first base this applies to.
+
 ## Email sendouts
 
 - For an email sendout, follow [Preparing an email sendout](COMMUNITY_OPERATIONS.md#preparing-an-email-sendout). Draft and preview revisions are operational work, without app checks or SDK builds; validate any notification-code repair separately.

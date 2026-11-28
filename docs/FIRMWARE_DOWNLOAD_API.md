@@ -29,9 +29,9 @@ Save this request outside the repository, for example `/tmp/digi-download.json`:
 {
   "machine": "digitakt",
   "os": "1.54",
-  "moduleIds": ["digimono", "digieq"],
+  "moduleIds": ["digistring", "euclidean"],
   "version": "D180",
-  "expectedVersions": {"digimono": "0.13.2-experimental"},
+  "expectedVersions": {"digistring": "0.9.0"},
   "expectedSha256": "b90e05a46af97b7179e7a17123b9335bcec90db4cec20996575d036a25249130",
   "riskAccepted": true
 }

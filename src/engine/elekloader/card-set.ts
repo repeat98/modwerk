@@ -3,7 +3,7 @@
 // written here so a set reaches the unit by card as it does over USB: the same packages, installed at power-on by the
 // base's loader with the checks of a USB install. The base loads only a file stamped with its own identity, whose
 // SHA-256 matches, and of its two files (/MODWERK0.SET, /MODWERK1.SET) the one with the higher generation.
-import { sha256 } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha256 } from '../elektron/bytes.ts'
 import { digestBytes, SAVED_SET_CAPACITY } from './upload-wire.ts'
 import { SET_CHANGES, SET_MAX_ABI } from './set-package.ts'
 
