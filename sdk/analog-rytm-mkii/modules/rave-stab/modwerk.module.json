@@ -55,8 +55,8 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, on the Modwerk base's digital voices.",
-      "Offered on the BD, SD and BT tracks only until its cost is measured on a unit.",
-      "Not yet heard on a unit."
+      "Offered on the BD, SD and BT tracks only: one voice measured 6.8 % of an audio block on a MKII; several voices together have not been measured yet.",
+      "Not tested yet: several SY RAVE voices at once, and a project save and power cycle."
     ]
   },
   "platform": {
