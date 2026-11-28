@@ -1,0 +1,68 @@
+{
+  "module": "micro-timing",
+  "version": "0.1.1-experimental",
+  "base": "development twin dce64a781f8581b4, MKII",
+  "scene": "C02 Part 1 stopped",
+  "inputs": {
+    "transport": "playing"
+  },
+  "seconds": 8,
+  "readings": 3,
+  "measuredAt": "2026-11-28T03:50:50.684Z",
+  "result": {
+    "id": "micro-timing",
+    "version": "0.1.1-experimental",
+    "packageSha256": "8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47",
+    "before": {
+      "frame": 24.4,
+      "frameMax": 32.8,
+      "frames": 68442,
+      "skipped": 0,
+      "cpu": 36.4,
+      "dsp1to4": 32.7,
+      "dsp5to8": 41.8,
+      "dsp1to4Peak": 33.8,
+      "dsp5to8Peak": 42.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0.1,
+        "cpu": 0.3,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 0.1,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "atRest": {
+      "frame": 24.4,
+      "frameMax": 32.8,
+      "frames": 68559,
+      "skipped": 0,
+      "cpu": 36.4,
+      "dsp1to4": 32.7,
+      "dsp5to8": 41.8,
+      "dsp1to4Peak": 33.7,
+      "dsp5to8Peak": 42.8,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.2,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 0.2,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "atRestAdds": {
+      "frame": 0,
+      "cpu": 0,
+      "dsp1to4": 0,
+      "dsp5to8": 0,
+      "dsp1to4Peak": -0.1,
+      "dsp5to8Peak": 0
+    },
+    "rolledBack": true
+  }
+}

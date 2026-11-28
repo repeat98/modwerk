@@ -27,26 +27,40 @@ unit, check LEVEL on an audio track and on a MIDI track, and record whether
 the development-twin rollback refusal returns with TRACK TRIG EDIT open and
 with it closed.
 
-**Not run yet.** Dig campaign paused (Jon priority 28 November 2026); no new
-Accept / `device_keep` invent. Prior LEVEL reports are on the private MICRO T9
-card, not this package. The one development-twin trial of this code ended with
-rollback refused (needs-recovery) and is not a LEVEL pass. Fill this section
-and the edge-case table below when the unit procedure runs.
+**Ran 28 November 2026 (Europe/London), tip `f88922eff471`**, package
+`8958a66f…`, MKII OS 1.40C. No Accept / `device_keep`. Digs paused after this
+record.
+
+| Step | Result |
+| --- | --- |
+| 1–4 software / compat / build / cost-model | **PASS** (`PYTHONUTF8=1` on Windows) |
+| 5 emulator | not run (`--no-emulator`) |
+| 6 unit-read | **PASS** (C02 Part 1, working = saved; empty inventory) |
+| 7 `device:test` | **PASS** (Windows trial rollback via recover after SIGINT unsupported) |
+| 8 soak 120 s | **PASS** |
+| 9 `device:price` | **PASS** on twin `dce64a781f8581b4` (`--dev` + guard): at rest frame **+0**, cpu **+0**; wrote `evidence/cpu-price.json`. Staged via step base `4e9a87ea…` (RAM) then guard twin (MAIN 1338730 > prior twin’s 1.25 MiB stage) |
+| 10 put-back | empty inventory after recover |
+| Emulator / Keep / power cycle | not this pass |
+
+Twin path for step 9: `npm run octatrack:base -- --stock OS.bin --step --out STEP` →
+`device boot STEP` → `device boot` `dev-twin-base63-guard-2026-11-26`
+(`dce64a781f8581b4`). No flash. Prior SPOS twin `cdfb0c2755afedfd` has no
+guard; larger `--dev` twins would not stage from it.
 
 ### Edge cases
 
 | Case | Why this change makes it a risk | How run | Result |
 |---|---|---|---|
-| LEVEL while playing | LEVEL rewrites every step through the stock writer while transport runs | `npm run test:procedure -- micro-timing` on package `8958a66f…` | not run: digs paused |
-| Part change | remembered row is module bss; Part change must not leave a stale row or hang | same procedure | not run: digs paused |
-| MIDI button | MIDI on/off selects which track LEVEL writes | same procedure | not run: digs paused |
-| USB removal while TRACK TRIG EDIT open | earlier Keep remove was refused (RUNTIME_UI_OPEN) with that key layer up | same procedure | not run: digs paused |
-| Power cycle | remembered row must clear; trig offsets must stay | same procedure | not run: digs paused |
-| Beside other TRACK TRIG EDIT / key-layer modules | shared gesture and screen claim | same procedure | not run: digs paused |
-| LEVEL audio track | owner-required: confirm LEVEL on audio with this package | same procedure | not run: digs paused |
-| LEVEL MIDI track | owner-required: confirm LEVEL on MIDI with this package | same procedure | not run: digs paused |
-| Rollback with TRACK TRIG EDIT open | prior twin trial rollback refused (needs-recovery) | same procedure | not run: digs paused |
-| Rollback with TRACK TRIG EDIT closed | compare open vs closed key layer | same procedure | not run: digs paused |
+| LEVEL while playing | LEVEL rewrites every step through the stock writer while transport runs | Keep-safe trial of `8958a66f…` | **not run**: MICRO T row never appeared (see LEVEL rows) |
+| Part change | remembered row is module bss; Part change must not leave a stale row or hang | `device:test` Part switches inside step 7 | **PASS** (scripted; no hang) |
+| MIDI button | MIDI on/off selects which track LEVEL writes | Keep-safe trial | **not run**: no MICRO T row to exercise LEVEL |
+| USB removal while TRACK TRIG EDIT open | earlier Keep remove was refused (RUNTIME_UI_OPEN) with that key layer up | not this pass | **not run** |
+| Power cycle | remembered row must clear; trig offsets must stay | not this pass (no Accept) | **not run** |
+| Beside other TRACK TRIG EDIT / key-layer modules | shared gesture and screen claim | compat step 2 | **PASS** (0 conflicts); hardware beside others not run |
+| LEVEL audio track | owner-required: confirm LEVEL on audio with this package | trial on `cdfb0c27…` and on `dce64a78…`; REC + FUNC+BANK; LCD PNG | **FAIL**: TRACK TRIG EDIT opened (TRIGS/SLIDE/SWING/REC.TRG) with **no MICRO T row**; footer stayed stock quantize — no LEVEL fraction change observed |
+| LEVEL MIDI track | owner-required: confirm LEVEL on MIDI with this package | same trials; MIDI button | **FAIL**: MIDI TRIG EDIT showed TRIGS/SWING only — **no MICRO T**; no LEVEL fraction change |
+| Rollback with TRACK TRIG EDIT open | prior twin trial rollback refused (needs-recovery) | Keep-safe Undo with TRACK TRIG EDIT / MIDI TRIG EDIT open | **PASS** (rolled back; inventory `[]`) on both twins |
+| Rollback with TRACK TRIG EDIT closed | compare open vs closed key layer | Keep-safe Undo after NO closed the key layer | **PASS** (rolled back; inventory `[]`) |
 
 ## What was reported
 
