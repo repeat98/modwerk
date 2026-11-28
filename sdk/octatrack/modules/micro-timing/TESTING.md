@@ -19,6 +19,35 @@ and Screen Off — USB package + native source accounting, not a card
 
 Stock guards for the TRACK TRIG EDIT sites in `manifest.py` match original OS 1.40C (`section_3_MAIN_OS.bin` SHA-256 `164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`) as hashed locally from the developer's own extract. Those bytes are not in this folder. `npm run module:verify` has not been run. A USB package of commit `dbc0652b4` was built on 18 November 2026 and is not in this folder.
 
+## `npm run test:procedure -- micro-timing` (package `8958a66f…`)
+
+Owner ask on #2193 (26 November 2026): run the published package
+`8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47` on a
+unit, check LEVEL on an audio track and on a MIDI track, and record whether
+the development-twin rollback refusal returns with TRACK TRIG EDIT open and
+with it closed.
+
+**Not run yet.** Dig campaign paused (Jon priority 28 November 2026); no new
+Accept / `device_keep` invent. Prior LEVEL reports are on the private MICRO T9
+card, not this package. The one development-twin trial of this code ended with
+rollback refused (needs-recovery) and is not a LEVEL pass. Fill this section
+and the edge-case table below when the unit procedure runs.
+
+### Edge cases
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| LEVEL while playing | LEVEL rewrites every step through the stock writer while transport runs | `npm run test:procedure -- micro-timing` on package `8958a66f…` | not run: digs paused |
+| Part change | remembered row is module bss; Part change must not leave a stale row or hang | same procedure | not run: digs paused |
+| MIDI button | MIDI on/off selects which track LEVEL writes | same procedure | not run: digs paused |
+| USB removal while TRACK TRIG EDIT open | earlier Keep remove was refused (RUNTIME_UI_OPEN) with that key layer up | same procedure | not run: digs paused |
+| Power cycle | remembered row must clear; trig offsets must stay | same procedure | not run: digs paused |
+| Beside other TRACK TRIG EDIT / key-layer modules | shared gesture and screen claim | same procedure | not run: digs paused |
+| LEVEL audio track | owner-required: confirm LEVEL on audio with this package | same procedure | not run: digs paused |
+| LEVEL MIDI track | owner-required: confirm LEVEL on MIDI with this package | same procedure | not run: digs paused |
+| Rollback with TRACK TRIG EDIT open | prior twin trial rollback refused (needs-recovery) | same procedure | not run: digs paused |
+| Rollback with TRACK TRIG EDIT closed | compare open vs closed key layer | same procedure | not run: digs paused |
+
 ## What was reported
 
 The behaviour in `microtiming.s` is the private card image MICRO T9 (ELEK `MICRO T9`, SHA-256 `be88f1993be56e07af1f6528e85cff831a998f26cd7ed2bad4bd7a8f3b662f12`), reported by the author on a unit. That image is not this module package, and it is not in the repository.
