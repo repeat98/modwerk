@@ -20,6 +20,9 @@ export const DEVICE_LOG_BYTES = logBytes(1)
 /** What a version 2 base pages out: the log and the two records; a version 1 base answers zeros past its log. */
 export const DEVICE_LOG_IMAGE_BYTES = logBytes(2) + CRASH_BYTES + STALL_BYTES
 export const DEVICE_LOG_PAGES = Math.ceil((DEVICE_LOG_IMAGE_BYTES + TRACE_BYTES) / DEVICE_LOG_PAGE)
+const SHEDS_AT = DEVICE_LOG_IMAGE_BYTES + TRACE_BYTES
+/** The page that holds the frame guard's live counts: asked alone, it costs one transfer instead of the whole log. */
+export const DEVICE_LOG_SHEDS_PAGE = DEVICE_LOG_PAGES - 1
 
 /** `stallSeen`: the stall record's count when the unit started, so a stall record with another count is from this start.
  * `sheds`: the frame guard's skips since the start and their track mask, live, on bases that page them, with `lateOver`,
@@ -82,6 +85,8 @@ export function parseDeviceLog(data: Uint8Array): DeviceLog | undefined {
   return { version, nonce: view.getUint32(8), boot: view.getUint32(12), seq: view.getUint32(16), stallSeen: view.getUint32(32), loads: loads.sort(bySeq), incidents: incidents.sort(bySeq),
     ...(version >= 2 ? { crash: crash(view, end), stall: stall(view, end + CRASH_BYTES) } : {}), ...(version >= 2 ? sheds(view, end + CRASH_BYTES + STALL_BYTES + TRACE_BYTES) : {}) }
 }
+/** The frame guard's counts from LOG's last page alone (DEVICE_LOG_SHEDS_PAGE); undefined from a base that doesn't page them. */
+export const parseShedsPage = (page: Uint8Array) => sheds(new DataView(page.buffer, page.byteOffset, page.byteLength), SHEDS_AT - DEVICE_LOG_SHEDS_PAGE * DEVICE_LOG_PAGE).sheds
 function sheds(view: DataView, at: number): { sheds?: { count: number; tracks: number; lateOver?: number } } {
   if (view.byteLength < at + SHEDS_BYTES || view.getUint32(at) !== SHEDS_MAGIC) return {}
   return { sheds: { count: view.getUint32(at + 4), tracks: view.getUint32(at + 8) & 0xff,
