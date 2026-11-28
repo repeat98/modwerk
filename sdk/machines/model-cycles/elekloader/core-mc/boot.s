@@ -1,4 +1,4 @@
-| SPDX-License-Identifier: GPL-3.0-or-later
+| SPDX-License-Identifier: GPL-2.0-or-later
 | Modwerk's Model:Cycles core: ev_boot. core.s's boot calls core_boot_init once, after it
 | has copied .run and cleared .bss, before the OS starts (supervisor, interrupts and data
 | cache off): handlers may write module RAM only and call no firmware routine.

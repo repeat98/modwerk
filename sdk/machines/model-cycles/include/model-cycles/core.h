@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #ifndef MODWERK_MODEL_CYCLES_CORE_H
 #define MODWERK_MODEL_CYCLES_CORE_H
 

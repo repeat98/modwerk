@@ -6,7 +6,7 @@
  "description": "Modwerk's core for the Model:Cycles OS 1.13: the boot copier and the UI hook bus (ev_tick, ev_draw, ev_key, ev_enc, ev_boot), and the OS's own routines and data by name (fw_*), so modules carry no stock addresses. Every other mod needs it.",
  "category": "Framework",
  "author": "Modwerk",
- "license": "GPL-3.0-or-later",
+ "license": "GPL-2.0-or-later",
  "target": {
   "device": "model-cycles",
   "product": "Model:Cycles",
@@ -9435,9 +9435,9 @@
  "conflicts": [],
  "build": {
   "sources": {
-   "core.s": "5fe35aceee9a6c3f785d6d886e60bb78e071edcce7350e50f048a2089716d287",
-   "fw.s": "067391f08c5365181b740f8a99bf39069b0c2f5d64361e5711ddb2c7d8652835",
-   "boot.s": "1d998e30b1d2450ea7458be4606672f949dcaf5815e1557999768e01f77f4bfc",
+   "core.s": "d5b94b726be5f53ad01014306a3e83b29da9412e2b79b0fe446957ebb68e8270",
+   "fw.s": "aaf2b78f8e8a600ed41a92a341240f03096349eb8ef1785d4db57e09793327fb",
+   "boot.s": "cbfd37ba58bb8e5891e8c8368fdda6c9d8f76d51cedf8c653694d0441901a2f4",
    "key-leds.s": "8cf029c1d10243387906fd91d4c4270c4033b9ffbe685cd39252c3269aa9fb97",
    "link.c": "5eed2a2230733ea7e9f53f1645ce7d091b8cd0cf253c73e8eb013d8afdc6345b",
    "link.s": "e61aab3b6434b2e14eca843812913c2de94123ef584399b6b5d7ef5224f7da45",

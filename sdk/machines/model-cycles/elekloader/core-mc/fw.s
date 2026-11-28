@@ -1,4 +1,4 @@
-| SPDX-License-Identifier: GPL-3.0-or-later
+| SPDX-License-Identifier: GPL-2.0-or-later
 | Modwerk's Model:Cycles core: where OS 1.13 keeps the routines and data modules use, as
 | absolute global symbols. No bytes: a module that names one links to the address here, so
 | it carries no stock address of its own. C API and conventions: model-cycles/core.h.

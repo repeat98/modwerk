@@ -7,7 +7,7 @@
  "category": "Framework",
  "author": "Modwerk",
  "description": "Modwerk's core for the Model:Cycles OS 1.13: the boot copier and the UI hook bus (ev_tick, ev_draw, ev_key, ev_enc, ev_boot), and the OS's own routines and data by name (fw_*), so modules carry no stock addresses. Every other mod needs it.",
- "license": "GPL-3.0-or-later",
+ "license": "GPL-2.0-or-later",
  "sources": [
   "../core/core.s",
   "fw.s",

@@ -1,4 +1,4 @@
-| SPDX-License-Identifier: GPL-3.0-or-later
+| SPDX-License-Identifier: GPL-2.0-or-later
 | Modwerk's Model:Cycles core (OS 1.13): constants for assembly. The fw_* locations are
 | symbols of the core (fw.s); name them directly. C: model-cycles/core.h.
 

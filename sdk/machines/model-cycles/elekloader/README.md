@@ -31,7 +31,7 @@ npm run machine:base -- model-cycles --stock /private/model-cycles_OS1.13.syx --
 
 ## Results
 
-- Built 2026-11-28 with Modwerk's own core: package `c8e9966a…` ([base-binding.json](../base-binding.json)), 94 bytes
+- Built 2026-11-28 with Modwerk's own core: package `dda53ffd…` ([base-binding.json](../base-binding.json)), 94 bytes
   `.boot`, 38250 `.run`, 115796 `.bss`, 8 sites; its exports, imports, sites, tables, contributions and every `fw_*`
   value equal those of `485c526a…`, the hook-bus base before it. Not yet run on a unit.
 - Built 2026-11-25 with m68k-elf GCC 16.2.0 and binutils 2.47 against the kit at `3b31ef3`: package `646706ff…`

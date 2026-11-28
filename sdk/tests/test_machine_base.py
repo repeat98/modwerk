@@ -112,9 +112,9 @@ class MachineBases(unittest.TestCase):
         for path in OWN_CORE:
             first = (APP / path).read_text().splitlines()[0]
             if path.endswith(".json"):
-                self.assertEqual(json.loads((APP / path).read_text())["license"], "GPL-3.0-or-later", path)
+                self.assertEqual(json.loads((APP / path).read_text())["license"], "GPL-2.0-or-later", path)
             else:
-                self.assertIn("SPDX-License-Identifier: GPL-3.0-or-later", first, path)
+                self.assertIn("SPDX-License-Identifier: GPL-2.0-or-later", first, path)
         folder = APP / "sdk/machines/model-cycles/elekloader/core-mc"
         mod = json.loads((folder / "mod.json").read_text())
         own = HOOK_BUS | OWN_CORE
