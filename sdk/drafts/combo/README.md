@@ -1,6 +1,6 @@
 # Combo
 
-Version 0.1.0-experimental · by @sebasprosala-sys · an experimental draft: rendered bit for bit in dsp_host; the build before page 2 ran on a unit; COMBO is a USB package only for now (no card id is free).
+Version 0.1.0-experimental · by @sebasprosala-sys · an experimental draft: rendered bit for bit in dsp_host; this build, with both pages, passed device:test on a unit; COMBO is a USB package only for now (no card id is free).
 
 ## Overview
 
@@ -52,7 +52,7 @@ GAIN, BASS, MID, TREB, LEV and MIX glide (about 1.5 ms), so turning them, lockin
 ## Quick tutorial
 
 1. Put a drum loop, a synth line or a guitar on a track and pick COMBO on its FX1. At the defaults you hear BOOST's light crunch through a 1X12 cabinet.
-2. Hold FUNC, press FX1 and turn A through CLEAN, ROCK, SOLID and BASS to hear the five voices.
+2. Hold FUNC, press FX1 and turn A through CLEAN, BOOST, ROCK, SOLID and BASS to hear the five voices.
 3. Turn GAIN up past 90 for a fully driven sound, then turn CAB through 1X10 and 4X12 to hear the speaker change. Lower TREB if it gets fizzy.
 4. On the SETUP page turn D (AXIS) up to move the mic off axis, E (DIST) up to step it back into the room, and F (MIX) to about 60 to blend the dry track back in.
 5. Set CAB to OFF and GAIN to 0 to hear the amp nearly clean, or pick another effect in the list to take COMBO off the track.
