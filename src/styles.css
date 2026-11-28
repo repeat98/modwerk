@@ -317,6 +317,7 @@ h2 { font-size: var(--text-md); letter-spacing: -.15px; font-weight: 600; }
 .module-preview[data-module="miniverb"] { --signal: #83c7bc; --signal-rgb: 131,199,188; }
 .module-preview[data-module="tapeecho"] { --signal: #d5bd96; --signal-rgb: 213,189,150; }
 .module-preview[data-module="euclid"] { --signal: #c09be9; --signal-rgb: 192,155,233; }
+.module-preview[data-module="seq"] { --signal: #4ade80; --signal-rgb: 74, 222, 128; }
 .module-preview[data-module="repitch"] { --signal: #9eb4ed; --signal-rgb: 158,180,237; }
 .module-preview[data-module="analog-bassdrum"] { --signal: #e9ab83; --signal-rgb: 233,171,131; }
 .module-preview[data-module="grain"] { --signal: #f0b45a; --signal-rgb: 240,180,90; }
