@@ -1,0 +1,516 @@
+{
+  "schema": 1,
+  "module": "quadraverb",
+  "version": "0.1.0-experimental",
+  "sourceSha256": "ef8f67f7cafbc05fe012797e1e0a8765cde313020a93bed780acce1b588f7f35",
+  "kind": "dsp",
+  "cycles": {
+    "unit": "instructions/sample",
+    "static": 317.4,
+    "measured": 317.4,
+    "instancesPerCore": 1,
+    "method": "dsp_host with step tracing (engine/verify_area.py --cycles), the release form: the shell running each of the 48 programs' areas, relocated as code() relocates them, with the stream named by the slot's record and the in-blocks the ColdFire half sends; one instance, 16-sample calls, MIX 127, noise. The last call of runs ending 2 to 33 frames after the program starts (every place a tick can fall in a block), and of runs ending 2 to 17 frames into a fade (PROG moved away), each run bit-exact against the model. Executed instructions a sample (the shell's and the area's; the test's stand-in left out): the dearest, program 53, 307.2 while it plays and 317.4 while it fades; the code is straight-line, so the traced worst path is the static one. Chip cycles by interlock_scan's stall model on the same traces: 341.6 in the dearest block, 353.1 while fading; declared to the base as 355 modeled cycles, which it charges at 7/4 (one instance may take 726). Per program in `programs`. Not measured on a unit."
+  },
+  "stock": {
+    "comparator": "DARK REV",
+    "comparatorWorst": 242.38,
+    "dearestWorst": 330.94,
+    "baseline": "E-Verb's matched stock benchmark (sdk/octatrack/modules/everb/evidence/performance.json): perf.py bench on the original image, SPRING REV, DARK REV, PLATE REV and DJ EQ through fixed and moving controls and a trig split at every position. Not rerun for the Quadraverb.",
+    "stockSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+    "justification": "The Quadraverb runs the original's 96-step programs step for step at full rate, with their LFO sweeps and the copies of its long delay lines to and from the ColdFire, so it costs more than DARK REV. Its dearest program is still cheaper than DJ EQ, the dearest stock effect, and one instance a core is all the program areas allow."
+  },
+  "stress": {
+    "instancesPerCore": 1,
+    "tracks": 8,
+    "lfosPerTrack": 3,
+    "lockedSlots": 12,
+    "seconds": 2,
+    "guard": true,
+    "dirty": true,
+    "clobbers": 0,
+    "hangs": 0,
+    "method": "engine/stress_area.py: eight tracks, four a core, 2.0 s in dsp_host -guard 0x3dfe -guard-shared -dirty 0x5a, with stock's FX2 buffer table (Y:$4000, $8000 and the shared window's two entries a core). What the Quadraverb allows: one program a core, so T1 (core 1) and T5 (core 0) run programs and the other six tracks have the effect with no area named (dry, as the base's refusal leaves a slot). Each running track walks through the programs in its own order, the two dearest first (16 in the 2 s), one every sixteenth at 120 BPM: PROG moves (the area fades), then a stand-in for the base names the next program's area in the slot's record 60 blocks later, and that area sets itself up, clears and starts. Three LFOs a track (slot D sine, MIX triangle, slot E square), all twelve slots a new value each sixteenth, trig splits on six tracks, random halfwords in every in-block. No hang, 0 clobbers, both running tracks sound, and each track's output equals its output beside seven silent tracks. dsp_host's meters include the stand-in's block copies, so they are not the module's cost. The base's own stream counts (lost, refused) belong to the ColdFire's channel, which dsp_host does not run: read them on the unit (mem:0x40aed874:24 on twin5)."
+  },
+  "programs": [
+    {
+      "index": 0,
+      "program": 0,
+      "cyclesAverage": 311,
+      "cyclesDearestBlock": 319,
+      "executedDearest": 284,
+      "cyclesFading": 330.6,
+      "executedFading": 294.2,
+      "areaWords": 1156
+    },
+    {
+      "index": 1,
+      "program": 1,
+      "cyclesAverage": 299.3,
+      "cyclesDearestBlock": 307.4,
+      "executedDearest": 271.6,
+      "cyclesFading": 319,
+      "executedFading": 281.8,
+      "areaWords": 1076
+    },
+    {
+      "index": 2,
+      "program": 2,
+      "cyclesAverage": 306.5,
+      "cyclesDearestBlock": 314.6,
+      "executedDearest": 280.6,
+      "cyclesFading": 326.2,
+      "executedFading": 290.8,
+      "areaWords": 1093
+    },
+    {
+      "index": 3,
+      "program": 4,
+      "cyclesAverage": 246.1,
+      "cyclesDearestBlock": 253.2,
+      "executedDearest": 214.9,
+      "cyclesFading": 264.8,
+      "executedFading": 225.1,
+      "areaWords": 1001
+    },
+    {
+      "index": 4,
+      "program": 10,
+      "cyclesAverage": 299.3,
+      "cyclesDearestBlock": 306.9,
+      "executedDearest": 273.4,
+      "cyclesFading": 318.4,
+      "executedFading": 283.6,
+      "areaWords": 1092
+    },
+    {
+      "index": 5,
+      "program": 11,
+      "cyclesAverage": 301.6,
+      "cyclesDearestBlock": 309.2,
+      "executedDearest": 274.4,
+      "cyclesFading": 320.8,
+      "executedFading": 284.6,
+      "areaWords": 1110
+    },
+    {
+      "index": 6,
+      "program": 12,
+      "cyclesAverage": 297.3,
+      "cyclesDearestBlock": 304.9,
+      "executedDearest": 271.4,
+      "cyclesFading": 316.4,
+      "executedFading": 281.6,
+      "areaWords": 1088
+    },
+    {
+      "index": 7,
+      "program": 13,
+      "cyclesAverage": 293.3,
+      "cyclesDearestBlock": 301.3,
+      "executedDearest": 266.6,
+      "cyclesFading": 312.9,
+      "executedFading": 276.8,
+      "areaWords": 1054
+    },
+    {
+      "index": 8,
+      "program": 14,
+      "cyclesAverage": 274.1,
+      "cyclesDearestBlock": 274.1,
+      "executedDearest": 251.8,
+      "cyclesFading": 285.6,
+      "executedFading": 261.9,
+      "areaWords": 919
+    },
+    {
+      "index": 9,
+      "program": 15,
+      "cyclesAverage": 299,
+      "cyclesDearestBlock": 307.1,
+      "executedDearest": 271.6,
+      "cyclesFading": 318.7,
+      "executedFading": 281.8,
+      "areaWords": 1074
+    },
+    {
+      "index": 10,
+      "program": 16,
+      "cyclesAverage": 302.2,
+      "cyclesDearestBlock": 310.3,
+      "executedDearest": 276.6,
+      "cyclesFading": 321.9,
+      "executedFading": 286.8,
+      "areaWords": 1083
+    },
+    {
+      "index": 11,
+      "program": 17,
+      "cyclesAverage": 315.3,
+      "cyclesDearestBlock": 323.9,
+      "executedDearest": 289.4,
+      "cyclesFading": 335.5,
+      "executedFading": 299.6,
+      "areaWords": 1127
+    },
+    {
+      "index": 12,
+      "program": 18,
+      "cyclesAverage": 315.3,
+      "cyclesDearestBlock": 323.9,
+      "executedDearest": 289.4,
+      "cyclesFading": 335.5,
+      "executedFading": 299.6,
+      "areaWords": 1127
+    },
+    {
+      "index": 13,
+      "program": 19,
+      "cyclesAverage": 319.5,
+      "cyclesDearestBlock": 328.1,
+      "executedDearest": 294.4,
+      "cyclesFading": 339.7,
+      "executedFading": 304.6,
+      "areaWords": 1136
+    },
+    {
+      "index": 14,
+      "program": 20,
+      "cyclesAverage": 285.2,
+      "cyclesDearestBlock": 292.5,
+      "executedDearest": 258.6,
+      "cyclesFading": 304.1,
+      "executedFading": 268.8,
+      "areaWords": 1070
+    },
+    {
+      "index": 15,
+      "program": 21,
+      "cyclesAverage": 285.2,
+      "cyclesDearestBlock": 292.5,
+      "executedDearest": 258.6,
+      "cyclesFading": 304.1,
+      "executedFading": 268.8,
+      "areaWords": 1070
+    },
+    {
+      "index": 16,
+      "program": 22,
+      "cyclesAverage": 293.7,
+      "cyclesDearestBlock": 300.7,
+      "executedDearest": 266.9,
+      "cyclesFading": 312.2,
+      "executedFading": 277.1,
+      "areaWords": 1093
+    },
+    {
+      "index": 17,
+      "program": 33,
+      "cyclesAverage": 247.1,
+      "cyclesDearestBlock": 254.2,
+      "executedDearest": 215.9,
+      "cyclesFading": 265.8,
+      "executedFading": 226.1,
+      "areaWords": 1001
+    },
+    {
+      "index": 18,
+      "program": 34,
+      "cyclesAverage": 280.4,
+      "cyclesDearestBlock": 287.9,
+      "executedDearest": 251,
+      "cyclesFading": 299.5,
+      "executedFading": 261.2,
+      "areaWords": 1063
+    },
+    {
+      "index": 19,
+      "program": 35,
+      "cyclesAverage": 266,
+      "cyclesDearestBlock": 273.4,
+      "executedDearest": 238.9,
+      "cyclesFading": 284.9,
+      "executedFading": 249.1,
+      "areaWords": 1040
+    },
+    {
+      "index": 20,
+      "program": 36,
+      "cyclesAverage": 281.6,
+      "cyclesDearestBlock": 289.1,
+      "executedDearest": 253,
+      "cyclesFading": 300.7,
+      "executedFading": 263.2,
+      "areaWords": 1068
+    },
+    {
+      "index": 21,
+      "program": 44,
+      "cyclesAverage": 314,
+      "cyclesDearestBlock": 322,
+      "executedDearest": 286,
+      "cyclesFading": 333.6,
+      "executedFading": 296.2,
+      "areaWords": 1158
+    },
+    {
+      "index": 22,
+      "program": 46,
+      "cyclesAverage": 289.6,
+      "cyclesDearestBlock": 297.2,
+      "executedDearest": 259.5,
+      "cyclesFading": 308.8,
+      "executedFading": 269.7,
+      "areaWords": 1092
+    },
+    {
+      "index": 23,
+      "program": 47,
+      "cyclesAverage": 296.5,
+      "cyclesDearestBlock": 304.1,
+      "executedDearest": 267.5,
+      "cyclesFading": 315.6,
+      "executedFading": 277.7,
+      "areaWords": 1108
+    },
+    {
+      "index": 24,
+      "program": 48,
+      "cyclesAverage": 268.1,
+      "cyclesDearestBlock": 275.4,
+      "executedDearest": 236.9,
+      "cyclesFading": 286.9,
+      "executedFading": 247.1,
+      "areaWords": 1038
+    },
+    {
+      "index": 25,
+      "program": 49,
+      "cyclesAverage": 270.5,
+      "cyclesDearestBlock": 278.1,
+      "executedDearest": 238,
+      "cyclesFading": 289.7,
+      "executedFading": 248.2,
+      "areaWords": 1039
+    },
+    {
+      "index": 26,
+      "program": 50,
+      "cyclesAverage": 277.9,
+      "cyclesDearestBlock": 285.6,
+      "executedDearest": 249.6,
+      "cyclesFading": 297.2,
+      "executedFading": 259.8,
+      "areaWords": 1075
+    },
+    {
+      "index": 27,
+      "program": 52,
+      "cyclesAverage": 323.5,
+      "cyclesDearestBlock": 332.1,
+      "executedDearest": 298.4,
+      "cyclesFading": 343.7,
+      "executedFading": 308.6,
+      "areaWords": 1144
+    },
+    {
+      "index": 28,
+      "program": 53,
+      "cyclesAverage": 332.9,
+      "cyclesDearestBlock": 341.6,
+      "executedDearest": 307.2,
+      "cyclesFading": 353.1,
+      "executedFading": 317.4,
+      "areaWords": 1168
+    },
+    {
+      "index": 29,
+      "program": 54,
+      "cyclesAverage": 291.8,
+      "cyclesDearestBlock": 299.9,
+      "executedDearest": 263.4,
+      "cyclesFading": 311.4,
+      "executedFading": 273.6,
+      "areaWords": 1124
+    },
+    {
+      "index": 30,
+      "program": 58,
+      "cyclesAverage": 283.3,
+      "cyclesDearestBlock": 291.2,
+      "executedDearest": 254.5,
+      "cyclesFading": 302.8,
+      "executedFading": 264.7,
+      "areaWords": 1087
+    },
+    {
+      "index": 31,
+      "program": 61,
+      "cyclesAverage": 305,
+      "cyclesDearestBlock": 312.7,
+      "executedDearest": 276.9,
+      "cyclesFading": 324.2,
+      "executedFading": 287.1,
+      "areaWords": 1103
+    },
+    {
+      "index": 32,
+      "program": 62,
+      "cyclesAverage": 286.2,
+      "cyclesDearestBlock": 293.4,
+      "executedDearest": 257.9,
+      "cyclesFading": 304.9,
+      "executedFading": 268.1,
+      "areaWords": 1066
+    },
+    {
+      "index": 33,
+      "program": 63,
+      "cyclesAverage": 306.2,
+      "cyclesDearestBlock": 314.2,
+      "executedDearest": 277.8,
+      "cyclesFading": 325.8,
+      "executedFading": 287.9,
+      "areaWords": 1135
+    },
+    {
+      "index": 34,
+      "program": 64,
+      "cyclesAverage": 305.6,
+      "cyclesDearestBlock": 313.6,
+      "executedDearest": 277.6,
+      "cyclesFading": 325.1,
+      "executedFading": 287.8,
+      "areaWords": 1135
+    },
+    {
+      "index": 35,
+      "program": 65,
+      "cyclesAverage": 292,
+      "cyclesDearestBlock": 299.8,
+      "executedDearest": 265,
+      "cyclesFading": 311.3,
+      "executedFading": 275.2,
+      "areaWords": 1111
+    },
+    {
+      "index": 36,
+      "program": 66,
+      "cyclesAverage": 326.3,
+      "cyclesDearestBlock": 335.1,
+      "executedDearest": 301.4,
+      "cyclesFading": 346.7,
+      "executedFading": 311.6,
+      "areaWords": 1160
+    },
+    {
+      "index": 37,
+      "program": 71,
+      "cyclesAverage": 288,
+      "cyclesDearestBlock": 296.3,
+      "executedDearest": 259.7,
+      "cyclesFading": 307.9,
+      "executedFading": 269.9,
+      "areaWords": 1112
+    },
+    {
+      "index": 38,
+      "program": 74,
+      "cyclesAverage": 281,
+      "cyclesDearestBlock": 288.6,
+      "executedDearest": 251.4,
+      "cyclesFading": 300.2,
+      "executedFading": 261.6,
+      "areaWords": 1070
+    },
+    {
+      "index": 39,
+      "program": 75,
+      "cyclesAverage": 288.4,
+      "cyclesDearestBlock": 296.8,
+      "executedDearest": 259.1,
+      "cyclesFading": 308.4,
+      "executedFading": 269.2,
+      "areaWords": 1117
+    },
+    {
+      "index": 40,
+      "program": 78,
+      "cyclesAverage": 324.2,
+      "cyclesDearestBlock": 332.9,
+      "executedDearest": 298.4,
+      "cyclesFading": 344.5,
+      "executedFading": 308.6,
+      "areaWords": 1154
+    },
+    {
+      "index": 41,
+      "program": 79,
+      "cyclesAverage": 324.2,
+      "cyclesDearestBlock": 332.9,
+      "executedDearest": 298.4,
+      "cyclesFading": 344.5,
+      "executedFading": 308.6,
+      "areaWords": 1154
+    },
+    {
+      "index": 42,
+      "program": 80,
+      "cyclesAverage": 287.5,
+      "cyclesDearestBlock": 294.9,
+      "executedDearest": 259.6,
+      "cyclesFading": 306.5,
+      "executedFading": 269.8,
+      "areaWords": 1029
+    },
+    {
+      "index": 43,
+      "program": 81,
+      "cyclesAverage": 291.7,
+      "cyclesDearestBlock": 299.1,
+      "executedDearest": 264.6,
+      "cyclesFading": 310.7,
+      "executedFading": 274.8,
+      "areaWords": 1038
+    },
+    {
+      "index": 44,
+      "program": 83,
+      "cyclesAverage": 301.1,
+      "cyclesDearestBlock": 309.4,
+      "executedDearest": 273.9,
+      "cyclesFading": 321,
+      "executedFading": 284.1,
+      "areaWords": 1131
+    },
+    {
+      "index": 45,
+      "program": 84,
+      "cyclesAverage": 287,
+      "cyclesDearestBlock": 295.1,
+      "executedDearest": 258.1,
+      "cyclesFading": 306.7,
+      "executedFading": 268.3,
+      "areaWords": 1094
+    },
+    {
+      "index": 46,
+      "program": 85,
+      "cyclesAverage": 303,
+      "cyclesDearestBlock": 310.6,
+      "executedDearest": 274,
+      "cyclesFading": 322.1,
+      "executedFading": 284.2,
+      "areaWords": 1112
+    },
+    {
+      "index": 47,
+      "program": 89,
+      "cyclesAverage": 282.8,
+      "cyclesDearestBlock": 290.4,
+      "executedDearest": 253.6,
+      "cyclesFading": 302,
+      "executedFading": 263.8,
+      "areaWords": 1080
+    }
+  ]
+}

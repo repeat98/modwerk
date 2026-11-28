@@ -1,0 +1,4 @@
+# Development engines (engine/qvunit.py) carry one Alesis program each: they stay off Git. The release's program sources
+# (gen/areas.json, qv_tables.h, qv_runtime.s) are committed under the owner's waiver of 27 November 2026 (FIRMWARE.md).
+gen/engine.asm
+gen/program.json

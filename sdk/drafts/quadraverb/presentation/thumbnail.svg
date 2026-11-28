@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="576" viewBox="0 0 320 192" role="img" aria-labelledby="title description">
+  <title id="title">Quadraverb: the Alesis Quadraverb's reverb programs, step for step</title>
+  <desc id="description">Original illustration: an impulse enters a loop of 96 program steps; its short delay lines stay in the DSP ring and its long ones go out to the ColdFire's memory and back every frame; a tail of reflections decays to the right. This is an illustration, not an Octatrack screenshot.</desc>
+  <rect width="320" height="192" rx="14" fill="#202025"/>
+  <g fill="none" stroke="#36343f" stroke-width=".6">
+    <path d="M24 52H296M24 97H296M24 142H296M64 38V158M128 38V158M192 38V158M256 38V158"/>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8" fill="#a5a2b4">
+    <text x="24" y="24" fill="#ece8f6" font-size="10" letter-spacing="1.4">QUADRAVERB</text>
+    <text x="268" y="24">FX2</text>
+    <text x="24" y="176">96 STEPS · 44.1 KHZ</text>
+    <text x="196" y="176">DSP RING · SDRAM</text>
+    <text x="78" y="46">DSP</text>
+    <text x="74" y="156">SDRAM</text>
+  </g>
+  <path d="M26 97H40M40 97V61M40 97V97" fill="none" stroke="#bfb0f8" stroke-width="1.2" stroke-linecap="round"/>
+  <circle cx="40" cy="61" r="2" fill="#bfb0f8"/>
+  <g fill="none" stroke="#bfb0f8" stroke-width=".9" stroke-linejoin="round">
+    <rect x="56" y="62" width="72" height="56" rx="10"/>
+    <path d="M40 90H56M128 90H160"/>
+    <path d="M78 118V134M106 134V118" stroke-dasharray="2 2"/>
+    <rect x="64" y="134" width="56" height="10" rx="5" opacity=".6"/>
+  </g>
+  <g fill="#bfb0f8">
+    <circle cx="68" cy="62" r="1.6"/><circle cx="84" cy="62" r="1.6"/><circle cx="100" cy="62" r="1.6"/><circle cx="116" cy="62" r="1.6"/>
+    <circle cx="128" cy="76" r="1.6"/><circle cx="128" cy="104" r="1.6"/><circle cx="56" cy="76" r="1.6"/><circle cx="56" cy="104" r="1.6"/>
+    <path d="M78 118l-2.4 4h4.8zM106 134l-2.4-4h4.8z"/>
+  </g>
+  <path d="M170.0 64.8V116.3M172.8 69.3V113.6M177.2 68.3V114.2M180.6 70.5V112.9M183.5 77.7V108.6M185.9 74.6V110.4M189.9 76.4V109.4M192.4 77.1V108.9M196.7 78.0V108.4M199.6 85.7V103.8M202.6 87.5V102.7M205.8 85.4V104.0M208.2 88.4V102.2M210.5 88.0V102.4M213.6 88.8V101.9M217.3 89.1V101.7M221.6 88.1V102.3M224.7 87.8V102.5M227.3 91.3V100.4M229.6 91.7V100.2M232.3 90.6V100.8M235.1 90.7V100.8M237.7 90.8V100.7M241.8 93.3V99.2M244.8 93.6V99.0M247.1 92.3V99.8M250.0 93.2V99.3M254.3 94.5V98.5M256.9 94.1V98.7M259.5 93.3V99.2M261.8 94.2V98.7M264.6 94.7V98.4M267.2 94.0V98.8M271.7 94.7V98.4M275.4 95.2V98.1M279.9 94.8V98.3M283.8 95.7V97.8M286.2 95.1V98.1M289.0 95.3V98.0M292.0 95.6V97.8" fill="none" stroke="#bfb0f8" stroke-width=".9" opacity=".85"/>
+</svg>

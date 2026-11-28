@@ -1,0 +1,56 @@
+{
+ "firmware": "1.40C",
+ "moduleVersion": "0.1.0-experimental",
+ "hardware": false,
+ "model": "MKII",
+ "capturedOn": "2026-11-27",
+ "capturedBy": "repeat98",
+ "imageSha256": "7520dee59c33b4050aedce5e0ed06e12cd9911b90b678d3040c520a19073dad5",
+ "baseIdentity": "f033983afd9ee1eddf1d2fbdc304d0a3333f20e38583c93fb29cb50a1f0bec80",
+ "packageSha256": "35faa1b5d34e958cecf243aff412fb8a3f7cdb9001326de4b48af8b334538943",
+ "sourceRevision": "3866f1136a81b10ab8e1c6d0423712980511d703",
+ "emulatorSha256": "5d4323b7b29c20d9b1d6251df39a668923bf17788eacb1f60ac9b61c7f43d29c",
+ "setup": "Emulator captures, not hardware ones. ot_emu built from the pinned upstream source (emulatorSha256), MKII panel, run by npm run device:emulator with --dsp on development twin 7520dee5 of the base 0.8.3 side branch (base/octatrack-program-areas 5ecfbd2f4; imageSha256 is its MAIN image). The package named here, built from the source revision named here with the owner's ROM on his computer, was installed with the session's try. This emulator runs no DSP passes, so nothing was heard and the pick shows only the pages; the frame guard's share was set to 100 % and the CPU allowance to 100 % first (guard:1000 cpu:100), as the emulator's CPU meter reads full. Each picture is the emulated LCD read by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Panel steps: T5; FUNC+FX2; LEVEL to QUADRAVERB; YES; FX2; then A and F turned.",
+ "palette": {
+  "on": [
+   24,
+   24,
+   24
+  ],
+  "off": [
+   255,
+   255,
+   255
+  ]
+ },
+ "images": [
+  {
+   "path": "quadraverb-chooser.png",
+   "sha256": "7ee68ac4ad87c48f74e9017abf5d38c3a8a9e4e3e7084bb70fb0cd75a65ec36f",
+   "scale": 2,
+   "page": "FX2 SETUP (effect chooser)",
+   "state": "Track 5 on FX2 SETUP: FUNC+FX2 opened the chooser, LEVEL moved the cursor down to QUADRAVERB (DELAY is the track's current effect)."
+  },
+  {
+   "path": "quadraverb-page.png",
+   "sha256": "4f57c2be527dbf239aeae04ed0cc606d383c9e940f1465af6255900ec5f98404",
+   "scale": 2,
+   "page": "FX2",
+   "state": "Track 5 with Quadraverb on FX2 after YES and FX2: PROG on A and MIX on F at their defaults."
+  },
+  {
+   "path": "quadraverb-prog.png",
+   "sha256": "03f53d93ab454dd5d445079c95c259fe68e4679f009a5107cd00ba6701b0b56f",
+   "scale": 2,
+   "page": "FX2",
+   "state": "Knob A turned: the dial shows the program by its number on the original, here 10 (SMALL ROOM, the default)."
+  },
+  {
+   "path": "quadraverb-mix.png",
+   "sha256": "660275a8cbd25311753eb6e726a3ae8139b116ec5c65dc3ab5a89d1dbe86ff0e",
+   "scale": 2,
+   "page": "FX2",
+   "state": "Knob F turned: MIX at 70."
+  }
+ ]
+}
