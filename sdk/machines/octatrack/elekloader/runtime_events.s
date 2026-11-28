@@ -350,21 +350,29 @@ modwerk_stock_4000d514_8:
 | ---- 0x4000de10: ev_midi_chromatic_off_gate
         .globl  modwerk_site_4000de10
 modwerk_site_4000de10:
-        lea     -20(%sp),%sp
+        lea     -24(%sp),%sp
         movem.l %d0-%d1/%a0-%a2,(%sp)
-| ev_midi_chromatic_off_gate: void f(void)
+        clr.l   20(%sp)
+| ev_midi_chromatic_off_gate: void f(uint32_t *wide_mask)
         movea.l modwerk_runtime_event_row+292,%a2
 .L4000de10_ev_midi_chromatic_off_gate:
         move.l  (%a2)+,%d0
         beq     .L4000de10_ev_midi_chromatic_off_gate_end
+        pea     20(%sp)
         movea.l %d0,%a0
         jsr     (%a0)
-        lea     0(%sp),%sp
+        lea     4(%sp),%sp
         bra     .L4000de10_ev_midi_chromatic_off_gate
 .L4000de10_ev_midi_chromatic_off_gate_end:
+        move.l  20(%sp),%d0
+        beq     .L4000de10_tail
+        move.l  %d0,%d4
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        jmp     0x4000df9e
 .L4000de10_tail:
         movem.l (%sp),%d0-%d1/%a0-%a2
-        lea     20(%sp),%sp
+        lea     24(%sp),%sp
         .globl  modwerk_stock_4000de10_6
 modwerk_stock_4000de10_6:
         .space  6 | the site's own stock bytes
@@ -410,21 +418,29 @@ modwerk_stock_4000dfd4_6:
 | ---- 0x4000e452: ev_midi_chromatic_on_gate
         .globl  modwerk_site_4000e452
 modwerk_site_4000e452:
-        lea     -20(%sp),%sp
+        lea     -24(%sp),%sp
         movem.l %d0-%d1/%a0-%a2,(%sp)
-| ev_midi_chromatic_on_gate: void f(void)
+        clr.l   20(%sp)
+| ev_midi_chromatic_on_gate: void f(uint32_t *wide_mask)
         movea.l modwerk_runtime_event_row+288,%a2
 .L4000e452_ev_midi_chromatic_on_gate:
         move.l  (%a2)+,%d0
         beq     .L4000e452_ev_midi_chromatic_on_gate_end
+        pea     20(%sp)
         movea.l %d0,%a0
         jsr     (%a0)
-        lea     0(%sp),%sp
+        lea     4(%sp),%sp
         bra     .L4000e452_ev_midi_chromatic_on_gate
 .L4000e452_ev_midi_chromatic_on_gate_end:
+        move.l  20(%sp),%d0
+        beq     .L4000e452_tail
+        move.l  %d0,%d3
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     24(%sp),%sp
+        jmp     0x4000e6e2
 .L4000e452_tail:
         movem.l (%sp),%d0-%d1/%a0-%a2
-        lea     20(%sp),%sp
+        lea     24(%sp),%sp
         .globl  modwerk_stock_4000e452_8
 modwerk_stock_4000e452_8:
         .space  8 | the site's own stock bytes

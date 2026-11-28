@@ -3129,28 +3129,30 @@
    "length": 8,
    "when": "MIDI chromatic note-on octave gate",
    "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
-   "contract": "A notification: every subscribed engine handler runs; each clears or gates only its own machine voices. Stock runs after every handler. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "contract": "Every handler ORs its own tracks into wide_mask for notes outside 72..96, then returns. The base runs every handler. If the union is nonzero, it enters stock's wide chromatic block with d3 set to that mask; otherwise it runs the stock octave test. d2-d7/a2-a6 must be kept, as C keeps them.",
    "order": "lower first, then module id; every handler runs. 10-90.",
    "subscribers": [
     {
      "module": "synth",
      "fn": "mw_midi_chromatic_on_gate",
      "order": 40,
-     "does": "Clears FM Synth engine voices on this hook.",
+     "does": "Adds FM Synth tracks that need the wide note-on path.",
      "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_mgate"
     },
     {
      "module": "cx-osc",
      "fn": "cx_midi_chromatic_on_gate",
      "order": 45,
-     "does": "Clears CX OSC engine voices on this hook.",
+     "does": "Adds CX OSC tracks that need the wide note-on path.",
      "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_mgate"
     }
    ],
    "orderEvidence": "Every installed FM engine runs; FM Synth (40) before CX OSC (45).",
-   "prototype": "void f(void)",
-   "args": [],
-   "results": "notify"
+   "prototype": "void f(uint32_t *wide_mask)",
+   "args": ["&scratch"],
+   "results": "mask",
+   "maskRegister": "d3",
+   "wide": "0x4000e6e2"
   },
   {
    "event": "ev_midi_chromatic_off_gate",
@@ -3159,28 +3161,30 @@
    "length": 6,
    "when": "MIDI chromatic note-off octave gate",
    "context": "a task (UI, MIDI, sequencer or project file): short, no firmware call that can block",
-   "contract": "A notification: every subscribed engine handler runs; each clears or gates only its own machine voices. Stock runs after every handler. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "contract": "Every handler ORs its own tracks into wide_mask for notes outside 72..96, then returns. The base runs every handler. If the union is nonzero, it enters stock's wide chromatic release block with d4 set to that mask; otherwise it runs the stock octave test. d2-d7/a2-a6 must be kept, as C keeps them.",
    "order": "lower first, then module id; every handler runs. 10-90.",
    "subscribers": [
     {
      "module": "synth",
      "fn": "mw_midi_chromatic_off_gate",
      "order": 40,
-     "does": "Clears FM Synth engine voices on this hook.",
+     "does": "Adds FM Synth tracks that need the wide note-off path.",
      "evidence": "sdk/octatrack/modules/synth/upstream/synth/poly.s po_mogate"
     },
     {
      "module": "cx-osc",
      "fn": "cx_midi_chromatic_off_gate",
      "order": 45,
-     "does": "Clears CX OSC engine voices on this hook.",
+     "does": "Adds CX OSC tracks that need the wide note-off path.",
      "evidence": "sdk/drafts/cx-osc/standalone/poly.s po_mogate"
     }
    ],
    "orderEvidence": "Every installed FM engine runs; FM Synth (40) before CX OSC (45).",
-   "prototype": "void f(void)",
-   "args": [],
-   "results": "notify"
+   "prototype": "void f(uint32_t *wide_mask)",
+   "args": ["&scratch"],
+   "results": "mask",
+   "maskRegister": "d4",
+   "wide": "0x4000df9e"
   },
   {
    "event": "ev_midi_live_record_event",

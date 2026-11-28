@@ -123,13 +123,17 @@ def load(path=REGISTRY):
                 raise ValueError('events.json: take event %s needs a site of its own' % name)
             events.append(dict(e, kind=kind, site=at, room=room))
             continue
-        if e['results'] != 'notify' and (e['results'].get('0') != 'next' or e['results'].get('*') not in ('tail', 'done')
+        if e['results'] == 'mask':
+            if (e['args'] != ['&scratch'] or e.get('maskRegister') not in ('d3', 'd4')
+                    or not re.fullmatch(r'0x[0-9a-f]{8}', e.get('wide', ''))):
+                raise ValueError('events.json: %s mask needs &scratch, d3/d4 and a wide target' % name)
+        elif e['results'] != 'notify' and (e['results'].get('0') != 'next' or e['results'].get('*') not in ('tail', 'done')
                                          or any(v not in ('tail', 'done') for k, v in e['results'].items() if k != '0')):
             raise ValueError('events.json: %s results map 0 to next and every other value to tail or done' % name)
-        if any(v == 'done' for v in (e['results'].values() if e['results'] != 'notify' else ())) and not sites[at]['done']:
+        if any(v == 'done' for v in (e['results'].values() if isinstance(e['results'], dict) else ())) and not sites[at]['done']:
             raise ValueError('events.json: %s drops calls at a site with no done code' % name)
         for a in e['args']:
-            if a != '&d0' and a not in REGISTERS and not re.fullmatch(r'site\+\d+|d[2-7]|a[3-6]', a):
+            if a not in ('&d0', '&scratch') and a not in REGISTERS and not re.fullmatch(r'site\+\d+|d[2-7]|a[3-6]', a):
                 raise ValueError('events.json: %s argument %s is &d0, site+N or a register at the site' % (name, a))
         events.append(dict(e, kind=kind, site=at, room=room))
     spans = sorted([(at, s['length']) for at, s in sites.items()] + [(s['site'], s['length']) for s in owned])
@@ -195,7 +199,9 @@ def _call(out, name, e, k):
                '        move.l  (%%a2)+,%%d0\n        beq     %s\n' % (e['event'], e['prototype'], 4 * k, loop, end))
     pushed = 0
     for a in reversed(e['args']):
-        if a == '&d0':
+        if a == '&scratch':
+            out.append('        pea     %d(%%sp)\n' % (SAVED + pushed))
+        elif a == '&d0':
             out.append('        pea     %d(%%sp)\n' % pushed)
         elif a in REGISTERS:  # the site's d0-d1/a0-a2, in the dispatch's saved frame
             out.append('        move.l  %d(%%sp),-(%%sp)\n' % (REGISTERS[a] + pushed))
@@ -205,7 +211,7 @@ def _call(out, name, e, k):
             out.append('        move.l  %d(%%sp),-(%%sp)\n' % (SAVED + int(a[5:]) + pushed))
         pushed += 4
     out.append('        movea.l %%d0,%%a0\n        jsr     (%%a0)\n        lea     %d(%%sp),%%sp\n' % pushed)
-    if e['results'] == 'notify':
+    if e['results'] in ('notify', 'mask'):
         out.append('        bra     %s\n' % loop)
     else:
         out.append('        tst.l   %%d0\n        beq     %s\n' % loop)
@@ -213,6 +219,11 @@ def _call(out, name, e, k):
             out.append('        cmpi.l  #%d,%%d0\n        beq     .L%s_%s\n' % (int(value), name, action))
         out.append('        bra     .L%s_%s\n' % (name, e['results']['*']))
     out.append('%s:\n' % end)
+    if e['results'] == 'mask':
+        out.append('        move.l  %d(%%sp),%%d0\n        beq     .L%s_tail\n'
+                   '        move.l  %%d0,%%%s\n        movem.l (%%sp),%%d0-%%d1/%%a0-%%a2\n'
+                   '        lea     %d(%%sp),%%sp\n        jmp     %s\n'
+                   % (SAVED, name, e['maskRegister'], SAVED + 4, e['wide']))
 
 
 def _take(out, name, e, k, at):
@@ -263,11 +274,13 @@ def asm(reg):
         name = '%08x' % at
         here = [e for e in reg['events'] if e['site'] == at]
         take = here[0]['kind'] == 'take'
-        frame = SAVED + (8 if take else 0)
+        frame = SAVED + (8 if take else 4 if here[0]['results'] == 'mask' else 0)
         out.append('\n| ---- %#010x: %s\n        .globl  modwerk_site_%s\nmodwerk_site_%s:\n' % (
             at, ', '.join(e['event'] for e in here), name, name))
         out += ['        %s\n' % line for line in s['head']]
         out.append('        lea     -%d(%%sp),%%sp\n        movem.l %%d0-%%d1/%%a0-%%a2,(%%sp)\n' % frame)
+        if not take and here[0]['results'] == 'mask':
+            out.append('        clr.l   %d(%%sp)\n' % SAVED)
         for e in here:
             (_take(out, name, e, e['index'] - FIRST, at) if take else _call(out, name, e, e['index'] - FIRST))
         for action in ('tail', 'done'):

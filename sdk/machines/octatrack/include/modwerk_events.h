@@ -424,13 +424,13 @@ typedef void modwerk_ev_fm_transport_stop(void);
 /* ev_fm_voice_kill (0x4000685c, take: subscribe a struct modwerk_take): voice kill for FM machines. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
 #define MODWERK_EV_FM_VOICE_KILL 75
 
-/* ev_midi_chromatic_on_gate (0x4000e452): MIDI chromatic note-on octave gate. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. A notification: every subscribed engine handler runs; each clears or gates only its own machine voices. Stock runs after every handler. d2-d7/a2-a6 must be kept, as C keeps them. */
+/* ev_midi_chromatic_on_gate (0x4000e452): MIDI chromatic note-on octave gate. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. Every handler ORs its own tracks into wide_mask for notes outside 72..96, then returns. The base runs every handler. If the union is nonzero, it enters stock's wide chromatic block with d3 set to that mask; otherwise it runs the stock octave test. d2-d7/a2-a6 must be kept, as C keeps them. */
 #define MODWERK_EV_MIDI_CHROMATIC_ON_GATE 76
-typedef void modwerk_ev_midi_chromatic_on_gate(void);
+typedef void modwerk_ev_midi_chromatic_on_gate(uint32_t *wide_mask);
 
-/* ev_midi_chromatic_off_gate (0x4000de10): MIDI chromatic note-off octave gate. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. A notification: every subscribed engine handler runs; each clears or gates only its own machine voices. Stock runs after every handler. d2-d7/a2-a6 must be kept, as C keeps them. */
+/* ev_midi_chromatic_off_gate (0x4000de10): MIDI chromatic note-off octave gate. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. Every handler ORs its own tracks into wide_mask for notes outside 72..96, then returns. The base runs every handler. If the union is nonzero, it enters stock's wide chromatic release block with d4 set to that mask; otherwise it runs the stock octave test. d2-d7/a2-a6 must be kept, as C keeps them. */
 #define MODWERK_EV_MIDI_CHROMATIC_OFF_GATE 77
-typedef void modwerk_ev_midi_chromatic_off_gate(void);
+typedef void modwerk_ev_midi_chromatic_off_gate(uint32_t *wide_mask);
 
 /* ev_midi_live_record_event (0x400625e0, take: subscribe a struct modwerk_take): MIDI live recorder on MIDI event 0x41. A task (UI, MIDI, sequencer or project file): short, no firmware call that can block. The taker's entry gets every register and the stack as at the site and replays what the site held (the stock tail below) before it returns to stock; it must not jump into the site's bytes. */
 #define MODWERK_EV_MIDI_LIVE_RECORD_EVENT 78
