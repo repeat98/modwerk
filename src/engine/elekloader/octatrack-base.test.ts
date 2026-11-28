@@ -4,13 +4,27 @@ import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { loadAny } from '../../../vendor/elekloader/kit/src/patch.ts'
 import metadata from '../assets/stock-dsp-metadata.json' with { type: 'json' }
 import type { StockDspCore } from '../stock-dsp.ts'
-import { baseIdentity, buildBase, fillBase, type BaseFill } from './octatrack-base.ts'
+import { baseIdentity, bootName, buildBase, fillBase, type BaseFill } from './octatrack-base.ts'
+import { execFileSync } from 'node:child_process'
+import baseVersions from '../../../sdk/machines/octatrack/base-versions.json' with { type: 'json' }
 
 const cores = [{ tag: 'A', shared: [{ destination: 0x7d1, words: Uint32Array.of(0x0a0b0c, 0x0d0e0f) }],
   packages: [{ fxId: 4, words: Uint32Array.of(0x123456, 0xabcdef, 0x000001) }] }] as unknown as StockDspCore[]
 const stripped = JSON.stringify({
   sections: { '.run': { len: 14, parts: [['hex', 'aa'], ['stock', '0x40000400', 2], ['hex', 'bbcc']] } },
   sites: [{ addr: '0x400f0ee3', len: 6, new: '1122' + '33' }],
+})
+
+describe('the name the Octatrack shows at boot', () => {
+  const released = baseVersions.bases.at(-1)!
+  it('is MW and the released version, MODWERK for a base without one, the same in build_core.py', () => {
+    expect(bootName(released.identities[0])).toBe('MW ' + released.version)
+    expect(bootName('f'.repeat(64))).toBe('MODWERK')
+    const python = (identity: string) => execFileSync('python3', ['-B', '-c', 'import sys; sys.path.insert(0, sys.argv[1]); import build_core; print(build_core.update_name(sys.argv[2]))',
+      new URL('../../../sdk/machines/octatrack/elekloader', import.meta.url).pathname, identity], { encoding: 'utf8' }).trim()
+    expect(python(released.identities[0])).toBe(bootName(released.identities[0]))
+    expect(python('f'.repeat(64))).toBe('MODWERK')
+  })
 })
 
 describe('the Octatrack base from the stock file', () => {
