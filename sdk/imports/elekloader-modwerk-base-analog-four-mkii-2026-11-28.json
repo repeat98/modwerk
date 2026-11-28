@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-analog-four-mkii-2026-11-28",
+  "about": "The source-built Modwerk Analog Four MKII base for OS 1.56.",
+  "cores": [
+    {
+      "file": "modwerk-base-analog-four-mkii-b687298c.elemod",
+      "sha256": "b687298c927868a11f16eb6a627b46d0d03d45fa90f31c270a11abd3256f3d09",
+      "id": "core",
+      "version": "0.5",
+      "device": "analog-four-mk2",
+      "os": "1.56",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "36e30b9b61189d8675459a8a4a0314f732d82c2b",
+        "path": "sdk/imports/packages/modwerk-base-analog-four-mkii/modwerk-base-analog-four-mkii-b687298c.elemod"
+      }
+    }
+  ],
+  "mods": []
+}
