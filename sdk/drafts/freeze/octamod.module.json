@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 2,
+  "id": "freeze",
+  "key": "FREEZE",
+  "name": "Freeze",
+  "version": "0.1.0",
+  "category": "effects",
+  "author": {
+    "github": "jacobphono",
+    "credits": [
+      "jacobphono"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "FREEZE",
+    "family": "Looper",
+    "summary": "Holds the last seconds of a track and replays them as a slow, low tape loop every 1 to 8 track steps.",
+    "overview": "While not holding, the track passes through unchanged and is recorded into its stock delay ring. GRAB captures at the next step; a tape head reads the held audio at SPIN and returns to the loop start every STEP track steps through a crossfade, so odd lengths drift against the pattern.",
+    "highlights": [
+      "Loop lengths of 1 to 8 track steps, following tempo, track speed and swing",
+      "SPIN 0.25x to 1.0x, slower and lower like tape, 0.5x by default",
+      "JTR wanders the tape slowly without changing the loop length",
+      "POS scrubs back through about two seconds of held audio"
+    ],
+    "usage": [
+      "Not runnable yet: it needs a base hook that is still a proposal (DELAY_HOOK_PROPOSAL.md)."
+    ]
+  },
+  "controls": [
+    {
+      "name": "STEP",
+      "default": 4,
+      "count": 8,
+      "doc": "loop length in track steps, 1 to 8; a change lands when the current loop ends",
+      "labels": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8"
+      ]
+    },
+    {
+      "name": "SPIN",
+      "default": 64,
+      "count": 128,
+      "doc": "tape speed of the held audio, 0.25x to 1.0x, 0.5x at 64; slower is lower",
+      "labels": null
+    },
+    {
+      "name": "JTR",
+      "default": 0,
+      "count": 128,
+      "doc": "slow bounded tape wander and loop-start drift; the loop length never changes",
+      "labels": null
+    },
+    {
+      "name": "POS",
+      "default": 0,
+      "count": 128,
+      "doc": "where the loop reads in the held audio, newest at 0, oldest at 127",
+      "labels": null
+    },
+    {
+      "name": "GRAB",
+      "default": 0,
+      "count": 2,
+      "doc": "HOLD captures at the next track step, OFF lets go at the next step",
+      "labels": [
+        "OFF",
+        "HOLD"
+      ]
+    },
+    {
+      "name": "MIX",
+      "default": 127,
+      "count": 128,
+      "doc": "how much of the loop replaces the track while holding",
+      "labels": null
+    },
+    {
+      "name": "FADE",
+      "default": 20,
+      "count": 128,
+      "doc": "grab and release crossfade, 6 ms to 1.1 s",
+      "labels": null
+    },
+    {
+      "name": "SEAM",
+      "default": 64,
+      "count": 128,
+      "doc": "crossfade where the loop returns to its start, 1/256 to 1/2 of the loop",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "FX2",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Not runnable: needs the base hook ev_delay_track, a proposal awaiting the owner (DELAY_HOOK_PROPOSAL.md).",
+      "Uses the track's stock four-second delay ring, so FX2 only.",
+      "Host tests only; nothing has run in ot_emu or on a unit, and CPU is not measured."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host tests only: 53 of 53 checks under ASan/UBSan and a clean ColdFire cross-compile (TESTING.md). Not run in ot_emu or on hardware.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code by jacobphono, written with Claude Code, MIT. No Elektron firmware, code or tables; no Reaktor material."
+  },
+  "media": [],
+  "access": {
+    "location": "FX2 chooser of an audio track, once a base carries the hook.",
+    "steps": [
+      "Not available yet."
+    ],
+    "screenshots": []
+  }
+}
