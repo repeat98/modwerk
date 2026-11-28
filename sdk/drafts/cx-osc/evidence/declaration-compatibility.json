@@ -1,0 +1,26 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "modules:compat",
+    "--",
+    "--with",
+    "cx-osc"
+  ],
+  "cwd": "module/cx-osc worktree",
+  "exit_code": 0,
+  "status": "STAGED_DEBT",
+  "finished_utc": "2026-11-27T00:25:00Z",
+  "diagnostics": {
+    "summary": {
+      "active": 49,
+      "pairs": 1176,
+      "problems": 1,
+      "notes": [
+        "Manifest drop of ot_machines table detours (fm_main_commit, ml_* …) fixes module:dev and table-owned compat findings; engine detours remain.",
+        "With cx-osc staged, synth+cx-osc still share LFO engine sites until catalog lists cx-osc and group-owned relation returns.",
+        "sdk/machines/octatrack/compatibility.json relation empty until cx-osc is in sdk/catalog.json (CI modules:compat)."
+      ]
+    }
+  }
+}

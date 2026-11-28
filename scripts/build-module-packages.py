@@ -101,22 +101,30 @@ def requested_release_scope(buildable):
 
 def retain_pending_requested(compiled, baseline, ids):
     """Keep inactive, previously verified objects unchanged; never compile their pending source."""
+    def row_key(field, row):
+        return (row['moduleId'], row['label']) if field == 'objects' else row['moduleId']
+
     pending = set(REQUESTED) - set(ids)
     if pending & set(json_file(APP / 'src/engine/assets/module-build.json')['moduleVersions']):
         raise ValueError('Pending modules must be absent from verified version pins')
-    for field, key in [('objects', 'label'), ('groups', 'moduleId')]:
-        actual = {row[key]: row for row in compiled[field]}
-        expected = {row[key] for row in baseline[field] if row['moduleId'] not in pending}
-        previous = {row[key] for row in baseline[field]}
-        new = {row[key] for row in compiled[field] if row[key] not in previous and row['moduleId'] in ids}
+    for field in ('objects', 'groups'):
+        actual = {row_key(field, row): row for row in compiled[field]}
+        expected = {row_key(field, row) for row in baseline[field] if row['moduleId'] not in pending}
+        previous = {row_key(field, row) for row in baseline[field]}
+        new = {row_key(field, row) for row in compiled[field] if row_key(field, row) not in previous and row['moduleId'] in ids}
         if len(actual) != len(compiled[field]) or set(actual) != expected | new:
             raise ValueError('Compiled requested package scope differs from the verified baseline')
-        compiled[field] = [row if row['moduleId'] in pending else actual[row[key]] for row in baseline[field]] + [actual[k] for k in actual if k in new]
+        compiled[field] = [row if row['moduleId'] in pending else actual[row_key(field, row)] for row in baseline[field]] + [actual[k] for k in actual if k in new]
     return compiled
 
 
 def compile_requested(root, known, documents, versions, revision, native, sources, assembler, disassembler, ids):
     """Authored objects and runtime recipes only; inherited USB spans are masked."""
+    def workdir(module_id, label):
+        path = root / 'requested' / f'{module_id}__{label}'
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
     byid = {m.name: m for m in known.values()}
     selected = [byid[id] for id in ids + (['repitch'] if 'poly8' in ids else [])] + [known['USB MIDI']]
     selection = {m.key: m for m in selected}
@@ -126,7 +134,7 @@ def compile_requested(root, known, documents, versions, revision, native, source
     for m in selected:
         author = documents[m.name]['author']['github'] if m.name in documents else 'markandrus'
         for u in m.linked:
-            work = root / 'requested' / u.label; work.mkdir(parents=True)
+            work = workdir(m.name, u.label)
             text = (root / u.source).read_text(); validate_source(text.replace('.include "remix.inc"', ''))
             extra = []
             if u.include:
@@ -157,8 +165,8 @@ def compile_requested(root, known, documents, versions, revision, native, source
         if m.name in ('repitch', 'mute-modes'):
             for unit in m.linked:
                 if unit.label not in ('repitch','mm_softmute'): continue
-                work = root / 'requested' / unit.label
-                pkg = next(row for row in objects if row['label'] == unit.label)
+                work = workdir(m.name, unit.label)
+                pkg = next(row for row in objects if row['moduleId'] == m.name and row['label'] == unit.label)
                 for sidechain in ([False,True] if m.name=='mute-modes' else [False]):
                     extra=[]
                     if unit.include:
@@ -178,8 +186,8 @@ def compile_requested(root, known, documents, versions, revision, native, source
             for unit in m.linked:
                 exports=recipe.get('runtimeExports',{}).get(unit.label,{})
                 if not exports: continue
-                pkg=next(row for row in objects if row['label']==unit.label)
-                work=root/'requested'/unit.label;obj=work/'poly8-exported.o'
+                pkg=next(row for row in objects if row['moduleId']==m.name and row['label']==unit.label)
+                work=workdir(m.name, unit.label);obj=work/'poly8-exported.o'
                 obj.write_bytes(bytes.fromhex(pkg['code']))
                 from remix.platform_build import promote_symbols
                 promote_symbols(obj,exports['symbols'])
@@ -187,12 +195,12 @@ def compile_requested(root, known, documents, versions, revision, native, source
                 pkg['variants'].append(dict(whenModules=['poly8'],withoutModules=[],bytes=len(raw),code=raw.hex(),sha256=HASH(raw)))
         if m.name == 'mute-modes':
             unit = next(u for u in m.linked if u.label == 'mm_softmute')
-            work = root / 'requested' / unit.label
+            work = workdir(m.name, unit.label)
             (work / 'remix.inc').write_text(unit.include({**selection, 'SIDECHAIN_COMPRESSOR': known['SIDECHAIN_COMPRESSOR']}))
             obj = work / 'sidechain.o'
             run(['m68k-elf-as', '-mcpu=' + unit.cpu, '-I', work, '-o', obj, root / unit.source], root)
             raw = obj.read_bytes()
-            pkg = next(row for row in objects if row['label'] == unit.label)
+            pkg = next(row for row in objects if row['moduleId'] == m.name and row['label'] == unit.label)
             pkg['variants'].append(dict(whenModules=['sidechain-compressor'],withoutModules=['poly8'],bytes=len(raw),code=raw.hex(),sha256=HASH(raw)))
         for index, patch in enumerate(m.cf_patches if m.name == 'recorder-loop-fix' else ()):
             label = 'recorder_cave_' + str(index)

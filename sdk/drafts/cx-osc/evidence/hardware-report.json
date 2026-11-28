@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "module": "cx-osc",
+  "version": "0.1.0-experimental",
+  "kind": "functional",
+  "status": "reported",
+  "model": "MKII",
+  "testedOn": "2026-11-27",
+  "tester": "ilia-murzinov",
+  "imageSha256": "683999d97678d9d364ae8a08984791bf8df76c88bb082f2e9826c0501a2527e5",
+  "packageSha256": "f52815adb0d5cdb0f1926c519f8319ce4527f1adcc52313d502023fb306065ad",
+  "summary": "RAM-boot dev twin 46c30886 of base 0.8.2. device:test trial passed (CX on T1/T5, three simultaneous on T1–T3, T4–T8 refused, no crash). device:cx-stress with pattern trigs: morph_zero 1–3 and morph_heavy 1–2 pass param readback; admission ~3 hot instances per Part; see stress-hardware.json and stress-hardware-n456.json. SRC SETUP FDBK (encoder E) writable with SETUP_ALL.",
+  "limitations": [
+    "No MIDI flood stress (track machine; device:cx-stress covers audio load).",
+    "ColdFire worst-case cycles per event not stamped; static bound or owner waiver pending.",
+    "No listening sign-off, chromatic MIDI soak, or power-cycle Keep on this report.",
+    "Pattern mutated by device:cx-stress --arm-trigs during stress runs."
+  ],
+  "report": "TESTING.md",
+  "commands": [
+    "npm run device:test -- --share /tmp/modwerk-share.sock …/cx-osc.mwrm",
+    "npm run device:cx-stress -- --arm-trigs --preset all --cpu-settle 15 …/cx-osc.mwrm"
+  ]
+}

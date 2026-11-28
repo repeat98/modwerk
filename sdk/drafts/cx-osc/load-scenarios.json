@@ -1,0 +1,33 @@
+{
+  "schema": "cx-osc-load-scenarios-v1",
+  "module": "cx-osc",
+  "frameUsNominal": 362.8,
+  "mlFmMax": 6,
+  "morphHeavyMaxTracks": 4,
+  "notes": "Morph-zero cap follows ML_FM_MAX=6 with SETUP CAR/MOD at 0 (machine.s, 26 Nov 2026). Morph-heavy follows upstream README: at most four CX tracks with CAR, MOD, PWM, FDBK, INDX, DEC and FOLD engaged.",
+  "presets": {
+    "init": {
+      "label": "fm_defaults after pick",
+      "playback": [64, 25, 0, 64, 0, 0],
+      "setup": [0, 0, 127, 64, 0, 64],
+      "playbackNames": ["PTCH", "RATO", "INDX", "FINE", "FOLD", "MIX"],
+      "setupNames": ["CAR", "MOD", "DEC", "SYMM", "FDBK", "PWM"]
+    },
+    "morph_zero_hot_playback": {
+      "label": "MOD/MOR morph 0, PLAYBACK stressed",
+      "playback": [64, 127, 127, 64, 127, 127],
+      "setup": [0, 0, 127, 64, 0, 64]
+    },
+    "morph_heavy_all": {
+      "label": "CAR/MOD morph + PWM/FDBK/INDX/DEC/FOLD engaged",
+      "playback": [64, 127, 127, 64, 127, 127],
+      "setup": [127, 127, 127, 127, 127, 127]
+    }
+  },
+  "instanceCounts": {
+    "morph_zero_hot_playback": [1, 2, 3, 4, 5, 6],
+    "morph_heavy_all": [1, 2, 3, 4]
+  },
+  "measureSecondsPlaying": 8,
+  "transport": "pattern must have trigs on every CX track used"
+}

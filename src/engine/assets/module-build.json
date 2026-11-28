@@ -4,7 +4,7 @@
   "sourceCommit": "545c3a7163908a3a9c0799f4cfde52e540f242ed",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "sourceTreeSha256": "8e8f1f60b80863a1625d39db97463e725a54cc527373d51be94c9eecb40195cc",
-  "compilerSha256": "3bb3824f4e3f6f837b0f9854ca4bb78f67e499197d9eb0bd14237cbd73be5ee8",
+  "compilerSha256": "aaf9ba5da7b2171b8cbcfcb4ef9aa5e20cf8a589eeb39a51d01418160b24eba4",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.9-experimental",

@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "ev_midi_note_on", "fn": "cx_take_midi_note_on", "order": 45, "replaces": "po_mon"},
+    {"event": "ev_midi_note_off", "fn": "cx_take_midi_note_off", "order": 45, "replaces": "po_moff"}
+  ],
+  "rests": [
+    "0x40003ca4", "0x4000d03e", "0x4000b51a", "0x4000b2c8", "0x4000c634",
+    "0x4000685c", "0x4000d514"
+  ],
+  "contribute": [
+    {
+      "to": "ot_machines",
+      "order": 45,
+      "data": "cx_machine"
+    },
+    {
+      "to": "ot_machine_starts",
+      "order": 45,
+      "data": "cx_machine_start"
+    }
+  ]
+}

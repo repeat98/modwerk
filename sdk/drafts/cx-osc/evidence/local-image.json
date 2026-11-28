@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "module": "cx-osc",
+  "purpose": "Bind UI captures and qualification imageSha256 to the twin used on the author's MKII.",
+  "devTwinDir": "/Users/iliamurzinov/Documents/modwerk-dev-twin-cxosc",
+  "baseVersion": "0.8.2",
+  "identityPrefix": "311bb670568f8e91",
+  "imageSha256": "92d2ba065fa82198f17a26a3efd1d3dac56e46ce1455048eb861a0517df0a48b",
+  "notFlashCandidateSha256": "",
+  "measuredOn": "2026-11-27",
+  "notes": "build_core.py --dev with machine chooser viewport fix. RAM-boot after power cycle."
+}
