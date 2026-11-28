@@ -67,7 +67,9 @@ Guards are the same hashes as `sdk/octatrack/modules/synth` `stock_guard` entrie
 | Dev twin **with** FM hooks 69-90 (earlier tip) | `38a6d03fba944b23…` | **Fail** | MODWERK **VEC:04** (`ADDR` in the base code area). The relocated resolver branches are a source-level cause candidate. Unit returns to flashed base after power cycle. |
 | Dev twin with corrected resolver tails (this worktree) | `3afe6b2da03a30e6…` | **Pass** | MKII RAM boot reported `booted: base 3afe6b2d…`; the USB session reconnected and identified the same base. On saved B04, preflight passed. With no modules installed, PLAY, STOP and Part 1 to 2 to 1 completed. The unit reported stopped, and Part restore found working = saved with nothing to put back. |
 
-**Not run on hardware yet:** FM Synth on subscribed hooks, LFO depth, and STOP with FM notes. FM Synth 0.1.5 still detours these sites and cannot load on this base; its package migration stays in follow-up. The Part switch above tested the base without a module.
+**FM Synth 0.1.6 migration try (28 Nov 2026, branch `codex/fm-hook-migration`):** Development twin `da4a1fb69662a6b9…` (this branch, `build_core.py --dev`) RAM-booted. Preflight on saved B04 passed; PLAY, STOP and Part switch without modules passed. `device try` with FM Synth 0.1.6 (`e8c3e4fa`, 28,076 bytes, 45 hooks) failed during USB commit (diagnostic 2276/2277, PC `0x40d9159c`); the twin rolled back. STOP, wide MIDI chromatic gates, LFO depth, and FM notes stay unproven on hardware until a commit completes.
+
+**Not yet proven:** FM behavior after install. FM Synth 0.1.5 detours still clash on a hooks-only base; use 0.1.6 from `codex/fm-hook-migration` for the next try.
 
 `machine-ports.json` lists **synth** `subscribe` / `records`; **cx-osc** cites draft sources only (`sdk/drafts/cx-osc/`, #2293). Hook coverage passes: every hook has a declared user; placeholders cite `unused-hooks.json`.
 
