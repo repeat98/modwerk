@@ -1,7 +1,7 @@
 import type { Database, Env, User } from './platform'
 import { digest, HttpError, jsonBody, response } from './security'
 import { finishPilotCase, pilotRecords, recordPilot } from './eval-pilot'
-import { boardReply, boardUser, messageBody } from './agent-board'
+import { boardReply, boardUser } from './agent-board'
 import { forum } from './forum'
 import { shoutbox } from './shoutbox'
 import { avatarRoutes } from './avatars'
@@ -341,37 +341,6 @@ async function todoStatus(db: Database, id: string, body: Record<string, unknown
   return { ok: true }
 }
 
-/**
- * The shared to-do list is the agent board's wanted tasks (docs/AGENT_BOARD.md). Every open to-do about a pull
- * request or issue stands there as a task from TARS that anyone signed in can take, and the two end together:
- * a task whose pull request merged finishes its to-do, a task someone closed drops it, and a to-do that is
- * settled ends its task. A to-do with no number (Discord, diagnostics, the bot's own health) can name a tester
- * and stays the owner's. A note the board's text rules refuse stays private too.
- */
-async function shareTodos(db: Database) {
-  const at = new Date().toISOString(), stamp = now()
-  const todos = (await db.prepare("SELECT id,target,command,note,urgent FROM maintenance_bot_todos WHERE status='open' AND target>0").all<TodoRow>()).results
-  const tasks = (await db.prepare("SELECT id,topic_key,body,ended_at,ended_reason FROM agent_messages WHERE user_id='tars' AND kind='wanted' AND topic_kind='issue' AND parent_id IS NULL AND (ended_at IS NULL OR ended_reason<>'expired')")
-    .all<{ id: string; topic_key: string; body: string; ended_at: string | null; ended_reason: string | null }>()).results
-  const of = (todo: TodoRow) => tasks.filter(task => task.topic_key === String(todo.target) && task.body.endsWith(' ' + todo.command + '.'))
-  let shared = 0
-  for (const todo of todos) {
-    const mine = of(todo), ended = mine.find(task => task.ended_at)
-    if (ended) await db.prepare("UPDATE maintenance_bot_todos SET status=?,updated_at=? WHERE id=? AND status='open'").bind(ended.ended_reason === 'merged' ? 'done' : 'dropped', stamp, todo.id).run()
-    else if (mine.length) shared++
-    else {
-      let text
-      try { text = messageBody(todo.note.replace(/\s*;\s*/g, '. ').replace(/[.\s]+$/, '') + '. To do it: ' + todo.command + '.') } catch { continue }
-      await db.prepare("INSERT INTO agent_messages(id,kind,topic_kind,topic_key,user_id,body,priority,created_at,active_at) VALUES(?,'wanted','issue',?,'tars',?,?,?,?)")
-        .bind(crypto.randomUUID(), String(todo.target), text, todo.urgent ? 'high' : 'normal', at, at).run()
-      shared++
-    }
-  }
-  const open = new Set(todos.flatMap(todo => of(todo).map(task => task.id)))
-  for (const task of tasks) if (!task.ended_at && !open.has(task.id)) await db.prepare("UPDATE agent_messages SET ended_at=?,ended_reason='administrator' WHERE id=? AND ended_at IS NULL").bind(at, task.id).run()
-  return { shared }
-}
-
 /** The bot acts on the agent board as the owner: replies through the board's own rules, closes and releases as administrator. */
 async function boardAction(env: Env, db: Database, kind: string, id: string, body: Record<string, unknown>) {
   const at = new Date().toISOString()
@@ -579,7 +548,6 @@ export async function maintenanceBotRoutes(request: Request, env: Env, db: Datab
     return response({ ok: true })
   }
   if (route === '/todos' && method === 'POST') return response(await addTodos(env, db, await jsonBody(request, 64 * 1024)))
-  if (route === '/todos/share' && method === 'POST') return response(await shareTodos(db))
   if (route === '/diagnostics' && method === 'GET') return response(await diagnostics(db))
   if (route === '/merge' && method === 'POST') return response(await mergeAsOwner(env, await jsonBody(request)))
   if (route === '/merge/reviewed' && method === 'POST') return response(await reviewedMerge(env, db, await jsonBody(request)))

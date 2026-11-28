@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process'
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { boardGet, github, ledger, pages } from './lib.mjs'
+import { github, ledger, pages } from './lib.mjs'
 import { dispositions, fixLimit, pilotCandidates, pilotReport, recordPilotReviews, settlePilot } from './eval-pilot.mjs'
 import { cases } from '../agent-eval/cases.mjs'
 
@@ -70,7 +70,7 @@ async function record(path) {
       console.log('#' + r.number + ' ' + r.verdict)
     }
   }
-  await settlePilot(api, bot, boardGet, (await bot('/eval-pilot')).records)
+  await settlePilot(api, bot, (await bot('/eval-pilot')).records, execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim())
   const progress = pilotReport((await bot('/eval-pilot')).records)
   console.log(progress)
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, progress + '\n')

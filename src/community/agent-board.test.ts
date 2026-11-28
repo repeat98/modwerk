@@ -84,51 +84,20 @@ describe('agent board', () => {
     expect(await drafts()).toContainEqual(expect.objectContaining({ id: message.id }))
   })
 
-  it('posts one task per gap and routes it to an independent holder through the real board', async () => {
-    const { env, boardLogin, call, inbox, db } = await fixture()
+  it('records each pilot gap once with its public hint and posts nothing on the board', async () => {
+    const { env, db } = await fixture()
     const adapter = env.DB!
     db.prepare("INSERT INTO maintenance_bot_state VALUES ('fingerprint','plain text')").run()
-    const author = await boardLogin('ada'), verifier = await boardLogin('bo')
     const review = { number: 42, merge: 'f'.repeat(40), authorId: 101, verdict: 'gap', hint: 'Keeps the final row' }
     await recordPilot(adapter, review)
     await recordPilot(adapter, review)
-    const [record] = await pilotRecords(adapter), id = record.task!
-    expect((await inbox(author)).pilotTasks).toBeUndefined()
-    expect((await inbox(verifier)).pilotTasks).toEqual([expect.objectContaining({ id, source: 42 })])
-    const take = (token: string) => call('/agent-board/messages/' + id + '/take', 'POST', {}, token)
-    expect((await take(author)).status).toBe(403)
-    expect((await take(verifier)).status).toBe(200)
-    const decline = (token: string) => call('/agent-board/messages/' + id + '/replies', 'POST', { outcome: 'different-result', body: 'The earlier version passes the same check.' }, token)
-    expect((await decline(author)).status).toBe(403)
-    expect((await decline(verifier)).status).toBe(201)
+    expect(await pilotRecords(adapter)).toEqual([{ number: 42, merge: review.merge, authorId: 101, verdict: 'gap', hint: 'Keeps the final row' }])
     await finishPilotCase(adapter, 42, { result: 'different-result' })
     await finishPilotCase(adapter, 42, { result: 'added', evidence: 99 })
     expect((await pilotRecords(adapter))[0].result).toBe('different-result')
-    expect((await inbox(verifier)).pilotTasks).toBeUndefined()
     for (let number = 43; number <= 47; number++) await recordPilot(adapter, { ...review, number, verdict: 'covered' })
     expect(await pilotRecords(adapter)).toHaveLength(5)
-    expect(db.prepare("SELECT COUNT(*) AS n FROM agent_messages WHERE user_id='tars' AND kind='wanted'").get()?.n).toBe(1)
-  })
-
-  it('groups independent tasks under an issue or claim and keeps their holders and PRs separate', async () => {
-    const { boardLogin, claim, post, call } = await fixture()
-    const ada = await boardLogin('ada'), bo = await boardLogin('bo'), cy = await boardLogin('cy')
-    const parent = (await (await claim(ada, { kind: 'issue', key: '1619' })).json()).claim
-    const task = { kind: 'wanted', topic: 'site', key: 'worker', body: 'Investigate the saved state.' }
-    const create = async (extra: Record<string, unknown>) => (await (await post(ada, { ...task, ...extra })).json()).message
-    const save = await create({ parentIssue: 1619 }), load = await create({ parentIssue: 1619, body: 'Investigate loading.' })
-    const other = await create({ parentClaim: parent.id })
-    const take = (id: string, token: string, pr?: number) => call('/agent-board/messages/' + id + '/take', 'POST', { pullRequest: pr }, token)
-    expect((await take(save.id, bo, 222)).status).toBe(200)
-    expect((await take(load.id, cy)).status).toBe(200)
-    expect((await take(save.id, cy)).status).toBe(409)
-    const siblings = (await (await call('/agent-board/messages?parentIssue=1619')).json()).messages
-    expect(siblings).toHaveLength(2)
-    expect(siblings).toEqual(expect.arrayContaining([expect.objectContaining({ to: 'bo', pullRequest: 222 }), expect.objectContaining({ to: 'cy', pullRequest: null })]))
-    expect((await (await call('/agent-board/messages?parentClaim=' + parent.id)).json()).messages).toEqual([other])
-    expect((await post(ada, { ...task, parentClaim: 'missing' })).status).toBe(400)
-    expect((await post(ada, { ...task, parentIssue: 1619, parentClaim: parent.id })).status).toBe(400)
-    expect((await post(ada, { ...task, kind: 'finding', parentIssue: 1619 })).status).toBe(400)
+    expect(db.prepare('SELECT COUNT(*) AS n FROM agent_messages').get()?.n).toBe(0)
   })
 
   it('records independent findings and their evidence without folding the original thread', async () => {
@@ -136,10 +105,8 @@ describe('agent board', () => {
     const ada = await boardLogin('ada'), bo = await boardLogin('bo')
     const about = { topic: 'site', key: 'worker', body: 'A save can lose the version.' }
     const finding = (await (await post(ada, { ...about, kind: 'finding', pullRequest: 12 })).json()).message
-    const wanted = (await (await post(ada, { ...about, kind: 'wanted' })).json()).message
     const record = (id: string, token: string, outcome: string) => call('/agent-board/messages/' + id + '/replies', 'POST', { body: 'Checked the saved version.', outcome, evidence: 345 }, token)
     expect((await record(finding.id, ada, 'reproduced')).status).toBe(400)
-    expect((await record(wanted.id, bo, 'reproduced')).status).toBe(400)
     expect((await record(finding.id, bo, 'unknown')).status).toBe(400)
     for (const outcome of ['reproduced', 'different-result']) {
       const result = (await (await record(finding.id, bo, outcome)).json()).message
@@ -458,31 +425,13 @@ describe('agent board questions and findings', () => {
     expect(messages.map((item: { id: string; pullRequest: number | null }) => [item.id, item.pullRequest]).sort()).toEqual([[closed.id, null], [open.id, 1602]].sort())
   })
 
-  it('lets anyone post a wanted task and any agent take it, and ends it when its pull request merges', async () => {
-    const { env, call, boardLogin, post } = await fixture()
-    const ada = await boardLogin('ada'), bo = await boardLogin('bo'), cy = await boardLogin('cy')
-    vi.stubEnv('MODWERK_SITE', 'https://octamod.test/')
-    const fetch = (url: string, init: RequestInit) => handleCommunity(new Request(url, { ...init, headers: { ...init.headers as Record<string, string>, 'CF-Connecting-IP': '192.0.2.1' } }), env)
-    const options = { api: 'https://api.example.test/api', fetch }
-    const { message: task } = await client.post({ kind: 'wanted', topic: 'site', key: 'forum', body: 'Show the module version beside each forum thread title.' }, { ...options, token: ada })
-    expect(task).toMatchObject({ kind: 'wanted', topic: { kind: 'site', key: 'forum' }, author: 'ada', to: null, pullRequest: null })
-    for (const body of [{ topic: 'site', key: 'forum', to: 'bo' }, { topic: 'site', key: 'Forum' }, { topic: 'site', key: 'forum/threads' }]) expect((await post(ada, { kind: 'wanted', body: 'A task', ...body })).status).toBe(400)
-    const listed = async (filter: Record<string, string>) => (await client.listMessages(filter, options)).messages.map((item: { id: string }) => item.id)
-    expect([await listed({ kind: 'wanted' }), await listed({ kind: 'wanted', topic: 'site', key: 'forum' }), await listed({ machine: 'forum' })]).toEqual([[task.id], [task.id], []])
-    // Taking names the holder; someone else's take is refused, and the holder links the pull request.
-    expect((await call('/agent-board/messages/' + task.id + '/take', 'POST', {})).status).toBe(401)
-    expect((await client.messageAction(task.id, 'take', {}, { ...options, token: bo })).message.to).toBe('bo')
-    await expect(client.messageAction(task.id, 'take', {}, { ...options, token: cy })).rejects.toThrow('@bo has taken this task')
-    expect((await client.messageAction(task.id, 'take', { pullRequest: 1700 }, { ...options, token: bo })).message).toMatchObject({ to: 'bo', pullRequest: 1700 })
-    const { message: question } = await (await post(bo, { kind: 'question', topic: 'site', key: 'worker', to: 'ada', body: 'Which cron runs the board?' })).json()
-    expect((await call('/agent-board/messages/' + question.id + '/take', 'POST', {}, cy)).status).toBe(400)
-    env.GITHUB_TOKEN = 'synthetic-token'
-    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ number: 1700, state: 'closed', merged_at: '2026-11-09T00:00:00Z' })))
-    await syncAgentClaims(env, env.DB!)
-    vi.unstubAllGlobals()
-    expect(await listed({ kind: 'wanted' })).toEqual([])
-    expect((await client.listMessages({ kind: 'wanted', ended: true }, options)).ended).toMatchObject([{ id: task.id, to: 'bo', endedReason: 'merged' }])
-    vi.unstubAllEnvs()
+  it('takes no wanted tasks: shared jobs are GitHub issues', async () => {
+    const { call, boardLogin, post } = await fixture()
+    const ada = await boardLogin('ada')
+    expect((await post(ada, { kind: 'wanted', topic: 'site', key: 'forum', body: 'Show the module version.' })).status).toBe(400)
+    const { message: finding } = await (await post(ada, { kind: 'finding', topic: 'site', key: 'forum', body: 'Threads list newest first.' })).json()
+    for (const action of ['take', 'priority']) expect((await call('/agent-board/messages/' + finding.id + '/' + action, 'POST', {}, ada)).status).toBe(404)
+    expect((await call('/agent-board/messages?kind=wanted')).status).toBe(400)
   })
 
   it('keeps board text to plain prose', () => {
@@ -543,26 +492,6 @@ describe('agent board questions and findings', () => {
     await syncAgentClaims(env, env.DB!)
     expect(db.prepare('SELECT id, ended_reason AS reason FROM agent_messages WHERE parent_id IS NULL ORDER BY id').all())
       .toEqual([{ id: settled.id, reason: 'expired' }, { id: followed.id, reason: null }].sort((a, b) => a.id < b.id ? -1 : 1))
-  })
-
-  it('lists wanted tasks most urgent first; their author sets the priority, and the author or an administrator changes it', async () => {
-    const { call, boardLogin, post } = await fixture()
-    const ada = await boardLogin('ada'), bo = await boardLogin('bo')
-    const task = async (body: Record<string, unknown>) => (await (await post(ada, { kind: 'wanted', topic: 'site', key: 'forum', ...body })).json()).message
-    const later = await task({ body: 'Tidy the forum footer.', priority: 'low' }), plain = await task({ body: 'Show module versions on threads.' }), urgent = await task({ body: 'Fix the broken thread links.', priority: 'high' })
-    expect([later.priority, plain.priority, urgent.priority]).toEqual(['low', 'normal', 'high'])
-    for (const body of [{ kind: 'wanted', priority: 'urgent' }, { kind: 'finding', priority: 'high' }]) expect((await post(ada, { topic: 'site', key: 'forum', body: 'A task', ...body })).status).toBe(400)
-    const order = async () => (await (await call('/agent-board/messages?kind=wanted')).json()).messages.map((item: { id: string }) => item.id)
-    expect(await order()).toEqual([urgent.id, plain.id, later.id])
-    const prioritise = (id: string, priority: string, developer: string, admin = '') => call('/agent-board/messages/' + id + '/priority', 'POST', { priority }, developer, { admin })
-    expect((await prioritise(later.id, 'high', bo)).status).toBe(404)
-    expect((await (await prioritise(later.id, 'high', ada)).json()).message.priority).toBe('high')
-    const admin = (await (await call('/auth/admin', 'POST', { key: 'e'.repeat(64) })).json()).token as string
-    expect((await (await prioritise(urgent.id, 'low', '', admin)).json()).message.priority).toBe('low')
-    expect(await order()).toEqual([later.id, plain.id, urgent.id])
-    const { message: question } = await (await post(bo, { kind: 'question', topic: 'site', key: 'forum', to: 'ada', body: 'Which comes first?' })).json()
-    expect((await prioritise(question.id, 'high', bo)).status).toBe(400)
-    expect(question.priority).toBeUndefined()
   })
 
   it('lets authors take back their posts, administrators remove any, and drops a suspended account\'s', async () => {
@@ -628,7 +557,7 @@ describe('agent board questions and findings', () => {
     }
     const question = await addThread(cy, 'question', '2026-11-10T12:00:00.000Z')
     await addThread(ada, 'finding', '2026-11-11T12:00:00.000Z')
-    await addThread(cy, 'wanted', '2026-11-16T12:00:00.000Z')
+    await addThread(cy, 'finding', '2026-11-16T12:00:00.000Z')
     expect((await reply(ada, question, 'Here is the first reply.')).status).toBe(201)
     db.prepare('UPDATE agent_messages SET created_at=? WHERE parent_id=?').run('2026-11-12T12:00:00.000Z', question)
     expect((await reply(cy, question, 'Here is the latest reply.')).status).toBe(201)
@@ -639,12 +568,12 @@ describe('agent board questions and findings', () => {
       {
         startsAt: '2026-11-09T00:00:00.000Z', endsAt: '2026-11-16T00:00:00.000Z', complete: true,
         claims: { made: 2, ended: { merged: 0, releasedByHolder: 1, expired: 1, other: 0 } },
-        developers: { active: 2, firstSeen: 1 }, threads: { questions: 1, findings: 1, wanted: 0 }, replies: 1,
+        developers: { active: 2, firstSeen: 1 }, threads: { questions: 1, findings: 1 }, replies: 1,
       },
       {
         startsAt: '2026-11-16T00:00:00.000Z', endsAt: '2026-11-23T00:00:00.000Z', complete: false,
         claims: { made: 1, ended: { merged: 1, releasedByHolder: 0, expired: 1, other: 1 } },
-        developers: { active: 2, firstSeen: 1 }, threads: { questions: 0, findings: 0, wanted: 1 }, replies: 1,
+        developers: { active: 2, firstSeen: 1 }, threads: { questions: 0, findings: 1 }, replies: 1,
       },
     ] })
   })
