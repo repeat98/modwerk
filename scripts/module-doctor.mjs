@@ -45,6 +45,8 @@ const UI_CLAIMS_REQUIRED_FROM = '2026-10-14'
 const PAGE_CONTROLS_REQUIRED_FROM = '2026-11-11'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2), all = args.includes('--all'), draft = args.includes('--draft'), release = args.includes('--release'), ids = args.filter(arg => !arg.startsWith('--'))
+// --procedure: test:procedure's step 1 for a listed module's update, whose qualification record that very run writes (npm run module:qualify).
+const procedure = args.includes('--procedure')
 if ((all && ids.length) || (!all && ids.length !== 1) || (all && draft) || (release && !draft)) throw new Error('Usage: npm run module:doctor -- <module-id>   or   npm run module:doctor -- --draft <id> [--release]   or   npm run module:doctor -- --all')
 const json = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
 const exists = path => existsSync(resolve(root, path))
@@ -236,10 +238,15 @@ function octatrack(id) {
 
   // The release record against the source it was tested on, and drafted words nobody has read yet (npm run module:qualify).
   const qualified = qualifyChecks.get(id) ?? []
-  if (qualified.length) fail('qualification', qualified.map(problem => problem.detail).join('; '), qualified[0].fix)
+  // In the test procedure an update's record still names the version before it: the run's own evidence replaces it (Midiverb 0.2.0, 27 November 2026).
+  const recordWaits = procedure && document.tests.qualification?.moduleVersion !== document.version
+  const waits = 'waits for this run: npm run module:qualify -- ' + id + ' --procedure DIR --base TEXT --write'
+  if (qualified.length && recordWaits) info('qualification', 'the record is ' + document.tests.qualification?.moduleVersion + '\'s, ' + waits)
+  else if (qualified.length) fail('qualification', qualified.map(problem => problem.detail).join('; '), qualified[0].fix)
   else if (document.tests.qualification) ok('qualification', 'bound to this source, nothing left drafted (npm run module:qualify -- ' + id + ' --check)')
 
-  if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
+  if (rulesProblem && recordWaits && rulesProblem.startsWith(id + '.tests.qualification.moduleVersion:')) info('module rules', 'npm run modules:check stops at this record, which ' + waits)
+  else if (rulesProblem) fail('module rules', 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), 'fix what it names, then run npm run modules:check -- --base origin/main')
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
   const build = json('src/engine/assets/module-build.json'), buildable = document.build?.status !== 'pending'

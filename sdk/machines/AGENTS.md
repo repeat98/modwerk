@@ -7,4 +7,4 @@ You are changing a machine: its profile, core, base, hooks or USB link. Every ma
 - Extend the Octatrack's loader, USB link, builder, MCP and page with the machine's glue. Do not design a second one.
 - When a piece moves, update the recipe's table and the machine's guide in the same pull request.
 - A new device starts with a message to the owner ([talk to the owner first](../../docs/ADD_A_MACHINE.md#talk-to-the-owner-first)). All base work goes directly onto the [machine’s cumulative draft](../../docs/DEVELOPER_WORKFLOW.md#change-a-base). A link or loader port outside the base has its own owner-reviewed pull request.
-- Never commit firmware, stock code or tables, memory dumps or built images.
+- Never commit firmware, stock code or tables, memory dumps or built images. Only the owner publishes prebuilt base images, outside Git ([hosted bases](../../docs/HOSTED_BASES.md)).

@@ -8,7 +8,7 @@ import { parseBuildRequest, siteBase, verifyPublishedModules, buildAndSave, libr
 import { readFirmwareBuildManifest, sha256 } from './firmware-build-manifest.mjs'
 
 const image = new Uint8Array([1, 2, 3, 4])
-vi.mock('../vendor/elekloader/kit/src/bridge.ts', () => ({ Bridge: class {
+vi.mock('../src/engine/elektron/builder-bridge.ts', () => ({ Bridge: class {
   async setStock() { return { ok: true, dev: { key: 'digitakt-mk1' }, os: '1.54' } }
   addCore() { return {} }
   addMod() { return { ok: true } }
@@ -18,7 +18,7 @@ vi.mock('../vendor/elekloader/kit/src/bridge.ts', () => ({ Bridge: class {
 } }))
 
 const root = fileURLToPath(new URL('../', import.meta.url))
-const request = { machine: 'digitakt', os: '1.54', moduleIds: ['digimono', 'digieq'], version: 'D180', riskAccepted: true }
+const request = { machine: 'digitakt', os: '1.54', moduleIds: ['digistring', 'euclidean'], version: 'D180', riskAccepted: true }
 const cleanup = []
 afterEach(async () => { vi.unstubAllGlobals(); for (const path of cleanup.splice(0)) await rm(path, { recursive: true, force: true }) })
 
@@ -85,12 +85,12 @@ describe('local firmware release verification', () => {
 
   it('saves and reads back bytes in private fresh folders, retaining implicit dependencies and pins', async () => {
     const f = await fixture()
-    const expectedVersion = f.inventory.modules.find(module => module.id === 'digitakt-digimono').version
-    const result = await buildAndSave({ ...request, expectedSha256: sha256(image), expectedVersions: { digimono: expectedVersion } }, f.options)
-    expect(result.moduleVersions.digimono).toBe(expectedVersion)
+    const expectedVersion = f.inventory.modules.find(module => module.id === 'digitakt-digistring').version
+    const result = await buildAndSave({ ...request, expectedSha256: sha256(image), expectedVersions: { digistring: expectedVersion } }, f.options)
+    expect(result.moduleVersions.digistring).toBe(expectedVersion)
     expect(result.files[0].sha256).toBe(sha256(await readFile(result.files[0].path)))
-    expect(result.moduleVersions.digichain).toBeTruthy()
-    expect(result.modules.find(pin => pin.id === 'digimono').source.commit).toMatch(/^[a-f0-9]{40}$/)
+    expect(result.modules.map(pin => pin.id)).toContain('machine-pages')
+    expect(result.modules.find(pin => pin.id === 'digistring').source.commit).toMatch(/^[a-f0-9]{40}$/)
     expect((await stat(result.files[0].path)).mode & 0o777).toBe(0o600)
     expect(JSON.parse(await readFile(result.receiptPath, 'utf8')).verification).toBe('saved-local-build-from-published-inputs')
     const second = await buildAndSave(request, f.options)

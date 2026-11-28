@@ -1,0 +1,1 @@
+Firmware builder: the table of machines and stock OS releases the builder knows (hashes, load addresses, containers and module memory) is now Modwerk's own (`src/engine/elektron/devices.ts`). Builds are unchanged: every value and lookup matched the previous table on 10,794 checks. An unrecognized OS file is now refused with "not a stock firmware this builder knows".

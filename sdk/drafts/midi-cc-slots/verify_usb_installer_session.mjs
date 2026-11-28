@@ -15,9 +15,9 @@ const requests=[];globalThis.fetch=url=>{requests.push(String(url));return nativ
 const server=await createServer({configFile:false,server:{middlewareMode:true,hmr:false},appType:'custom',define:{'import.meta.env.VITE_LOCAL_CC_SLOTS':JSON.stringify('1')}})
 try{
  const {createEngineSession}=await server.ssrLoadModule('/src/engine/session.ts')
- const {members,read}=await server.ssrLoadModule('/vendor/elekloader/kit/src/zip.ts')
+ const {members,read}=await server.ssrLoadModule('/src/engine/elektron/zip.ts')
  const {decodeFirmware}=await server.ssrLoadModule('/src/engine/elek.ts')
- const {sha}=await server.ssrLoadModule('/vendor/elekloader/kit/src/bytes.ts')
+ const {sha}=await server.ssrLoadModule('/src/engine/elektron/bytes.ts')
  const {decodeCardSeed}=await server.ssrLoadModule('/src/engine/elekloader/card-seed.ts')
  writeFileSync(join(out,'original-MAIN.private.bin'),decodeFirmware(original).mainOs)
  const replies=[],handle=createEngineSession(r=>replies.push(r)),ids=['sidechain-compressor','playmodes','mute-modes','midi-cc-slots']

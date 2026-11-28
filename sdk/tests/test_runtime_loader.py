@@ -34,7 +34,7 @@ class LoaderTests(unittest.TestCase):
         cc = shutil.which('cc')
         if not cc:
             self.skipTest('no host C compiler')
-        octatrack = ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')
+        octatrack = ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=2097152u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u')
         # Force the 32-bit stock/pool address collision in one cached build, where both kinds of flush run.
         cached_overlap = ('-DMODWERK_CACHED_MODULES', '-DMODWERK_HOST_OVERLAP_STOCK')
         for defines in ((), octatrack, cached_overlap, octatrack + ('-DMODWERK_CACHED_MODULES',),
@@ -129,6 +129,12 @@ class LoaderTests(unittest.TestCase):
             build.dsp_section(pkg, 'fx2', 382, 'executed', 133, 16384, 'E-Verb')
         with self.assertRaisesRegex(ValueError, 'display name'):
             build.dsp_section(pkg, 'fx2', 382, 'executed', 132, 16384, 'A' * 16)
+        self.assertEqual(build.FX_IDS, 128)  # elekloader/fx-ids.json, which build_core.py builds the base with
+        for fx_id in (32, 127):  # past stock's 32 ids
+            self.assertEqual(build.dsp_section({**pkg, 'fxId': fx_id}, 'fx2', 382, 'executed', 132, 16384, 'E-Verb')['effect'], fx_id)
+        for fx_id in (0, 128):
+            with self.subTest(fx_id=fx_id), self.assertRaisesRegex(ValueError, 'an id of 1-127'):
+                build.dsp_section({**pkg, 'fxId': fx_id}, 'fx2', 382, 'executed', 132, 16384, 'E-Verb')
 
     def test_abi9_base_features_claims_and_hook_entries(self):
         pkg = next(p for p in json.loads((ROOT / 'src/engine/assets/dsp-packages.json').read_text())['packages'] if p['id'] == 'everb')
@@ -265,7 +271,7 @@ class SiteEventTests(unittest.TestCase):
         cc = shutil.which('cc')
         if not cc:
             self.skipTest('no host C compiler')
-        for defines in (('-DRUNTIME_MODULES=32u',), ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')):
+        for defines in (('-DRUNTIME_MODULES=32u',), ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=2097152u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u')):
             with self.subTest(defines), tempfile.TemporaryDirectory() as temp:
                 subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-g', *SANITIZE,
                                 '-fno-sanitize-recover=all', *defines, '-I', LOADER / 'tests/events', '-I', LOADER,
@@ -636,7 +642,7 @@ start_record = {1,16,machine,TARGET};
                     obj = work / (build_name + '-' + source.stem + '.o')
                     subprocess.run(['m68k-elf-gcc', '-mcpu=5475', '-msoft-float', '-O2', '-ffreestanding', '-fno-builtin', '-fno-jump-tables',
                                     '-fno-asynchronous-unwind-tables', '-fomit-frame-pointer', '-ffunction-sections', '-fdata-sections',
-                                    '-Wall', '-Wextra', '-Werror', *defines, '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u',
+                                    '-Wall', '-Wextra', '-Werror', *defines, '-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=2097152u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u',
                                     '-I' + str(glue), '-I' + str(adapters), '-I' + str(LOADER), '-I' + str(ROOT / 'sdk/runtime/upload'),
                                     '-c', str(source), '-o', str(obj)], check=True, capture_output=True)
                     objects.append(obj)

@@ -1,0 +1,4 @@
+{
+ "about": "How many effect ids the Octatrack base handles, FX1 and FX2 alike (fxids.h MODWERK_FX_IDS; docs/OCTATRACK_MORE_EFFECT_IDS.md): ids 1 to ids - 1, past stock's 32 from the start. The one place it is set: build_core.py builds the base with it and the runtime builder (sdk/runtime/loader/build.py) bounds a package's effect id by it. At most 128 (stock reads a Part's id as a signed byte); raising it is this number and a base rebuild. Card images (build_bus.py) keep stock's 32.",
+ "ids": 128
+}

@@ -45,7 +45,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../src/engine/elektron/bytes.ts'
 import { describeRefusal } from './loader-refusals.mjs'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // MWMS v1 and v2, sdk/runtime/loader/set_package.h. One offer and one Keep for all changes.
 import { digestBytes, UPLOAD_MAX_BYTES } from './upload-wire.ts'
-import { sha256 } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha256 } from '../elektron/bytes.ts'
 import frameCosts from '../../../sdk/machines/octatrack/frame-costs.json' with { type: 'json' }
 
 /** v2's table entry: a module's package id and what it adds to the longest frame, per mille: each further instance
@@ -12,17 +12,22 @@ export interface FrameCost { module: number; use: number; wake: number; rest: nu
  * what each further track that trigs off that step adds, and the margin on a pattern's own measured stock; first, what
  * an open USB stream adds to the frame interrupt's work (to a computer, and both ways, then by width: up to 2, 4, 8, 16
  * and 20 channels), ids below those. */
+/** machine_registry.c PRICE_BIT: a machine's price travels under its module id with this bit flipped. */
+export const PRICE_BIT = 0x80000000
 export const STOCK_IDS = { stream: 0xffffffe0, streamDuplex: 0xffffffe1, streamByWidth: 0xffffffe2, trackStock: 0xfffffff1, line: 0xfffffff2, reserveBySteps: 0xfffffff3, reserveMargin: 0xfffffffc, reserveFloor: 0xfffffffd, trackPlay: 0xfffffffe, measuredMargin: 0xffffffff } as const
 type Stock = { stream?: number; streamDuplex?: number; streamByWidth?: readonly number[]; trackStock: number; line: number; reserveBySteps: readonly number[]; reserveMargin: number; reserveFloor: number; trackPlay: number; measuredMargin: number }
 /** The measured costs (sdk/machines/octatrack/frame-costs.json, percent: `first` alone, `each` further, `rest` installed
  * and unused, and the base's `stock`) as v2 sends them, by id ascending. */
-export function frameCostTable(costs: Record<string, { first: number; each: number; rest?: number }> = frameCosts.costs, stock: Stock | null = frameCosts.stock): FrameCost[] {
-  const modules = Object.entries(costs).map(([id, cost]) => ({
-    module: new DataView(sha256(new TextEncoder().encode(id)).buffer).getUint32(0), // build.py module_id()
-    use: Math.round(cost.each * 10), wake: Math.max(0, Math.round(cost.first * 10) - Math.round(cost.each * 10)),
-    rest: Math.max(0, Math.round((cost.rest ?? 0) * 10)),
-  }))
+export function frameCostTable(costs: Record<string, { first: number; each: number; rest?: number; price?: number }> = frameCosts.costs, stock: Stock | null = frameCosts.stock): FrameCost[] {
+  const modules = Object.entries(costs).flatMap(([id, cost]) => {
+    const module = new DataView(sha256(new TextEncoder().encode(id)).buffer).getUint32(0) // build.py module_id()
+    const entry = { module, use: Math.round(cost.each * 10), wake: Math.max(0, Math.round(cost.first * 10) - Math.round(cost.each * 10)),
+      rest: Math.max(0, Math.round((cost.rest ?? 0) * 10)) }
+    // A machine's measured whole-track price, for the Part budget (machine_registry.c cpu_price): its id with PRICE_BIT.
+    return cost.price === undefined ? [entry] : [entry, { module: (module ^ PRICE_BIT) >>> 0, use: Math.round(cost.price * 10), wake: 0, rest: 0 }]
+  })
   if (modules.some(m => m.module >= 0xffffffe0)) throw new Error('A module id collides with the base\'s own figures.') // 0xffffffe0 and up are the base's
+  if (new Set(modules.map(m => m.module)).size !== modules.length) throw new Error('A machine\'s price id collides with a module id.')
   if (stock && stock.reserveBySteps.length !== 9) throw new Error('The stock reserve needs a figure for 0 to 8 tracks on a step.')
   if (stock?.streamByWidth && stock.streamByWidth.length !== 5) throw new Error('A stream needs a figure for up to 2, 4, 8, 16 and 20 channels.')
   const own = stock ? [

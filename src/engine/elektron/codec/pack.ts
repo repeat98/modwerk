@@ -6,7 +6,7 @@ const MIN = 3, FAR = 3328, MAXOFF = 65536, MAXCOUNT = 2048, WINDOW = 24, EARLY =
 
 // Control bits go into tag bytes, most significant first; a tag byte is placed in the stream when its
 // first bit is written, so payload bytes written in between land before the next tag byte.
-class Writer {
+export class Writer {
   out: Uint8Array
   n = 0
   tag = 0

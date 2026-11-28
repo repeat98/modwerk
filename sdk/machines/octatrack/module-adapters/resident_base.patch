@@ -329,7 +329,7 @@
      return sites, layout
 --- a/dsp_receiver.asm
 +++ b/dsp_receiver.asm
-@@ -20,7 +20,11 @@
+@@ -20,7 +20,13 @@
  ; (two words per 24-bit word), 59-63 scratch. Opcodes: 1 PROBE, 3 WRITE, 4 BIND,
  ; 5 UNBIND, 6 BYPASS (an id onto stock's null stub), 7 BASE (X:$255 entry),
  ; 8 PEEK (one bit of a P word, answered in HF3), 9 SUM (HF3: the sum of 1-256 table words differs from the
@@ -339,9 +339,21 @@
 +; desired mask in word5. The build names every writable branch operand.
 +; 11 resident initialization: count word4, logical offset word5, feature word7.
 +; Fixed owned X/Y ranges only, dormant feature only; every word is read back.
++; 12 slot record word (dsp_programs.c): word4 its index 0-63 in X:$7fb0-$7fef, word5 the value's low 16 bits,
++; word7 its high 8. The first frame zeroes the 64 words before any effect reads them.
  ; The first refused packet of a boot leaves a record (missoffset, then two words):
  ;   $01rrrr: its halfwords sum to rrrr, not 0; the sequence that arrived; their
  ;            position-weighted sum (each halfword times 64 - its index), mod 2^24.
+@@ -71,4 +77,9 @@
+         move    x0,p:(r1)
++        move    #>$7fb0,r1              ; the slot records (op 12): zero before any effect reads one
++        move    #<0,x0
++        do      #<64,mwslotzero
++        move    x0,x:(r1)+
++mwslotzero:
+         move    #>tblready,r1
+         move    #>1,x0
+         move    x0,p:(r1)+
 @@ -75,7 +79,7 @@
  tblset:
  ; Load meter: core 0's main loop (P:$4b) counts its idle iterations in b until a frame is due, and
@@ -351,7 +363,7 @@
  ; Each window of 1024 frames is published after its serial: the least and most idle
  ; counts, their sum and the frames with none (missed). Core 1 keeps no such count. r1 names idlewin
  ; (frame); the frames left stay in x1 for the test at counted: stock writes x1 before it reads it after both frame heads.
-@@ -158,7 +162,15 @@
+@@ -158,7 +162,33 @@
          and     #>$ffff,a
          cmp     #<1,a
          beq     accepted
@@ -359,11 +371,29 @@
 +        beq     hookcontrol
 +        cmp     #<11,a
 +        beq     hookreset
++        cmp     #<12,a
++        beq     mwslotop
          bra     coldops
 +hookcontrol:
 +@HOOK_CONTROL@
 +hookreset:
 +@HOOK_RESET@
++mwslotop:
++        move    x:(r0+4),a              ; op 12: X:$7fb0 + word 4 (0-63) becomes word 7 << 16 | word 5
++        and     #>$ffff,a
++        cmp     #>63,a
++        bgt     badsaved
++        add     #>$7fb0,a
++        move    a1,r1
++        move    x:(r0+7),a
++        and     #>$ff,a
++        asl     #16,a,a
++        move    a1,x0
++        move    x:(r0+5),a
++        and     #>$ffff,a
++        or      x0,a
++        move    a1,x:(r1)
++        bra     accepted
  coldsum:
          move    #>@COLDSUM@,r1          ; a torn packet: its record is kept by the window's half (badsum)
          jmp     (r1)

@@ -63,6 +63,7 @@ static void *host_stock(uint32_t a)
 
 void mg_tick(void); /* midi_generators.c, checked by test_midi_generators.c */
 void mg_tick(void) {}
+void modwerk_lfo_pmtr_tables_changed(void) {} /* lfo_pmtr_dest covered by test_lfo_pmtr_dest.c */
 static unsigned rest_polls; /* the loader's resting poll, checked by sdk/runtime/loader/tests/events_test.c; modelled below */
 static int project_loading; /* fxmap.c's: a project load runs */
 int modwerk_fxmap_loading(void);
@@ -186,10 +187,14 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
 }
 /* The site's measured costs: module 'L' (LIGHT) one track 2 % of a frame, 1 % to wake, while costs_listed. */
 static int costs_listed;
+static int prices_listed; /* and CHEAP's measured price, 17 % (frame-costs.json `price`, under PRICE_BIT) */
 int modwerk_status_module_cost(uint32_t module, uint32_t *use, uint32_t *wake)
-{ if (!costs_listed || module != 'L') return 0; *use = 20u, *wake = 10u; return 1; }
+{
+    if (prices_listed && module == ('C' ^ 0x80000000u)) { *use = 170u, *wake = 0; return 1; }
+    if (!costs_listed || module != 'L') return 0; *use = 20u, *wake = 10u; return 1;
+}
 uint32_t modwerk_status_module_rest(uint32_t module) { return costs_listed && module == 'L' ? 15u : 0u; } /* 1.5 % at rest */
-uint32_t modwerk_status_costs_key(void) { return costs_listed ? 2u : 1u; } /* status.c's: another table, another key */
+uint32_t modwerk_status_costs_key(void) { return (costs_listed ? 2u : 1u) + (prices_listed ? 4u : 0u); } /* status.c's: another table, another key */
 static uint32_t test_hush; /* status.c's predicted brake */
 uint32_t modwerk_status_hush(fx_set fx[2], uint16_t id[2])
 { fx[0] = fx[1] = (fx_set){{0}}; id[0] = (uint16_t)(test_hush >> 24), id[1] = 0xffffu; return test_hush; }
@@ -575,6 +580,29 @@ static void check_cpu_budget(void)
     part0()[60 + 120] = 'A'; ++owner_epoch; mw_ui_tick(); /* nor once an install brings the machine the Part names */
     CHECK(!mw_cpu_refused && hot_boxes == judged + 1);
     cpu_now = 0; for (unsigned k = 0; k < 3; ++k) part0()[60 + 120 + k] = 0;
+    mw_ui_tick(); rows(0, 0, 0, 0);
+    CHECK(!mw_cpu_refused);
+}
+/* The site's measured price (frame-costs.json `price`) bills a machine in place of its descriptor's: FM Synth 0.1.5
+ * named 4 and took 16.5 on a medium pattern, so a loaded Part carried eight of them (owner, 26 November 2026). Without
+ * a price in the table, the descriptor's stands. */
+static const struct modwerk_machine C = {MODWERK_MACHINE_ABI, {'C', 'H'}, 1, 1, "CHEAP", MODWERK_MACHINE_PROTECT, 0, a_defaults,
+                                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, render_a, 0, 0, 0, 0, {4}};
+static void check_cpu_measured_price(void)
+{
+    const void *one[] = {&C};
+    rows(one, 1, 0, 0);
+    for (unsigned t = 0; t < 8; ++t) part0()[0x22 + t] = 1, part0()[60 + 30 * t] = 'C', part0()[61 + 30 * t] = 'H', part0()[62 + 30 * t] = 1;
+    fresh(); a_admit = 1; mw_cpu_allowance = 45; prices_listed = 0; mw_ui_tick(); mw_ui_tick();
+    CHECK(!mw_cpu_refused && mw_cpu_booked == 32);              /* a loaded Part of eight at the descriptor's 4 */
+    prices_listed = 1; mw_ui_tick(); mw_ui_tick();               /* the table names 17: two fit in 45, six go silent */
+    CHECK(mw_cpu_booked == 34 && mw_cpu_refused == 0xfcu);
+    unsigned boxes = cpu_boxes;
+    CHECK(mw_assign(part0(), 1, 1) == 1 && mw_assign(part0(), 1, 5) == (unsigned)-1 && cpu_boxes == boxes + 1); /* a pick: 17 + 17 + 17 */
+    CHECK(cpu_box_add == 170u);
+    prices_listed = 0; mw_ui_tick(); mw_ui_tick();               /* a table without it: the descriptor's again */
+    CHECK(!mw_cpu_refused && mw_cpu_booked == 28);
+    for (unsigned t = 0; t < 8; ++t) for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0;
     mw_ui_tick(); rows(0, 0, 0, 0);
     CHECK(!mw_cpu_refused);
 }
@@ -1530,6 +1558,7 @@ int main(void)
     check_source_starts();
     check_native_flex_voice();
     check_cpu_budget();
+    check_cpu_measured_price();
     check_engine_price();
     check_busiest_step(); check_rest_booked();
     check_brake();

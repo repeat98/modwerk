@@ -62,13 +62,17 @@ const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'con
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
 const STATELESS = ['crash', 'stall', 'set', 'base', 'freeze_pc', 'usb_gone', 'detail'] // records that carry no cpu, keys or screen
-/** A refused restore's set record from base 0.7.10 on (diag.c): the loader's check that refused it (dsp1, read as dsp1to4;
- * loader.h runtime_check) and the module pool then, in 16-byte units (cpu the bytes used, dsp0 the largest free run, read as
- * dsp5to8). Older bases leave all three 0. A module-memory refusal by the claims check is a DSP claim meeting a delay buffer. */
+/** A refused restore's set record from base 0.7.10 on (diag.c): the loader's check that refused it (dsp1's low byte, read as
+ * dsp1to4; loader.h runtime_check) and the module pool then, in 16-byte units (cpu the bytes used, dsp0 the largest free run,
+ * read as dsp5to8, with their bits 16-19 in dsp1's bits 8-11 and 12-15, 0 below 1 MiB). Older bases leave all three 0. A
+ * module-memory refusal by the claims check is a DSP claim meeting a delay buffer. */
 const REFUSED_CHECKS = ['', 'the module pool', 'its DSP claims', 'the machine metadata', 'the DSP limits']
-const refusedPool = r => !(r.cpu || r.dsp5to8 || r.dsp1to4) ? '' :
-  (r.dsp1to4 ? `, by ${r.tempo24 === 2 && r.dsp1to4 === 2 ? 'its DSP claims meeting a delay buffer' : REFUSED_CHECKS[r.dsp1to4] ?? 'check ' + r.dsp1to4}` : '') +
-  `, module memory ${Math.round(r.cpu / 64)} KiB used, largest free block ${(r.dsp5to8 / 64).toFixed(1)} KiB`
+const refusedPool = r => {
+  if (!(r.cpu || r.dsp5to8 || r.dsp1to4)) return ''
+  const check = r.dsp1to4 & 0xff, used = r.cpu + (r.dsp1to4 >> 8 & 15) * 65536, largest = r.dsp5to8 + (r.dsp1to4 >> 12 & 15) * 65536
+  return (check ? `, by ${r.tempo24 === 2 && check === 2 ? 'its DSP claims meeting a delay buffer' : REFUSED_CHECKS[check] ?? 'check ' + check}` : '') +
+    `, module memory ${Math.round(used / 64)} KiB used, largest free block ${(largest / 64).toFixed(1)} KiB`
+}
 // diag.c stores up to fourteen package IDs in the set record. A full record can be only part of the inventory.
 const SET_ID_CAPACITY = 14
 /** A CPU record from base 0.8.2 on (diag.h): bits 16-23 are the tracks refused since the last one, each named by the

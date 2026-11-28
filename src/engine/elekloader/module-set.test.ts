@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it, vi } from 'vitest'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import catalog from '../../../sdk/catalog.json' with { type: 'json' }
 import { publishedManifest as manifest } from './published-octatrack.fixture'
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
 import { publishedBinding as baseBinding } from './published-octatrack.fixture'
 import { removal } from '../../dev/octatrack-usb-lifecycle'
 import { RuntimeFeature } from './upload-usb'
-import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, poolExtent, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
+import { BASE_DSP_FEATURES, BaseUpdateRequired, PROGRAM_AREAS, ProgramAreasBaseRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, moduleSetReview, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
 const load = async (entry: { path: string }) => file(entry.path)
@@ -113,15 +113,9 @@ describe('preparing a module set', () => {
     expect(fetched).not.toHaveBeenCalled()
     const audio = (manifest as { usbAudio?: { configurable?: { name: string } } }).usbAudio?.configurable
     const extraNames = audio ? [audio.name] : []
-    // Every published package at once needs more than the base's module pool, so they compose in two sets that share
-    // it out: the largest first, each into the lighter set.
-    await expect(prepareModuleSet(target, empty, fetched, events, baseBinding.identity)).rejects.toThrow('module memory')
-    const cost = (id: string) => { const entry = manifest.packages.find(item => item.id === id); return entry ? poolExtent(entry, file(entry.path)) : 0 }
-    const compose = async (ids: readonly string[], capabilities: typeof events) => {
-      const halves: string[][] = [[], []], used = [0, 0]
-      for (const id of [...ids].sort((a, b) => cost(b) - cost(a))) { const half = used[0] <= used[1] ? 0 : 1; halves[half].push(id); used[half] += cost(id) }
-      return (await Promise.all(halves.map(moduleIds => prepareModuleSet({ name: 'Half', moduleIds }, empty, fetched, capabilities, baseBinding.identity)))).flatMap(result => result.changes)
-    }
+    // Every published package at once fits the base's 2 MiB module pool (the 768 KiB before took them in two sets).
+    const compose = async (ids: readonly string[], capabilities: typeof events) =>
+      (await prepareModuleSet({ name: 'All', moduleIds: [...ids] }, empty, fetched, capabilities, baseBinding.identity)).changes
     const changes = await compose(USB_MODULE_IDS, events)
     expect(changes.map(change => change.module).sort()).toEqual([...manifest.packages.map(entry => entry.name), ...extraNames].sort())
     expect(changes.every(change => change.undo?.length === 32)).toBe(true)
@@ -167,9 +161,9 @@ describe('preparing a module set', () => {
     await expect(subscriber({ [index('ot_machines')]: order(16) })).resolves.toBeDefined()
     await expect(subscriber({ [index('ot_machines')]: order(20) })).rejects.toThrow('inconsistent') // an 80-byte record past the image
     await expect(subscriber({ [4 + SITE_EVENTS]: order(8) })).rejects.toThrow('inconsistent') // past the base's events
-    // Image and bss together up to 288 KiB (loader.h RUNTIME_MODULE_BYTES), past the 128 KiB image limit.
-    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 294912 - 96)).resolves.toBeDefined()
-    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 294912 - 95)).rejects.toThrow('inconsistent')
+    // Image and bss together up to 512 KiB (build_core.py RUNTIME_MODULE_BYTES), past the 256 KiB image limit.
+    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 524288 - 96)).resolves.toBeDefined()
+    await expect(subscriber({ [index('ev_mute_keep')]: raise(8) }, 96, 0, 524288 - 95)).rejects.toThrow('inconsistent')
   })
   it('fetches the site’s copy and refuses one that did not arrive intact', async () => {
     const entry = manifest.packages[0], data = file(entry.path)
@@ -202,18 +196,24 @@ const readerClaims: Claim[] = [[2, 0, 1, 0x800, 0x200], [2, 1, 1, 0x800, 0x200],
 describe('ABI 9 packages: base features and DSP claims', () => {
   const effect = manifest.packages.find(item => item.id === 'everb')!, published = file(effect.path)
   const keybus = { abi: 9, features: 7 | 128, maxSites: 128, maxCopies: 128 }, at = baseBinding.identity
-  const reader = (data = abi9(published, BASE_DSP_FEATURES, readerClaims), fields: Record<string, unknown> = {}) => {
-    const entry = { ...effect, abi: 9, requires: BASE_DSP_FEATURES, claims: readerClaims.length, bytes: data.length, sha256: sha(data), ...fields }
+  const readerRequirement = 8 // key-bus reader; independent of additional provided services
+  const reader = (data = abi9(published, readerRequirement, readerClaims), fields: Record<string, unknown> = {}) => {
+    const entry = { ...effect, abi: 9, requires: readerRequirement, claims: readerClaims.length, bytes: data.length, sha256: sha(data), ...fields }
     return { catalogue: createRuntimeCatalogue({ packages: [entry] }), data }
   }
   const target = { name: 'Reader', moduleIds: ['everb'] }
-  it('offers only the key bus, which the base reports through its loader’s ABI 9', () => {
+  it('offers the fixed returning-chain and key-bus services beside program areas', () => {
     const sites = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/dsp-sites.json', import.meta.url), 'utf8'))
-    expect(BASE_DSP_FEATURES).toBe(sites.features.find((feature: { name: string }) => feature.name === 'keybus').bit)
-    expect(BASE_DSP_FEATURES).toBe(8)
+    expect(sites.features.find((feature: { name: string }) => feature.name === 'keybus').bit).toBe(8)
+    expect(BASE_DSP_FEATURES).toBe(24)
     // The Octatrack's on-demand base provides exactly that (resident_engines.c); the loader refuses any other bit.
     const engines = readFileSync(new URL('../../../sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.c', import.meta.url), 'utf8')
-    expect(engines).toContain('unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS; }')
+    expect(engines).toContain('unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_TRACK_PROCESSOR | MW_DSP_PROGRAMS; }')
+    // Program areas have no ledger region: their bit is the one abi9.py and the base's header give them.
+    const abi9 = readFileSync(new URL('../../../sdk/runtime/loader/abi9.py', import.meta.url), 'utf8')
+    expect(Number(/UNLEDGERED = \{'programs': (0x[0-9a-f]+)\}/.exec(abi9)?.[1])).toBe(PROGRAM_AREAS)
+    const header = readFileSync(new URL('../../../sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.h', import.meta.url), 'utf8')
+    expect(Number(/#define MW_DSP_PROGRAMS (0x[0-9a-f]+)u/.exec(header)?.[1])).toBe(PROGRAM_AREAS)
     expect(readFileSync(new URL('../../../sdk/runtime/loader/loader.h', import.meta.url), 'utf8')).toMatch(/#define RUNTIME_ABI 10u?\b/)
   })
   it('syncs a reader to a base whose loader reports ABI 9, with its forward and Undo packages checked', async () => {
@@ -230,7 +230,7 @@ describe('ABI 9 packages: base features and DSP claims', () => {
     expect(changes).toEqual([{ module: 'E-Verb', data, undo: removalPackage('everb') }])
     expect((await catalogue.prepare({ name: 'Empty', moduleIds: [] }, { ...empty, moduleIds: ['everb'] }, fetched, keybus, at)).changes[0].undo).toEqual(data)
     // A reader that claims nothing is as valid: the base owns the bus's words.
-    const bare = abi9(published, BASE_DSP_FEATURES, [])
+    const bare = abi9(published, readerRequirement, [])
     await expect(reader(bare, { claims: 0 }).catalogue.prepare(target, empty, async () => bare, keybus, at)).resolves.toBeDefined()
   })
   it('offers a reader only to a base known to have the key bus, with the guided update saying why', async () => {
@@ -257,23 +257,34 @@ describe('ABI 9 packages: base features and DSP claims', () => {
       { abi: 8, requires: BASE_DSP_FEATURES, claims: 0 }, { abi: 8, requires: 0, claims: 1 }, { abi: 10 }])
       expect(() => reader(undefined, fields)).toThrow('inconsistent')
   })
+  it('offers an effect that requires program areas only to a base known to have them', async () => {
+    const data = abi9(published, PROGRAM_AREAS, []), fetched = vi.fn(async () => data)
+    const catalogue = createRuntimeCatalogue({ packages: [{ ...effect, abi: 9, requires: PROGRAM_AREAS, claims: 0, bytes: data.length, sha256: sha(data) }] })
+    for (const base of KEY_BUS_BASES) await expect(catalogue.prepare(target, empty, fetched, keybus, base)).resolves.toBeDefined()
+    for (const base of [undefined, 'b'.repeat(64)]) {
+      const problem = catalogue.review(target, empty, keybus, base).problem
+      expect(problem).toBeInstanceOf(ProgramAreasBaseRequired)
+      expect(problem).toBeInstanceOf(BaseUpdateRequired)
+    }
+    expect(() => createRuntimeCatalogue({ packages: [{ ...effect, abi: 9, requires: PROGRAM_AREAS | 0x200, claims: 0, bytes: data.length, sha256: sha(data) }] })).toThrow('inconsistent')
+  })
   it('checks the header and every claim as the loader does before anything is sent', async () => {
     const refused = async (data: ReturnType<typeof abi9>, fields: Record<string, unknown> = {}) => {
       const { catalogue } = reader(data, fields)
       await expect(catalogue.prepare(target, empty, async () => data, keybus, at)).rejects.toThrow('inconsistent')
     }
     await refused(abi9(published, 0, readerClaims)) // requires differs from the manifest
-    await refused(abi9(published, BASE_DSP_FEATURES, readerClaims.slice(1))) // claim count differs
-    await refused(abi9(published, BASE_DSP_FEATURES, readerClaims, [[0, 3, 0]]), {}) // a hook entry: no base has hook slots
+    await refused(abi9(published, readerRequirement, readerClaims.slice(1))) // claim count differs
+    await refused(abi9(published, readerRequirement, readerClaims, [[0, 3, 0]]), {}) // a hook entry: no base has hook slots
     for (const claim of [[3, 0, 1, 0x800, 1], [2, 2, 1, 0x800, 1], [2, 0, 0, 0x800, 1], [2, 0, 4, 0x800, 1], [2, 0, 1, 0x800, 0],
       [2, 0, 1, 0x2fff0, 0x20], [2, 0, 1, 0x3fff0, 0x20], [2, 0, 1, 0x40000, 1]] as Claim[])
-      await refused(abi9(published, BASE_DSP_FEATURES, [claim]), { claims: 1 })
+      await refused(abi9(published, readerRequirement, [claim]), { claims: 1 })
     // Two of a package's own claims meeting: the same core and space, or anywhere in the window whatever the core.
-    await refused(abi9(published, BASE_DSP_FEATURES, [[2, 0, 1, 0x800, 0x40], [2, 0, 1, 0x83f, 1]]), { claims: 2 })
-    await refused(abi9(published, BASE_DSP_FEATURES, [[2, 0, 1, 0x33dfe, 0x10], [1, 1, 1, 0x33e00, 1]]), { claims: 2 })
-    const apart = abi9(published, BASE_DSP_FEATURES, [[2, 0, 1, 0x800, 0x40], [2, 1, 1, 0x800, 0x40], [1, 0, 1, 0x800, 0x40]])
+    await refused(abi9(published, readerRequirement, [[2, 0, 1, 0x800, 0x40], [2, 0, 1, 0x83f, 1]]), { claims: 2 })
+    await refused(abi9(published, readerRequirement, [[2, 0, 1, 0x33dfe, 0x10], [1, 1, 1, 0x33e00, 1]]), { claims: 2 })
+    const apart = abi9(published, readerRequirement, [[2, 0, 1, 0x800, 0x40], [2, 1, 1, 0x800, 0x40], [1, 0, 1, 0x800, 0x40]])
     await expect(reader(apart, { claims: 3 }).catalogue.prepare(target, empty, async () => apart, keybus, at)).resolves.toBeDefined()
-    const reserved = abi9(published, BASE_DSP_FEATURES, readerClaims); reserved[80 + published.length - 68 - (4 * new DataView(published.buffer).getUint32(32) + 2 * new DataView(published.buffer).getUint16(36)) + 3] = 1
+    const reserved = abi9(published, readerRequirement, readerClaims); reserved[80 + published.length - 68 - (4 * new DataView(published.buffer).getUint32(32) + 2 * new DataView(published.buffer).getUint16(36)) + 3] = 1
     await refused(reserved) // the first claim's reserved byte
   })
 })

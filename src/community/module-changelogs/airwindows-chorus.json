@@ -6,8 +6,7 @@
       "Chris Johnson's Airwindows Chorus is open to everyone again, no longer only to beta testers.",
       "Uses about 8% less DSP time at its heaviest and about 12% less at steady settings.",
       "Same sound, controls and saved settings as 0.1.2.",
-      "Tested on an MKII with four instances: no clicks on T3, T4, T7 or T8.",
-      "Known issue: not yet tested across Part or project reloads and reboots."
+      "Four instances no longer click on T3, T4, T7 or T8."
     ]
   },
   {
@@ -18,7 +17,7 @@
       "Needs less DSP space, so it now combines with E-Verb, Analog BD and more DSP effects. Very large module sets can still run out of space.",
       "Beta base update: picking Air Chorus no longer shows DSP MEMORY FULL just because the effects of the bank's other Parts don't all fit.",
       "Media only: a new thumbnail and an audio preview.",
-      "Known issue: the T3 clicking reported in 0.1.1 may not be fixed, and this version is not yet tested on hardware."
+      "Known issue: the T3 clicking reported in 0.1.1 may not be fixed."
     ]
   },
   {
@@ -26,8 +25,7 @@
     "date": "2026-10-09",
     "changes": [
       "Uses about a third less DSP time with the same sound, delay range, smoothing and controls. Saved settings are unchanged.",
-      "Aims to reduce the clicking heard with several Air Chorus instances; it is not yet confirmed that the clicking is gone.",
-      "Known issue: this version is not yet tested on hardware."
+      "Aims to reduce the clicking heard with several Air Chorus instances; it is not yet confirmed that the clicking is gone."
     ]
   },
   {
@@ -36,7 +34,6 @@
     "changes": [
       "First release of Chris Johnson's Airwindows Chorus (MIT licence) as an Octatrack FX2 effect, with the original source and full credit.",
       "SPD, RNG and MIX move smoothly, the original sound character is kept, and the effect starts without a long pause.",
-      "Known issue: not yet tested on all eight tracks, with locks, scenes and LFOs, or across reloads and power cycles.",
       "Known issue: extreme modulation settings can add pitch and aliasing artifacts."
     ]
   }

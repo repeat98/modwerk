@@ -2426,10 +2426,10 @@
    "record": 24,
    "key": null,
    "room": 8,
-   "declaration": "struct modwerk_setting {\n    uint32_t abi;                       /* MODWERK_SETTING_ABI */\n    const char *label;                  /* its row on the page: up to 15 characters */\n    uint32_t count;                     /* its choices, 2-6 */\n    const char *const *choices;         /* each choice's name: up to 15 characters; the first is the one a new unit starts with */\n    void (*apply)(unsigned choice);     /* put choice 0..count-1 in force */\n    uint32_t reserved;                  /* ABI 3: install preset, 0 for the instrument default */\n};\n#define MODWERK_SETTING_ABI 1u\n#define MODWERK_SETTING_GROUP_ABI 2u\n#define MODWERK_SETTING_PRESET_ABI 3u\n#define MODWERK_SETTING_FIELDS UINT32_MAX\n#define MODWERK_SETTING_PAGE_ROOM 11u\nstruct modwerk_choice_page {\n    const char *label;\n    unsigned count, active;\n    const char *names[MODWERK_SETTING_PAGE_ROOM];\n    const char *values[MODWERK_SETTING_PAGE_ROOM]; /* optional short current values on the field list */\n};\nstruct modwerk_setting_pages { /* ABI 2: row.choices points here, row.count is zero */\n    void (*page)(uint32_t saved, unsigned field, struct modwerk_choice_page *out);\n    uint32_t (*choose)(uint32_t saved, unsigned field, unsigned choice);\n};",
+   "declaration": "struct modwerk_setting {\n    uint32_t abi;                       /* MODWERK_SETTING_ABI */\n    const char *label;                  /* its row on the page: up to 15 characters */\n    uint32_t count;                     /* its choices, 2-6 */\n    const char *const *choices;         /* each choice's name: up to 15 characters; the first is the one a new unit starts with */\n    void (*apply)(unsigned choice);     /* put choice 0..count-1 in force */\n    uint32_t reserved;                  /* ABI 3: install preset, 0 for the instrument default */\n};\n#define MODWERK_SETTING_ABI 1u\n#define MODWERK_SETTING_GROUP_ABI 2u\n#define MODWERK_SETTING_PRESET_ABI 3u\n#define MODWERK_SETTING_ACTIONS_ABI 4u /* nonpersistent direct field-list actions */\n#define MODWERK_SETTING_FIELDS UINT32_MAX\n#define MODWERK_SETTING_PAGE_ROOM 11u\nstruct modwerk_choice_page {\n    const char *label;\n    unsigned count, active;\n    const char *names[MODWERK_SETTING_PAGE_ROOM];\n    const char *values[MODWERK_SETTING_PAGE_ROOM]; /* optional short current values on the field list */\n};\nstruct modwerk_setting_pages { /* ABI 2: row.choices points here, row.count is zero */\n    void (*page)(uint32_t saved, unsigned field, struct modwerk_choice_page *out);\n    uint32_t (*choose)(uint32_t saved, unsigned field, unsigned choice);\n};",
    "when": "PROJ > MODWERK > SETTINGS lists the contributed settings in table order. YES opens a row and shows its choices with the active one marked. UP and DOWN browse, YES applies the highlighted choice, and NO returns to the list",
    "context": "the UI task: apply is short and must not draw or open a window",
-   "contract": "Contribute one struct modwerk_setting (every field set) for a choice the player makes on the unit, not in a project: it holds for the whole instrument. The base calls apply(choice) when the player takes a choice and, within a tick, after every change of the installed modules (a power-up, a sync, an Undo, a switch in MODULES), so the module starts as with its first choice and needs no storage of its own. The base keeps the choice through a power cycle under the label, so an update of the module, or another build of it with the same label, keeps the setting; give a label no other module uses. A kept choice this record does not offer is the first one until the player chooses again. A grouped record (ABI 2) points choices at struct modwerk_setting_pages and provides a field list for MODWERK_SETTING_FIELDS or the options of one listed field, and converts a confirmed selection to its saved word. The module must handle an initial zero and older saved values. Labels and names are read each time the page is drawn: keep them in the image, printable capitals.",
+   "contract": "Contribute one struct modwerk_setting (every field set) for a choice the player makes on the unit, not in a project: it holds for the whole instrument. The base calls apply(choice) when the player takes a choice and, within a tick, after every change of the installed modules (a power-up, a sync, an Undo, a switch in MODULES), so the module starts as with its first choice and needs no storage of its own. The base keeps the choice through a power cycle under the label, so an update of the module, or another build of it with the same label, keeps the setting; give a label no other module uses. A kept choice this record does not offer is the first one until the player chooses again. A grouped record (ABI 2) points choices at struct modwerk_setting_pages and provides a field list for MODWERK_SETTING_FIELDS or the options of one listed field, and converts a confirmed selection to its saved word. The module must handle an initial zero and older saved values. Labels and names are read each time the page is drawn: keep them in the image, printable capitals. ABI 4 uses the grouped record shape for direct actions: YES on a field invokes choose(0, MODWERK_SETTING_FIELDS, row) once and stays on that list. The Base never saves a choice or calls apply for an action record, including installation and Undo. The page label may report current module-owned status. Project actions and their persistence remain module-owned.",
    "order": "lower first, then module id: the page's row order. 50-90.",
    "subscribers": [],
    "orderEvidence": "Each setting is its module's own and no row reads another's. USB Audio is the first to contribute (ALL CHANNELS, OFF, and MAIN + CUE ONLY in the twenty-channel layout: issue 1512); until its package is published no module does."
@@ -2464,6 +2464,91 @@
    "raisers": [],
    "raisedByBase": true,
    "orderEvidence": "Each subscriber keeps its own copy of the deadline; none reads another's. Owner approved 22 November 2026 for Tape Echo and every ColdFire effect after it."
+  },
+ {
+  "event": "ot_lfo_pmtr_dest",
+  "index": 63,
+  "kind": "table",
+  "site": null,
+  "length": 0,
+  "record": 12,
+  "key": null,
+  "room": 16,
+  "declaration": "typedef void modwerk_lfo_pmtr_after_store(uint16_t *word); /* audio path; publish live state from *word */\nstruct modwerk_lfo_pmtr_dest {\n    uint16_t index;                  /* destination index; 30-38 reserved for parked drafts */\n    uint16_t flags;                  /* MODWERK_LFO_PMTR_* */\n    const char *label;               /* SETUP string (PROB, RST, …), NUL-padded short name */\n    uint16_t *words;                 /* 8 live halfwords, one per audio track (LFO store form) */\n    modwerk_lfo_pmtr_after_store *after_store; /* optional; NULL = no peer publish */\n};\n#define MODWERK_LFO_PMTR_ABI 2u\n#define MODWERK_LFO_PMTR_AUDIO 1u     /* audio LFO page only (MIDI twin later) */",
+  "when": "audio LFO SETUP PMTR past stock 0-29: the base owns the page count, SETUP formatter, the PMTR beq that skipped WAVE's descriptor-count clamp, and dest store; dest lea is coded but not claimed yet (FM Synth overlap)",
+  "context": "the UI task (SETUP) and the audio LFO engine (destination resolve): short, no firmware call that can block",
+  "contract": "Contribute one struct modwerk_lfo_pmtr_dest. index must be unique among contributors and >= 30; the first record for an index wins. words points at eight track-indexed halfwords the LFO engine stores into. Optional after_store runs on the audio path after mw_lfo_pmtr_store writes *word (NULL = engine write only; peers must not claim 0x4000d07a). Room 16. Published SETUP count is 30 + number of unique contributed indexes (clamped to room). Dest store own/jmp at 0x4000d07a length 6 (move.w d0,(a1) + subq.l #1,4(sp); rejoin 0x4000d080) -> mw_lfo_pmtr_store (MOP-70/71). Resolve reloads MACSR/ACC1/ACC2 and takes track from a4. Dest lea at 0x4000d042 (pad_to=8) is implemented in lfo_pmtr_dest.s but not claimed in this land: published FM Synth po_lfo3b still overlaps at 0x4000d03e pad 8; a follow-up claims the lea with the companion migrate to 0x4000d03a (fork 6210dacde). SETUP encoder (MOP-34 twin live-patch): own/poke 0x4003923c length 2, stock 6734 (beq.s to 0x40039272) -> 4e71 nop; fall-through 0x4003923e (move.l d5,-(sp)). Not a detour at function entry 0x40038e04. Do not invent other addresses.",
+  "order": "lower first, then module id: SETUP scroll order among extended destinations. Drafts: PROB 30 order 10, RST 31 order 20, … TSTR 38 order 90.",
+  "subscribers": [],
+  "orderEvidence": "Coordinator lock LFO SETUP indexes 30–38 (TEMPO 39) on the fork; upstream hook index for this table is 63 (append after ev_frame_deadline). No catalogue module contributes on first land. Dest lea deferred pending FM Synth companion migrate. Port of fork scaffold 141322f42 through after_store ABI 2, without the lea claim from 6210dacde.",
+  "sites": [
+   {
+    "site": "0x4000d07a",
+    "length": 6,
+    "guard": "05513c90a3f4765378f011e125ede9c6eb20d8fdd856ecc65c5f8a7f8bcfb4ee",
+    "op": "jmp",
+    "target": "mw_lfo_pmtr_store",
+    "what": "audio LFO destination store (move.w d0,(a1) + subq.l #1,4(sp)); rejoin 0x4000d080 (OS 1.40C; MOP-70)"
+   },
+   {
+    "site": "0x4003923c",
+    "length": 2,
+    "guard": "c874bc29e99f2e67290d6cdb1caa2a67a4d8ec079434fef4eaa0715e902f4ac1",
+    "op": "own",
+    "what": "LFO page-2 encoder: nop PMTR beq (stock 6734) so SETUP uses WAVE's descriptor-count clamp; fall-through 0x4003923e (MOP-34 twin, OS 1.40C)"
+   },
+   {
+    "site": "0x4003bf64",
+    "length": 8,
+    "guard": "88c3015bea265af524001c19cb4e3b9743131f26f46f5d0e58dfb2f8622283c1",
+    "op": "jmp",
+    "target": "mw_lfo_pmtr_format",
+    "what": "audio LFO PMTR formatter: contributed indexes print their SETUP label (guards from trig-prob manifest, OS 1.40C)"
+   },
+   {
+    "site": "0x400d38a8",
+    "length": 4,
+    "guard": "560231689713a5933b6c8ac3e6b2f243730e49e1c6b0c610c41e8e8dad26044c",
+    "op": "own",
+    "what": "audio LFO page PMTR count word: base publishes 30+n from contributions"
+   }
+  ]
+ },
+  {
+   "event": "ot_reserved_64",
+   "index": 64,
+   "kind": "table",
+   "site": null,
+   "sites": [],
+   "length": 0,
+   "record": 4,
+   "key": null,
+   "room": 1,
+   "declaration": "/* reserved for ev_audio_step (#2271): no record, no reader */",
+   "when": "never: index 64 is reserved for ev_audio_step (#2271), which lands in a later base together with a Play Modes release that subscribes it",
+   "context": "a reserved hook index; no base code reads it",
+   "contract": "Contribute nothing. #2271 replaces this placeholder in place and keeps index 64; the published Play Modes 0.2.1 patches ev_audio_step's site, so a base that owned it would refuse Play Modes (owner, 28 November 2026)",
+   "order": "none: nothing contributes",
+   "subscribers": [],
+   "orderEvidence": "Index reservation for ev_audio_step (#2271), in the owner's order of 27 November 2026 (#2261 at 63, #2271 at 64, ot_dsp_effects at 65)."
+  },
+  {
+   "event": "ot_dsp_effects",
+   "index": 65,
+   "kind": "table",
+   "site": null,
+   "sites": [],
+   "length": 0,
+   "record": 32,
+   "key": null,
+   "room": 8,
+   "declaration": "struct modwerk_dsp_effect {\n    uint32_t abi;                       /* MODWERK_DSP_EFFECT_ABI */\n    uint32_t program_words;             /* the P words of each of its program areas, 1-2048: the most one program's code takes; 0 none */\n    int32_t (*program)(unsigned slot);  /* the program slot runs from now: 0-0x7fffff, or -1 none yet */\n    uint32_t (*code)(unsigned slot, int32_t program, uint32_t at, uint32_t *out); /* that program's words for P address at */\n    uint16_t stream_in, stream_out;     /* the stream: halfwords a frame to the slot's DSP code and from it; 0 none */\n    void (*fill)(unsigned slot, uint32_t frame, volatile uint16_t *in);         /* the in-block the DSP reads in that frame */\n    void (*take)(unsigned slot, uint32_t frame, const volatile uint16_t *out);  /* the out-block the DSP wrote in that frame */\n    uint32_t reserved;                  /* 0 */\n};\n#define MODWERK_DSP_EFFECT_ABI 1u\n#define MODWERK_DSP_SLOT_RECORDS 0x7fb0u    /* X, on the slot's core: 4 words at + 4 * ((r7 >> 8) & 15); word 0 the P address of the area the slot runs, 0 none; word 1 its in-block's offset in the frame's host bank, word 2 its out-block's, 0 none */\n#define MODWERK_DSP_STREAM_LAG 3u          /* fill(slot, f) runs once take() has had every out-block up to frame f - 3 */",
+   "when": "an FX effect runs code that changes when its program changes (a program knob): for each slot whose live effect is the contributing module's, the base reads its record every UI tick, writes the program's code into P while the effect plays and switches the slot to it between two frames",
+   "context": "the UI task under the base's stable lock: program and code are short and never block; they read the frame records or the Part, never write them",
+   "contract": "Contribute one struct modwerk_dsp_effect from a module whose DSP package requires the base's program areas (loader ABI 9, requires programs). For each FX slot (0-7 FX1 of T1-T8, 8-15 FX2) whose live effect id is this module's, the base claims two areas of program_words P words on the slot's core (while playing from free words only; with no room the slot's record stays 0) and asks program(slot) every tick. When it answers a program the slot does not run, the base asks code(slot, program, at, out) for that program's words at P address at, every word final (24 bits, nothing relocated), writes them into the area the slot does not run, and then puts at into word 0 of the slot's record between two frames. The DSP code reads that word at every call, X:$7fb0 + 4 * ((r7 >> 8) & 15) on its core (0: none yet, stay dry), and jumps there with jsr; the area returns with rts and names no P address outside itself, since the effect's own code may move. code returns the words it wrote, 1 to program_words; 0 keeps what the slot runs. An area keeps the program it holds, so going back to the program before costs no write. One switch at a time on a core, each a write of the code (a packet of 24 words a frame) and one frame for the switch. A slot that leaves the effect gets 0 in its record before its areas go back. The DSP code fades, clears or restarts at a switch as it needs: the frame its record changes is the switch. The stream (bases from 0.8.4, build_core.py --stream-channel, beside USB AUDIO IN; T1-T4 on core 1 built and host-tested only, not yet run on a unit): with stream_in or stream_out set, the base gives the slot an in-block and an out-block in its core's host banks, calls fill(slot, f) for the block the DSP reads in frame f and take(slot, f) with the block it wrote in frame f, from the frame transfer's interrupt (short, no firmware call, d2-d7/a2-a6 kept as C keeps them), and only after their first fill names the blocks in the slot's record, the out-block in word 2 first, then the in-block in word 1 (offsets into that frame's host bank, whose base, $2000 or $4000, stock's bank take keeps at X:$207 on the slot's core: the block is at X:$207 + the word; never from r6, which stock's dispatcher points at its parameter copies); take() runs from the frame after word 2 is named, before word 1 is, so DSP code that waits for both words has every frame it writes taken; fill(f) runs once take() has had every out-block up to f - MODWERK_DSP_STREAM_LAG. A halfword arrives in bits 0-15 with bits 16-23 unknown, and goes out from bits 0-15. While the words are set the DSP code reads its in-block and writes its out-block every frame; they go to 0 before the blocks are given up. The channel's lanes and halfwords a frame (stream_channel.h MW_STREAM_IN_MOST, MW_STREAM_OUT_MOST) are shared by every slot of both cores: a pick whose lane would not fit beside those held or let in is refused with STREAM FULL and the slot keeps its effect; a slot a Part change, reload, paste or project load brings is judged once, in slot order, and one that does not fit stays dry (words 1 and 2 stay 0) until its effect changes. A lane whose slot left its effect counts no more while it closes, and a slot that holds its lane keeps it.",
+   "order": "(order, module id); one record a module, read for the slots that run its effect id.",
+   "subscribers": [],
+   "orderEvidence": "Each record serves only the slots running its own module's effect id, so no two records serve one slot."
   }
  ]
 }

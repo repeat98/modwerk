@@ -1,13 +1,13 @@
 {
  "schema": 1,
- "identity": "b699a5a35dba4159717df50577a661b0fe3b9d7502f1c49041ffcb6d86ae5558",
- "arena": 1089859040,
- "pool": 1087966256,
+ "identity": "31ab1cf539a2efaed6d547b9207351d1757870f7764d9ba6ec09ae79276adddf",
+ "arena": 1092519392,
+ "pool": 1087995168,
  "symbols": {
   "modwerk_controller_write_begin": 1084880600,
   "modwerk_controller_write_end": 1084880628,
-  "modwerk_cue_cfg_clamp": 1085167492,
-  "modwerk_raise_ev_mute_keep": 1085170440
+  "modwerk_cue_cfg_clamp": 1085178320,
+  "modwerk_raise_ev_mute_keep": 1085181268
  },
  "controllers": {
   "sidechain-compressor": "7f71a19e06d7578ef00d35f2a1e753db717aa34035c4d15f15a3f4c8eb2b54aa",
@@ -16,6 +16,6 @@
  },
  "dspFeatures": 24,
  "variants": {
-  "off": "b699a5a35dba4159717df50577a661b0fe3b9d7502f1c49041ffcb6d86ae5558"
+  "off": "31ab1cf539a2efaed6d547b9207351d1757870f7764d9ba6ec09ae79276adddf"
  }
 }

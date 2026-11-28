@@ -38,6 +38,15 @@ describe('module release notes', () => {
     expect(() => parseModuleChangelogs(fixture([{ ...entry, changes: ['x'.repeat(201)] }]), catalog)).toThrow('at most 200 characters')
   })
 
+  it('keeps test status out of the notes players read', () => {
+    // Lines that stayed on tested releases until 26 Nov 2026; a player-facing limit and a self-test feature still pass.
+    const catalog = [{ id: 'euclid', version: entry.version }], notes = (line: string) => fixture([{ ...entry, changes: [line] }])
+    for (const line of ['Known issue: not yet tested on a unit.', 'Known issue: this version has not yet run on a unit.', 'Known issue: checked in the emulator only, not yet on a unit.', 'Tested on an MKI: all four modes and a power cycle.'])
+      expect(() => parseModuleChangelogs(notes(line), catalog), line).toThrow('Leave test status out')
+    for (const line of ['Known issue: the freeze with seven instances is still open.', 'Installing, removing or self-testing it no longer fails a sync (#791).', 'No change on the unit.'])
+      expect(() => parseModuleChangelogs(notes(line), catalog), line).not.toThrow()
+  })
+
   it('rejects duplicate versions, impossible dates, empty summaries and invalid references', () => {
     expect(() => parseModuleChangelogs(fixture([entry, entry]))).toThrow('Duplicate changelog version')
     expect(() => parseModuleChangelogs(fixture([{ ...entry, date: '2026-02-30' }]))).toThrow('Invalid changelog date')
@@ -61,15 +70,21 @@ describe('module release notes', () => {
     expect(mergeModuleReleases(notes)).toHaveLength(2)
   })
 
-  it.each(['euclid', 'digitakt-digieq', 'digitone-digitables'])('renders authored changes for %s before the history service responds', id => {
-    const html = renderToStaticMarkup(createElement(ModuleChangelog, { id }))
-    expect(html).toContain('module-release-notes')
-    expect(html).toContain('Current version')
-    expect(html).toContain('View changes')
-    const sourceCommit = moduleChangelogs[id][0].sourceCommit
-    if (sourceCommit) expect(html).toContain(sourceCommit)
-    expect(html).toContain(moduleChangelogs[id][0].changes[0])
-    expect(html).not.toContain('Loading changelog')
-    expect(html).not.toContain('No release history')
+  // No Digitakt changelog records a source commit since the imported packages left (28 November 2026), so the
+  // machine-qualified ids get a synthetic one on their current entry for the render.
+  it.each(['euclid', 'tapehead', 'digitakt-euclidean', 'digitakt-ii-chord-arp'])('renders authored changes for %s before the history service responds', id => {
+    const saved = moduleChangelogs[id][0]
+    if (id.startsWith('digitakt-')) moduleChangelogs[id][0] = { ...saved, sourceCommit: 'a'.repeat(40) }
+    try {
+      const html = renderToStaticMarkup(createElement(ModuleChangelog, { id }))
+      expect(html).toContain('module-release-notes')
+      expect(html).toContain('Current version')
+      expect(html).toContain('View changes')
+      const sourceCommit = moduleChangelogs[id][0].sourceCommit
+      if (sourceCommit) expect(html).toContain(sourceCommit)
+      expect(html).toContain(moduleChangelogs[id][0].changes[0])
+      expect(html).not.toContain('Loading changelog')
+      expect(html).not.toContain('No release history')
+    } finally { moduleChangelogs[id][0] = saved }
   })
 })

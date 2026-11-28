@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrack-link-fake'
 import { packSection } from '../elektron/codec/pack.ts'
-import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
+import { encodeBin } from '../elektron/octatrack-container.ts'
 import { removalPackage } from './module-set'
 import { BaseTooBigError, LinkBusyError, OctatrackLink, POWER_CYCLE_MS, RECONNECT_WAIT_MS, StaleLoadError, inUseHint, inUseSlotHint, linkBusy, octatrackRank, openFailure, pickOctatrack, tabLocks, type LinkDevice, type LinkUsb } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
@@ -459,6 +459,46 @@ describe('sending a module', () => {
     expect(inUseHint(['Tape Echo', 'BBD Delay', 'Deja Vu'])).toBe(' Look for Tape Echo, BBD Delay, or Deja Vu on the tracks.')
     expect(inUseHint(['A', 'B', 'C', 'D', 'E'])).toBe(' Look for A, B, C, D, or E on the tracks.')
     expect(inUseHint(['A', 'B', 'C', 'D', 'E', 'F'])).toBe(' Look for A, B, C, D, or 2 more on the tracks.')
+  })
+  it('names the pending card save when the unit stays busy past the wait (refusal 5)', async () => {
+    const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit), 100)
+    await link.connect()
+    unit.refusal = 5 // the last Keep's save is still pending: minutes, not a moment
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/still saving your last change to its card.*Press STOP.*Saved and checked/)
+  })
+  it('offers the card file from the second sync in a row that stops while sending, until one is refused or kept', async () => {
+    const unit = fakeUnit(), base = fakeSession(unit)
+    let drop = true
+    const connect: typeof base = async (...args) => {
+      const session = await base(...args)
+      return Object.create(session, { stage: { value: (...stage: Parameters<typeof session.stage>) => {
+        if (drop) throw new UploadUnconfirmedError('fixture', session.status)
+        return session.stage(...stage)
+      } } })
+    }
+    const link = new OctatrackLink(unit.usb, connect, 100)
+    await link.connect(); await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice).toMatchObject({ tone: 'error' }); expect(link.getState().notice?.card).toBeUndefined()
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.card).toBe(true); expect(link.getState().notice?.text).toMatch(/load this set from the card instead:$/)
+    drop = false; unit.refusal = 7
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.card).toBeUndefined()
+    drop = true; unit.refusal = undefined
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.card).toBeUndefined() // the count started again
+  })
+  it('says so when the device picker closes with no Octatrack chosen', async () => {
+    const unit = fakeUnit()
+    vi.spyOn(unit.usb, 'getDevices').mockResolvedValue([])
+    vi.spyOn(unit.usb, 'requestDevice').mockRejectedValueOnce(new DOMException('No device selected.', 'NotFoundError'))
+    const link = new OctatrackLink(unit.usb, fakeSession(unit)), stop = link.start()
+    await settle(); await link.connect()
+    expect(link.getState()).toMatchObject({ status: 'idle', noDevice: true })
+    await link.connect(); await settle()
+    expect(link.getState().noDevice).toBeUndefined() // gone once a unit is picked
+    stop()
   })
   it('stages again when the loader was busy for a moment', async () => {
     const { unit, link } = await linked()

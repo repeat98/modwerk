@@ -6,8 +6,8 @@
 import { sha256Hex } from './hash.ts'
 import { PCREL, decodeColdFire, readerAt, wholeInstructions } from './coldfire-isa.ts'
 import type { ElemodMachine } from './ele3.ts'
-import * as store from '../../../vendor/elekloader/kit/src/store.ts'
-import { ModError as KitModError } from '../../../vendor/elekloader/kit/src/elemod.ts'
+import * as store from './store.ts'
+import { ModError as KitModError } from './module-package.ts'
 
 export class ModError extends Error {}
 

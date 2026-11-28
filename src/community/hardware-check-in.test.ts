@@ -70,7 +70,7 @@ describe('the post-download check-in', () => {
     stops.push(watchHardwareCheckIn('alice', open, () => true))
     await vi.advanceTimersByTimeAsync(CHECK_IN_DELAY)
     expect(open).toHaveBeenCalledOnce()
-    updateHardwareFeedback('alice', build, { completed: build.modules.map(module => module.id) })
+    updateHardwareFeedback('alice', build, { completed: 'miniverb' })
     updateHardwareFeedback('alice', build, 'dismiss')
     const previous = readHardwareFeedback('alice')[0]
     await vi.advanceTimersByTimeAsync(1000)
@@ -80,13 +80,44 @@ describe('the post-download check-in', () => {
     await vi.advanceTimersByTimeAsync(1)
     expect(open).toHaveBeenCalledTimes(2)
     const reopened = open.mock.calls[1][0]
-    expect(reopened.completed).toEqual(build.modules.map(module => module.id))
+    expect(reopened.completed).toEqual(['miniverb'])
     expect(reopened.dismissed).toBe(true)
     expect(reopened.remindAt).toBe(previous.remindAt)
     expect(dueHardwareFeedback('alice')).toBeUndefined()
     window.dispatchEvent(new Event('focus'))
     await vi.advanceTimersByTimeAsync(CHECK_IN_DELAY)
     expect(open).toHaveBeenCalledTimes(2)
+  })
+  it('stays closed for a build already given feedback, even after another sync replaced its record, and asks for a changed set', async () => {
+    const open = vi.fn(), smaller = { ...build, modules: builtModules(['miniverb'], { miniverb: '0.0.1' }) }
+    stops.push(watchHardwareCheckIn('alice', open, () => true))
+    rememberHardwareFeedback('alice', build)
+    await vi.advanceTimersByTimeAsync(CHECK_IN_DELAY)
+    updateHardwareFeedback('alice', build, { completed: ['miniverb', 'tapeecho'] })
+    rememberHardwareFeedback('alice', build)
+    await vi.advanceTimersByTimeAsync(CHECK_IN_DELAY)
+    expect(open).toHaveBeenCalledOnce()
+    // Unloading Tape Echo is a changed set: it asks, and the full set's confirmation does not count for it.
+    rememberHardwareFeedback('alice', smaller)
+    await vi.advanceTimersByTimeAsync(CHECK_IN_DELAY)
+    expect(open).toHaveBeenCalledTimes(2)
+    expect(open.mock.calls[1][0].completed).toEqual([])
+    updateHardwareFeedback('alice', smaller, { completed: 'miniverb' })
+    // Syncing the full set again replaces the smaller record; both earlier confirmations still hold, so nothing opens.
+    rememberHardwareFeedback('alice', build)
+    await vi.advanceTimersByTimeAsync(CHECK_IN_DELAY)
+    expect(open).toHaveBeenCalledTimes(2)
+    expect(readHardwareFeedback('alice')[0].completed).toEqual(['miniverb', 'tapeecho'])
+    expect(dueHardwareFeedback('alice', Date.now() + FEEDBACK_SNOOZE)).toBeUndefined()
+    rememberHardwareFeedback('alice', smaller)
+    await vi.advanceTimersByTimeAsync(CHECK_IN_DELAY)
+    expect(open).toHaveBeenCalledTimes(2)
+    // A newer module version is a changed set again.
+    const updated = { ...build, modules: builtModules(['miniverb', 'tapeecho'], { miniverb: '0.0.1', tapeecho: '0.0.3' }) }
+    rememberHardwareFeedback('alice', updated)
+    await vi.advanceTimersByTimeAsync(CHECK_IN_DELAY)
+    expect(open).toHaveBeenCalledTimes(3)
+    expect(open.mock.calls[2][0].completed).toEqual([])
   })
   it('keeps dismissed and snoozed guides quiet until another download, preserving later reminder choices', async () => {
     const open = vi.fn()

@@ -102,7 +102,7 @@ class UpstreamCheckouts(unittest.TestCase):
         self.sync()
         with self.assertRaisesRegex(ValueError, "does not track"):
             tools.sync("octabam", self.url + "-other", self.first, self.base, True)
-        # A plain upstream (Elekloader) may carry no edits at all.
+        # A plain upstream (rytm-emu) may carry no edits at all.
         path = tools.sync("plain", self.url, self.first, self.base, False)
         self.assertEqual(tools.edits(path), set())
         (path / "tools/hw/rec.swift").write_text("// mine\n")
@@ -116,10 +116,10 @@ class InstrumentSetup(unittest.TestCase):
             base = pathlib.Path(tmp)
             (base / 'octabam/tools/hw').mkdir(parents=True)
             for selection, repos, archive in [
-                    (['--for', 'octatrack'], ['octabam', 'elekloader'], False),
+                    (['--for', 'octatrack'], ['octabam'], False),
                     (['--for', 'rytm'], ['rytm-emu'], False),
                     (['--for', 'zoom'], [], True),
-                    ([], ['octabam', 'elekloader', 'rytm-emu'], True)]:
+                    ([], ['octabam', 'rytm-emu'], True)]:
                 with self.subTest(selection=selection), \
                      mock.patch.object(sys, 'argv', ['upstream:tools', '--dir', tmp, *selection]), \
                      mock.patch.object(tools, 'sync', side_effect=lambda name, *_: base / name) as sync, \

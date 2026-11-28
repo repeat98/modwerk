@@ -1,4 +1,4 @@
-import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../engine/elektron/bytes.ts'
 import { STOCK_EFFECTS } from '../catalog/stock-effects'
 import { changeUsbAudioLayout, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED, usbAudioFromInstallPreset, usbAudioInstallPreset, usbAudioPreset, type UsbAudioConfiguration, type UsbAudioSetPreset, type UsbAudioPackageKind } from './usb-audio'
 import { lastSuccessfulSync } from './octatrack-progress'

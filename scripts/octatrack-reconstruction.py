@@ -18,7 +18,7 @@ import sys
 
 RECIPES = 'sdk/machines/octatrack/module-adapters/reconstruction-recipes.json'
 SHARED = (
-    'sdk/runtime/loader/build.py', 'sdk/runtime/loader/verify_static.py',
+    'sdk/runtime/loader/build.py', 'sdk/machines/octatrack/elekloader/fx-ids.json', 'sdk/runtime/loader/verify_static.py',
     'sdk/runtime/loader/modwerk_module.h', 'sdk/runtime/m68k_codegen.py',
     'sdk/machines/octatrack/module-adapters/standalone_runtime.py',
     'sdk/machines/octatrack/module-adapters/stock_recipe.py',

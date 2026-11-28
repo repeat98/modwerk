@@ -4,7 +4,8 @@
 .module-audio-cover-link { display: block; }
 .module-audio-cover-link:focus-visible { outline-offset: -3px; }
 .audio-preview-hint { position: absolute; bottom: 12px; left: 14px; display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #ffffff24; border-radius: 50%; background: #19191cad; color: var(--signal); backdrop-filter: blur(8px); pointer-events: none; transition: opacity .15s; }
-.audio-preview-dock { position: absolute; z-index: 1; bottom: 8px; left: 8px; right: 8px; border: 1px solid #ffffff18; border-radius: var(--radius-md); background: #17171bdd; backdrop-filter: blur(12px); box-shadow: 0 4px 16px #0003; }
+/* The compact player is a pane of glass over the cover art (module cards, Showcase sound clips). */
+.audio-preview-dock { position: absolute; z-index: 1; bottom: 8px; left: 8px; right: 8px; border: 1px solid #ffffff24; border-radius: var(--radius-md); background: #11111499; backdrop-filter: blur(16px) saturate(1.3); box-shadow: 0 4px 16px #0003; }
 .module-audio-cover .audio-preview-dock { opacity: 0; pointer-events: none; transition: opacity .15s; }
 .module-audio-cover:hover .audio-preview-dock, .module-audio-cover:has(:focus-visible) .audio-preview-dock, .module-audio-cover:has([data-playing="true"]) .audio-preview-dock { opacity: 1; pointer-events: auto; }
 .module-audio-cover:hover .audio-preview-hint, .module-audio-cover:has(:focus-visible) .audio-preview-hint, .module-audio-cover:has([data-playing="true"]) .audio-preview-hint { opacity: 0; }
@@ -14,7 +15,7 @@
 .module-audio-cover:has([data-playing="true"]) .audio-preview-hint-playing { display: flex; }
 .module-audio-cover:has([data-playing="true"]) .audio-preview-hint { border-color: color-mix(in srgb, var(--signal) 45%, transparent); }
 .audio-preview-player { position: relative; min-height: 48px; padding: 2px 8px; }
-.audio-preview-player .audio-player { --audio-accent: var(--signal, #d5bd96); --audio-wave: #96929a; --audio-height: 32px; --background: #17171b; gap: 10px; }
+.audio-preview-player .audio-player { --audio-accent: var(--signal, #d5bd96); --audio-wave: color-mix(in srgb, var(--text) 55%, transparent); --audio-height: 32px; --background: #17171b; gap: 10px; }
 .audio-preview-player .audio-player-play { position: relative; border: 0; background: transparent; color: #e7e4e1; box-shadow: none; }
 .audio-preview-player .audio-player-play::before { content: ''; position: absolute; inset: 6px; border: 1px solid #ffffff24; border-radius: 50%; background: #ffffff08; transition: border-color .15s, background .15s; }
 .audio-preview-player .audio-player-play:hover { background: transparent; color: var(--audio-accent); }
@@ -27,7 +28,7 @@
 .audio-preview-player .audio-player-time { inset: 0 -40px auto auto; width: 32px; height: 32px; align-items: center; justify-content: flex-end; font: var(--text-xs)/12px var(--mono); letter-spacing: .2px; }
 .audio-preview-player .audio-player-time > span { padding: 0; background: none; }
 .audio-preview-player .audio-player-elapsed { display: none; }
-.audio-preview-player .audio-player-duration { color: #a9a6b0; }
+.audio-preview-player .audio-player-duration { color: var(--text-secondary); }
 .audio-preview-player .audio-player-placeholder::before, .audio-preview-player .audio-player-fallback-progress { top: 16px; }
 .audio-preview-player .audio-player-hover > span { background: #1c1c22; }
 .module-audio-detail { grid-area: preview; min-width: 0; }

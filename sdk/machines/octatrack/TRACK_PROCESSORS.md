@@ -69,73 +69,70 @@ Ordinary uncommitted FX picks keep their refusal policy. Heavy scans stay outsid
 the short full-mask publication fence. Each fresh budget check shares one bank
 scan across cores; no bank-dependent result is cached between checks.
 
-The direct settings action API and its tests are split into a separate proposal
-on branch base/settings-direct-actions. This processor proposal adds no settings
-ABI. Completed temporary whole-set readiness does not permit saved-set writes
+The direct settings action API is upstream cumulative Base support, reviewed
+separately in2359/2366. This processor proposal adds no settings ABI. Completed temporary whole-set readiness does not permit saved-set writes
 during a trial.
 
-## Evidence and limits
+## Binding and packaging
 
-An earlier combined private Base identity is
-57cf36e6af98cd7215f3bd6e62d4049266c4e6544ed13ef2d4b7c97c07eaa3e8.
-The separate M/S package SHA is
-c974ee3929ced354fbb37942d83f27698ec25b04704a9c1ba13cfbc5462821af.
-No firmware, package or stock bytes are committed.
+The generated binding's dspFeatures is the ledger-service mask read from the
+exact compiled resident_engines.c and canonical DSP ledger, checked against
+the build proof. Every compile-time branch must agree on that mask. Program
+areas remain the upstream separate unledgered service0x100. Unknown expressions
+or changed compiled inputs refuse binding. Older bindings without this field
+retain their key-bus-only interpretation; draft source never advertises a
+service on an older published download.
 
-23 unchanged SDK behavioral tests pass with documented native adapters (UBSan,
-ledger include path, host handling of GCC-only attributes, weak budget facts
-for older non-M/S controller fixtures). Actual budget/publication code has its
-own passing tests. Three old assertions expect absent feature16 or exact old
-strings; they remain unchanged and need the proper test-maintenance review.
-The unmodified broad SDK suite and full pr:ready are not claimed green.
+The current cumulative Base plus this service exceeded the851712-byte packed
+slot by5196 bytes. Base-only bounded lookahead now selects a smaller parse in
+the existing section format. It compares against ordinary packing and cannot
+choose a larger result. Native and browser builders share fixed tie rules;
+synthetic fixtures pin parity and decode through the unchanged boot decoder
+model and the independent codec. Ordinary firmware/module packing is unchanged.
+This is computer-side packaging work, with no extra instructions in the audio
+path and no device decoder change.
 
-Native contract/lifecycle fixtures cover16 members, separate state, owner/PC,
-updated controller identity, ACK freshness, capacity pause and unknown work.
-Actual generated transport tests cover32 member packets, legacy CAS, reset
-boundaries and exact ownership.23 compatibility cases,18 fresh P/Y assemblies,
-actual final package admission including unchanged Apply Scene, strict whole-
-package stock-free checks and268 receiver instruction/operand comparisons per
-core pass. Runtime owner/allocator/DSP ACK facts in native lifecycle tests are
-modelled. No firmware or DSP execution harness or emulator ran for these computer
-checks. Older private MKII observations do not qualify the current exact build.
+## Evidence and limits —28 November2026
 
-The maintainer requested scheduling after0.8.3. Exact-build live-FX/both-core,
-CPU/load, persistence, normal-set and longer Undo qualification remain pending;
-an older1,562-second Undo failure is unresolved. Keep the proposal a draft.
-The later module release needs its own PR; the owner has approved its library copy.
+Merged cumulative Base target817bc050b98d88365ed6ae6f20fc63fba1a4276e.
+Official native/browser builds agree on firmware SHA
+8cdc404ab9c661f8bee76cc935f202a848414e1179b2a5d8d5410e4eaae34b79.
+Base identity31ab1cf539a2efaed6d547b9207351d1757870f7764d9ba6ec09ae79276adddf.
+MAIN1363155 bytes; packed container849452/851712 bytes (2260 spare).
+The host file includes a16-byte wrapper outside that container.
+This exact build has NOT run on a unit. Structural bootloader preservation
+and byte equality do not prove successful boot, sound, load or Undo.
 
-The generated Base binding records dspFeatures from the exact compiled
-resident_engines.c and DSP ledger, after checking both against the build proof.
-The browser uses the published binding's mask, preserving legacy key-bus-only
-bindings while accepting returning-service requirements when that Base is
-published. Draft source alone never advertises a service on an older download.
-An unknown service expression or changed compiled input refuses metadata binding.
+Native fixtures cover16 members, separate state, owner/PC bounds, changed
+controller identity, both-core ACK freshness, capacity pauses and uncertain
+retirement. Runtime/allocator/DSP ACK facts are modelled; no firmware or DSP
+execution harness or emulator is used. Generated receiver instructions are
+checked by assembly/disassembly rather than execution.
 
-## Review follow-up — 28 November 2026
+The separate Fix2358 retains fixed main-branch measurement assertions and is
+ready with its latest complete CI run green. This Base changes its own fixed
+expectations alongside the rebound package hashes: earlier measurements are
+not silently attached to different bytes. The shared settings action rows are
+already in cumulative0.8.4 through2359; this proposal adds no settings ABI.
 
-Board claims are linked to PR2248: dsp-region octatrack/returning-processor-chain reserves the existing DSP
-dispatcher extension, with no ColdFire event claim; the two state-region keys are
-octatrack/returning-y-800-bff-both and octatrack/returning-y-cc1-fef-both.
-The three legacy-test assumptions are corrected only on the separate branch
-fix/resident-tests-ledger, tested on both current main and the processor extension.
-That fix needs its own review/merge before the full processor check can be green.
-The private RAM pair named above still contains both proposals. Splitting the
-source does not turn it into physical qualification of the eventual merged Base.
+Earlier combined private buildcd7b50b133aeacbe58d078f8ff82a13d299ae9b2a631cce843d6a9b874b1dbe1
+ran a1800-second RAM trial with the ten original module names rebuilt for that
+candidate plus M/S; these were NOT the exact original saved package bytes.
+The developer reported stereo samples, nonzero M/S and both FX sounding normal
+on T1 and T5. During rollback M/S was removed first; after an orderly USB Audio
+configuration reconnect, a fresh read showed the SAME RAM Base, normal state
+and EMPTY live inventory, with tick continuity. The host lost the final ACK:
+this is module-removal evidence, NOT a clean acknowledged CLI Undo pass.
+A preceding attempt lost mains power and is inconclusive. The developer then
+power-cycled; the original Base and exact ten-module saved/live set were verified
+restored. No Keep or flash ran. These older bytes do not qualify this merge.
 
-The processor source is merged with current cumulative Base0.8.4 at
-ab3387d6035928f1a874e69acb44bb82db690a77, including Modwerk's own core,
-boot copier, hook bus and draw gate. Native returning contract, board and generated transport
-fixtures pass on that merged source. Earlier private bundle identities above
-do not name a build of this merge. A fresh official compiler/structural build
-now passes; exact unit qualification is still required. The erroneous octatrack/0 hook claim
-was released as requested; the chain claim uses the DSP-region kind.
+The historical1562-second Undo failure remains unexplained. Exact-current-build
+live FX on both cores, load, persistence, a normal saved set and long Undo still
+need the prescribed unit procedure. Keep this proposal a draft. The owner
+accepts and releases the cumulative Base; M/S then needs its separate module PR.
+The approved M/S copy and its private DSP/controller remain outside this PR.
 
-Current processor-only Base identity:
-b699a5a35dba4159717df50577a661b0fe3b9d7502f1c49041ffcb6d86ae5558.
-The packed container is849404 of851712 bytes (2308 spare); MAIN is1363234
-of1572864. The browser and native firmware images match exactly. Strict
-stock-free package scanning passes. Analog BD's recipe was recaptured against
-the actual new Base imports; its source hashes and six reconstruction copies
-are unchanged. Base-bound packages were regenerated and rebuild identically
-against this new binding. This build contains no M/S module or settings-action
-API, and has not run on a unit. It is not the old combined RAM pair.
+Board claims linked to2248 are dsp-region octatrack/returning-processor-chain
+and state regions octatrack/returning-y-800-bff-both and
+octatrack/returning-y-cc1-fef-both. No ColdFire event index is claimed.

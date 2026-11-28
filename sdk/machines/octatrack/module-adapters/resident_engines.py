@@ -393,7 +393,14 @@ def transport(text):
     after=('    if(op==10u && (proc>=0x2000u || (!proc && (id&~%s || init&~%s)))) return 0;\n'
            '    if(op==10u && proc && ((%s) || id&~%s ||\n'
            '       (init && (init<DL_CODE_START || init>=dl_pool_words[c])))) return 0;') % (mask,mask,one,mask)
-    return _change(text,before,after,'transport PLACE')
+    text = _change(text,before,after,'transport PLACE')
+    # Program-area slot records retain op12; returning member controls use op13.
+    text = _change(text, ' && op!=DL_PEEK && op!=10u && op!=13u)) return 0;\n',
+                   ' && op!=DL_PEEK && op!=10u && op!=12u && op!=13u)) return 0;\n'
+                   '    if(op==12u && (id>63u || init>0xffffu || proc>0xffu)) return 0;\n', 'transport slot record')
+    return _change(text, 'opcode==DL_SUM || opcode==10u || opcode==13u) {',
+                   'opcode==DL_SUM || opcode==10u || opcode==12u || opcode==13u) {',
+                   'transport slot record packet')
 
 
 def status(text):

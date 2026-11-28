@@ -61,15 +61,15 @@ describe('module detail parity across machines', () => {
     }
   })
 
-  it('credits DigiSophie’s developer separately from its original algorithm author', () => {
-    const mod = DIGI_MODS.find(mod => mod.device === 'digitakt' && mod.id === 'digisophie')!
+  it('credits STRING’s developer separately from the author of the work it follows', () => {
+    const mod = DIGI_MODS.find(mod => mod.device === 'digitakt' && mod.id === 'digistring')!
     const html = render(digiPage(mod))
-    expect(html).toContain('by Sjoerd (Soejrd)')
-    expect(html).toContain('href="https://github.com/soejrd/digisophie"')
-    expect(html).toContain('Matt Estela (@mestela) — original Sophie for Schwung algorithm')
-    expect(html).toContain('For @soejrd')
-    expect(html).not.toContain('>by Matt Estela')
-    expect(html).not.toContain('For @mestela')
+    expect(html).toContain('by Alez22')
+    expect(html).toContain('href="https://github.com/Alez22/digistring"')
+    expect(html).toContain('soejrd — Sophie for Digitakt, whose RAM addresses and pitch lookup STRING follows.')
+    expect(html).toContain('For @Alez22')
+    expect(html).not.toContain('>by soejrd')
+    expect(html).not.toContain('For @soejrd')
   })
 
   it('keeps missing processor measurements distinct from zero load', () => {
@@ -96,7 +96,6 @@ describe('module detail parity across machines', () => {
 
   it.each([
     ['poly8', 'heavy', 'Heavy CPU', 'one POLY8 track with repeated trigs'],
-    ['output-matrix', 'high', 'High CPU', '13.1 percentage points of audio-frame load added with ALL routes in MATRIX mode'],
   ])('shows the %s CPU badge and workload on its module page', (id, tier, badge, workload) => {
     const module = listedModules().find(module => module.id === id)! // POLY8 is paused but keeps its page
     const html = render(createElement(ModuleDetail, { module, selected: false, onToggle: noop }))
@@ -104,6 +103,16 @@ describe('module detail parity across machines', () => {
     expect(notice).toContain('data-tier="' + tier + '"')
     expect(notice).toContain('<strong>' + badge + '.</strong>')
     expect(notice?.toLowerCase()).toContain(workload.toLowerCase())
+  })
+
+  it('does not present an old package CPU reading as a measurement of rebound Output Matrix', () => {
+    expect(packageManifest.packages.find(row => row.id === 'output-matrix')!.sha256)
+      .toBe('70889486a7c9f74c4215feead1b28376f11149dbbc5ffba0acb62cb56c1f0f7e')
+    const module = listedModules().find(row => row.id === 'output-matrix')!
+    const html = render(createElement(ModuleDetail, { module, selected: false, onToggle: noop }))
+    expect(html).not.toContain('class="module-caution"')
+    expect(html).not.toContain('13.1 percentage points of audio-frame load')
+    expect(html).toContain('Estimated')
   })
 
   it('renders all three Octatrack dials and uses an unscaled outline for kilobyte values', () => {
@@ -130,7 +139,7 @@ describe('module detail parity across machines', () => {
 
   it('offers the report form on both Digi machines with public delivery, private configuration, and machine-specific fields', () => {
     for (const machine of ['digitakt', 'digitone'] as const) {
-      const mod = DIGI_MODS.find(mod => mod.device === machine && mod.id === 'digihealth')!
+      const mod = DIGI_MODS.find(mod => mod.device === machine && mod.id === { digitakt: 'digiperform', digitone: 'kitbank' }[machine])!
       const html = render(digiPage(mod), member)
       for (const name of ['title', 'model', 'flash', 'os', 'moduleVersion', 'steps', 'expected', 'actual']) {
         expect(html).toContain('name="' + name + '"')

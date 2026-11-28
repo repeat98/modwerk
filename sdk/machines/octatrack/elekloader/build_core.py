@@ -25,6 +25,18 @@ VERSION = '1.0.0-modwerk-dev.1'
 # The update name the resident bootloader shows while flashing (the ELEK header's ten-character field, right-justified);
 # src/engine/elekloader/octatrack-base.ts writes the same.
 UPDATE_NAME = 'MODWERK'
+
+
+def update_name(identity):
+    """The ten-cell name the Octatrack shows at boot: MW and the base's version (base-versions.json), as
+    octatrack-base.ts names it; UPDATE_NAME for a base without a released version."""
+    for base in json.loads((HERE.parent/'base-versions.json').read_text())['bases']:
+        if identity in base['identities']:
+            name = 'MW ' + base['version']
+            if len(name) > 10:
+                raise ValueError('The boot name holds ten characters: ' + name)
+            return name
+    return UPDATE_NAME
 # Resident controller trust: association, the scoped write lease, its resolver and the board-compiled policy table.
 CONTROLLER_POLICY_SOURCES = ('controller_policy.c', 'controller_policy.h', 'controller_association.c', 'controller_association.h',
                              'controller_write_lease.c', 'controller_write_lease.h', 'controller_write_policy.c',
@@ -241,6 +253,8 @@ CODEGEN = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(CODEG
 # The stock OS fixes every base carries (stock-fixes/README.md): their sources and guarded stock sites.
 _spec = importlib.util.spec_from_file_location('modwerk_stock_fixes', HERE / 'stock-fixes/stock_fixes.py')
 STOCK_FIXES = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(STOCK_FIXES)
+# module-adapters/stream_probe.py sets itself here for its probe builds (development twins only); --stream-channel imports it.
+STREAM_PROBE = None
 # Catalogue modules allowed to patch what this base owns, and why (docs/OCTATRACK_ELEKLOADER_MIGRATION.md).
 BASE_OWNS = {'usb-audio-out-tracks-main-cue': 'the base owns the USB configuration',
              'midi-scenes': 'its writes meet Elekloader\'s own sites; it needs a port',
@@ -311,15 +325,19 @@ STOCK_CYCLES = {4: 285, 5: 80, 8: 0, 12: 193, 13: 342, 16: 242, 17: 147, 18: 295
 # The dearest of them, DJ EQUALIZER (its 331 executed instructions in the emulator, stock_dsp_worst.py, run at about one a
 # cycle): what a machine's voice or engine still books each slot at, since a bank change may bring any stock effect.
 DSP_RESERVE = max(STOCK_CYCLES.values())
-# Effect ids the base handles (fxids.h MODWERK_FX_IDS; docs/OCTATRACK_MORE_EFFECT_IDS.md). 32 only to bisect.
-FX_IDS = 128
+# Effect ids the base handles, FX1 and FX2 alike (fxids.h MODWERK_FX_IDS; docs/OCTATRACK_MORE_EFFECT_IDS.md), set in
+# fx-ids.json alone: the runtime builder reads it too. 32 only to bisect.
+FX_IDS = BASE_FX_IDS = json.loads((HERE / 'fx-ids.json').read_text())['ids']  # main() may set FX_IDS to 32
 VALIDATOR_CLAMPS = (0x400023b6, 0x400023bc, 0x400023de, 0x400023e4)  # the Part validator's moveq #31, FX1 then FX2
 FX_WORDS = (FX_IDS + 31) // 32
-# Modules installed at once and their memory (loader.h; owner, 12 October 2026: up to 128 modules). About 5 KB a
-# module today; the pool is taken from sample memory at boot (the core's arena pages), and modset.c keeps a copy of
-# the set as staged beside it.
+# Modules installed at once and their memory (loader.h; owner, 12 October 2026: up to 128 modules; 27 November 2026:
+# the pool 2 MiB, one module's image 256 KiB and its image and bss 512 KiB, for the Quadraverb's 48 programs and
+# large sets). The pool is taken from sample memory at boot (the core's arena pages, 6,144 bytes each), and modset.c
+# keeps a copy of the set as staged beside it, so the pool's 768 KiB more take 256 more pages.
 RUNTIME_MODULES = 128
-RUNTIME_POOL_BYTES = 768 * 1024
+RUNTIME_POOL_BYTES = 2048 * 1024
+RUNTIME_IMAGE_BYTES = 256 * 1024
+RUNTIME_MODULE_BYTES = 512 * 1024
 DSP_EDITS = {
     # The FX selectors read their chooser list through these LEA operands, which the chooser composer repoints.
     'selection.c': (('static uint8_t paste[6322]={0};', 'static uint8_t paste[6322]; /* in .bss, which the core clears at boot: '
@@ -1591,6 +1609,10 @@ def main():
                         help='Offline staging only: source-link all six outputs and off, with --usb-audio as the explicit initial profile. No host settings/recovery or catalogue admission.')
     parser.add_argument('--usb-input', action='store_true',
                         help='Include the optional USB input transfer for a duplex USB Audio package.')
+    parser.add_argument('--stream-channel', action='store_true',
+                        help="The stream channel (module-adapters/stream_channel.c): an FX effect's ColdFire half and its DSP "
+                             'code exchange blocks every frame (events.json ot_dsp_effects stream_in, stream_out), beside '
+                             'USB AUDIO IN; needs --resident-on-demand (the slot records) and --site-events.')
     parser.add_argument('--dsp-hook', choices=tuple(DSP_HOOK_EDITS), default='guard',
                         help="with --dsp-loader: the state-7 entry, guard (default); usbin, pretend, noflags, long: hardware bisect variants")
     parser.add_argument('--dsp-probe', choices=('A', 'B', 'S', 'W', 'M', 'X'),
@@ -1639,7 +1661,7 @@ def main():
                         help='with --dev and --dsp-loader, a development twin only: machine voices and engines are admitted '
                              'without a cycle charge, so a voice with no hardware price yet can be measured with the meters '
                              'on a Part with NONE in every FX slot (#1542). Nothing guards the DSP: never for users.')
-    parser.add_argument('--fx-ids', type=int, choices=(32, 128), default=128,
+    parser.add_argument('--fx-ids', type=int, choices=(32, BASE_FX_IDS), default=BASE_FX_IDS,
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
     args = parser.parse_args()
@@ -1659,6 +1681,10 @@ def main():
         parser.error('--measure-voices is for a development twin: it needs --dev and --dsp-loader.')
     if args.resident_on_demand and not args.resident_stock_hooks:
         parser.error('--resident-on-demand needs --resident-stock-hooks.')
+    if args.stream_channel and (not args.dsp_loader or not args.site_events or not args.resident_on_demand
+                                or args.dsp_hook != 'guard' or args.dsp_probe or args.dsp_burn):
+        parser.error('--stream-channel needs --dsp-loader, --site-events, --resident-on-demand and the guarded transfer, '
+                     'without a DSP probe or burn.')
     if args.resident_stock_hooks and not args.resident_on_demand:
         parser.error('--resident-stock-hooks needs --resident-on-demand: Analog BD\'s engine is its package\'s (ABI 10), placed on demand.')
     if bool(args.controller_policies) != bool(args.controller_layout) or (args.controller_policies and not args.resident_stock_hooks):
@@ -1768,7 +1794,7 @@ def main():
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
     for name in ('ep0.c', 'usb_attach.h', 'usb_stock_sends.h', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
             ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
-             'midi_generators.s', 'sample_memory.c') if args.site_events else ()) + (
+             'midi_generators.s', 'sample_memory.c', 'lfo_pmtr_dest.c', 'lfo_pmtr_dest.s') if args.site_events else ()) + (
             ('part_menu.c', 'part_menu.s') if args.part_menu else ()):
         shutil.copyfile(HERE / name, source / name)
     if args.site_events and args.dsp_loader:  # PROJ > MODWERK > SETTINGS (events.json ot_settings; status.c's page)
@@ -1787,12 +1813,18 @@ def main():
         sys.path.insert(0, str(APP / 'sdk/machines/octatrack/module-adapters'))
         import resident_engines as dev_engines
         (source / 'dev.c').write_text(dev_engines.dev((source / 'dev.c').read_text()))
-    if args.site_events:  # the tables' records (struct modwerk_machine, struct modwerk_sequencer_rows)
+    if args.site_events:  # the tables' records (struct modwerk_machine, struct modwerk_sequencer_rows, ot_lfo_pmtr_dest)
         shutil.copyfile(APP / 'sdk/machines/octatrack/include/modwerk_events.h', source / 'modwerk_events.h')
     # The startup (boot_anim.c) draws the art the shared startup sources describe, with this base's version.
     spec = importlib.util.spec_from_file_location('modwerk_base_art', APP / 'sdk/runtime/startup/base_art.py')
     base_art = importlib.util.module_from_spec(spec); spec.loader.exec_module(base_art)
     (source / 'boot_art.h').write_text(base_art.header(VERSION.split('-')[0]))
+    stream = STREAM_PROBE
+    if args.stream_channel and not stream:
+        sys.path.insert(0, str(APP / 'sdk/machines/octatrack/module-adapters'))
+        import stream_probe as stream
+    if stream:
+        stream.prepare(args, source)
     usb_input = None
     if args.usb_input:
         if not (args.dsp_loader and args.dsp_hook == 'guard' and args.resident_stock_hooks
@@ -1821,7 +1853,10 @@ def main():
                 return resident_dsp.place_resident(
                     resident_ob, tag, end, str(source), dsp_packages.assemble,
                     resident_dsp.ALLOWED[tag] if args.resident_on_demand else 0)
-            resident_bundles[tag] = usb_input.place_receiver(place, dsp_packages.assemble, tag, hi, str(source)) if usb_input else place(hi)
+            # P:$88 is USB AUDIO IN's alone: the channel has no frame-head code, and the probes refuse --usb-input.
+            resident_bundles[tag] = (usb_input.place_receiver(place, dsp_packages.assemble, tag, hi, str(source)) if usb_input
+                                     else stream.place_receiver(args, place, dsp_packages.assemble, tag, hi, str(source)) if stream
+                                     else place(hi))
             return resident_bundles[tag]
         if args.resident_on_demand:  # the ColdFire side (docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md)
             import resident_engines
@@ -1883,6 +1918,8 @@ def main():
                 text = zero_state.unit(name, text, preserved_dynload)
             if usb_input and name == 'hooks.s':
                 text = usb_input.scheduler(text)
+            if stream and name == 'hooks.s':  # after USB AUDIO IN's block, before the loader's packet
+                text = stream.scheduler(text, args, usb=bool(usb_input))
             (source / ('dsp_hooks.s' if name == 'hooks.s' else name)).write_text(text)
         if args.resident_stock_hooks:
             for name in ('stock_hooks.c', 'stock_hooks.h', 'stock_hook_driver.c', 'stock_hook_driver.h', 'stock_hook_resources.c', 'stock_hook_resources.h',
@@ -1927,7 +1964,11 @@ def main():
                 '        modwerk_usb_input_dma_failed();\n'
                 '    }\n'
                 '    dl_phase = dl_c1_phase = 0;'))
+        if stream:
+            (source / 'dsp.c').write_text(stream.dsp_c((source / 'dsp.c').read_text(), args, usb=bool(usb_input)))
         shutil.copyfile(HERE / 'dsp_core1.s', source / 'dsp_core1.s')
+        if stream:
+            (source / 'dsp_core1.s').write_text(stream.core1((source / 'dsp_core1.s').read_text(), args))
         for name in ('dsp_journal.h', 'dsp_journal_manager.h', 'fxmap.h', 'fxpage.h', 'fxmap.c', 'fxmap.s', 'fxpage.c', 'fxpage.s', 'status.c', 'status.s', 'status.h', 'load_wire.h', 'selftest.h', 'diag.c', 'diag.h'):
             shutil.copyfile(HERE / name, source / name)
         if args.resident_on_demand:
@@ -1941,6 +1982,8 @@ def main():
                                                   **({'resident': resident_factory} if args.resident_stock_hooks else {}))
         if args.resident_stock_hooks:
             extra = usb_input.mailbox_initialization(image, device, dsp) if usb_input else None
+            if stream:
+                extra = stream.mailbox_initialization(image, device, dsp, args, extra)
             resident_boot_prepared = resident_boot_helper.prepare(image, device, dsp, dsp_layout, extra=extra)
             (source / 'resident-dsp-boot.s').write_text(resident_boot_prepared['assembly'])
             core_switch(recipe, (source / 'core.s').read_text(), 'MW_PREBOOT')
@@ -1948,7 +1991,7 @@ def main():
             dsp_sites += resident_boot_prepared['sites']
         if args.resident_on_demand:
             (source / 'resident-engines-data.c').write_text(resident_engines.data_c(resident_bundles))
-            for name in ('resident_engines.c', 'resident_engines.h', 'project_fx.c'):
+            for name in ('resident_engines.c', 'resident_engines.h', 'project_fx.c', 'dsp_programs.c'):
                 shutil.copyfile(resident_source.RUNTIME / name, source / name)
         chooser_sites, chooser_lists = loader_dsp.choosers(image, FX_IDS)
         at, guard, stepper = KNOB_STEP
@@ -2050,7 +2093,7 @@ def main():
     if args.resident_on_demand:
         for p in (APP / 'sdk/machines/octatrack/module-adapters/resident_engines.py',
                   resident_source.RUNTIME / 'resident_engines.c', resident_source.RUNTIME / 'resident_engines.h',
-                  resident_source.RUNTIME / 'project_fx.c'):
+                  resident_source.RUNTIME / 'project_fx.c', resident_source.RUNTIME / 'dsp_programs.c'):
             inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
     if args.resident_stock_hooks:
         for name in CONTROLLER_POLICY_SOURCES:
@@ -2072,6 +2115,8 @@ def main():
     if args.table_owners:  # the owners list and every package, declaration and recipe it names
         _, _, reviewed_inputs = reviewed_table_owners(args.table_owners.resolve())
         inputs.update(reviewed_inputs)
+    if stream:
+        inputs.update(stream.inputs(args))
     source_hash = sha(json.dumps(inputs, sort_keys=True, separators=(',', ':')).encode())
     chooser = json.loads((APP/'src/engine/assets/chooser-metadata.json').read_text())
     configuration = dict(fx1=['NONE', *chooser['stockFx1']], fx2=['NONE', *chooser['stockFx2']],
@@ -2209,13 +2254,16 @@ modwerk_retained_end:
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
                         '-fno-merge-constants', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
                         '-Wall', '-Wextra', '-Werror', '-DMODWERK_RUNTIME_METADATA_EXTERNAL', '-DMODWERK_RUNTIME_VOLATILE_JOURNAL', '-DMODWERK_FX_IDS=%du' % FX_IDS] + (['-DMODWERK_DSP_XWATCH'] if args.dsp_probe == 'X' else []) + [
-                        '-DRUNTIME_MODULES=%du' % RUNTIME_MODULES, '-DRUNTIME_POOL_BYTES=%du' % RUNTIME_POOL_BYTES] + (['-DMODWERK_DEV'] if args.dev else []) + (
+                        '-DRUNTIME_MODULES=%du' % RUNTIME_MODULES, '-DRUNTIME_POOL_BYTES=%du' % RUNTIME_POOL_BYTES,
+                        '-DRUNTIME_IMAGE_BYTES=%du' % RUNTIME_IMAGE_BYTES, '-DRUNTIME_MODULE_BYTES=%du' % RUNTIME_MODULE_BYTES] + (['-DMODWERK_DEV'] if args.dev else []) + (
         ['-DMODWERK_DSP_LOADER', '-DMODWERK_DSP_ALLOWANCE0=%d' % DSP_ALLOWANCE[0], '-DMODWERK_DSP_ALLOWANCE1=%d' % DSP_ALLOWANCE[1],
          '-DMODWERK_DSP_RESERVE=%d' % DSP_RESERVE] +
         ['-DMODWERK_DSP_%s%d=%d' % (key, n, dsp_layout[t][field]) for n, t in enumerate('AB')
          for key, field in (('TABLE', 'table'), ('WORDS', 'tableWords'), ('MISS', 'miss'), ('METER', 'meter'))] if args.dsp_loader else [])
     if args.measure_voices:  # dsp.c: voices admitted uncharged
         recipe['cflags'].append('-DMODWERK_MEASURE_VOICES')
+    if stream:
+        recipe['cflags'] += stream.cflags(args)
     if args.cached_modules:  # loader.c, runtime.c, fxpage.c, controller_board.c
         recipe['cflags'].append('-DMODWERK_CACHED_MODULES')
     if args.module_sets:
@@ -2236,7 +2284,8 @@ modwerk_retained_end:
         recipe['cflags'] += ['-DMODWERK_RESIDENT_ON_DEMAND', '-DRUNTIME_OWNER_GENERATION_LIMIT=0x3fffffffu']
     if args.site_events:  # the base owns these stock sites; packages subscribe (sdk/machines/octatrack/EVENTS.md)
         recipe['cflags'].append('-DMODWERK_RUNTIME_EVENTS')
-        recipe['sources'] += ['runtime_events.s', 'machine_registry.s', 'midi_generators.s']
+        # .c files (machine_registry.c, midi_generators.c, lfo_pmtr_dest.c) are already pulled in by the *.c glob above.
+        recipe['sources'] += ['runtime_events.s', 'machine_registry.s', 'midi_generators.s', 'lfo_pmtr_dest.s']
         for addr, n, guard, label in EVENTS.base_sites():
             stock = image[addr - device.main_load:addr - device.main_load + n]
             if sha(stock) != guard:
@@ -2247,8 +2296,9 @@ modwerk_retained_end:
             if sha(stock) != guard:
                 raise ValueError('The frame interrupt at %#x is not stock; review the frame guard.' % addr)
             recipe['sites'].append(dict(addr=hex(addr), stock=stock.hex(), op='jmp', target=label))
-        # The tables' sites: the machine registry's and the SEQUENCER rows' (machine_registry.c/.s). 'own' sites keep
-        # their stock bytes; the registry rewrites their immediates while the table changes.
+        # The tables' sites: machine registry, SEQUENCER rows, MIDI generators, LFO PMTR
+        # (machine_registry / midi_generators / lfo_pmtr_dest). 'own' sites keep their stock bytes;
+        # readers rewrite them while the table changes.
         for s in EVENTS.owned_sites():
             if s['table']=='ot_sample_editor_actions' and not args.sample_editor:
                 continue  # knowing the staged registry entry does not enable its stock sites
@@ -2338,6 +2388,8 @@ modwerk_retained_end:
         recipe['subscribe'].append(dict(event='ev_tick', fn='dl_ui', order=93))
         if args.resident_stock_hooks:  # controller_board.c: activation and retirement of trusted controllers
             recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_controller_tick', order=95))
+        if args.resident_on_demand:  # dsp_programs.c: the program areas of effects that contribute to ot_dsp_effects
+            recipe['subscribe'].append(dict(event='ev_tick', fn='mw_programs_tick', order=98))
         # The status modal (status.c): CUE + PROJ before stock and the modules see it, drawn under the dev capture.
         recipe['subscribe'] += [dict(event='ev_key', fn='modwerk_status_key', order=89),
                                 dict(event='ev_enc', fn='modwerk_status_enc', order=89),
@@ -2352,6 +2404,8 @@ modwerk_retained_end:
             if sha(stock) != guard:
                 raise ValueError('Stock bytes at %#x are not the ones the DSP loader hooks.' % addr)
             recipe['sites'].append(dict(addr=hex(addr), stock=stock.hex(), op='jmp', target=label))
+        if stream:  # the channel's state 0 and state 1, probe B's state 0
+            recipe['sites'] += stream.sites(image, device, args)
         recipe['sites'] += [] if args.dsp_probe == 'S' else dsp_sites
         recipe['sites'] += [dict(addr=hex(ROOT_MENU), stock=image[ROOT_MENU - device.main_load:][:4].hex(), op='bytes', kind='data',
                                  new='00000005'),
@@ -2460,7 +2514,7 @@ modwerk_retained_end:
                       'arena_base','__arena_pages','__arena_fill','__arena_clear',
                       'ev_tick','ev_draw','ev_key','ev_enc','ev_midi','ev_frame'}:
         raise ValueError('Core has unexpected unresolved imports: ' + str(mod.imports))
-    outputs, manifest = patch.build(str(args.stock), [path], version=UPDATE_NAME)
+    outputs, manifest = patch.build(str(args.stock), [path], version=update_name(identity))
     mapping = manifest.pop('_map')
     # MAIN stores .run packed (run_pack.py): the linked image again without its plain copy, repacked and verified as
     # patch.build does, so the RAM boot bound and every hash below are the packed image's.
@@ -2469,7 +2523,7 @@ modwerk_retained_end:
     run_pack = importlib.util.module_from_spec(spec); spec.loader.exec_module(run_pack)
     parsed = formats.load(str(args.stock))[0]
     linked = formats.main_image(formats.parse(outputs['bin'], device), device)
-    main_packed, run_proof = run_pack.pack(linked, manifest['link']['layout'], mapping, device.main_load, aplib.pack_section)
+    main_packed, run_proof = run_pack.pack(linked, manifest['link']['layout'], mapping, device.main_load, run_pack.pack_section_compact)
     outputs = formats.write(parsed, formats.pack_main(main_packed, device), device, manifest['version'])
     manifest.update(main_sha256=sha(main_packed), main_len=len(main_packed),
                     output=formats.verify(outputs, parsed, main_packed, device, manifest['version']))
@@ -2479,6 +2533,8 @@ modwerk_retained_end:
             raise ValueError('Saved file hash differs.')
     if args.dsp_loader and any(mapping[name] % 16 for name in ('dl_tx', 'dl_rx')):
         raise ValueError('The DSP loader packet buffers must be 16-byte aligned for eDMA channel 0.')
+    if stream:
+        stream.check_link(mapping, args)
     (out/'symbols.json').write_text(json.dumps(mapping, indent=2)+'\n')
     if args.controller_layout and json.loads(args.controller_layout.read_text()) != mapping:
         raise ValueError('Controller trust rows moved a linked symbol: their packages name the other layout.')
@@ -2520,7 +2576,7 @@ modwerk_retained_end:
                   packageSha256=sha(Path(path).read_bytes()), manifest=manifest,
                   savedHashes={ext:sha(data) for ext,data in outputs.items()}, trustStorage=trust_storage,
                   productionReady=False, hardware='not tested', emulator='not tested',
-                  limitations=['Up to 128 ColdFire runtime modules at once (hooks on ev_tick, ev_draw, ev_key and ev_enc, stock-code sites that no two modules share) in a 768 KiB pool reclaimed once no task can reach a module; no data-table sites, MIDI or frame hooks, or DSP modules and DSP resource ledger yet.',
+                  limitations=['Up to 128 ColdFire runtime modules at once (hooks on ev_tick, ev_draw, ev_key and ev_enc, stock-code sites that no two modules share) in a %d KiB pool reclaimed once no task can reach a module; no data-table sites, MIDI or frame hooks, or DSP modules and DSP resource ledger yet.' % (RUNTIME_POOL_BYTES // 1024),
                                'The base owns the USB configuration: USB MIDI/Audio cannot be combined with it yet.',
                                'RAM boot (boot.s): any host on the vendor interface can boot a whole OS image without a confirmation on the unit; development only. Nothing it does writes flash; the image must carry NOR\'s bootstrap version.',
                                'Logger retention/ABI and modified bootstrap require emulator/hardware qualification.',

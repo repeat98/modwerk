@@ -57,7 +57,7 @@ Two things it found in the emulator shape the rest:
    unit. Once no base links USB Audio in, the site can become an ordinary resting site event.
 2. **SET_INTERFACE and GET_INTERFACE.** The prototype leaves them as stock sites of the function's own
    (`0x4001dd04`, `0x4001d824`, and the EP0 page at `0x4001d4b2`). Decide per site: base-owned event or the package's.
-3. **Memory.** The module's bss (the ring, up to 96 KiB) comes from the 768 KiB runtime pool. Check the
+3. **Memory.** The module's bss (the ring, up to 96 KiB) comes from the 2 MiB runtime pool. Check the
    controller's alignment and addressing needs for the isochronous buffers and transfer descriptors against pool
    memory, and what the largest layout leaves for a set of 24 modules.
 4. **The POST layout's gain curve** (`usb_post.py`) is 256 stock words a linked base reads from the owner's own OS.
@@ -154,7 +154,8 @@ pitch change of 1/16 for 0.36 ms. Vendor request 0x56 reports the trims as a six
 
 Base 0.8.1 owns the frame-transfer interrupt. Its guarded DMA
 scheduler sends a staged input block to core 0 before an FX loader packet
-when both are due. The two transfers use disjoint DSP ranges. The RX hook
+when both are due; from 0.8.4 a streaming effect's block goes between them
+(`stream_probe.py` scheduler). The transfers use disjoint DSP ranges. The RX hook
 consumes the block marker once so a closed stream or a skipped transfer
 leaves the analog input intact. The base gives USB priority on the crossbar
 while a duplex configuration is selected and restores its previous values

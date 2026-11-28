@@ -59,6 +59,32 @@ class BaseServiceBinding(unittest.TestCase):
             with self.assertRaises(ValueError):
                 binding.load(dict(legacy, dspFeatures=value))
 
+    def test_conditional_program_areas_do_not_change_ledger_services(self):
+        self.source('MW_DSP_KEYBUS | MW_DSP_TRACK_PROCESSOR')
+        root = self.build / 'source'
+        header = root / 'resident_engines.h'
+        header.write_text('#define MW_DSP_PROGRAMS 0x100u\n')
+        source = root / 'resident_engines.c'
+        source.write_text('#ifdef MODWERK_RUNTIME_EVENTS\n'
+            'unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_TRACK_PROCESSOR | MW_DSP_PROGRAMS; }\n'
+            '#else\nunsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_TRACK_PROCESSOR; }\n#endif\n')
+        def pin():
+            path = self.build / 'proofs.json'
+            proof = json.loads(path.read_text())
+            for name in ('resident_engines.c', 'resident_engines.h'):
+                proof['sources']['sdk/machines/octatrack/module-adapters/resident-runtime/' + name] = hashlib.sha256((root / name).read_bytes()).hexdigest()
+            path.write_text(json.dumps(proof))
+        pin()
+        self.assertEqual(binding.provided_dsp_features(self.build), 24)
+        header.write_text(header.read_text() + '/* unrecorded change */\n')
+        with self.assertRaisesRegex(ValueError, 'build proof'):
+            binding.provided_dsp_features(self.build)
+        pin()
+        source.write_text(source.read_text().replace('MW_DSP_KEYBUS | MW_DSP_TRACK_PROCESSOR; }', 'MW_DSP_KEYBUS; }'))
+        pin()
+        with self.assertRaisesRegex(ValueError, 'conditional ledger'):
+            binding.provided_dsp_features(self.build)
+
 
 if __name__ == '__main__':
     unittest.main()

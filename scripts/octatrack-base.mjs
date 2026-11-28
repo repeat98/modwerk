@@ -16,7 +16,8 @@
 // (sdk/machines/octatrack/SAMPLE_EDITOR.md) that ot_sample_editor_actions contributors such as Beat Slicer run on. --resident-stock-hooks --controllers adds the resident Sidechain, Output Matrix and Analog BD engines and admits their packages
 // through committed trust rows (module-adapters/controller-policies.json). --resident-on-demand (with --resident-stock-hooks)
 // keeps those engines out of the DSP cores until a package that needs one is installed, so the cores' effect arena is
-// larger (docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md). Every build also writes
+// larger (docs/OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md). --stream-channel (with --resident-on-demand) gives an FX effect
+// that asks for it blocks to and from its DSP code every frame (module-adapters/stream_channel.c). Every build also writes
 // sdk/machines/octatrack/base-binding.json, which the base-bound packages link against (module_packages.py). The committed
 // base is the beta base, and --write takes only --beta, which names every one of its flags (BETA below):
 //   npm run octatrack:base -- --stock OS.bin --beta --write
@@ -28,8 +29,8 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFi
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
-import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
-import * as formats from '../vendor/elekloader/kit/src/formats.ts'
+import { sha } from '../src/engine/elektron/bytes.ts'
+import * as formats from '../src/engine/elektron/firmware-formats.ts'
 import { buildBase } from '../src/engine/elekloader/octatrack-base.ts'
 import { applyVariantPatch } from '../src/engine/elekloader/base-variants.ts'
 import { USB_AUDIO_LAYOUTS } from '../src/config/usb-audio.ts'
@@ -39,7 +40,7 @@ import { keepSymbols } from '../src/dev/address-names.ts'
 const { values: args } = parseArgs({ options: {
   stock: { type: 'string' }, upstream: { type: 'string', default: join(homedir(), '.cache/modwerk-upstream/elekloader') },
   write: { type: 'boolean', default: false }, out: { type: 'string' },
-  'usb-input': { type: 'boolean', default: false }, 'packaged-usb-audio': { type: 'boolean', default: false }, 'usb-midi': { type: 'boolean', default: false }, 'usb-audio': { type: 'string' }, 'site-events': { type: 'boolean', default: false },
+  'usb-input': { type: 'boolean', default: false }, 'stream-channel': { type: 'boolean', default: false }, 'packaged-usb-audio': { type: 'boolean', default: false }, 'usb-midi': { type: 'boolean', default: false }, 'usb-audio': { type: 'string' }, 'site-events': { type: 'boolean', default: false },
   'table-owners': { type: 'boolean', default: false },
   'resident-stock-hooks': { type: 'boolean', default: false }, 'resident-on-demand': { type: 'boolean', default: false },
   'saved-set-export': { type: 'boolean', default: false },
@@ -63,7 +64,7 @@ if (args.step) {
 // and every base after it ran module code uncached: so --write takes only these, through --beta.
 const BETA = { 'usb-input': true, 'usb-midi': true, 'packaged-usb-audio': true, 'site-events': true, 'table-owners': true,
   'resident-stock-hooks': true, 'resident-on-demand': true, controllers: true, 'module-sets': true,
-  'cached-modules': true, 'sample-editor': true, 'module-ui-roots': true, 'part-menu': true }
+  'cached-modules': true, 'sample-editor': true, 'module-ui-roots': true, 'part-menu': true, 'stream-channel': true }
 if (args.beta) {
   const own = Object.keys(args).filter(flag => !['stock', 'upstream', 'write', 'out', 'beta'].includes(flag) && process.argv.some(arg => arg === '--' + flag || arg.startsWith('--' + flag + '=')))
   if (own.length) throw new Error('--beta is every flag of the beta base; leave out ' + own.map(flag => '--' + flag).join(', ') + '.')
@@ -92,6 +93,7 @@ const buildLayout = (layout, output, ...rest) => python('build_core.py', '--stoc
   ...(args['site-events'] ? ['--site-events'] : []), ...(args['cached-modules'] ? ['--cached-modules'] : []),
   ...(args['table-owners'] ? ['--table-owners', join(adapters, 'table-owners.json')] : []),
   ...(args['resident-stock-hooks'] ? ['--resident-stock-hooks'] : []), ...(args['resident-on-demand'] ? ['--resident-on-demand'] : []),
+  ...(args['stream-channel'] ? ['--stream-channel'] : []),
   ...(args['saved-set-export'] ? ['--saved-set-export'] : []), ...(args['module-sets'] ? ['--module-sets'] : []),
   ...(args['sample-editor'] ? ['--sample-editor'] : []), ...(args['part-menu'] ? ['--part-menu'] : []), ...(args['module-ui-roots'] ? ['--module-ui-roots'] : []), ...rest)
 const build = (output, ...rest) => buildLayout(args['usb-audio'], output, ...rest)

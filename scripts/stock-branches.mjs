@@ -12,7 +12,7 @@ import { readFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
-import * as formats from '../vendor/elekloader/kit/src/formats.ts'
+import * as formats from '../src/engine/elektron/firmware-formats.ts'
 import { inboundBranches } from '../src/engine/elektron/inbound-branches.ts'
 
 const root = fileURLToPath(new URL('..', import.meta.url))

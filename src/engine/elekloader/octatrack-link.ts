@@ -4,13 +4,13 @@
 // undo it. The base itself undoes anything not kept when USB goes quiet or away,
 // so every failure here ends in "unplug to undo" at worst.
 import { runSelftest, waitUntilSaved } from './selftest.ts'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import { UploadDeviceError, UploadSession, UploadUnconfirmedError } from './upload-session.ts'
 import type { UploadResultName } from './upload-wire.ts'
 import { findVendorInterface, RuntimeFeature, UsbVendorTransport, VendorTransportError, type BaseSlots, type ControlDevice, type MissingModule, type OffModule, type RestoreReport, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
-import * as formats from '../../../vendor/elekloader/kit/src/formats.ts'
-import type { ElekFile } from '../../../vendor/elekloader/kit/src/elek.ts'
-import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
+import * as formats from '../elektron/firmware-formats.ts'
+import type { ElekFile } from '../elektron/octatrack-container.ts'
+import { OCTATRACK } from '../elektron/devices.ts'
 import type { OctatrackDiagnostic, DiagnosticReading, DiagnosticSyncStep } from '../../community/octatrack-diagnostics-contract'
 import { isStagingCommand } from '../../community/octatrack-diagnostics-contract'
 import type { Ep0Diagnostics } from './upload-usb.ts'
@@ -141,7 +141,10 @@ export interface LinkState {
   readonly module?: string
   /** 0–1 while sending. */
   readonly progress?: number
-  readonly notice?: { tone: 'success' | 'error'; text: string }
+  /** `card`: the sync dialog offers the set as the card file beside the text (a sync that keeps failing in transport). */
+  readonly notice?: { tone: 'success' | 'error'; text: string; card?: boolean }
+  /** The device picker closed with nothing chosen: a cancel, or the Octatrack was not in its list. */
+  readonly noDevice?: boolean
   /** A base update over USB is running (updateBase), through its restarts: the cable must stay in. */
   readonly baseUpdate?: BaseUpdateStep
   /** Where the base lives in the unit's flash (SLOTS, flash.h): on two slots an update restarts the unit once. */
@@ -176,6 +179,14 @@ const NOT_RESTORED = 'The Octatrack hasn’t loaded its saved modules yet, so no
  * every ten seconds while stopped; a restart drops it). On 26 November 2026 a tester's 166-198 kB sets never saved, and
  * each sync after one read "can't run this module file". */
 const NOT_SAVED = 'The Octatrack couldn’t save your last change to its card yet, so nothing changed. It takes no new change until that save lands, and keeps trying while it’s stopped. If Status doesn’t show “Saved and checked” soon, the card may be full: switch the Octatrack off and on, make room on the card, then sync again.'
+/** Refusal 5 that outlasts whenStopped's wait: in the field (two units on 0.8.x, 23-27 November 2026) that was never
+ * code loading, but the last Keep's card save still pending for minutes (modset.c modwerk_modset_check_set), which the
+ * base only finishes while stopped. The loader's own text ("still loading module code. Try again in a moment") sent both
+ * into the same refusal again. */
+const STILL_SAVING = 'The Octatrack is still saving your last change to its card, or loading module code, so nothing changed. Press STOP on the Octatrack and wait until Status shows “Saved and checked”, then sync again.'
+/** From the second sync in a row that stopped while sending: retrying failed 61 of 64 times (20-27 November 2026, #1596),
+ * and the card file takes the same set there without USB. */
+const CARD_INSTEAD = ' If it keeps failing, load this set from the card instead:'
 const RUNTIME_IN_USE = 7
 /** After refusal 7, the modules the sync removes or replaces: one of them is on a track. The base does not say which
  * track (November 2026: testers were refused several times in a row looking for it). */
@@ -339,7 +350,10 @@ export class OctatrackLink {
     if (!this.usb) return this.noWebUsb()
     let device: LinkDevice
     try { device = await this.usb.requestDevice({ filters: OCTATRACK_FILTERS }) }
-    catch (error) { if (errorName(error) === 'NotFoundError') this.diagnostic('link_failed', { failure: 'no-device' }); return } // picker closed
+    catch (error) { // picker closed: 27 members in a week, four of whom never connected after it, and the page said nothing
+      if (errorName(error) === 'NotFoundError') { this.diagnostic('link_failed', { failure: 'no-device' }); if (connection === this.connection && this.state.status === 'idle') this.set({ status: 'idle', noDevice: true }) }
+      return
+    }
     if (connection === this.connection) await this.open(device)
   }
   /** The member asked for something that needs USB (connecting, the base install guide) in a browser without WebUSB:
@@ -648,6 +662,8 @@ export class OctatrackLink {
   }
   /** The unit's own diagnostics log (diag.c); background diagnostics call this only after explicit consent. */
   deviceLog(signal?: AbortSignal, allowed: () => boolean = () => true) { return this.read('diagnostics log', transport => transport.deviceLog(signal), signal, allowed) }
+  /** The frame guard's renders dropped since the start and their tracks, in one transfer. */
+  sheds(signal?: AbortSignal, allowed: () => boolean = () => true) { return this.read('dropped sound count', transport => transport.sheds(signal), signal, allowed) }
   /** Private recovery export: holds one link lock for both fixed saved files, with no card writes. */
   savedBackup(signal?: AbortSignal) { return this.read('saved module files', transport => transport.savedBackup(signal), signal) }
   /** The modules the unit's project names that are not installed, while it is idle ([] from a base without MISSING);
@@ -885,6 +901,7 @@ export class OctatrackLink {
       this.live(connection)
       await this.release()
       this.live(connection) // a reply that arrived after the unit went away confirms nothing
+      this.stageDrops = 0
       this.ready(unsaved ? { tone: 'error', text: `Kept, but the Octatrack couldn’t save ${module} to the card yet. It keeps trying while it’s stopped and takes no other change until then. If Status doesn’t show “Saved and checked” soon, the card may be full: switch off and on (it starts with the modules saved before), make room on the card, then sync again.` }
         // Not saved yet is not a failed save: the base saves by itself once the unit is idle, and Status shows it.
         : saved === 'pending' ? { tone: 'success', text: `Synced. The Octatrack is still busy and saves ${module} to the card once it is stopped and idle. Leave it switched on until Status shows “Saved and checked”.` }
@@ -947,11 +964,12 @@ export class OctatrackLink {
         ...(failed.chunkOffset !== undefined ? {chunkOffset: failed.chunkOffset} : {}), ...(remaining !== undefined ? {remainingBytes: remaining} : {}) }} : {})})
     this.session = undefined
     await this.release()
+    const card = label === 'transport' && step === 'stage' ? ++this.stageDrops > 1 : (this.stageDrops = 0, false)
     // An untrusted connection that could not be read again leaves the running set unknown.
-    const text = recovered && clean ? RECOVERED : (refusedAs === 'unsafe' ? unsafeText(busy) : why === 0 && record?.saved === 0 ? NOT_RESTORED : why === 0 && record?.saved === 8 ? NOT_SAVED : REJECTED[why ?? 0] ?? explainLinkError(error)) +
-      (why === RUNTIME_IN_USE ? record?.inUseSlot ? inUseSlotHint(record.inUseSlot, this.replaced) : inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG)
+    const text = recovered && clean ? RECOVERED : (refusedAs === 'unsafe' ? unsafeText(busy) : why === 0 && record?.saved === 0 ? NOT_RESTORED : why === 0 && record?.saved === 8 ? NOT_SAVED : why === 5 ? STILL_SAVING : REJECTED[why ?? 0] ?? explainLinkError(error)) +
+      (why === RUNTIME_IN_USE ? record?.inUseSlot ? inUseSlotHint(record.inUseSlot, this.replaced) : inUseHint(this.replaced) : '') + (clean ? '' : ' ' + UNPLUG) + (card ? CARD_INSTEAD : '')
     if (this.device && connection === this.connection) {
-      const notice = { tone: 'error', text } as const
+      const notice = { tone: 'error', text, ...(card ? { card } : {}) } as const
       if (this.transport) this.ready(notice, session ? settled?.status.active : this.state.active)
       else this.set({ status: 'idle', notice })
     }
@@ -983,6 +1001,7 @@ export class OctatrackLink {
       (await this.transport?.selftest(false).catch(() => undefined))?.refusal === 5
   }
   private expectReconnect = false
+  private stageDrops = 0
   private audioTrial = false
   private reconnectCandidate?: LinkSession['status']
   private reconnectTimer?: ReturnType<typeof setTimeout>

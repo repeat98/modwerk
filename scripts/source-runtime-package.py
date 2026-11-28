@@ -25,7 +25,7 @@ FLAGS = ['-mcpu=54455', '-malign-int', '-msoft-float', '-Os', '-std=c11',
          '-fno-tree-loop-distribute-patterns', '-fno-asynchronous-unwind-tables',
          '-fno-unwind-tables', '-fomit-frame-pointer', '-ffunction-sections',
          '-fdata-sections', '-Wall', '-Wextra', '-Werror']
-SHARED = ('sdk/runtime/loader/build.py', 'sdk/runtime/m68k_codegen.py',
+SHARED = ('sdk/runtime/loader/build.py', 'sdk/machines/octatrack/elekloader/fx-ids.json', 'sdk/runtime/m68k_codegen.py',
           'sdk/machines/octatrack/events.py', 'sdk/machines/octatrack/events.json',
           'sdk/machines/octatrack/module-adapters/stock_recipe.py',
           'scripts/source-runtime-package.py')

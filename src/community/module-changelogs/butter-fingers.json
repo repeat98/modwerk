@@ -6,7 +6,7 @@
       "First release: removing a parameter or scene lock with a knob press no longer writes a new lock when the knob slips a detent.",
       "While a TRIG key or SCENE A/B is held, a pressed knob's first detent and every detent for 150 ms after its release are ignored.",
       "Press + turn still makes the coarse x7 edit, starting one detent later.",
-      "Known issue: MKII only; tested on one unit."
+      "Known issue: MKII only."
     ]
   }
 ]

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseModuleCpuMeter, parseModuleCpuPrice, parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { AT_REST_FROM, AT_REST_LIMIT, CPU_PRICE_PENDING_REASON, RELEASE_COST_FROM, curveProblem, FRAME_COST_FROM, FRAME_COST_RECORD, FRAME_COSTS_BASE_PATH, atRestStatus, frameCostStatus, generateFrameCosts, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending, readingsNote } from './module-cpu-price.mjs'
+import { AT_REST_FROM, AT_REST_LIMIT, AT_REST_METER_FROM, AT_REST_METER_LIMIT, CPU_PRICE_PENDING_REASON, RELEASE_COST_FROM, curveProblem, FRAME_COST_FROM, FRAME_COST_RECORD, FRAME_COSTS_BASE_PATH, atRestStatus, frameCostStatus, generateFrameCosts, cReserved0, cpuPriceProblems, cpuPriceStatus, glueReserved0, machineDescriptors, parseCpuPricePending, portGlue, readCpuPricePending, readingsNote } from './module-cpu-price.mjs'
 
 const repo = fileURLToPath(new URL('../', import.meta.url))
 const roots = []
@@ -229,6 +229,22 @@ describe('a module costs nothing while nobody uses it (owner, 20 November 2026)'
     expect(atRestStatus({ root, document: hook('mutes', '0.2.3', share(2.6)), glue: {} }).state).toBe('ok')
     /* No package of this version committed yet (a draft): the packages check names that; this one reads runtime.json. */
     expect(atRestStatus({ root, document: hook('mutes', '0.2.4', share(2.6)), glue: {} }).state).toBe('ok')
+  })
+
+  it('fails a new release whose UI-task work adds to the CPU meter at rest, even one that rests its frame detours', () => {
+    const meter = (id, cpu) => ({ ['sdk/octatrack/modules/' + id + '/evidence/cpu-price.json']: { module: id, result: { atRestAdds: { frame: 0, cpu } } } })
+    const root = fixture({
+      ...meter('ticky', AT_REST_METER_LIMIT + 0.5), ...changelog('ticky', '0.2.0', AT_REST_METER_FROM),
+      'sdk/octatrack/modules/ticky/runtime.json': { schema: 1, subscribe: [{ event: 'ev_in_use', fn: 'in_use', order: 50 }] },
+      ...meter('calm', AT_REST_METER_LIMIT), ...changelog('calm', '0.2.0', AT_REST_METER_FROM),
+      ...meter('older', 2.3), ...changelog('older', '0.1.5', '2026-11-18'),
+    })
+    const ticky = atRestStatus({ root, document: hook('ticky', '0.2.0'), glue: {} })
+    expect(ticky).toMatchObject({ state: 'fail', detail: expect.stringContaining('CPU meter') })
+    expect(ticky.fix).toContain('only when')
+    expect(atRestStatus({ root, document: hook('ticky', '0.3.0'), glue: {} }).state).toBe('fail') /* no changelog entry yet: a new release */
+    expect(atRestStatus({ root, document: hook('calm', '0.2.0'), glue: {} }).state).toBe('ok')
+    expect(atRestStatus({ root, document: hook('older', '0.1.5'), glue: {} })).toMatchObject({ state: 'warn', detail: expect.stringContaining('not refused') })
   })
 
   it('holds on main: no published release fails, whatever it costs at rest', () => {
