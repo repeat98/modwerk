@@ -42,7 +42,7 @@ FALLBACK = []                       # the core modules taken from the checkout w
 if HAVE:
     sys.path.insert(0, str(ROOT / 'sdk'))
     import firmware_codec  # noqa: E402
-    firmware_codec.use_elekloader(UPSTREAM)
+    firmware_codec.use_reference_checkout(UPSTREAM)
     import firmware_builder  # noqa: E402
     try:
         for name in CORE:

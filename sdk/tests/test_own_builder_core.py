@@ -56,7 +56,7 @@ def setUpModule():
         raise unittest.SkipTest('no upstream checkout at %s' % UPSTREAM)
     sys.path.insert(0, str(ROOT / 'sdk'))
     import firmware_codec
-    firmware_codec.use_elekloader(UPSTREAM)
+    firmware_codec.use_reference_checkout(UPSTREAM)
     import importlib
     U = {n: importlib.import_module('elekloader.' + n) for n in NAMES}
     O = {n: importlib.import_module('firmware_builder.' + n) for n in NAMES}
