@@ -87,7 +87,7 @@ Proof standard: *static* (no absolute reference, immediate, literal-pool entry, 
 | 0x4f8af2c9–0x4fc00000 | 0x4f88f2c9–0x4fc00000 | 3.3 MB | **probably free** | no reference | same unknowns as above | uncached |
 | 0x4fc00000–0x50000000 | same | 4 MB | **not free** | FX window | masked index proves the extent | uncached, eDMA 30/42 |
 | heap pool 0x444e48c0–0x454e48c0 | 0x444cbe80–0x454cbe80 | 16 MB | **not free (allocator-managed)** | descriptor constants | handed out by the buddy allocator only | cached |
-| second CPU, 0x4404f980–0x47ff0000 | same | 63 MB | **unknown** | no immediate reference | its stack/heap use was not traced | separate SDRAM |
+| second CPU, 0x4404f980–0x47ff0000 | same | 63 MB | **unknown** | no immediate reference | overall stack/heap use remains unqualified; bounded 128 KiB subrange in §3.1 | separate SDRAM |
 
 **Headroom.** Static headroom for mods on CPU1 is the proven-free 3,268 bytes of SRAM plus the boot-time fill; nothing larger is proven. What stock does when memory is exhausted: the allocator calls a handler pointer and retries (0x401ba802) [OBS]; sample loading is capped per slot at 0x80000 bytes [OBS].
 
@@ -97,6 +97,12 @@ Proof standard: *static* (no absolute reference, immediate, literal-pool entry, 
 - **Candidate A, heap block reserved at init.** Hook the allocator's first-use initialisation and take the first 64 KB block before any stock request (the Synthack-OS v0.8.1 approach, which its author tested on a unit with all samples loaded [PUB]). Argument: the block then belongs to the core and the allocator never hands it out again. Deviation: stock *allocates* it, which the design invariant forbids literally; the pool start also receives a 12-byte initialisation record [PUB], so the block must be used from +0x10. The allocator's in-block writes were not audited.
 
 Neither candidate meets the proof standard today. The allocator/linker therefore refuses every mod that needs SDRAM (see §7).
+
+### 3.1 CPU2 boot staging and private DDR (OS 1.42)
+
+Retained MAX source/compile/bounded-emulator results distinguish temporary CPU2 input `[0x40042000,0x4004f5c0)` (54,720 B, originally zero) from runtime code+BSS `[0x47000000,0x47020000)` (128 KiB). The installer restores the entire input interval to zero before native initialization at `0x400004bc`; it is not runtime scratch. The mixed probe used 110,340 B of runtime, including BSS, but only 18,403 B of packed input. The final verifier rejected runtime end `0x47020004` and dirty staging padding.
+
+These are CPU2-local addresses. They neither reserve nor qualify CPU1's `[0x47fe0000,0x48000000)` stack-gap candidate in [#1411](https://github.com/repeat98/modwerk/pull/1411). Physical DDR aliasing, stack high-water and deadlines remain unverified; Modwerk still offers no CPU2 area and keeps section 7 unchanged. [Exact guards, native owners and retained test identities](verification/2026-11-28-syntakt-cpu2-boot-staging.md) inform the CPU2 work left open by [#1922](https://github.com/repeat98/modwerk/pull/1922).
 
 ## 4. Hook sites and stock claims (A4)
 
@@ -280,15 +286,4 @@ Deferred to owner review: the SDRAM region (A/B), events (§4.4), the second CPU
 
 ## 10. Verification plan
 
-Firmware-free (CI): the checker and profile tests above. Local (owner's files, results as hashes only): link the boot probe against both stock images, verify the container with the repository's verifier (margin, size, section identity) and record the output hashes in `docs/VERIFICATION.md`.
-
-Emulator: the digiemu Syntakt port boots 1.40A to the live UI with the second CPU running [PUB]; a boot-probe build for 1.42 or 1.40A could be run there to confirm the hook executes and the OS reaches the UI, and to read the SRAM-tail signature. Not done here; the emulator does not model the FPGA, audio or persistence.
-
-Hardware (owner; every step bound to the exact build hash, nothing below is verified):
-
-1. Keep the stock 1.42 file, a MIDI DIN interface and Transfer's legacy OS-upgrade mode ready. The FUNC+TRIG 4 recovery path is **untested on the owner's unit**; a failed boot can only be recovered that way.
-2. Flash the boot-probe build whose SHA-256 is recorded in `docs/VERIFICATION.md` with Transfer over USB.
-3. First boot: the unit must reach the live UI and play a stock project; note the shown OS version string.
-4. Persistence: power-cycle twice; load a project with samples; load every sample slot the unit has; play for ten minutes with Outbox 8 attached if available.
-5. Recovery: flash the stock 1.42 file the same way and confirm the stock version string.
-6. Report exact results; anything not performed stays unverified.
+The existing firmware-free, emulator and owner hardware plan is [retained verbatim in the verification record](verification/2026-11-28-syntakt-cpu2-boot-staging.md#existing-verification-plan-retained). Its unperformed steps remain unverified.
