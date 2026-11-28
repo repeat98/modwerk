@@ -27,8 +27,9 @@ print(sys.argv[1], flush=True)
 
 class DeviceTest(unittest.TestCase):
     def test_the_trial_is_never_accepted(self):
-        command = octatest.trial_command('/x/e.mwrm', 300, '/tmp/s.sock')
+        command, share = octatest.trial_command('/x/e.mwrm', 300, '/tmp/s.sock')
         self.assertEqual(command[1:4], ['scripts/device.mjs', 'try', '/x/e.mwrm'])
+        self.assertEqual(share, '/tmp/s.sock')
         self.assertNotIn('--accept', command)
 
     def test_it_takes_one_package_before_reaching_the_unit(self):
@@ -41,7 +42,9 @@ class DeviceTest(unittest.TestCase):
         seen = {}
 
         class FakeTrial:
-            def __init__(self, command): seen['command'] = command
+            def __init__(self, command, share=None):
+                seen['command'] = command
+                seen['share'] = share
             def wait_started(self): seen['started'] = True
             def end(self, failures): seen['ended'] = True
 
