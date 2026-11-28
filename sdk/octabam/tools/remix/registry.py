@@ -2,8 +2,10 @@
 
 Every directory under `modules/` holding a `manifest.py` that exports a
 `MODULE` is a contribution; there is no central list. The registry refuses
-duplicate keys and ids. Directories whose name starts with `_` or `.` are
-skipped (`modules/_template/`).
+duplicate keys and two modules on one stock effect's id; two modules may
+prefer one free id, since the Modwerk base gives each its own at install
+and a card remix refuses the pair (ledger.check). Directories whose name
+starts with `_` or `.` are skipped (`modules/_template/`).
 
 The stock FX2 effects (tools/remix/stock.py) are registered alongside under
 their own keys ("FILTER", "CHORUS", ...), so a remix keeps one in the
@@ -22,7 +24,10 @@ import types
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1])); import toolpath  # noqa: E402,F401  (every tools/ dir on sys.path)
 
-from remix.schema import NO_FALLBACK, on_the_bus  # noqa: E402
+from remix.schema import NO_FALLBACK, STOCK_FX2_IDS, on_the_bus  # noqa: E402
+# A card image writes stock's 32-entry id tables (FX1_IDS, FX2_IDS, their
+# ID2POS and the DSP's init/proc), so a card remix takes ids below this.
+CARD_FX_IDS = 0x20
 MODULES_DIR = ROOT / "modules"
 PLATFORM_DIR = ROOT / "platform"
 PLATFORM_NAMES = ("dsp-dynload-stock", "dsp-dynload-stock-b", "usb-midi")
@@ -86,7 +91,7 @@ def modules() -> dict[str, object]:
             raise SystemExit(f"two modules claim the key {m.key!r}: "
                              f"{seen_dirs[m.key]} and {d.name}")
         if m.menu is not None:
-            if m.menu.fx2_id in seen_ids:
+            if m.menu.fx2_id in seen_ids and m.menu.fx2_id in STOCK_FX2_IDS:
                 raise SystemExit(
                     f"two modules claim FX2 id 0x{m.menu.fx2_id:02x}: "
                     f"{seen_ids[m.menu.fx2_id]} and {d.name}")
@@ -123,6 +128,19 @@ def modules() -> dict[str, object]:
         found[m.key] = m
     _cache = found
     return found
+
+
+def card_ids(name: str, selected) -> None:
+    """Refuse an effect a card image cannot hold: its id past stock's tables.
+    Two on one id are the ledger's (ledger.check), as every other clash."""
+    past = sorted(m.name for m in selected
+                  if m.menu is not None and m.menu.fx2_id >= CARD_FX_IDS)
+    if past:
+        raise SystemExit(
+            f"remix {name!r}: {', '.join(past)} take{'s' * (len(past) == 1)} an "
+            f"fx2 id past 0x{CARD_FX_IDS - 1:02x}; a card image writes stock's "
+            f"32-entry id tables, so it holds ids 0x04-0x{CARD_FX_IDS - 1:02x} "
+            f"only (the Modwerk base gives every effect its own at install)")
 
 
 def by_key(key: str):
@@ -225,6 +243,7 @@ def remix(name: str | None):
         if k not in known:
             raise SystemExit(f"remix {name!r} selects unknown module {k!r} -- "
                              f"have {sorted(known)}")
+    card_ids(name, [known[k] for k in r.modules])
     # ⚠️ THE FIRMWARE'S OWN NONE IS ONLY SAFE WHEN THERE IS NO BUS. An
     # unassigned track then runs nothing at all -- including the housekeeping
     # block -- and a remix with a server on one core and no participant on

@@ -30,7 +30,7 @@ describe('identifier-free install-guide and invitation counts in the browser', (
     expect(values.size).toBe(0)
   })
   it('takes every reason the install guide can report as itself, and nothing else', () => {
-    const guide: Record<BaseGuideFailure, true> = { 'no-webusb': true, 'site-outdated': true, 'build-failed': true, 'link-lost': true, 'update-refused': true, 'update-failed': true, 'wrong-base': true }
+    const guide: Record<BaseGuideFailure, true> = { 'no-webusb': true, 'site-outdated': true, 'build-failed': true, 'link-lost': true, 'update-refused': true, 'update-failed': true, 'wrong-base': true, 'hosted-download-failed': true }
     for (const reason of Object.keys(guide)) usage.countBaseInstall('failed', reason)
     usage.countBaseInstall('failed', 'link-timeout')
     expect(sent().map(([, body]) => body.detail)).toEqual([...Object.keys(guide), 'other'])
@@ -101,7 +101,7 @@ describe('identifier-free install-guide and invitation counts on the server', ()
     ]) expect((await call('/usage/count', 'POST', bad)).status, JSON.stringify(bad)).toBe(400)
     const rows = db.prepare('SELECT event,detail,count FROM octatrack_count_daily ORDER BY event,detail').all() as { event: string; detail: string; count: number }[]
     expect(rows.filter(row => row.event === 'base_install_failed')).toEqual([
-      { event: 'base_install_failed', detail: 'build-failed', count: 1 }, { event: 'base_install_failed', detail: 'link-lost', count: 1 },
+      { event: 'base_install_failed', detail: 'build-failed', count: 1 }, { event: 'base_install_failed', detail: 'hosted-download-failed', count: 1 }, { event: 'base_install_failed', detail: 'link-lost', count: 1 },
       { event: 'base_install_failed', detail: 'no-webusb', count: 1 }, { event: 'base_install_failed', detail: 'other', count: 3 }, { event: 'base_install_failed', detail: 'site-outdated', count: 1 },
       { event: 'base_install_failed', detail: 'update-failed', count: 1 }, { event: 'base_install_failed', detail: 'update-refused', count: 1 }, { event: 'base_install_failed', detail: 'wrong-base', count: 1 }])
     expect(rows.find(row => row.event === 'base_guide_opened')).toEqual({ event: 'base_guide_opened', detail: '', count: 1 })

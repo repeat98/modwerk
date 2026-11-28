@@ -1577,6 +1577,11 @@
         "label": "Erica Synths: LXR-02 goes open source",
         "url": "https://www.ericasynths.lv/news/post/lxropen/",
         "note": "The release announcement. Erica Synths supports only its own firmware; modified firmware is installed at the owner's risk."
+      },
+      {
+        "label": "LICHOMAT",
+        "url": "https://github.com/isthar/lxr-desktop-app",
+        "note": "Unofficial custom firmware for the Erica Synths LXR-02, built on the published source (GPL-3.0): microtiming, groove and velocity templates, a pattern generator and a reverb, with a desktop emulator and a VST3/AU plugin. In development; not yet tested on hardware."
       }
     ]
   },

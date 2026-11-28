@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { expect, it, vi } from 'vitest'
 import { createFrontendTools } from './frontend-mcp.mjs'
 
-it('carries parent tasks, independent evidence and inactivity hints through the developer MCP', async () => {
+it('carries independent evidence and inactivity hints through the developer MCP', async () => {
   const workspace = await mkdtemp(join(tmpdir(), 'modwerk-board-work-'))
   const sessionFile = join(workspace, 'credentials.json')
   const id = 'eab515dd-166b-417d-8221-49036c8a5dd7'
@@ -20,12 +20,8 @@ it('carries parent tasks, independent evidence and inactivity hints through the 
       { validateConfiguration: value => value, createRuntimeCatalogue: () => [] }, { fetch })
     const about = { topic: 'site', key: 'worker', text: 'Check the saved version.' }
     expect((await service.call('board_post', { kind: 'question', ...about, to: 'bo' })).recipientInactive).toBe(true)
-    await service.call('board_post', { kind: 'wanted', ...about, parentIssue: 1619 })
-    expect(JSON.parse(fetch.mock.lastCall[1].body).parentIssue).toBe(1619)
-    await service.call('board_take', { id })
-    expect(fetch.mock.lastCall[0]).toContain('/' + id + '/take')
-    await service.call('board_messages', { parentIssue: 1619 })
-    expect(fetch.mock.lastCall[0]).toContain('parentIssue=1619')
+    await service.call('board_messages', { kind: 'finding', machine: 'octatrack' })
+    expect(fetch.mock.lastCall[0]).toContain('kind=finding&machine=octatrack')
     const result = await service.call('board_reply', { id, text: about.text, outcome: 'different-result', evidence: 42 })
     expect(JSON.parse(fetch.mock.lastCall[1].body)).toEqual({ body: about.text, outcome: 'different-result', evidence: 42 })
     expect(result.message.untrusted_text).toBe(message.body)

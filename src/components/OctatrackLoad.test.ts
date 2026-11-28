@@ -3,7 +3,7 @@ import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { OctatrackLoad } from './OctatrackLoad'
-import { DSP_STOPPED, FROZEN_READINGS, LOAD_INTERVAL, recordLoad } from '../hooks/useOctatrackLoad'
+import { DROPPED_LIMIT, DSP_STOPPED, FROZEN_READINGS, LOAD_INTERVAL, SHED_EVERY, recordLoad } from '../hooks/useOctatrackLoad'
 import { loadPath } from '../config/octatrack-load'
 import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
 import type { LoadReading } from '../engine/elekloader/upload-wire'
@@ -12,12 +12,12 @@ const reading = (ticks = 120): LoadReading => ({ ticks, frames: ticks * 50, cpu:
 let container: HTMLDivElement, root: ReturnType<typeof createRoot>, stops: (() => void)[] = []
 beforeEach(() => { vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); vi.useFakeTimers(); vi.setSystemTime(0); stops = []; container = document.createElement('div'); document.body.append(container); root = createRoot(container) })
 afterEach(async () => { stops.forEach(stop => stop()); await act(() => root.unmount()); container.remove(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
-function device(implementation: () => Promise<LoadReading | undefined> = async () => reading(), log: () => Promise<unknown> = async () => undefined) {
-  const load = vi.fn(implementation), deviceLog = vi.fn(log)
+function device(implementation: () => Promise<LoadReading | undefined> = async () => reading(), log: () => Promise<unknown> = async () => undefined, counts: () => Promise<unknown> = async () => undefined) {
+  const load = vi.fn(implementation), deviceLog = vi.fn(log), sheds = vi.fn(counts)
   let state: LinkState = { status: 'ready', identity: { base: 'a'.repeat(64), canSubmit: true, model: 'OT' } }
   const listeners = new Set<() => void>()
-  const link = { liveLoad: load, deviceLog, start: () => () => {}, getState: () => state, subscribe: (fn: () => void) => { listeners.add(fn); return () => listeners.delete(fn) } } as unknown as OctatrackLink
-  return { link, load, deviceLog, update(next: LinkState) { state = next; for (const listener of listeners) listener() } }
+  const link = { liveLoad: load, deviceLog, sheds, start: () => () => {}, getState: () => state, subscribe: (fn: () => void) => { listeners.add(fn); return () => listeners.delete(fn) } } as unknown as OctatrackLink
+  return { link, load, deviceLog, sheds, update(next: LinkState) { state = next; for (const listener of listeners) listener() } }
 }
 const record = (link: OctatrackLink) => act(() => { stops.push(recordLoad(link)) })
 const render = async (link: OctatrackLink | null, active = true) => { if (link && !stops.length) await record(link); await act(() => root.render(createElement(OctatrackLoad, { link, active }))) }
@@ -98,4 +98,19 @@ it('reads the unit’s stall record once readings stay frozen, and asks for a po
   expect(text).toContain(DSP_STOPPED)
   // The next poll (the unit back after its power cycle) starts without it.
   await record(unit.link); expect(container.textContent).not.toContain(DSP_STOPPED)
+})
+it('says so when the unit keeps dropping sound, names the tracks, and stops asking a base without the count', async () => {
+  let ticks = 0, count = 0
+  const unit = device(async () => reading(++ticks), undefined, async () => ({ count, tracks: 0b101 }))
+  await render(unit.link); expect(unit.sheds).toHaveBeenCalledTimes(1)
+  const round = () => act(() => vi.advanceTimersByTimeAsync(LOAD_INTERVAL * SHED_EVERY))
+  count = DROPPED_LIMIT - 1; await round(); expect(unit.sheds).toHaveBeenCalledTimes(2)
+  expect(container.textContent).not.toContain('dropping sound') // a few gaps are one-offs
+  count += 1; await round()
+  expect(container.textContent).toContain(`${DROPPED_LIMIT} short gaps in the last minute, on T1, T3`)
+  // A minute without new drops clears it.
+  for (let i = 0; i < 5; ++i) await round()
+  expect(container.textContent).not.toContain('dropping sound')
+  const older = device(async () => reading(++ticks)); stops.pop()!(); await render(older.link)
+  await act(() => vi.advanceTimersByTimeAsync(LOAD_INTERVAL * SHED_EVERY * 3)); expect(older.sheds).toHaveBeenCalledTimes(1)
 })

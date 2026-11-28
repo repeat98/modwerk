@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
-import { sha } from '../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../src/engine/elektron/bytes.ts'
 import { UploadSession, UploadDeviceError, UploadUnconfirmedError } from '../src/engine/elekloader/upload-session.ts'
 import { UPLOAD_CHUNK, UPLOAD_MAX_BYTES, UPLOAD_RESPONSE, UploadCommand } from '../src/engine/elekloader/upload-wire.ts'
 

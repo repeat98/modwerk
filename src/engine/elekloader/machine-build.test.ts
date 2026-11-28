@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import { MACHINE_DEVICE, planBuild, prepareBuild, prepareLocalBuild, type Builder } from './machine-build.ts'
 
 const stock = new File([new Uint8Array(4)], 'OCTATRACK_OS1.40C.bin')

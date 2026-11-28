@@ -1,29 +1,30 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// All machine integrations use the unchanged Elekloader kit. A machine extends its catalogue/core, not its builder;
-// a device the pinned kit lacks is carried by Modwerk's builder (carried-devices.ts), in the page and in the worker.
+// Every machine builds through Modwerk's firmware builder (src/engine/elektron/builder.ts). A machine extends its
+// catalogue and core, not the builder; carried-devices.ts adds the machines the builder's table lacks, in the page
+// and in the worker.
 import CATALOG_JSON from '../../../vendor/elekloader/catalog/catalog.json' with { type: 'json' }
-import KIT from '../../../vendor/elekloader/kit/kit.json' with { type: 'json' }
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json' with { type: 'json' }
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json' with { type: 'json' }
 import CYCLES_BASE from '../../../sdk/machines/model-cycles/base-binding.json' with { type: 'json' }
 import RYTM_FX_IDS from '../../../sdk/machines/analog-rytm-mkii/fx-ids.json' with { type: 'json' }
 import RYTM_VOICE_MODULES from '../../../sdk/machines/analog-rytm-mkii/voice-modules.json' with { type: 'json' }
 import {
-  buildLogText as kitBuildLogText, createBuilder, parseCatalog, planBuild as kitPlanBuild, prepare, releases,
+  PROTOCOL, buildLogText as engineBuildLogText, createBuilder, parseCatalog, planBuild as kitPlanBuild, prepare, releases,
   type Builder, type Catalog, type Plan, type Prepared,
-} from '../../../vendor/elekloader/kit/src/kit/index.ts'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
-import { checkLock, type Lock } from '../../../vendor/elekloader/kit/src/store.ts'
+} from '../elektron/builder.ts'
+import { VERSION as BUILDER_VERSION } from '../elektron/builder-version.ts'
+import { sha } from '../elektron/bytes.ts'
+import { checkLock, type Lock } from '../elektron/store.ts'
 import type { BuilderResult } from './protocol'
 import { carryDevices } from './carried-devices.ts'
 
-export { buildStep } from '../../../vendor/elekloader/kit/src/kit/index.ts'
+export { buildStep } from '../elektron/builder.ts'
 export type { Builder }
 export const MACHINE_DEVICE = { octatrack: 'octatrack', digitakt: 'digitakt-mk1', 'digitakt-ii': 'digitakt-mk2', digitone: 'digitone-mk1', 'analog-rytm-mkii': 'analog-rytm-mk2', 'analog-four-mkii': 'analog-four-mk2', 'model-cycles': 'model-cycles' } as const
 export type ElekloaderMachine = keyof typeof MACHINE_DEVICE
 carryDevices()
 export const BUILDER_CATALOG: Catalog = parseCatalog(CATALOG_JSON)
-export const BUILDER_SOURCE = { repository: 'https://github.com/irpina/elekloader', commit: KIT.commit, version: KIT.version, protocol: KIT.protocol, catalogRevision: BUILDER_CATALOG.revision }
+export const BUILDER_SOURCE = { repository: 'https://github.com/repeat98/modwerk/tree/main/src/engine/elektron', version: BUILDER_VERSION, protocol: PROTOCOL, catalogRevision: BUILDER_CATALOG.revision }
 
 export function createMachineBuilder(): Builder {
   return createBuilder({
@@ -109,7 +110,7 @@ export async function prepareLocalBuild(builder: Builder, input: { machine: Elek
     } catch { return { ok: false, error: mod.file.name + ' is not a readable .elemod.' } }
   }
   const ready = await builder.load()
-  if (ready.protocol !== KIT.protocol) return { ok: false, error: 'The builder uses a different kit protocol.' }
+  if (ready.protocol !== PROTOCOL) return { ok: false, error: 'The builder uses a different protocol.' }
   const stock = await builder.setStock(input.stock)
   if (!stock.ok) return { ok: false, error: stock.error }
   if (stock.dev.key !== MACHINE_DEVICE[input.machine] || stock.os !== input.release)
@@ -146,6 +147,6 @@ export function checkStorageLock(machine: ElekloaderMachine, value: unknown): Lo
 }
 
 export function buildLogText(input: { device: string; release: string; version: string; enabled: readonly string[]; result: BuilderResult }) {
-  return kitBuildLogText({ title: 'Modwerk build log', device: input.device, os: input.release, version: input.version, enabled: input.enabled, result: input.result,
-    builder: `elekloader kit ${KIT.version} (${KIT.commit.slice(0, 12)}, protocol ${KIT.protocol}), catalog ${BUILDER_CATALOG.revision}` })
+  return engineBuildLogText({ title: 'Modwerk build log', device: input.device, os: input.release, version: input.version, enabled: input.enabled, result: input.result,
+    builder: `Modwerk builder ${BUILDER_VERSION} (protocol ${PROTOCOL}), catalog ${BUILDER_CATALOG.revision}` })
 }

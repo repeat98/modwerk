@@ -99,7 +99,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
         <button className="button button-quiet" disabled={!canExport} onClick={onExport}><Icon name="download" size={16}/>{'Export ' + w.set}</button><p className="export-note" aria-live="polite">{exported ? w.Set + ' exported as JSON.' : 'JSON backup · no firmware included'}</p>
       </div>
     </section>
-    <p className="file-footnote"><span>Builder: <a href={BUILDER_SOURCE.repository} target="_blank" rel="noreferrer">elekloader ↗</a> by irpina (GPL-3.0-or-later), with each mod’s pinned author release. It runs in this browser.</span></p>
+    <p className="file-footnote"><span>Builder: <a href={BUILDER_SOURCE.repository} target="_blank" rel="noreferrer">Modwerk’s own ↗</a> (GPL-3.0-or-later), with each module’s pinned author release. It runs in this browser.</span></p>
     {/* The build card stays in the page's sticky column; what follows a build reads in the main column. */}
     {results && createPortal(<>
       {result && <div className="build-facts"><span>Size <strong>{kib(result.bytes)}</strong></span><span>OS version <strong>{result.version}</strong></span><span>Built in <strong>{result.seconds.toFixed(1)} s</strong></span></div>}
@@ -117,7 +117,7 @@ export function DigiBuildPanel({ device, firmware, moduleIds, storage, onExport,
         {storageId && <><dt>Mod storage</dt><dd>Layout {storageId}, saved with this {w.set} for its next build</dd></>}
         {preflight && <><dt>Preflight</dt><dd>Passed. Sections {preflight.unchangedSections.join(', ')} are byte for byte stock; {preflight.changed.length} changed {preflight.changed.length === 1 ? 'run' : 'runs'} of stock bytes, each inside a declared site ({[...new Set(preflight.changed.map(run => run.owner))].join(', ') || 'none'}); {kib(preflight.appended)} appended of {kib(preflight.appendLimit)} allowed; {kib(preflight.flashHeadroom)} flash headroom.</dd>
           <dt>Stock file SHA-256</dt><dd>{preflight.stockSha256}</dd><dt>Main OS SHA-256</dt><dd>{preflight.mainBuildSha256} (stock {preflight.mainStockSha256})</dd></>}
-        <dt>Builder</dt><dd><a href={BUILDER_SOURCE.repository + '/tree/' + BUILDER_SOURCE.commit} target="_blank" rel="noreferrer">elekloader {BUILDER_SOURCE.commit.slice(0, 7)} ↗</a> by irpina, GPL-3.0-or-later · <a href={assetUrl('licenses/THIRD_PARTY_NOTICES.html')} target="_blank" rel="noreferrer">Licence notices</a></dd>
+        <dt>Builder</dt><dd><a href={BUILDER_SOURCE.repository} target="_blank" rel="noreferrer">Modwerk builder {BUILDER_SOURCE.version} ↗</a>, GPL-3.0-or-later · <a href={assetUrl('licenses/THIRD_PARTY_NOTICES.html')} target="_blank" rel="noreferrer">Licence notices</a></dd>
       </dl></details></section>}
       {lines.length > 0 && <section className="configuration-section"><details open={state.phase === 'failed'}><summary>Build log</summary>
         <ol className="build-log">{lines.map(([seconds, line], index) => <li key={index}><span className="build-log-time">{seconds.toFixed(2)} s</span><span>{line}</span></li>)}</ol>

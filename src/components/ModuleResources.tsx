@@ -11,6 +11,7 @@ export function ModuleResources({ id }: { id: string }) {
   const hasQuickTest = downloadedModuleGuide(module)?.hasQuickTest
   return <>
     <details className="module-disclosure"><summary><span>How to use it</span><Icon name="plus" size={16} /></summary><div className="disclosure-content">
+      {id === 'seq' && <p className="service-note">Full usage: <a href="https://ilia-murzinov.github.io/octabam/reference/modules/seq.html" target="_blank" rel="noreferrer">octabam SEQ manual ↗</a> (FX page-2 and CX OSC destinations are octabam-only).</p>}
       {hasQuickTest && <ModuleUsageInstructions module={module} steps={data.usage}/>}
       <ModuleAccess id={id} showScreenshots={false} />
       {!hasQuickTest && data.usage.join('\n') !== document.access?.steps.join('\n') && <ol className="usage-list">{data.usage.map(step => <li key={step}>{step}</li>)}</ol>}

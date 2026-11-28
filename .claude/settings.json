@@ -13,6 +13,16 @@
     ],
     "SessionStart": [
       {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/lane.mjs\" tidy",
+            "timeout": 300
+          }
+        ]
+      },
+      {
         "hooks": [
           {
             "type": "command",

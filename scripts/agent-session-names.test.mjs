@@ -15,9 +15,10 @@ describe('the names a shared session scrubs', () => {
     expect(developerNames(config({ 'user.name': 'Greta Šimek', 'user.email': 'greta.simek@example.test' }))).toEqual(['Greta Šimek', 'Greta', 'Šimek', 'greta', 'simek'])
   })
 
-  it('leaves out roles, services, digits and short parts, and copes with git knowing nothing', () => {
+  it('leaves out roles, services, common words, digits and short parts, and copes with git knowing nothing', () => {
     expect(developerNames(config({ 'user.name': 'Al', 'user.email': '1234567+beatmaker-99@users.noreply.github.com' }))).toEqual(['beatmaker'])
     expect(developerNames(config({ 'user.email': 'info.studio@example.test' }))).toEqual([])
+    expect(developerNames(config({ 'user.name': 'The Off Heezy Studio' }))).toEqual(['The Off Heezy Studio', 'Heezy'])
     expect(developerNames(config({}))).toEqual([])
   })
 })
