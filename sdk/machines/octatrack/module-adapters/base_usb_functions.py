@@ -206,18 +206,174 @@ mw_usb_clock_dropped: .long 0       | USB events dropped while DIN clocked
 '''
 
 
+# USB events and DIN bytes reach one FIFO and one stock framer (0x40092bf4). Its running status, its "second data byte
+# pending" flag and the half-received message at its buffer's write index belong to the framer, not to either input. A
+# USB event always carries its status byte, so it became the status DIN's later data bytes were read with: a DAW's USB
+# program change between a DIN sender's running-status notes turned every later DIN data byte into a program change,
+# each one a pattern change. So a USB channel or two- or three-byte system common event (CIN 2, 3, 8-14) is framed on
+# its own: DIN's bytes first, then DIN's state saved with interrupts masked (the UART holds any byte that comes), the
+# event enqueued and framed, and DIN's state put back, its half-received message at the new write index. Realtime
+# bytes never touch the running status. A USB SysEx spans packets and is left as it was. A DIN SysEx the event cuts
+# is dropped whole (running status 0), as stock drops it, but its tail can no longer play as notes.
+DIN_STATE = '''
+| ---- A USB message keeps DIN's running status (Modwerk, base_usb_functions.py) --
+.set MW_RS,         0x46100b70      | the framer's running status
+.set MW_PEND,       0x46100b74      | nonzero: a three-byte message waits for its second data byte
+.set MW_SXLEN,      0x46100b6c      | data bytes of the SysEx being framed
+.set MW_WIDX,       0x46100b5c      | the message buffer's write index
+.set MW_MSGS,       0x46100b84      | the framer's message buffer
+| mw_usb_din_hold: d0 = the event's CIN, at the SR the ISR entered with. For a
+| channel or system common event: DIN's bytes framed, interrupts masked, DIN's
+| state saved; it returns at SR 0x2700. Else nothing. Uses d0-d1/a0-a1.
+mw_usb_din_hold:
+    cmpil   #2,%d0
+    bcss    9f
+    cmpil   #3,%d0
+    blss    1f
+    cmpil   #8,%d0
+    bcss    9f
+    cmpil   #14,%d0
+    bhis    9f
+1:  tstl    FIFO_COUNT
+    beqs    2f
+    bsr     usbmidi_rx_run_framer
+    bras    1b
+2:  movew   #0x2700,%sr
+3:  tstl    FIFO_COUNT              | a DIN byte from before the mask
+    beqs    4f
+    bsr     usbmidi_rx_run_framer
+    bras    3b
+4:  lea     mw_din_saved,%a0
+    movel   MW_RS,%d0
+    movel   %d0,%a0@
+    movel   MW_PEND,%d0
+    movel   %d0,%a0@(4)
+    movel   MW_WIDX,%d0
+    lea     MW_MSGS,%a1
+    moveb   %a1@(0,%d0:l),%d1
+    moveb   %d1,%a0@(8)
+    moveb   %a1@(1,%d0:l),%d1
+    moveb   %d1,%a0@(9)
+    moveq   #1,%d0
+    moveb   %d0,mw_din_held_event
+    rts
+9:  clrb    mw_din_held_event
+    rts
+
+| mw_usb_din_resume: at SR 0x2700, after the event's bytes (or its drop). The
+| event framed, then DIN's state back. Uses d0-d1/a0-a1.
+mw_usb_din_resume:
+    tstb    mw_din_held_event
+    beqs    9f
+    clrb    mw_din_held_event
+1:  tstl    FIFO_COUNT
+    beqs    2f
+    bsr     usbmidi_rx_run_framer
+    bras    1b
+2:  lea     mw_din_saved,%a0
+    movel   %a0@,%d0
+    cmpil   #0xf0,%d0
+    bnes    3f
+    moveq   #0,%d0                  | a DIN SysEx the event cut: dropped whole
+    movel   %d0,MW_SXLEN
+3:  movel   %d0,MW_RS
+    movel   %a0@(4),%d1
+    movel   %d1,MW_PEND
+    beqs    9f
+    movel   MW_WIDX,%d0             | the half-received message, at the new index
+    lea     MW_MSGS,%a1
+    moveb   %a0@(8),%d1
+    moveb   %d1,%a1@(0,%d0:l)
+    moveb   %a0@(9),%d1
+    moveb   %d1,%a1@(1,%d0:l)
+9:  rts
+
+    .balign 4
+mw_din_saved:       .long 0, 0      | running status, pending flag
+                    .byte 0, 0      | the half-received message's status and first data byte
+mw_din_held_event:  .byte 0
+    .balign 2
+'''
+
+# Stock's dormant USB MIDI buffers lie inside its USB DISK MODE read buffer (0x4ecb8000): the encoder writes each
+# packet at 0x4ecc8000 and the receive dTD lands at 0x4ecc9000, 64 and 68 KB into it. While a computer reads the card,
+# a clock or note packet then overwrites the first word of a block it is reading: the card holds the right bytes, the
+# computer's copy does not, and a card backup or a copied project is silently damaged. While DISK MODE is open the
+# base holds USB MIDI: the sender stays busy (what is queued is dropped at the end, a stale clock is worth nothing),
+# EP2 is flushed and the receiver is not primed again. usbmidi_up is left alone: it is what the attach watchdog reads
+# as "the host configured the unit". A SET_CONFIGURATION during DISK MODE clears the sender's busy flag, so the next
+# tick holds again.
+DISK_HOLD = '''
+| ---- USB MIDI rests while USB DISK MODE is open (Modwerk, base_usb_functions.py)
+| void mw_usb_midi_disk(int open): ep0.c's 60 Hz tick, with DISK MODE's state.
+    .global mw_usb_midi_disk, mw_usb_midi_held, mw_usb_midi_disk_holds
+mw_usb_midi_disk:
+    movel   %sp@(4),%d0
+    lea     %sp@(-16),%sp
+    moveml  %d2-%d5,%sp@
+    movew   %sr,%d4
+    tstl    %d0
+    beqs    5f
+    movew   #0x2700,%sr
+    tstb    mw_usb_midi_held
+    beqs    1f
+    tstb    usbmidi_tx_busy
+    bnes    8f                      | held, and not configured again since
+1:  moveq   #1,%d0
+    moveb   %d0,mw_usb_midi_held
+    moveb   %d0,usbmidi_tx_busy     | the sender never starts the encoder
+    clrw    usbmidi_up+4            | usbmidi_tx_acc_len (usbmidi_rx_bus_end's offset)
+    addql   #1,mw_usb_midi_disk_holds
+    movew   %d4,%sr
+    bsr     usbmidi_rx_ep2_flush
+    bras    9f
+5:  tstb    mw_usb_midi_held
+    beqs    9f
+    movew   #0x2700,%sr
+    clrb    mw_usb_midi_held
+    tstb    usbmidi_up
+    beqs    8f                      | not configured: SET_CONFIGURATION brings EP2 up
+    clrw    usbmidi_up+4            | what queued during DISK MODE is stale
+    clrb    usbmidi_tx_busy
+    mvzb    usbmidi_rx_state,%d0
+    beqs    6f
+    bsr     usbmidi_rx_prime        | high speed: the 512-byte dTD
+    bras    8f
+6:  pea     RX_BUF                  | full speed: the firmware's own 64-byte prime
+    jsr     EP2_RX_PRIME
+    addql   #4,%sp
+8:  movew   %d4,%sr
+9:  moveml  %sp@,%d2-%d5
+    lea     %sp@(16),%sp
+    rts
+mw_usb_midi_held:       .byte 0
+    .balign 4
+mw_usb_midi_disk_holds: .long 0     | how often DISK MODE held USB MIDI
+'''
+
+
 def receiver_source(text):
-    """The shared USB MIDI receiver, with USB clock and transport giving way while DIN clocks. The import stays exact."""
+    """The shared USB MIDI receiver, with USB clock and transport giving way while DIN clocks, a USB message keeping
+    DIN's running status, and USB MIDI resting in DISK MODE. The import stays exact."""
     stamp, fits = '    movel   %d1,CLK_T\n', '6:  moveq   #0,%d2\n'
-    if text.count(stamp) != 1 or text.count(fits) != 1 or 'mw_usb_' in text:
-        raise ValueError('The authored USB MIDI receiver changed; review the DIN clock guard.')
+    held, enqueued = '    beqs    5f\n4:  movew   #0x2700,%sr\n', '    blts    7b\n    movew   %d5,%sr\n'
+    gate = '    tstb    usbmidi_up\n    beqw    9f\n'
+    # The decoder's loop grows past a short branch's reach: its two loop branches become word branches.
+    loop_in, loop_back = '    bles    8f\n    movew   %sr,%d5\n', '    bgts    3b\n8:  rts\n'
+    if any(text.count(line) != 1 for line in (stamp, fits, held, enqueued, gate, loop_in, loop_back)) or 'mw_usb_' in text:
+        raise ValueError('The authored USB MIDI receiver changed; review the DIN clock guard, running status and disk hold.')
+    text = text.replace(loop_in, '    blew    8f\n    movew   %sr,%d5\n').replace(loop_back, '    bgtw    3b\n8:  rts\n')
     text = text.replace(stamp, stamp + '    movel   %d1,mw_usb_clk_stamp\n')
+    text = text.replace(held, '    beqs    5f\n    bsrw    mw_usb_din_hold\n4:  movew   #0x2700,%sr\n')
+    text = text.replace(enqueued, '    blts    7b\n    bsrw    mw_usb_din_resume\n    movew   %d5,%sr\n')
+    text = text.replace(gate, gate + '    tstb    mw_usb_midi_held        | DISK MODE: EP2 rests\n    bnew    9f\n')
     return text.replace(fits, '''6:  bsrw    mw_usb_clock_yields
     beqs    10f
+    bsrw    mw_usb_din_resume
     movew   %d5,%sr                 | DIN is clocking: drop the event
     bras    5f
 10: moveq   #0,%d2
-''') + CLOCK_GUARD
+''') + DIN_STATE + DISK_HOLD + CLOCK_GUARD
 
 
 def audio_include(key):
