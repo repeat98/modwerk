@@ -165,7 +165,7 @@ export async function buildSession({ file, agent, note = '', skip = [], shared }
 export const placeholderNote = note => !/[\p{L}\p{N}]/u.test(note ?? '')
 
 // Parts of an email address that are roles or services, not a person: never scrubbed as names.
-const NOT_NAMES = new Set(['info', 'mail', 'email', 'contact', 'hello', 'admin', 'office', 'studio', 'music', 'noreply', 'users', 'github', 'dev'])
+const NOT_NAMES = new Set(['info', 'mail', 'email', 'contact', 'hello', 'admin', 'office', 'studio', 'music', 'noreply', 'users', 'github', 'dev', 'the', 'and', 'off', 'now', 'new', 'one', 'not', 'for', 'you', 'all', 'out', 'official'])
 /** The developer's names as git knows them: user.name in full and in parts, and the parts of user.email before the @. */
 export function developerNames(read = key => execFileSync('git', ['config', '--get', key], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim()) {
   const value = key => { try { return read(key) } catch { return '' } }
