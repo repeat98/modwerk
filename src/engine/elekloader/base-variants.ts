@@ -6,7 +6,7 @@
 // The committed package is the default layout's; each other variant is a line patch against it, checked by hash.
 import { publishedBinding as baseBinding } from './octatrack-publication.ts'
 import baseVersions from '../../../sdk/machines/octatrack/base-versions.json' with { type: 'json' }
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import { USB_AUDIO_LAYOUTS, type UsbAudioLayout } from '../../config/usb-audio.ts'
 import type { BaseFill } from './octatrack-base.ts'
 

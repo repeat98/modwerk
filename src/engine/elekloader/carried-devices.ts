@@ -4,7 +4,7 @@
 // (scripts/machine-base.py, carry_device) and this file with the browser kit, so both builders know the same device.
 // The vendored kit stays unchanged: its device list is extended in place, in the page and in the builder's worker.
 import DN2_DEVICE from '../../../sdk/machines/digitone-ii/elekloader/device.json' with { type: 'json' }
-import { devices, type Device, type Range } from '../../../vendor/elekloader/kit/src/devices.ts'
+import { devices, type Device, type Range } from '../elektron/devices.ts'
 
 type Facts = typeof DN2_DEVICE.device
 type Num = string | number

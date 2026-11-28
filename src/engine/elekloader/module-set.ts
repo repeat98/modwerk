@@ -5,7 +5,7 @@
 import { publishedBinding as baseBinding, publishedPackages as manifest } from './octatrack-publication.ts'
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
 import dspSites from '../../../sdk/machines/octatrack/dsp-sites.json' with { type: 'json' }
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import { MODULES } from '../../catalog/modules.ts'
 import { inventoryChanges, type Inventory, type InventoryTarget } from '../../config/inventory.ts'
 import type { OctatrackLink, SetChange } from './octatrack-link.ts'

@@ -5,7 +5,7 @@ import { UPLOAD_HEADER, UPLOAD_MAX_FRAME, UPLOAD_RESPONSE, UPLOAD_VERSION } from
 import type { UploadTransport } from './upload-session.ts'
 import { LOAD_BYTES, parseLoadReading, type LoadReading, SAVED_SET_METADATA_BYTES, SAVED_SET_CHUNK_BYTES,
   SAVED_SET_CHUNK_DATA, parseSavedSetMetadata, parseSavedSetChunk, ZERO_DIGEST, type SavedSetMetadata, type SavedSetSnapshot } from './upload-wire.ts'
-import { sha, toHex } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha, toHex } from '../elektron/bytes.ts'
 import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, DEVICE_LOG_SHEDS_PAGE, parseDeviceLog, parseShedsPage, type DeviceLog } from './device-log.ts'
 import { parseSetIdentity } from './set-package.ts'
 

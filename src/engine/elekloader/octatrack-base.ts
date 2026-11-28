@@ -8,9 +8,9 @@ import { BASE_FIRMWARE } from '../base.ts'
 import { usbAudioPostCurve } from '../usb-audio-curve.ts'
 import { recoverStockDsp, type StockDspCore } from '../stock-dsp.ts'
 import { packRun, RUN_UNPACK } from './run-pack.ts'
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
-import * as formats from '../../../vendor/elekloader/kit/src/formats.ts'
-import { build } from '../../../vendor/elekloader/kit/src/patch.ts'
+import { sha } from '../elektron/bytes.ts'
+import * as formats from '../elektron/firmware-formats.ts'
+import { build } from '../elektron/firmware-build.ts'
 
 /** A gap in the package: `count` words of a stock recipe from word `first`, at `offset` (bytes, in the filled
  * layout) of a section (24-bit code or the named 32-bit POST data recipe), or a DSP payload site (24-bit little-endian). */

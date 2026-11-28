@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { DIGI_MODS } from '../../devices/digi-mods'
 import MACHINES from '../../devices/machines.generated.json'
 import { BUILDER_CATALOG, BUILDER_SOURCE, buildLogText, buildStep, builderReleases, planBuild, prepareBuild, type Builder } from './digi-build'
-import type { Catalog } from '../../../vendor/elekloader/kit/src/kit/catalog'
+import type { Catalog } from '../elektron/builder-catalog'
 import { DIGI_DOWNLOADS_ENABLED, digiDownloadsEnabled, digiDownloadsOpen, isCoreBuildPreview } from './protocol'
 import { baseVariant, rytmVariant } from './machine-build'
 import DT2_BASE from '../../../sdk/machines/digitakt-ii/base-binding.json'
@@ -476,7 +476,7 @@ describe('the build log', () => {
     const text = buildLogText({ device: 'Digitakt mk1', release: '1.53', version: '2.0a', enabled: ['/work/core/core-2.1.elemod', '/work/mods/digislicer-2.1.elemod'], result })
     const lines = text.split('\n')
     expect(lines[0]).toBe('Modwerk build log: Digitakt mk1, OS 1.53')
-    expect(lines[1]).toContain('elekloader kit ' + BUILDER_SOURCE.version + ' (' + BUILDER_SOURCE.commit.slice(0, 12))
+    expect(lines[1]).toContain('Modwerk builder ' + BUILDER_SOURCE.version + ' (protocol ' + BUILDER_SOURCE.protocol)
     expect(lines[1]).toContain('catalog ' + BUILDER_SOURCE.catalogRevision)
     expect(text).toContain('Mods: core 2.1, digislicer 2.1\n')
     expect(text).toContain('Result: built and verified in 0.40 s\n')

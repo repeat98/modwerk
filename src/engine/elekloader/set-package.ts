@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // MWMS v1 and v2, sdk/runtime/loader/set_package.h. One offer and one Keep for all changes.
 import { digestBytes, UPLOAD_MAX_BYTES } from './upload-wire.ts'
-import { sha256 } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha256 } from '../elektron/bytes.ts'
 import frameCosts from '../../../sdk/machines/octatrack/frame-costs.json' with { type: 'json' }
 
 /** v2's table entry: a module's package id and what it adds to the longest frame, per mille: each further instance
