@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, checkAndCommit, gateEdits, mergeMain, moduleScopeProblems, pythonProblem, readiness, targetBranch, PACKAGE_ONLY } from './pr-ready.mjs'
+import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, checkAndCommit, forkVisibilityNote, gateEdits, mergeMain, moduleScopeProblems, pythonProblem, readiness, releaseBranchNotes, targetBranch, PACKAGE_ONLY } from './pr-ready.mjs'
 
 describe('pr:ready verdict', () => {
   it('merges a clean main itself and leaves a conflicting one untouched, naming its files', () => {
@@ -174,6 +174,22 @@ describe('pr:ready verdict', () => {
     expect(verdict.ok).toBe(false)
     expect(verdict.problems[0]).toContain('scripts/module-compat.py')
     expect(verdict.problems[0]).toContain('never change the check to pass it')
+  })
+  it('reminds release branches to qualify on the shipping base and to split shared gate scripts out', () => {
+    expect(releaseBranchNotes('feature/seq', ['sdk/octatrack/modules/seq/manifest.py'])).toEqual([])
+    const notes = releaseBranchNotes('release/seq', ['sdk/octatrack/modules/seq/manifest.py'])
+    expect(notes).toHaveLength(2)
+    expect(notes[0]).toContain('module:doctor')
+    expect(notes[1]).toContain('octatrack-qualify.py')
+    expect(readiness({ releaseNotes: notes }).notes.slice(0, 2)).toEqual(notes)
+  })
+  it('says which git remote moves an upstream pull request when the checkout pushes to a fork', () => {
+    expect(forkVisibilityNote('git@github.com:repeat98/modwerk.git')).toBeNull()
+    expect(forkVisibilityNote('https://github.com/repeat98/modwerk')).toBeNull()
+    const fork = forkVisibilityNote('git@github.com:someone/modwerk.git')
+    expect(fork).toContain('someone/modwerk')
+    expect(fork).toContain('fork')
+    expect(readiness({ forkNote: fork }).notes[0]).toBe(fork)
   })
   it('refuses a module pull request that also changes the base, and leaves a module its own recipe rows', () => {
     // Threshold Slices (#1285) added a shared sample-editor service and a hook beside its draft.
