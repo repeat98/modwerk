@@ -346,8 +346,10 @@
   },
   {
    "index": 64,
-   "event": "ev_hook_reserved_64",
-   "kind": "raise"
+   "event": "ot_reserved_64",
+   "kind": "table",
+   "room": 1,
+   "record": 4
   },
   {
    "index": 65,

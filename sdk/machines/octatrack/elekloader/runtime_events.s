@@ -1214,12 +1214,6 @@ modwerk_raise_ev_frame_deadline:
         lea     modwerk_runtime_event_row+232,%a0
         bra.w   modwerk_raise_row
 
-| ---- raised (by a module, or by the base): ev_hook_reserved_64: void f(void); every handler runs, the answers OR'd
-        .globl  modwerk_raise_ev_hook_reserved_64
-modwerk_raise_ev_hook_reserved_64:
-        lea     modwerk_runtime_event_row+240,%a0
-        bra.w   modwerk_raise_row
-
 | a0: the hook's row pointer. C convention: d0 the answers OR'd, d2-d7/a2-a6 kept.
 modwerk_raise_row:
         lea     -8(%sp),%sp

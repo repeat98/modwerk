@@ -6,6 +6,6 @@
   "ev_bank_write": "added in #1564 for MIDI Scenes and Kits, which keep data per project, bank and Part; first module pending",
   "ev_project_reload": "added in #1564 for MIDI Scenes and Kits, which keep data per project, bank and Part; first module pending",
   "ot_lfo_pmtr_dest": "base table index 63 for extended LFO SETUP PMTR; reader host-tested; first catalogue user (TEMPO) waits on dest-lea+FM Synth migrate, .mwrm and device:price",
-  "ev_hook_reserved_64": "placeholder keeping index 64 for ev_audio_step (#2271), which comes in a later base with a Play Modes release that subscribes it (owner, 28 November 2026); #2271 replaces it in place"
+  "ot_reserved_64": "placeholder table keeping index 64 for ev_audio_step (#2271), which comes in a later base with a Play Modes release that subscribes it (owner, 28 November 2026); #2271 replaces it in place"
  }
 }
