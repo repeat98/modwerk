@@ -24,7 +24,6 @@ const releases: Record<'octatrack' | 'rytm' | 'zoom', [BaseRelease, ...BaseRelea
         { area: 'Settings', detail: 'Modules can offer commands that act when you press YES and keep the selected row in view. Installing or undoing a module does not repeat those commands. By offtheheezystudio.' },
         { area: 'CPU', detail: 'A Part’s CPU budget charges each machine what one playing track of it was measured to take, so a project or Part with too many heavy machines starts the extras silent with CPU FULL instead of crackling.' },
         { area: 'LFO', detail: 'Modules can add their own destinations to an audio LFO’s PMTR list, after the stock ones. By jonathanwardle1992-beep.' },
-        { area: 'Sequencer', detail: 'Modules can change which step of a track’s pattern plays through the base, so several of them can work side by side. By jonathanwardle1992-beep.' },
       ],
     },
     {
