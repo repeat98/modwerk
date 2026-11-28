@@ -126,27 +126,6 @@ def ported(module, registry=None, path=PORTS):
     return replace(module, detours=tuple(kept), pokes=tuple(pokes), symbol_refs=tuple(refs), tables=tuple(tables), linked=units)
 
 
-
-# Call-event wrappers the glue unit emits so a machine port can subscribe without editing module sources.
-# shape step_ptr_track: int f(unsigned *step, unsigned track) -> call `via`(track, *step), store result, return 0.
-CALL_WRAPPERS = {
-    'step_ptr_track': (
-        'int f(unsigned *step, unsigned track): call %(via)s(track, *step), store into *step, return 0\n'
-        '        .global %(fn)s\n%(fn)s:\n'
-        '        movea.l 4(%%sp),%%a0\n'
-        '        move.l  (%%a0),-(%%sp)\n'
-        '        move.l  12(%%sp),-(%%sp)\n'
-        '        jsr     %(via)s\n'
-        '        addq.l  #8,%%sp\n'
-        '        movea.l 4(%%sp),%%a0\n'
-        '        move.l  %%d0,(%%a0)\n'
-        '        moveq   #0,%%d0\n'
-        '        rts\n'
-        '        .balign 4\n'
-    ),
-}
-
-
 def glue(name, entry):
     """The package's generated glue unit (GNU as, ColdFire): take records, the machine descriptor, SEQUENCER rows
     and claim predicates, every symbol the module's own. Module sources stay as they are."""
@@ -156,12 +135,6 @@ def glue(name, entry):
         what, code = CLAIMS[claim]
         out.append('| %s\n        .global %s\n%s:\n        %s' % (what, claim, claim, code))
         out.append('        .balign 4\n')
-    for wrap in entry.get('callWrappers', ()):
-        shape = wrap.get('shape')
-        if shape not in CALL_WRAPPERS or not wrap.get('fn') or not wrap.get('via'):
-            raise ValueError('%s: callWrappers need fn, via and a known shape (%s)' % (
-                name, ', '.join(sorted(CALL_WRAPPERS))))
-        out.append('| %s' % (CALL_WRAPPERS[shape] % wrap))
     for label, (claims, entry_symbol) in sorted(entry.get('records', {}).items()):
         out.append('        .global %s\n%s:\n        .long   %s, %s\n' % (label, label, claims or 0, entry_symbol or 0))
     m = entry.get('machine')

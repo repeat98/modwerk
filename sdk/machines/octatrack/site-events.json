@@ -346,9 +346,8 @@
   },
   {
    "index": 64,
-   "event": "ev_audio_step",
-   "kind": "call",
-   "room": 8
+   "event": "ev_hook_reserved_64",
+   "kind": "raise"
   },
   {
    "index": 65,
