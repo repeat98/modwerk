@@ -134,6 +134,21 @@ class Decoder(unittest.TestCase):
         data += data[1000:5000] * 3
         self.assertEqual(hashlib.sha256(aplib.pack_section(data)).hexdigest(), PARITY)
 
+    def test_compact_lookahead_preserves_decoder_and_never_exceeds_default_size(self):
+        rng = random.Random(711)
+        shaped = (b'', b'a', bytes(8192), rng.randbytes(4096), rng.randbytes(9000) * 9,
+                  bytes(((i % 97) ^ (i >> 9)) & 255 for i in range(65536)))
+        for data in shaped:
+            data += bytes(-len(data) % 4)
+            compact = run_pack.pack_section_compact(data)
+            self.assertLessEqual(len(compact), len(aplib.pack_section(data)))
+            self.assertEqual(decode(compact, len(data)), data)
+            self.assertEqual(elz.depack_section(compact), data)
+        self.assertEqual(len(compact), 4003)
+        # Independent browser implementation pins the SAME synthetic fixture.
+        self.assertEqual(hashlib.sha256(compact).hexdigest(),
+                         '6c2c7aacb340a7c4333306c5b49f9e3022ff722ae280019176e97c1985c90aff')
+
 
 class Image(unittest.TestCase):
     def setUp(self):

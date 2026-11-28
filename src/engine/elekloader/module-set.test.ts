@@ -196,18 +196,19 @@ const readerClaims: Claim[] = [[2, 0, 1, 0x800, 0x200], [2, 1, 1, 0x800, 0x200],
 describe('ABI 9 packages: base features and DSP claims', () => {
   const effect = manifest.packages.find(item => item.id === 'everb')!, published = file(effect.path)
   const keybus = { abi: 9, features: 7 | 128, maxSites: 128, maxCopies: 128 }, at = baseBinding.identity
-  const reader = (data = abi9(published, BASE_DSP_FEATURES, readerClaims), fields: Record<string, unknown> = {}) => {
-    const entry = { ...effect, abi: 9, requires: BASE_DSP_FEATURES, claims: readerClaims.length, bytes: data.length, sha256: sha(data), ...fields }
+  const readerRequirement = 8 // key-bus reader; independent of additional provided services
+  const reader = (data = abi9(published, readerRequirement, readerClaims), fields: Record<string, unknown> = {}) => {
+    const entry = { ...effect, abi: 9, requires: readerRequirement, claims: readerClaims.length, bytes: data.length, sha256: sha(data), ...fields }
     return { catalogue: createRuntimeCatalogue({ packages: [entry] }), data }
   }
   const target = { name: 'Reader', moduleIds: ['everb'] }
-  it('offers only the key bus, which the base reports through its loader’s ABI 9', () => {
+  it('offers the fixed returning-chain and key-bus services beside program areas', () => {
     const sites = JSON.parse(readFileSync(new URL('../../../sdk/machines/octatrack/dsp-sites.json', import.meta.url), 'utf8'))
-    expect(BASE_DSP_FEATURES).toBe(sites.features.find((feature: { name: string }) => feature.name === 'keybus').bit)
-    expect(BASE_DSP_FEATURES).toBe(8)
+    expect(sites.features.find((feature: { name: string }) => feature.name === 'keybus').bit).toBe(8)
+    expect(BASE_DSP_FEATURES).toBe(24)
     // The Octatrack's on-demand base provides exactly that (resident_engines.c); the loader refuses any other bit.
     const engines = readFileSync(new URL('../../../sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.c', import.meta.url), 'utf8')
-    expect(engines).toContain('unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_PROGRAMS; }')
+    expect(engines).toContain('unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_TRACK_PROCESSOR | MW_DSP_PROGRAMS; }')
     // Program areas have no ledger region: their bit is the one abi9.py and the base's header give them.
     const abi9 = readFileSync(new URL('../../../sdk/runtime/loader/abi9.py', import.meta.url), 'utf8')
     expect(Number(/UNLEDGERED = \{'programs': (0x[0-9a-f]+)\}/.exec(abi9)?.[1])).toBe(PROGRAM_AREAS)
@@ -229,7 +230,7 @@ describe('ABI 9 packages: base features and DSP claims', () => {
     expect(changes).toEqual([{ module: 'E-Verb', data, undo: removalPackage('everb') }])
     expect((await catalogue.prepare({ name: 'Empty', moduleIds: [] }, { ...empty, moduleIds: ['everb'] }, fetched, keybus, at)).changes[0].undo).toEqual(data)
     // A reader that claims nothing is as valid: the base owns the bus's words.
-    const bare = abi9(published, BASE_DSP_FEATURES, [])
+    const bare = abi9(published, readerRequirement, [])
     await expect(reader(bare, { claims: 0 }).catalogue.prepare(target, empty, async () => bare, keybus, at)).resolves.toBeDefined()
   })
   it('offers a reader only to a base known to have the key bus, with the guided update saying why', async () => {
@@ -273,17 +274,17 @@ describe('ABI 9 packages: base features and DSP claims', () => {
       await expect(catalogue.prepare(target, empty, async () => data, keybus, at)).rejects.toThrow('inconsistent')
     }
     await refused(abi9(published, 0, readerClaims)) // requires differs from the manifest
-    await refused(abi9(published, BASE_DSP_FEATURES, readerClaims.slice(1))) // claim count differs
-    await refused(abi9(published, BASE_DSP_FEATURES, readerClaims, [[0, 3, 0]]), {}) // a hook entry: no base has hook slots
+    await refused(abi9(published, readerRequirement, readerClaims.slice(1))) // claim count differs
+    await refused(abi9(published, readerRequirement, readerClaims, [[0, 3, 0]]), {}) // a hook entry: no base has hook slots
     for (const claim of [[3, 0, 1, 0x800, 1], [2, 2, 1, 0x800, 1], [2, 0, 0, 0x800, 1], [2, 0, 4, 0x800, 1], [2, 0, 1, 0x800, 0],
       [2, 0, 1, 0x2fff0, 0x20], [2, 0, 1, 0x3fff0, 0x20], [2, 0, 1, 0x40000, 1]] as Claim[])
-      await refused(abi9(published, BASE_DSP_FEATURES, [claim]), { claims: 1 })
+      await refused(abi9(published, readerRequirement, [claim]), { claims: 1 })
     // Two of a package's own claims meeting: the same core and space, or anywhere in the window whatever the core.
-    await refused(abi9(published, BASE_DSP_FEATURES, [[2, 0, 1, 0x800, 0x40], [2, 0, 1, 0x83f, 1]]), { claims: 2 })
-    await refused(abi9(published, BASE_DSP_FEATURES, [[2, 0, 1, 0x33dfe, 0x10], [1, 1, 1, 0x33e00, 1]]), { claims: 2 })
-    const apart = abi9(published, BASE_DSP_FEATURES, [[2, 0, 1, 0x800, 0x40], [2, 1, 1, 0x800, 0x40], [1, 0, 1, 0x800, 0x40]])
+    await refused(abi9(published, readerRequirement, [[2, 0, 1, 0x800, 0x40], [2, 0, 1, 0x83f, 1]]), { claims: 2 })
+    await refused(abi9(published, readerRequirement, [[2, 0, 1, 0x33dfe, 0x10], [1, 1, 1, 0x33e00, 1]]), { claims: 2 })
+    const apart = abi9(published, readerRequirement, [[2, 0, 1, 0x800, 0x40], [2, 1, 1, 0x800, 0x40], [1, 0, 1, 0x800, 0x40]])
     await expect(reader(apart, { claims: 3 }).catalogue.prepare(target, empty, async () => apart, keybus, at)).resolves.toBeDefined()
-    const reserved = abi9(published, BASE_DSP_FEATURES, readerClaims); reserved[80 + published.length - 68 - (4 * new DataView(published.buffer).getUint32(32) + 2 * new DataView(published.buffer).getUint16(36)) + 3] = 1
+    const reserved = abi9(published, readerRequirement, readerClaims); reserved[80 + published.length - 68 - (4 * new DataView(published.buffer).getUint32(32) + 2 * new DataView(published.buffer).getUint16(36)) + 3] = 1
     await refused(reserved) // the first claim's reserved byte
   })
 })

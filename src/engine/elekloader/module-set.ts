@@ -52,7 +52,7 @@ export class BaseUpdateRequired extends ModuleSetError {
 }
 /** A key bus reader on a base that may not have the key bus: the same guided update, saying why. */
 export class KeyBusBaseRequired extends BaseUpdateRequired {
-  constructor(module: string) { super(`${module} needs a Modwerk base with the key bus. Update to the latest Modwerk base, then sync again. Your selected modules will stay here.`) }
+  constructor(module: string, service = 'the key bus') { super(`${module} needs a Modwerk base with ${service}. Update to the latest Modwerk base, then sync again. Your selected modules will stay here.`) }
 }
 /** An effect whose program changes its DSP code, on a base that may not have program areas: the same guided update. */
 export class ProgramAreasBaseRequired extends BaseUpdateRequired {
@@ -117,14 +117,17 @@ const bounded = (n: unknown, max: number) => typeof n === 'number' && Number.isI
 /** Header bytes by ABI (sdk/runtime/loader/README.md): ABI 9 adds requires u16, the claim count u8 and the hook-entry count
  * u8; ABI 10 is ABI 9's header, with engines for the base's hook sites. */
 const HEADERS: Record<number, number> = { 6: 68, 7: 72, 8: 76, 9: 80, 10: 80 }
-/** The base DSP features an ABI 9 package may require: the key bus (dsp-sites.json), which only a base built with the
- * resident engines on demand provides (resident_engines.c's modwerk_machine_dsp_features). An ABI 9 loader alone does
- * not say so, and the capability record has no bit for it, so the site offers a reader only to the bases it knows have
- * the bus (KEY_BUS_BASES); the loader would refuse it elsewhere with a bare RUNTIME_CONFLICT. */
-export const BASE_DSP_FEATURES: number = dspSites.features.find(feature => feature.name === 'keybus')?.bit ?? 0
-/** Program areas (resident_engines.h MW_DSP_PROGRAMS, events.json ot_dsp_effects): an effect whose DSP code changes with
- * its program. A base feature with no ledger region, so its bit is abi9.py's UNLEDGERED, not dsp-sites.json's. The bases
- * that have them are this branch's published base in each layout, built as the key bus's are (KEY_BUS_BASES). */
+/** Service requirements belong to the published Base, which can differ from the
+ * cumulative source draft. New bindings record the exact compiled service mask;
+ * historical published bindings provide the key bus. Never expose a draft-only
+ * service merely because it appears in the current source registry. */
+const KEY_BUS_FEATURE = dspSites.features.find(feature => feature.name === 'keybus')?.bit ?? 0
+const TRACK_PROCESSOR_FEATURE = dspSites.features.find(feature => feature.name === 'track-processor')?.bit ?? 0
+export const BASE_DSP_FEATURES: number = (baseBinding as { dspFeatures?: number }).dspFeatures ?? KEY_BUS_FEATURE
+const knownDspFeatures = dspSites.features.reduce((mask, feature) => mask | feature.bit, 0)
+if (!Number.isInteger(BASE_DSP_FEATURES) || BASE_DSP_FEATURES < 0 || BASE_DSP_FEATURES > 65535 || (BASE_DSP_FEATURES & ~knownDspFeatures))
+  throw new Error('The published Base service binding differs from its DSP registry. Regenerate and review the Base binding.')
+/** Program areas are the separate unledgered service introduced by the cumulative Base. */
 export const PROGRAM_AREAS = 0x100
 /** The bases with the key bus: the published one in each of its USB Audio layouts, built with the beta flags
  * (scripts/octatrack-base.mjs, --resident-on-demand); the layouts differ only in their USB descriptors. */
@@ -145,6 +148,10 @@ const SITE_RECORD = 74, CLAIM_RECORD = 12, ENTRY_RECORD = 8
 function requirements(entry: RuntimePackage, group = false) {
   const abi = entry.abi ?? ('octabam' in entry && entry.octabam ? 7 : 6), sites = entry.sites ?? 0, copies = entry.copies ?? 0, fills = entry.fills ?? 0
   const requires = entry.requires ?? 0, claims = entry.claims ?? 0, entries = entry.entries ?? 0
+  // The returning contract is one ABI10 engine, not an ordinary key-bus reader.
+  // Reject an impossible descriptor before asking the unit to stage its bytes.
+  if ((requires & TRACK_PROCESSOR_FEATURE) && (requires !== TRACK_PROCESSOR_FEATURE || abi !== 10 || entries !== 1))
+    throw invalidPackage()
   // An engine (ABI 10 hook entries) runs only for a controller its base trusts, so only a base-bound package has one.
   if (![6, 7, 8, 9, 10].includes(abi) || !bounded(sites, 128) || !bounded(copies, 128) || !bounded(fills, 64) ||
       !bounded(entry.features ?? 0, 65535) || !bounded(entry.requiresCapabilities ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
@@ -415,7 +422,8 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       const { abi, features, sites, copies, requires } = requirements(entry, step.group)
       if ((!capabilities && (abi > 6 || features)) || capabilities && (abi > capabilities.abi || (features & capabilities.features) !== features || sites > capabilities.maxSites || copies > capabilities.maxCopies))
         throw new BaseUpdateRequired()
-      if ((requires & BASE_DSP_FEATURES) && !(base && KEY_BUS_BASES.includes(base))) throw new KeyBusBaseRequired(step.name)
+      if ((requires & BASE_DSP_FEATURES) && !(base && KEY_BUS_BASES.includes(base)))
+        throw new KeyBusBaseRequired(step.name, requires & ~KEY_BUS_FEATURE ? 'the required audio processing' : 'the key bus')
       if ((requires & PROGRAM_AREAS) && !(base && KEY_BUS_BASES.includes(base))) throw new ProgramAreasBaseRequired(step.name)
     }
     if (steps.length > 1 && !(capabilities && capabilities.features & RuntimeFeature.moduleSets)) throw new BaseUpdateRequired()

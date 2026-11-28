@@ -48,6 +48,11 @@ void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint
 extern const struct mu_backend modwerk_runtime_backend;
 struct file_object { uint32_t word[6]; };
 #ifdef MODWERK_HOST
+/* Standalone card fixtures model no completed whole-set trial. A linked real
+ * loader or explicit readiness model overrides this conservative host default. */
+#ifndef MODWERK_TEST_TRIAL_READY_IMPLEMENTED
+__attribute__((weak)) int modwerk_runtime_set_trial_ready(void) { return 0; }
+#endif
 uint8_t modwerk_test_keys[8]; /* the panel's held-key rows */
 int modwerk_test_gate = 1;
 uint32_t modwerk_test_ticks;
@@ -843,7 +848,8 @@ void modwerk_modset_service(void)
         modwerk_modset_switch_result = switch_now(switch_id, switch_on);
         switch_asked = 0;
     }
-    if (VOLATILE_BLOCKED() || !GATE()) return;
+    if ((VOLATILE_BLOCKED() && !modwerk_runtime_set_trial_ready()) || !GATE()) return;
+    if (!restored && VOLATILE_BLOCKED()) return;
     if (!restored) { /* three seconds in: the project and the card are up; then the restore's retries */
         if (!restore_tries) { if (TICKS > 180u) restore(); }
         else if (TICKS >= retry_at) restore_pass();
@@ -864,6 +870,7 @@ void modwerk_modset_service(void)
         }
     }
 #endif
+    if (VOLATILE_BLOCKED()) return; /* trial readiness never permits a saved-set write */
     if (!pending || TICKS < retry_at) return;
     slot ^= 1u;
     if (!store(slot)) slot ^= 1u, retry_at = TICKS + 600u, modwerk_modset_result = SAVE_FAILED; /* ten seconds, then again */

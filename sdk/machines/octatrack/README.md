@@ -16,6 +16,10 @@ The Octatrack is the reference for [the recipe every machine follows](../../../d
 
 Recovery: hold FUNC while powering on, choose MIDI UPGRADE and send the stock .syx over 5-pin DIN MIDI.
 
+The [returning track processor proposal](TRACK_PROCESSORS.md) adds a packaged
+pre-FX chain and scoped controls. Direct settings actions are a separate proposal. It is under review and
+has no released Base capability yet; both FX slots remain independent.
+
 
 ## Stock OS fixes
 

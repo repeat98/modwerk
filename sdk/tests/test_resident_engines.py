@@ -200,7 +200,7 @@ class ResidentEngines(unittest.TestCase):
         cls.units = {}
         cls.ab = hook_engines.analog_engine(cls.ob.root, cls.work.name, cls.packages.assemble)
         for tag in 'AB':
-            for feature in resident_dsp.FEATURES:
+            for feature in UNIT_WORDS:  # fixed legacy engines; returning package has its own contract fixture
                 if feature & resident_dsp.ALLOWED[tag]:
                     cls.units[tag, feature] = cls.ab if feature & resident_dsp.PACKAGED else \
                         resident_dsp.engine_unit(cls.ob, tag, feature, cls.work.name, cls.packages.assemble)
@@ -374,12 +374,12 @@ class ResidentEngines(unittest.TestCase):
 
     @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
     def test_two_packaged_engines_share_a_chain_site(self):
-        """Site 5 hosting Analog BD and a second packaged member (made up here: feature 16, a small engine that sees
+        """Site 5 hosting Analog BD and a second packaged member (made up here: feature 32, a small engine that sees
         every call, as BlackPyramids' must, and renders only a record signed $3303). The receiver places and
         switches both; the chain calls them in the catalogue's order, a member that renders skips every later one and
         the stock source, a disabled member's call is skipped, a dormant site runs only the replay; every path leaves
         the system stack as it found it (an engine leaves through the trampoline, which drops the site's return)."""
-        loader, work, harness, member = resident_source.load_loader(), Path(self.work.name), self.harness(), 16
+        loader, work, harness, member = resident_source.load_loader(), Path(self.work.name), self.harness(), 32
         seen, mark = 0x6000, 0x6001  # the made-up member's X words: calls it saw, and its render mark
         with second_member(member):
             for tag in 'AB':

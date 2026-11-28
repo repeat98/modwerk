@@ -32,7 +32,28 @@ import packageManifest from '../engine/assets/octatrack-module-packages.json'
 const draft = () => parseModuleDocument(example)
 const rated = () => parseModuleDocument({ ...example, resources: { ...example.resources, impact: resourceImpactFixture() } })
 
+// Fixed package identities for this reviewed Base rebind. A new binding must
+// update these literals deliberately; current evidence never chooses its own oracle.
+const reboundPackages = {
+  'sidechain-compressor': 'dc5c56a9c8c0a9bfc59bd8427cc1ebfcc2685f5036ba997745847fad4b74a50c',
+  'output-matrix': '70889486a7c9f74c4215feead1b28376f11149dbbc5ffba0acb62cb56c1f0f7e',
+  'cc-map': 'c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2',
+  'recorder-loop-fix': 'effbae009e0ab8cc1cdd7cd8a460a758935adc08427fcb3a5f9522f4ce888a6f',
+  'analog-bassdrum': '9c313143b17b7cb9c41c8b0b7293cda29b533315b1b440ecfe64c1690eb0821a',
+} as const
+
 describe('module resource gauges', () => {
+  it.each(Object.entries(reboundPackages))('pins the reviewed rebound package for %s', (id, digest) => {
+    const entry = packageManifest.packages.find(row => row.id === id)!
+    expect(entry.sha256).toBe(digest)
+    expect(createHash('sha256').update(readFileSync('public/' + entry.path)).digest('hex')).toBe(digest)
+  })
+
+  it('does not reuse the old exact-package DSP audit for rebound recorder-loop-fix', () => {
+    const id = 'recorder-loop-fix'
+    const document = MODULE_DOCUMENTS.find(row => row.id === id)!
+    expect(moduleResourceIndicators(document)[1]).toMatchObject({ value: 'Minimal', status: 'Estimated' })
+  })
   it('populates CPU, DSP and memory for every current version without inventing measurements', () => {
     expect(MODULE_DOCUMENTS).toHaveLength(sdkCatalog.modules.length)
     // Only versions under an owner exception may go without a qualification record; none is invented for them.
@@ -113,10 +134,10 @@ describe('module resource gauges', () => {
     expect(lofiMemory.description).toContain((memory.sharedBytes / 1000) + ' kB shared')
     expect(lofiMemory.description).toContain((memory.perInstanceBytes / 1000) + ' kB per instance')
     expect(moduleResourceIndicators(outputMatrix)[1]).toMatchObject({
-      value: '+6.8 pp', status: 'Measured · T5–8', score: 6.8, maximum: 100, fill: 6.8,
+      value: 'Low', status: 'Estimated', score: 2, fill: 50,
       benchmark: { value: hookPrice.worstCase + ' cycles per sample for one instance', source: 'sdk/octatrack/modules/output-matrix/' + hookPrice.report },
     })
-    expect(moduleResourceIndicators(outputMatrix)[0].benchmark?.value).toBe('13.1% of a frame added with ALL routes in MATRIX mode')
+    expect(moduleResourceIndicators(outputMatrix)[0].benchmark).toBeUndefined()
     expect(moduleResourceIndicators(bbd)[1]).toMatchObject({
       value: '+10.8 pp', status: 'Measured · T1–4',
       benchmark: { value: bbdPrice + ' instructions per sample per instance', basis: 'instr./sample · Emulator' },
@@ -129,7 +150,7 @@ describe('module resource gauges', () => {
   it('shows a machine by what the base charges its pick, with the measured active CPU load beside it', () => {
     const analog = MODULE_DOCUMENTS.find(module => module.id === 'analog-bassdrum')!
     for (const [id, first, active] of [
-      ['amiga', '26.6%', '7.4%'], ['analog-bassdrum', '24.4%', '10.1%'], ['vector', '0.2%', '0.6%'],
+      ['amiga', '26.6%', '7.4%'], ['vector', '0.2%', '0.6%'],
     ]) {
       const document = MODULE_DOCUMENTS.find(module => module.id === id)!
       const [cpu] = moduleResourceIndicators(document)
@@ -139,7 +160,8 @@ describe('module resource gauges', () => {
     // POLY8's booked curve was read on 0.3.4, not the published 0.3.3: its active load, as before
     const [poly8] = moduleResourceIndicators(MODULE_DOCUMENTS.find(module => module.id === 'poly8')!)
     expect(poly8).toMatchObject({ value: '41.9%', status: 'Measured · in use' })
-    expect(moduleResourceIndicators(analog)[1]).toMatchObject({ value: '+5.6 pp', status: 'Measured · T1–4' })
+    expect(moduleResourceIndicators(analog)[0]).toMatchObject({ value: '24.4%', status: 'Measured · first track', benchmark: undefined })
+    expect(moduleResourceIndicators(analog)[1]).toMatchObject({ value: 'Moderate', status: 'Estimated' })
     // the active reading is bound to its version; a base-bound module's booked cost is the base's, whatever version it runs
     expect(moduleResourceIndicators({ ...analog, version: '99.0.0' })[0]).toMatchObject({ value: '24.4%', benchmark: undefined })
     const amiga = MODULE_DOCUMENTS.find(module => module.id === 'amiga')!
@@ -148,6 +170,8 @@ describe('module resource gauges', () => {
 
   it('binds zero direct DSP cycles to the audited packages and preserves active DSP paths', () => {
     for (const record of directDspEvidence.modules) {
+      // This exact rebound package has an explicit unmeasured case above.
+      if (record.module === 'recorder-loop-fix') continue
       const document = MODULE_DOCUMENTS.find(module => module.id === record.module)
       if (document?.version !== record.version) continue
       expect(moduleResourceIndicators(document)[1]).toMatchObject({
@@ -216,10 +240,10 @@ describe('module resource gauges', () => {
     expect(memory.description).toContain('51.568 kB in the module pool and 2,033.664 kB in leased sample RAM')
   })
 
-  it('shows the incremental Sidechain DSP load against stock compression', () => {
+  it('keeps the rebound Sidechain package unmeasured until its own hardware record', () => {
     const sidechain = MODULE_DOCUMENTS.find(module => module.id === 'sidechain-compressor')!
-    expect(moduleResourceIndicators(sidechain)[1]).toMatchObject({ value: '+1.8 pp', status: 'Measured · T5–8' })
-    expect(moduleResourceIndicators(sidechain)[1].description).toContain('compared with stock COMPRESSOR')
+    expect(moduleResourceIndicators(sidechain)[1]).toMatchObject({ value: 'Moderate', status: 'Estimated' })
+    expect(moduleResourceIndicators(sidechain)[1].description).not.toContain('compared with stock COMPRESSOR')
   })
 
   it('keeps drafts parseable but blocks releases and gauge rendering without ratings', () => {

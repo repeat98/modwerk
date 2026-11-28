@@ -127,7 +127,7 @@ int main(void) {
     assert(!mw_hook_claim_permitted(0,&span,0) && !mw_hook_claim_permitted(MW_DSP_MATRIX,&span,0));
     assert(mw_hook_claim_permitted(MW_DSP_SIDECHAIN,&span,0)); /* Sidechain implies the bus */
     span=(struct mw_hook_span){0xff0,0x10,1,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0)); /* MON words */
-    span=(struct mw_hook_span){0x800,0x200,1,MW_HOOK_Y}; assert(mw_hook_claim_permitted(0,&span,1)); /* the old bus: no feature's */
+    span=(struct mw_hook_span){0x800,0x200,1,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(0,&span,1)); /* returning-chain private state: explicitly owned in this Base */
     span=(struct mw_hook_span){0x3bdfe,0x202,1,MW_HOOK_Y}; assert(mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0));
     span.core=0; span.space=MW_HOOK_X; assert(mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0)); /* one window, any view */
     span=(struct mw_hook_span){0x3bdfd,2,1,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0)); /* past it */

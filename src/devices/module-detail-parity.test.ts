@@ -96,7 +96,6 @@ describe('module detail parity across machines', () => {
 
   it.each([
     ['poly8', 'heavy', 'Heavy CPU', 'one POLY8 track with repeated trigs'],
-    ['output-matrix', 'high', 'High CPU', '13.1 percentage points of audio-frame load added with ALL routes in MATRIX mode'],
   ])('shows the %s CPU badge and workload on its module page', (id, tier, badge, workload) => {
     const module = listedModules().find(module => module.id === id)! // POLY8 is paused but keeps its page
     const html = render(createElement(ModuleDetail, { module, selected: false, onToggle: noop }))
@@ -104,6 +103,16 @@ describe('module detail parity across machines', () => {
     expect(notice).toContain('data-tier="' + tier + '"')
     expect(notice).toContain('<strong>' + badge + '.</strong>')
     expect(notice?.toLowerCase()).toContain(workload.toLowerCase())
+  })
+
+  it('does not present an old package CPU reading as a measurement of rebound Output Matrix', () => {
+    expect(packageManifest.packages.find(row => row.id === 'output-matrix')!.sha256)
+      .toBe('70889486a7c9f74c4215feead1b28376f11149dbbc5ffba0acb62cb56c1f0f7e')
+    const module = listedModules().find(row => row.id === 'output-matrix')!
+    const html = render(createElement(ModuleDetail, { module, selected: false, onToggle: noop }))
+    expect(html).not.toContain('class="module-caution"')
+    expect(html).not.toContain('13.1 percentage points of audio-frame load')
+    expect(html).toContain('Estimated')
   })
 
   it('renders all three Octatrack dials and uses an unscaled outline for kilobyte values', () => {

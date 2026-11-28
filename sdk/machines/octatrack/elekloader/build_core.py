@@ -40,7 +40,7 @@ def update_name(identity):
 # Resident controller trust: association, the scoped write lease, its resolver and the board-compiled policy table.
 CONTROLLER_POLICY_SOURCES = ('controller_policy.c', 'controller_policy.h', 'controller_association.c', 'controller_association.h',
                              'controller_write_lease.c', 'controller_write_lease.h', 'controller_write_policy.c',
-                             'controller_transport.c', 'controller_transport.h', 'controller_board.c', 'controller_board.h')
+                             'controller_transport.c', 'controller_transport.h', 'controller_board.c', 'controller_board.h', 'controller_features.h', 'track_control.inc', 'processor_contract.h', 'processor_contract.c', 'processor_board.inc', 'processor_package.inc')
 # Built for size (RAM boot keeps MAIN under 1.25 MiB): engine-task and boot-only units, never reached from the USB
 # or frame interrupts or with interrupts masked. boot_anim.c is paced by DTIM3, not by instruction counts, so it
 # can only draw fewer frames in its 3.5 s. Units an interrupt reaches (ep0, vendor, transfer, manager, selection,
@@ -2079,15 +2079,17 @@ def main():
                      'scripts/octatrack-module-page.mjs'):
             inputs[name] = sha((APP / name).read_bytes())
     if args.resident_stock_hooks:
-        for name in ('resident_dsp.py', 'resident_boot.py', 'resident_driver.py', 'resident_source.py', 'resident_placement.py', 'resident_journal.py', 'resident_base.patch', 'resident_base_sources.json'):
+        for name in ('resident_dsp.py', 'resident_boot.py', 'resident_driver.py', 'resident_source.py', 'resident_placement.py', 'resident_journal.py', 'resident_base.patch', 'resident_base_sources.json', 'track_budget.py', 'track_receiver.py'):
             p = APP / 'sdk/machines/octatrack/module-adapters' / name
             inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
         inputs.update({'sdk/octabam/' + p: h for p, h in resident_dsp.verify_sources(resident_ob.root).items()})
         for name in ('dsp-sites.json', 'dsp_sites.py'):  # the ledger dsp_ledger.h is generated from
             inputs['sdk/machines/octatrack/' + name] = sha((APP / 'sdk/machines/octatrack' / name).read_bytes())
-        for name in ('stock_hooks.c', 'stock_hooks.h', 'stock_hook_driver.c', 'stock_hook_driver.h', 'stock_hook_resources.c', 'stock_hook_resources.h', 'dsp_ledger.h', 'cue_cfg.s'):
+        for name in ('stock_hooks.c', 'stock_hooks.h', 'stock_hook_driver.c', 'stock_hook_driver.h', 'stock_hook_resources.c', 'stock_hook_resources.h', 'dsp_ledger.h', 'cue_cfg.s', 'track_budget.c'):
             p = resident_source.RUNTIME / name
             inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
+        p = APP / 'sdk/machines/octatrack/include/modwerk_track.h'
+        inputs[p.relative_to(APP).as_posix()] = sha(p.read_bytes())
     if args.resident_on_demand:
         for p in (APP / 'sdk/machines/octatrack/module-adapters/resident_engines.py',
                   resident_source.RUNTIME / 'resident_engines.c', resident_source.RUNTIME / 'resident_engines.h',
@@ -2279,7 +2281,7 @@ modwerk_retained_end:
     if args.resident_stock_hooks:
         recipe['cflags'].append('-DMODWERK_RESIDENT_STOCK_HOOKS')
     if args.resident_on_demand:
-        recipe['cflags'].append('-DMODWERK_RESIDENT_ON_DEMAND')
+        recipe['cflags'] += ['-DMODWERK_RESIDENT_ON_DEMAND', '-DRUNTIME_OWNER_GENERATION_LIMIT=0x3fffffffu']
     if args.site_events:  # the base owns these stock sites; packages subscribe (sdk/machines/octatrack/EVENTS.md)
         recipe['cflags'].append('-DMODWERK_RUNTIME_EVENTS')
         # .c files (machine_registry.c, midi_generators.c, lfo_pmtr_dest.c) are already pulled in by the *.c glob above.
@@ -2521,7 +2523,7 @@ modwerk_retained_end:
     run_pack = importlib.util.module_from_spec(spec); spec.loader.exec_module(run_pack)
     parsed = formats.load(str(args.stock))[0]
     linked = formats.main_image(formats.parse(outputs['bin'], device), device)
-    main_packed, run_proof = run_pack.pack(linked, manifest['link']['layout'], mapping, device.main_load, aplib.pack_section)
+    main_packed, run_proof = run_pack.pack(linked, manifest['link']['layout'], mapping, device.main_load, run_pack.pack_section_compact)
     outputs = formats.write(parsed, formats.pack_main(main_packed, device), device, manifest['version'])
     manifest.update(main_sha256=sha(main_packed), main_len=len(main_packed),
                     output=formats.verify(outputs, parsed, main_packed, device, manifest['version']))

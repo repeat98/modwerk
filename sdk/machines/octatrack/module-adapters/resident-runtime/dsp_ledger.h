@@ -9,24 +9,25 @@
 #define MW_DSP_MATRIX 2u
 #define MW_DSP_ANALOG_BD 4u
 #define MW_DSP_KEYBUS 8u
-#define MW_DSP_FEATURES 15u  /* every feature bit */
+#define MW_DSP_TRACK_PROCESSOR 16u
+#define MW_DSP_FEATURES 31u  /* every feature bit */
 /* Features whose engine and initial words come from their controller's package (ABI 10), never from the base. */
-#define MW_DSP_PACKAGED 4u
+#define MW_DSP_PACKAGED 20u
 #define MW_DSP_KEYBUS_EXECUTED 25u  /* its tap: executed instructions a sample for a core's four tracks, counted statically */
 #define MW_DSP_KEYBUS_HARDWARE 43u  /* its tap: chip cycles a sample for a core's four tracks, timed on a unit (evidence/keybus-tap-timing-20261123.json); its charge */
 /* What a held feature holds too. */
 #define MW_DSP_IMPLIED(f) ((f) | ((f) & 1u ? 8u : 0u))
 /* Cores a feature runs on: bit 0 core 0 (payload A, tracks 5-8), bit 1 core 1 (payload B, tracks 1-4). */
-#define MW_DSP_CORES(f) ((f) == 1u ? 3u : (f) == 2u ? 1u : (f) == 4u ? 3u : (f) == 8u ? 3u : 0u)
+#define MW_DSP_CORES(f) ((f) == 1u ? 3u : (f) == 2u ? 1u : (f) == 4u ? 3u : (f) == 8u ? 3u : (f) == 16u ? 3u : 0u)
 /* A feature's index (its bit's position); MW_DSP_COUNT for anything else. */
-#define MW_DSP_COUNT 4u
-#define MW_DSP_INDEX(f) ((f) == 1u ? 0u : (f) == 2u ? 1u : (f) == 4u ? 2u : (f) == 8u ? 3u : MW_DSP_COUNT)
+#define MW_DSP_COUNT 5u
+#define MW_DSP_INDEX(f) ((f) == 1u ? 0u : (f) == 2u ? 1u : (f) == 4u ? 2u : (f) == 8u ? 3u : (f) == 16u ? 4u : MW_DSP_COUNT)
 /* Words a feature's reset writes on each core it runs on (its regions there, in order), and its first region's
  * when it has more than one: a reset chunk never crosses it (one owned range per chunk). */
-#define MW_DSP_RESET_WORDS(f) ((f) == 1u ? 1042u : (f) == 2u ? 193u : (f) == 4u ? 3776u : (f) == 8u ? 1026u : 0u)
-#define MW_DSP_RESET_SPLIT(f) ((f) == 1u ? 16u : (f) == 8u ? 514u : 0u)
+#define MW_DSP_RESET_WORDS(f) ((f) == 1u ? 1042u : (f) == 2u ? 193u : (f) == 4u ? 3776u : (f) == 8u ? 1026u : (f) == 16u ? 1839u : 0u)
+#define MW_DSP_RESET_SPLIT(f) ((f) == 1u ? 16u : (f) == 8u ? 514u : (f) == 16u ? 1024u : 0u)
 /* The logical end of the region a reset offset falls in: a chunk from o is at most MW_DSP_RESET_END(f, o) - o. */
-#define MW_DSP_RESET_END(f, o) ((f) == 1u ? ((o) < 16u ? 16u : (o) < 530u ? 530u : 1042u) : (f) == 2u ? 193u : (f) == 4u ? 3776u : (f) == 8u ? ((o) < 514u ? 514u : 1026u) : 0u)
+#define MW_DSP_RESET_END(f, o) ((f) == 1u ? ((o) < 16u ? 16u : (o) < 530u ? 530u : 1042u) : (f) == 2u ? 193u : (f) == 4u ? 3776u : (f) == 8u ? ((o) < 514u ? 514u : 1026u) : (f) == 16u ? ((o) < 1024u ? 1024u : 1839u) : 0u)
 
 struct mw_dsp_region { uint8_t feature, core, space; /* space: 1 x, 2 y */ uint8_t pad; uint32_t address, words; };
 static const struct mw_dsp_region mw_dsp_regions[] = {
@@ -43,6 +44,10 @@ static const struct mw_dsp_region mw_dsp_regions[] = {
     {8u, 1u, 2u, 0, 0x3bdfeu, 0x202u}, /* keybus */
     {8u, 0u, 2u, 0, 0x7e00u, 0x200u}, /* keybus */
     {8u, 1u, 2u, 0, 0x7e00u, 0x200u}, /* keybus */
+    {16u, 0u, 2u, 0, 0x800u, 0x400u}, /* track_processor */
+    {16u, 1u, 2u, 0, 0x800u, 0x400u}, /* track_processor */
+    {16u, 0u, 2u, 0, 0xcc1u, 0x32fu}, /* track_processor */
+    {16u, 1u, 2u, 0, 0xcc1u, 0x32fu}, /* track_processor */
 };
 #define MW_DSP_REGIONS (sizeof mw_dsp_regions / sizeof mw_dsp_regions[0])
 
@@ -51,7 +56,7 @@ static const struct mw_dsp_region mw_dsp_regions[] = {
  * after the hooked code when it has an exit (0: none, or no such payload). */
 struct mw_dsp_site { uint8_t feature, chain; uint16_t exit[2]; };
 static const struct mw_dsp_site mw_dsp_sites[] = {
-    {8u, 0u, {0x0u, 0x0u}}, /* 0 dsp_fx1_dispatch */
+    {24u, 1u, {0x0u, 0x0u}}, /* 0 dsp_fx1_dispatch */
     {1u, 0u, {0x0u, 0x0u}}, /* 1 dsp_compressor_proc */
     {1u, 0u, {0x0u, 0x0u}}, /* 2 dsp_track_commit */
     {2u, 0u, {0x0u, 0x0u}}, /* 3 dsp_core0_mixdown */

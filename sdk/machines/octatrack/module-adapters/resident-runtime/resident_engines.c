@@ -33,9 +33,9 @@ volatile uint8_t mw_engines_wait[2][MW_ENGINE_FEATURES], mw_engines_admitted[MW_
 /* ABI 9 (loader.h): a package may require the key bus, which the board holds for them (controller_board.c), and program
  * areas (dsp_programs.c). */
 #ifdef MODWERK_RUNTIME_EVENTS
-unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_PROGRAMS; }
+unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_TRACK_PROCESSOR | MW_DSP_PROGRAMS; }
 #else
-unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS; }
+unsigned modwerk_machine_dsp_features(void) { return MW_DSP_KEYBUS | MW_DSP_TRACK_PROCESSOR; }
 #endif
 #ifdef MODWERK_DEV
 struct mw_engines_view mw_engines_view = {.magic = {'M', 'W', 'E', 'V'}}; /* initialized: in .data, inside the dev MEM window */

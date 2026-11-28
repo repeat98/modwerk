@@ -34,11 +34,13 @@ def transport(text):
         if text.count(old) != 1:
             raise ValueError('Generated resident transport seam changed: ' + old[:70])
         text = text.replace(old, new)
+    sites, registry = _ledger()
+    allowed = {core: sum(f['bit'] for f in registry['features'] if tag in f['cores']) for core, tag in enumerate(('A','B'))}
     change('op!=DL_BASE && op!=DL_PEEK)) return 0;',
-           'op!=DL_BASE && op!=DL_PEEK && op!=10u)) return 0;\n'
-           '    if(op==10u && (id&~(c ? 13u:15u) || init&~(c ? 13u:15u) || proc)) return 0;')
+           'op!=DL_BASE && op!=DL_PEEK && op!=10u && op!=13u)) return 0;\n'
+           + ('    if(op==10u && (id&~(c ? %du:%du) || init&~(c ? %du:%du) || proc)) return 0;' % (allowed[1],allowed[0],allowed[1],allowed[0])))
     change('opcode==DL_BASE || opcode==DL_PEEK || opcode==DL_SUM) {',
-           'opcode==DL_BASE || opcode==DL_PEEK || opcode==DL_SUM || opcode==10u) {')
+           'opcode==DL_BASE || opcode==DL_PEEK || opcode==DL_SUM || opcode==10u || opcode==13u) {')
     change('        if(opcode==DL_WRITE) {', '        if(opcode==DL_WRITE || opcode==11u) {')
     # A reset job carries up to DL_RESET_DATA words, one packet a frame, each packet's offset its own (as a WRITE's).
     change('                    else if(jobs[c].opcode==DL_WRITE) {',
@@ -63,6 +65,8 @@ int dl_job_status(unsigned c) {''')
     totals, _ = sites.reset_words(reg)
     text = text.replace('@TOTAL@', ' : '.join('feature==%du ? %du' % (f, n) for f, n in totals.items()) + ' : 0u', 1)
     text = text.replace('@END@', sites.reset_end_expression(reg, 'feature', 'offset'), 1)
+    text = text.replace('    jobs[c].opcode=op;', '    if(op==13u && ((id&~0x10fu) || init>65535u || proc>65535u)) return 0;\n    jobs[c].opcode=op;', 1)
+    text=text.replace('id>=MODWERK_FX_IDS ||', '(op!=13u && id>=MODWERK_FX_IDS) ||', 1)
     return owned_transport(text)
 
 
@@ -261,7 +265,7 @@ static int owned_reserve(unsigned c,uint32_t generation,unsigned op,unsigned id,
 int dl_owned_command_reserve(unsigned c,uint32_t generation,unsigned op,unsigned id,unsigned init,unsigned proc,
         struct dl_owned_job *out) {
     /* PEEK storm restarts have no bounded lifetime and are legacy-only. */
-    if((op!=DL_PROBE && op!=DL_BIND && op!=DL_UNBIND && op!=DL_BYPASS && op!=DL_BASE && op!=10u) ||
+    if((op!=DL_PROBE && op!=DL_BIND && op!=DL_UNBIND && op!=DL_BYPASS && op!=DL_BASE && op!=10u && op!=13u) ||
        !owned_command_valid(c,op,id,init,proc)) return 0;
     return owned_reserve(c,generation,op,id,init,proc,0,out);
 }

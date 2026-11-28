@@ -27,6 +27,7 @@ static uint8_t pool[RUNTIME_POOL_BYTES] __attribute__((aligned(16)));
 struct modwerk_runtime_api modwerk_runtime_api;
 volatile uint32_t modwerk_runtime_ticks;
 static struct runtime_module *volatile live[RUNTIME_MODULES];
+static uint32_t publication_serial[RUNTIME_MODULES], publication_sequence;
 /* One bit per position for each of the four UI hooks, lowest position first (ColdFire ff1). */
 static volatile uint32_t ui_positions[RUNTIME_EVENTS][(RUNTIME_MODULES + 31u) / 32u];
 static struct runtime_module *owned[OWNERS]; /* every module holding pool memory */
@@ -77,6 +78,19 @@ static struct {
 #define JUDGED_CAPABILITY 0u
 #endif
 int modwerk_runtime_set_busy(void) { return SET_ROWS != 0; }
+#ifdef MODWERK_HOST
+/* Included native loader/card fixtures already provide the real predicate. */
+#define MODWERK_TEST_TRIAL_READY_IMPLEMENTED 1
+#endif
+int modwerk_runtime_set_trial_ready(void)
+{
+#ifdef MODWERK_RUNTIME_SETS
+    return !modwerk_runtime_volatile_busy() && change_set.count && !change_set.preparing &&
+        change_set.complete && change_set.published == change_set.count;
+#else
+    return 0;
+#endif
+}
 #ifndef MODWERK_RUNTIME_JOURNAL_EXTERNAL
 __attribute__((weak)) int modwerk_machine_journal_enabled(void) { return 0; }
 __attribute__((weak)) int modwerk_machine_journal_begin_safe(void) { return 0; }
@@ -127,12 +141,22 @@ __attribute__((weak)) int modwerk_machine_image_validate(const struct runtime_ds
 const struct runtime_module *modwerk_runtime_module(unsigned i) { return i < RUNTIME_MODULES ? live[i] : 0; }
 /* The engine task is the only writer. Add the new bits before publishing the module and clear its absent
  * hooks afterwards. A reader can interrupt anywhere: an extra bit just makes it look at the live slot. */
+uint32_t modwerk_runtime_publication(uintptr_t image)
+{
+    /* Caller holds the machine's stable lock, as for owner resolution. */
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i)
+        if (live[i] && (uintptr_t)live[i]->dsp.image == image) return publication_serial[i];
+    return 0;
+}
 static void set_live(unsigned position, struct runtime_module *m)
 {
     unsigned word = position / 32u;
     uint32_t bit = 0x80000000u >> (position % 32u);
     for (unsigned e = 0; e < RUNTIME_EVENTS; ++e)
         if (m && m->hook[e]) ui_positions[e][word] |= bit;
+    /* Never reuse a serial, including after Undo republishes the old image.
+     * Exhaustion fails closed for clients, rather than confusing continuity. */
+    publication_serial[position] = m && publication_sequence != UINT32_MAX ? ++publication_sequence : 0;
     live[position] = m;
     for (unsigned e = 0; e < RUNTIME_EVENTS; ++e)
         if (!m || !m->hook[e]) ui_positions[e][word] &= ~bit;
@@ -196,6 +220,12 @@ __attribute__((weak)) int modwerk_machine_dsp_claims_admit(unsigned requires, co
 { (void)requires; (void)claims; return n ? RUNTIME_CONFLICT : RUNTIME_OK; }
 /* ABI 10: a machine without hook sites admits no engine. */
 __attribute__((weak)) int modwerk_machine_dsp_engine_admit(const struct runtime_dsp *d) { (void)d; return RUNTIME_CONFLICT; }
+#endif
+/* Optional machine admission of bounded wire words before native pool allocation.
+ * Existing machines retain their metadata-only predicate. */
+#ifndef MODWERK_RUNTIME_ENGINE_DATA_EXTERNAL
+__attribute__((weak)) int modwerk_machine_dsp_engine_data_admit(struct runtime_dsp *d,const uint8_t *words,const uint8_t *relocations)
+{ (void)words;(void)relocations;return modwerk_machine_dsp_engine_admit(d); }
 #endif
 /* Two claims meet: the same core (an ABI 10 claim on both cores meets either) and space, or both in the window both
  * cores see (any space: the window is one memory on the Octatrack, whatever the bus), with a word in common. */
@@ -1166,13 +1196,13 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     if (claims_taken(slot, claim, claims)) return refuse(RUNTIME_CONFLICT); /* another live module's claim */
     uint32_t admission_lock = modwerk_machine_lock();
     enum runtime_check check = RUNTIME_CHECK_CLAIMS;
-    int why = engine ? modwerk_machine_dsp_engine_admit(&dsp) : modwerk_machine_dsp_claims_admit(dsp.requires, claim, claims);
+    int why = engine ? modwerk_machine_dsp_engine_data_admit(&dsp,words,dsp_relocation) : modwerk_machine_dsp_claims_admit(dsp.requires, claim, claims);
     if (!why) check = RUNTIME_CHECK_METADATA, why = modwerk_machine_metadata_admit(dsp_of(live[slot]), &dsp, context, RUNTIME_METADATA_PREPARE);
     if (!why) check = RUNTIME_CHECK_DSP, why = modwerk_machine_dsp_admit(dsp_of(live[slot]), &dsp);
     modwerk_machine_unlock(admission_lock);
     if (why) return refuse_at(check, (enum runtime_refusal)why);
     if (image || sites || dsp.count || engine) {
-        if (owner_generation == UINT32_MAX) return refuse(RUNTIME_FULL);
+        if (owner_generation >= RUNTIME_OWNER_GENERATION_LIMIT) return refuse(RUNTIME_FULL);
         reclaim(context);
         uint32_t head = ((uint32_t)sizeof(struct runtime_module) + sites * (uint32_t)sizeof(struct runtime_site) + 15u) & ~15u,
                  code = (end + 15u) & ~15u, words_end = (4u * dsp_words_n + 2u * dsp_relocations_n + 3u) & ~3u,

@@ -18,6 +18,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -54,6 +55,57 @@ def _builder():
     return builder
 
 
+def provided_dsp_features(build):
+    """Read the ledger-service mask from the compiled source, not the live SDK.
+
+    This is metadata extraction, never execution. A changed implementation must
+    be reviewed rather than silently inferred. A Base without this source has
+    no resident DSP service. Historical bindings without this field stay valid.
+    """
+    source = Path(build) / 'source/resident_engines.c'
+    if not source.exists():
+        return 0
+    recorded = json.loads((Path(build) / 'proofs.json').read_text())['sources']
+    for name in ('resident_engines.c', 'dsp_ledger.h'):
+        key = 'sdk/machines/octatrack/module-adapters/resident-runtime/' + name
+        if recorded.get(key) != hashlib.sha256((source.parent / name).read_bytes()).hexdigest():
+            raise ValueError('Compiled DSP service source differs from its build proof: ' + name)
+    ledger = (source.parent / 'dsp_ledger.h').read_text()
+    constants = {name: int(value) for name, value in re.findall(
+        r'^#define\s+(MW_DSP_[A-Z0-9_]+)\s+(\d+)u?\b', ledger, re.M)}
+    declaration = r'unsigned\s+modwerk_machine_dsp_features\(void\)\s*\{'
+    expressions = re.findall(declaration + r'\s*return\s+([^;{}]+);\s*\}', source.read_text())
+    if not expressions or len(expressions) != len(re.findall(declaration, source.read_text())):
+        raise ValueError('Review the compiled Base DSP service declaration before binding it.')
+    # Program areas are upstream's separate unledgered ABI9 service. This field
+    # describes ledger features; every compile-time branch must agree on those.
+    unledgered = 0
+    if any('MW_DSP_PROGRAMS' in expression for expression in expressions):
+        header = source.parent / 'resident_engines.h'
+        key = 'sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.h'
+        if recorded.get(key) != hashlib.sha256(header.read_bytes()).hexdigest():
+            raise ValueError('Compiled program-area header differs from its build proof.')
+        value = re.search(r'^#define\s+MW_DSP_PROGRAMS\s+(0x[0-9a-fA-F]+|\d+)u?\b', header.read_text(), re.M)
+        if not value or int(value.group(1), 0) != 0x100:
+            raise ValueError('Review the unledgered program-area ABI before binding it.')
+        constants['MW_DSP_PROGRAMS'] = unledgered = 0x100
+    masks = set()
+    ledger_mask = constants.get('MW_DSP_FEATURES', 0)
+    for expression in expressions:
+        mask = 0
+        for term in expression.split('|'):
+            term = term.strip()
+            if term not in constants:
+                raise ValueError('Unknown compiled Base DSP service: ' + term)
+            mask |= constants[term]
+        if mask & ~(ledger_mask | unledgered):
+            raise ValueError('Compiled Base DSP service lies outside its own ledger.')
+        masks.add(mask & ledger_mask)
+    if len(masks) != 1:
+        raise ValueError('Review conditional ledger services before binding this Base.')
+    return masks.pop()
+
+
 def bind(build, policies):
     """The binding of one base build_core.py made (its directory), with the trust rows it was built with."""
     build = Path(build)
@@ -64,14 +116,17 @@ def bind(build, policies):
     if any(name not in stock_hook_controllers.UNITS and name not in MACHINES for name in controllers):
         raise ValueError('A trust row names a module that is not a controller.')
     return dict(schema=1, identity=bound['identity'], arena=bound['arena'], pool=bound['pool'],
-                symbols={name: symbols[name] for name in SYMBOLS if name in symbols}, controllers=controllers)
+                symbols={name: symbols[name] for name in SYMBOLS if name in symbols}, controllers=controllers,
+                dspFeatures=provided_dsp_features(build))
 
 
 def load(binding=None):
     binding = json.loads(BINDING.read_text()) if binding is None else binding
     if (binding.get('schema') != 1 or not isinstance(binding.get('identity'), str) or len(binding['identity']) != 64
             or any(type(binding.get(key)) is not int for key in ('arena', 'pool'))
-            or not isinstance(binding.get('symbols'), dict) or not isinstance(binding.get('controllers'), dict)):
+            or not isinstance(binding.get('symbols'), dict) or not isinstance(binding.get('controllers'), dict)
+            or ('dspFeatures' in binding and (type(binding['dspFeatures']) is not int
+                                            or not 0 <= binding['dspFeatures'] <= 65535))):
         raise ValueError('sdk/machines/octatrack/base-binding.json is malformed: rebuild the base.')
     return binding
 

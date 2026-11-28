@@ -370,6 +370,9 @@ def assemble_resident(ob, tag, origin, work, assemble, on_demand=0):
         entries += [('hom_mix', 'omx_mix', MATRIX,
                      'btst #10,a\nbcs hom_stockm\nrts\nhom_stockm:\nmove ssh,x0\njmp $292'),
                     ('hom_phn', 'omx_phn', MATRIX, 'move x:>$205,r0\nrts')]
+    # A chain replaces the exclusive stub at the same guarded stock site.
+    chained_labels = {site['label'] for site in LEDGER['sites'] if site['kind'] == 'chain'}
+    entries = [entry for entry in entries if entry[1] not in chained_labels]
     # Forwarding branches change no register or CCR. The frame receiver may rewrite
     # only the second word, before this frame reaches any track's source/FX.
     shims = '\n'.join('%s:\njmp %s_off\n%s_off:\n%s\n' % (stub, stub, stub, off)
@@ -409,12 +412,14 @@ def assemble_resident(ob, tag, origin, work, assemble, on_demand=0):
         if name == 'output-matrix' and tag != 'A':
             continue
         for hook in ob.modules[name].dsp.hooks:
+            if hook.label in chained_labels:
+                continue
             stub = {'sctap': 'hsc_tap', 'scdet': 'hsc_det', 'moncommit': 'hsc_commit', 'scinit': 'hsc_init',
                     'omx_mix': 'hom_mix', 'omx_phn': 'hom_phn'}[hook.label]
             guards.append(dict(module=name, site=hook.site_on(tag), expectedSha256=hook.stock.sha256,
                                entry=labels[stub], relocated=RELOCATED.get(hook.label, False)))
     for chain in chains:
-        descriptors += chain_descriptors(chain, labels, words, origin, on_demand)
+        descriptors += chain_descriptors(chain, labels, words, origin, on_demand, engines)
         # The catalogue's site (dsp-sites.json), whose guard is the displaced instruction the stub replays.
         site, stub = chain['site'], chain['stub']
         at = labels[stub + '_off'] - origin
@@ -431,7 +436,8 @@ def assemble_resident(ob, tag, origin, work, assemble, on_demand=0):
 
 # The instruction each chain site's stub replays for the stock one the site's JSR displaced: authored, the catalogue
 # holds only its guard (dsp-sites.json), which the dormant replay's words must equal.
-CHAIN_REPLAY = {'dsp_track_source': 'move a,x:>$20e'}
+CHAIN_REPLAY = {'dsp_track_source': 'move a,x:>$20e',
+                'dsp_fx1_dispatch': 'move x:>$208,r6'}
 BRA_LONG, BSR_LONG = 0x0d10c0, 0x0d1080  # the two-word PC-relative forms: the receiver writes only the second word
 
 
@@ -450,12 +456,14 @@ def chain_layout(site, tag):
     lines = ['%s:' % stub, 'jmp %s_off' % stub, 'hcn%d:' % n]
     for f in members:
         lines += ['hcm%dx%03d:' % (n, f), 'bsr >hcr%d' % n]
-    lines += ['%s_off:' % stub, CHAIN_REPLAY[site['name']], 'rts', 'hcr%d:' % n, 'rts',
-              'hcx%d:' % n, 'move ssh,x0', 'jmp $%x' % int(site['exit'][tag], 16)]
+    lines += ['%s_off:' % stub, CHAIN_REPLAY[site['name']], 'rts', 'hcr%d:' % n, 'rts']
+    # Processing chains always return; only source chains have a skip exit.
+    if 'exit' in site:
+        lines += ['hcx%d:' % n, 'move ssh,x0', 'jmp $%x' % int(site['exit'][tag], 16)]
     return dict(site=site, stub=stub, members=members, text='\n'.join(lines) + '\n')
 
 
-def chain_descriptors(chain, labels, words, origin, on_demand):
+def chain_descriptors(chain, labels, words, origin, on_demand, engines=None):
     """The receiver's rows for a chain: the site's branch (owner: every member; on while any is enabled), then one per
     member's call (its packaged engine at word 0, from its base word)."""
     stub = chain['stub']
@@ -474,14 +482,22 @@ def chain_descriptors(chain, labels, words, origin, on_demand):
     for f in chain['members']:
         at = labels['hcm%dx%03d' % (n, f)]
         form(at, BSR_LONG, ret)
+        # Packaged entries start at word zero. A resident member names its
+        # independently relocated entry (e.g. Sidechain's moncommit).
+        offset = 0
+        if not f & PACKAGED:
+            name = chain['site'].get('entries', {}).get(str(f))
+            offset = (engines or {}).get(f, {}).get('entries', {}).get(name)
+            if offset is None:
+                raise ValueError('A resident chain member has no resolved entry')
         rows.append(dict(owner=f, operand=at + 1, off=ret, on=None, entry=at, base=labels[base_label(f)],
-                         onOffset=0, offValue=disp(ret, at), onValue=None))
+                         onOffset=offset, offValue=disp(ret, at), onValue=None))
     return rows
 
 
 def chain_exits(bundle):
     """{site index: the trampoline's P address} on this bundle's core: where a member's engine leaves (its exit)."""
-    return {s['index']: bundle['labels']['hcx%d' % s['index']] for s in LEDGER['sites'] if s['kind'] == 'chain'}
+    return {s['index']: bundle['labels']['hcx%d' % s['index']] for s in LEDGER['sites'] if s['kind'] == 'chain' and 'exit' in s}
 
 
 def place_resident(ob, tag, end, work, assemble, on_demand=0):
@@ -606,12 +622,16 @@ def receiver_control(bundle):
     tag = bundle['tag']
     if bundle['allowed'] != ALLOWED[tag] or len(bundle['descriptors']) != descriptor_count(tag):
         raise ValueError('Resident hook descriptor layout changed')
+    # A successful resident CAS refreshes the Base-owned current-chain pointer.
+    # Ordinary nonresident receiver builds retain the zero pointer and refuse op13.
     on_demand = bundle.get('onDemand', 0)
     if not isinstance(on_demand, int) or on_demand & ~ALLOWED[tag] or bool(on_demand) != ('engines' in bundle):
         raise ValueError('Resident on-demand layout changed')
     end = bundle['origin'] + len(bundle['words'])
     # Word 7 (0 for every CAS the board sends) selects PLACE (the engine's words, 1..$1fff) on an on-demand build.
     lines = ['move x:(r0+7),a', 'tst a', 'bne hplace'] if on_demand else []
+    if on_demand & 16:
+        lines = ['move #>$%x,a' % _base_word(bundle,16,end), 'move #>tpbase,r3', 'move a1,p:(r3)'] + lines
     lines += ['move x:(r0+4),x0', 'move #>hookstate,r1', 'move p:(r1),a',
               'cmp x0,a', 'bne badsaved', 'move x:(r0+5),x1', 'move x1,a',
               'and #>$%x,a' % (0xffffff ^ ALLOWED[tag]), 'bne badsaved',
@@ -638,7 +658,7 @@ def receiver_control(bundle):
         # A chain's own branch (owner: its members) goes to its fixed run of calls; each member's call, to its engine.
         chain = row.get('chain', False)
         placed = not chain and row['owner'] & on_demand
-        if (row['owner'] & ~(PACKAGED & ALLOWED[tag] & on_demand) or not row['owner'] if chain else
+        if (row['owner'] & ~(ALLOWED[tag] & on_demand) or not row['owner'] if chain else
                 row['owner'] not in FEATURES or not row['owner'] & ALLOWED[tag]) or \
                 not all(bundle['origin'] <= row[k] < end for k in ('operand', 'off') + (() if placed else ('on',))):
             raise ValueError('A resident hook escapes its owned P block')
@@ -675,6 +695,7 @@ def base_label(feature):
 def descriptor_count(tag):
     """Rows the receiver switches on payload `tag`: each base stub, then each chain's branch and its members' calls."""
     base = 6 if tag == 'A' else 4
+    base -= sum(s['kind'] == 'chain' and s['label'] in {'sctap','scdet','moncommit','scinit','omx_mix','omx_phn'} and tag in s for s in LEDGER['sites'])
     return base + sum(1 + len([f for f in s['features'] if f & ALLOWED[tag]])
                       for s in LEDGER['sites'] if s['kind'] == 'chain')
 

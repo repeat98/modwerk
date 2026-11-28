@@ -97,8 +97,8 @@ class ResidentStockDsp(unittest.TestCase):
         ob = packages.Octabam(str(ROOT / 'sdk/octabam'))
         with tempfile.TemporaryDirectory() as work:
             for tag in ('A', 'B'):
-                # Analog BD's engine is its package's, always on demand; the rest stay in the block, as they were.
-                packaged = resident.PACKAGED & resident.ALLOWED[tag]
+                # Current Base puts each chain member on demand, including the key tap.
+                packaged = resident.ALLOWED[tag]
                 first = resident.assemble_resident(ob, tag, 0x1000, work, packages.assemble, packaged)
                 other = resident.assemble_resident(ob, tag, 0x1400, work, packages.assemble, packaged)
                 self.assertEqual(len(first['words']), len(other['words']))
@@ -109,8 +109,10 @@ class ResidentStockDsp(unittest.TestCase):
                     self.assertEqual(moved['onValue'], row['onValue'])
                     self.assertEqual(first['words'][row['operand'] - first['origin']], row['offValue'])
                 # Complete dormant replays: SCdet displaces TWO one-word moves, SCinit one two-word move.
-                for row, label in zip(first['guards'][:4], ('hsc_tap_off', 'hsc_det_off', 'hsc_commit_off', 'hsc_init_off')):
-                    at = first['labels'][label] - first['origin']
+                guards = {row['entry']: row for row in first['guards']}
+                for stub in ('hch0', 'hsc_det', 'hsc_commit', 'hsc_init'):
+                    row = guards[first['labels'][stub]]
+                    at = first['labels'][stub + '_off'] - first['origin']
                     self.assertEqual(hashlib.sha256(b''.join(w.to_bytes(3, 'big') for w in first['words'][at:at + 2])).hexdigest(), row['expectedSha256'])
                 prefix_at = first['labels']['hsc_det_off'] - first['origin']
                 prefix = first['words'][prefix_at:prefix_at + 2]

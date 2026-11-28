@@ -12,6 +12,19 @@
 #define MW_ENGINE_PACKAGED_WORDS 0u /* no engines placed: a packaged feature's controller is never admitted */
 #endif
 
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+#define MW_RETURNING_TRACKS 1
+#include "processor_contract.h"
+#include "processor_package.inc"
+static unsigned tp_wanted(void),tp_held(void);
+static void tp_tick(void);
+static int tp_admit(const struct runtime_dsp *,const struct runtime_dsp *,enum runtime_metadata_operation);
+static int tp_settling(void);
+static unsigned tp_busy(unsigned);
+static int tp_scoped_controls(uintptr_t,uintptr_t,uint32_t,uint32_t,uint32_t,uint32_t);
+#else
+static unsigned tp_held(void){return 0;}
+#endif
 int modwerk_saved_set_busy(void);
 int dl_hook_buffer_ranges_idle(unsigned);
 #ifdef MODWERK_RESIDENT_ON_DEMAND
@@ -141,7 +154,12 @@ static int same_identity(const struct mw_controller_identity *a, const struct mw
         a->parameter_revision == b->parameter_revision;
 }
 static int held(const struct mw_controller_slot *s) { return s->state != MW_CTL_EMPTY && s->state != MW_CTL_RELEASED; }
-static int jobs(const struct mw_controller_slot *s) { return s->job_state[0] || s->job_state[1]; }
+static int track_jobs(const struct mw_controller_slot *);
+static void track_poll(void);
+static int track_prepare(unsigned);
+static int track_capacity(const struct mw_controller_slot *,const struct runtime_module *);
+void modwerk_dsp_track_tick(void);
+static int jobs(const struct mw_controller_slot *s) { return s->job_state[0] || s->job_state[1] || track_jobs(s); }
 
 /* The compiled rows, whole: one identity and image per package, valid entries. */
 static int rows_valid(void)
@@ -456,6 +474,7 @@ static void begin(unsigned at, unsigned c, unsigned op)
 {
     struct mw_controller_slot *s = &REGISTRY.slots[at];
     if (transport.held[c] || s->job_state[c] || kb_lane[c].op) return;
+    if (op == MW_CTL_ENABLE && !track_prepare(at)) return;
     if (mw_controller_transport_begin(&transport, &s->binding, c, op) == MW_CTL_PENDING && op == MW_CTL_ENABLE)
         verified[at] = s->binding.generation;
 }
@@ -558,7 +577,7 @@ static unsigned engine_features(void)
     unsigned features = 0;
     for (unsigned k = 0; k < MW_CONTROLLER_SLOTS; ++k)
         if (engine_wanted(k)) features |= REGISTRY.slots[k].binding.identity.feature;
-    return features;
+    return features|tp_wanted();
 }
 #else
 static unsigned engine_features(void) { return slot_features(); }
@@ -755,10 +774,12 @@ static void advance(unsigned at)
     int quiesce = !published || (want[at].generation == b->generation && want[at].quiesce);
 #ifdef MODWERK_RESIDENT_ON_DEMAND
     /* Unused by this bank (use_tick): never placed, or parked while the unit is quiet and settled, as compaction waits. */
-    int idle = !quiesce && !(used & b->identity.feature), park = idle && !jobs(s) && mw_engines_settled();
+    int capacity = !track_capacity(s,m);
+    int idle = !quiesce && (!(used & b->identity.feature) || capacity);
+    int park = idle && !jobs(s) && (capacity || mw_engines_settled());
     if (!idle && s->state != MW_CTL_DISABLING && s->state != MW_CTL_RETIRING) parked[at] = 0;
 #else
-    int idle = 0, park = 0;
+    int idle = !quiesce && !track_capacity(s,m), park = idle && !jobs(s);
 #endif
     switch (s->state) {
     case MW_CTL_RESERVED:
@@ -842,6 +863,9 @@ static void advance(unsigned at)
     default: break; /* QUARANTINED holds everything; nothing is retried */
     }
 }
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("no-jump-tables")))
+#endif
 void modwerk_controller_tick(void)
 {
     uint32_t irq = modwerk_machine_lock();
@@ -851,11 +875,14 @@ void modwerk_controller_tick(void)
         closed = !rows_valid() || !modwerk_controller_write_policy_count ||
             !mw_controller_transport_init(&transport, &REGISTRY, &providers, 0);
     }
+    modwerk_dsp_track_tick();
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+    mw_engines_poll();
+    tp_tick();
+#endif
     if (!closed) {
         poll();
-#ifdef MODWERK_RESIDENT_ON_DEMAND
-        mw_engines_poll();
-#endif
+        track_poll();
         bind_live();
 #ifdef MODWERK_RESIDENT_ON_DEMAND
         use_tick();
@@ -863,14 +890,16 @@ void modwerk_controller_tick(void)
         keybus_tick();
         for (unsigned at = 0; at < MW_CONTROLLER_SLOTS; ++at) if (held(&REGISTRY.slots[at])) advance(at);
 #ifdef MODWERK_RESIDENT_ON_DEMAND
-        {
-            uint8_t busy[2] = {(uint8_t)(transport.held[0] || kb_lane[0].op), (uint8_t)(transport.held[1] || kb_lane[1].op)};
-            /* Collect by what is wanted: it unplaces an engine only where its feature is known off on that core. */
-            mw_engines_collect(engine_features() | (kb_wanted ? KEYBUS : 0u), mask, mask_known, busy);
-        }
         keybus_release();
 #endif
     }
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+        {
+            uint8_t busy[2] = {(uint8_t)(transport.held[0] || kb_lane[0].op || tp_busy(0)), (uint8_t)(transport.held[1] || kb_lane[1].op || tp_busy(1))};
+            /* Collect by what is wanted: it unplaces an engine only where its feature is known off on that core. */
+            mw_engines_collect(engine_features() | (kb_wanted ? KEYBUS : 0u), mask, mask_known, busy);
+        }
+#endif
 #if defined(MODWERK_RESIDENT_ON_DEMAND) && defined(MODWERK_DEV)
     view();
 #endif
@@ -883,6 +912,9 @@ __attribute__((weak)) unsigned modwerk_machine_bank_modules(uint32_t *module, un
 #endif
 int modwerk_controller_settling(void)
 {
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+    if(tp_settling())return 1;
+#endif
     if (!started || closed) return 0;
     if (bind_again) return 1; /* a live controller not bound yet, or waiting for its predecessor's disable */
     for (unsigned at = 0; at < MW_CONTROLLER_SLOTS; ++at) {
@@ -911,6 +943,10 @@ int modwerk_controller_admit(const struct runtime_dsp *from, const struct runtim
 {
     /* Nothing bound: every package is an ordinary one, but a reader would wait for a bus that never comes (the board
      * holds it), unpriced: refused. The first tick runs at boot, long before the saved set's restore. */
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+    int returning=tp_admit(from,to,operation);
+    if(returning!=RUNTIME_OK)return returning;
+#endif
     if (!started || closed) return to && to->present && (to->requires & KEYBUS) ? (closed ? RUNTIME_CONFLICT : RUNTIME_BUSY) : RUNTIME_OK;
     const struct mw_controller_write_policy *incoming = to && to->present ? row_for(to->controller_sha256, to->module, to->image_bytes) : 0;
     const struct mw_controller_write_policy *outgoing = from && from->present ? row_for(from->controller_sha256, from->module, from->image_bytes) : 0;
@@ -978,6 +1014,12 @@ int modwerk_controller_admit(const struct runtime_dsp *from, const struct runtim
  * feature, whole (engine_shape); its claims are that feature's regions, which the base keeps for it. */
 int modwerk_machine_dsp_engine_admit(const struct runtime_dsp *d)
 {
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+    if(d && (d->requires&TP_FEATURE)){
+        struct tp_view view;
+        return tp_decode(d,&view)==TP_VALID?RUNTIME_OK:RUNTIME_MALFORMED;
+    }
+#endif
     const struct mw_controller_write_policy *p = started && d ? row_for(d->controller_sha256, d->module, d->image_bytes) : 0;
     if (!p) return RUNTIME_CONFLICT;
     return engine_shape(d, p->identity.feature) ? RUNTIME_OK : RUNTIME_MALFORMED;
@@ -987,8 +1029,14 @@ int modwerk_machine_dsp_engine_admit(const struct runtime_dsp *d)
  * buffer never goes where the tap may still write). */
 unsigned modwerk_controller_held(void)
 {
-    unsigned features = slot_features();
+    unsigned features = slot_features()|tp_held();
     if (kb_wanted || (KEYBUS_IMPLIED(features)) || ((mask[0] | mask[1]) & KEYBUS) || (started && mask_known != 3u) ||
         ((kb_dirty[0] || kb_dirty[1]) && !closed)) features |= KEYBUS; /* until its seed is scrubbed */
     return features;
 }
+
+#include "track_control.inc"
+
+#ifdef MODWERK_RESIDENT_ON_DEMAND
+#include "processor_board.inc"
+#endif

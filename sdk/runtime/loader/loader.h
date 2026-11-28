@@ -7,6 +7,10 @@
 #include <stdint.h>
 #include "upload.h"
 #include "modwerk_module.h"
+/* Machines may reserve a disjoint namespace for Base-owned transport jobs. */
+#ifndef RUNTIME_OWNER_GENERATION_LIMIT
+#define RUNTIME_OWNER_GENERATION_LIMIT UINT32_MAX
+#endif
 #define RUNTIME_ABI 10u
 #define RUNTIME_GROUP_METADATA 4u       /* ABI8 MWMG prefix; machine must explicitly admit its lifetime */
 #define RUNTIME_CAPABILITY_FLAGS 7u     /* CF sites, hash-backed stock copies, authored constant fills; and 128, site events, when the machine has them (64 is the volatile journal) */
@@ -144,6 +148,8 @@ int modwerk_runtime_owner_held(const struct runtime_owner *,unsigned *hint);
  * journal switch); odd while one is under way. A result derived from owners while it was even and unchanged still
  * holds, apart from each owner's own header, which modwerk_runtime_owner_held checks. */
 uint32_t modwerk_runtime_owner_epoch(void);
+/* Stable lock held. Changes only when this image is actually republished. */
+uint32_t modwerk_runtime_publication(uintptr_t image);
 /* Why the last package was refused, for diagnostics and the unit's own message. */
 enum runtime_refusal { RUNTIME_OK, RUNTIME_MALFORMED, RUNTIME_MEMORY, RUNTIME_CONFLICT, RUNTIME_FULL, RUNTIME_BUSY, RUNTIME_CYCLES,
                        RUNTIME_IN_USE /* a track runs the effect it would replace or remove */,
@@ -172,6 +178,7 @@ extern const struct mu_backend modwerk_runtime_backend;
  * uses the production module admission/switches and retains every predecessor
  * through trial. Publish may return MU_PUBLISHING_MORE; never implicit Keep. */
 int modwerk_runtime_set_busy(void);
+int modwerk_runtime_set_trial_ready(void);
 #ifdef MODWERK_RUNTIME_SETS
 extern const struct mu_backend modwerk_runtime_set_backend;
 int modwerk_runtime_handle_reserved(uint32_t module, unsigned handle);
@@ -283,5 +290,9 @@ int modwerk_machine_dsp_claims_admit(unsigned requires, const struct runtime_dsp
 /* ABI 10, locked, at admission, in place of the claims' check: may this engine take its hook sites and its claims (a
  * runtime_refusal)? `d` holds its counts, claims and entries; its words are not yet kept. Weak: refuses every engine. */
 int modwerk_machine_dsp_engine_admit(const struct runtime_dsp *d);
+/* Stable lock. Encoded words/relocations are already bounded by the parser.
+ * A machine may materialize native scratch for its predicate and PREPARE;
+ * these pointers are replaced with owned pool words before publication. */
+int modwerk_machine_dsp_engine_data_admit(struct runtime_dsp *,const uint8_t *words,const uint8_t *relocations);
 void modwerk_machine_dsp_switch(const struct runtime_dsp *from, const struct runtime_dsp *to);
 #endif

@@ -158,7 +158,7 @@ def pack(main, layout, symbols, load, pack_section):
     if decode(section, words, run_load, start + UNCACHED) != plain:
         raise ValueError('The packed .run does not decode to the linked one.')
     return bytes(main[:at]) + section, dict(
-        format='section (sdk/firmware_codec aplib.pack_section)', decoder='run_unpack.s', decoderSha256=ASM_SHA256,
+        format='section (firmware_codec aplib format)', decoder='run_unpack.s', decoderSha256=ASM_SHA256,
         plainBytes=len(plain), plainSha256=hashlib.sha256(plain).hexdigest(),
         packedBytes=len(section), packedSha256=hashlib.sha256(section).hexdigest(), savedBytes=len(plain) - len(section))
 
@@ -167,3 +167,74 @@ def unpack(main, layout, symbols, load):
     """The plain image a boot of the packed MAIN runs: the section at run_load as run_unpack.s decodes it."""
     at, run_load, words, start = _layout(layout, symbols, load)
     return bytes(main[:at]) + decode(main[at:], words, run_load, start + UNCACHED)
+
+
+def pack_section_compact(data):
+    """Base .run only: bounded lookahead in the SAME stream format, never larger than aplib.pack_section.
+
+    Record the ordinary greedy match at every byte, then choose literals/matches
+    backwards by their encoded bit cost. At most 45 lengths are considered per
+    byte: 3..32, the longest match and the gamma-length boundaries. The device
+    decoder and the normal firmware/module packer's output stay unchanged.
+    """
+    from array import array
+    import struct
+    from firmware_codec import aplib
+    data = bytes(data)
+    baseline = aplib.pack_section(data)
+    n = len(data)
+    lengths, offsets = array('H', [0]) * n, array('I', [0]) * n
+    table = {}
+    for i in range(n - 3):
+        key = data[i:i + 3]
+        seen = table.get(key)
+        best = off = 0
+        if seen:
+            limit = min(aplib.MAXCOUNT, n - i)
+            for j in reversed(seen[-aplib.WINDOW:]):
+                d = i - j
+                if d > aplib.MAXOFF:
+                    break
+                t = max(best, aplib.MIN - 1 + (d > aplib.FARLIMIT))
+                if t >= limit or data[j + t] != data[i + t] or data[j + 3:j + t] != data[i + 3:i + t]:
+                    continue
+                best, off = aplib._common(data, i, j, t + 1, limit), d
+                if best >= aplib.EARLY:
+                    break
+        if seen is None:
+            table[key] = [i]
+        else:
+            seen.append(i)
+            if len(seen) > 4 * aplib.WINDOW:
+                del seen[:-aplib.WINDOW]
+        lengths[i], offsets[i] = best, off
+    cost, take = array('I', [0]) * (n + 1), array('H', [0]) * n
+    for i in range(n - 1, -1, -1):
+        best = 9 + cost[i + 1]  # one tag bit and a literal byte
+        length, off = lengths[i], offsets[i]
+        if length:
+            far = off > aplib.FARLIMIT
+            head = 11 + 2 * (((off + aplib.BIAS) >> 8).bit_length() - 1)
+            candidates = list(range(aplib.MIN + far, min(length, 32) + 1)) + [length]
+            for power in range(5, 12):
+                edge = (1 << power) + 3 + far
+                candidates.extend(k for k in (edge - 1, edge) if aplib.MIN + far <= k <= length)
+            for k in candidates:
+                coded = k - 1 - far
+                bits = head + (2 * ((coded - 2).bit_length() - 1) if coded > 3 else 0)
+                candidate = bits + cost[i + k]
+                if candidate < best:
+                    best, take[i] = candidate, k
+        cost[i] = best
+    stream, i = aplib._Stream(), 0
+    while i < n:
+        count = take[i]
+        if count:
+            stream.match(offsets[i], count)
+            i += count
+        else:
+            stream.literal(data[i])
+            i += 1
+    packed = stream.end()
+    compact = struct.pack('>II', len(packed), sum(packed) & 0xFFFFFFFF) + packed
+    return compact if len(compact) < len(baseline) else baseline

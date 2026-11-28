@@ -3,6 +3,19 @@
 #include "publication.h"
 #include "selection.h"
 #include "transfer.h"
+#ifdef MODWERK_RESIDENT_STOCK_HOOKS
+/* Resident builds must link the reservation gate. Other loader variants have
+ * no returning processor and keep their original admission behavior. */
+extern int modwerk_dsp_track_target(const uint8_t *);
+#else
+static int modwerk_dsp_track_target(const uint8_t *ids) { (void)ids; return 1; }
+#endif
+static int track_ready(const uint8_t *ids)
+{ return modwerk_dsp_track_target(ids) && dl_publication_ready(ids); }
+static unsigned track_waited;
+#ifndef DL_NATIVE_TEST
+static unsigned immediate_track_waited;
+#endif
 static uint32_t serial=0x40000000u,token=0;
 static volatile unsigned pending=0,bank=0,pattern=0,deferred=0;
 static volatile uint32_t missed=0;
@@ -48,7 +61,7 @@ unsigned dl_pattern_boundary(void) {
     uint8_t target[16],source[8];
     unsigned b=BYTE(0x800065bfu),p=BYTE(0x800065c0u);
     if(b>=16 || p>=16) return 1; /* Stock's no-next-pattern sentinel. */
-    if(capture(b,p,target,source) && dl_publication_ready(target)) return 1;
+    if(capture(b,p,target,source) && track_ready(target)) return 1;
     /* Keep the current pattern running. The UI remembers the requested target
      * before replacing the queued pair and requeues it after preparation. */
     missed=0x10000u|(b<<8)|p;
@@ -84,7 +97,7 @@ unsigned dl_pattern_request_guard(const uint32_t *args) {
     unsigned pass=*(volatile uint32_t *)0x800065b8u==1 || args[1]==0xffffffffu;
     if(!pass) {
         if(!capture(args[0],args[1],target,src)) { fail(DL_SELECT_UNAVAILABLE);return 0; }
-        pass=dl_publication_ready(target);
+        pass=track_ready(target);
     }
     if(pass) {
         /* A newer already-resident/queued request supersedes a deferred one;
@@ -110,7 +123,7 @@ unsigned dl_chain_stop_guard(void) {
                       0,0xffffffffu,0};
     if(!dl_residency_enabled) return 1;
     unsigned known=capture(args[0],args[1],target,src);
-    if(known && dl_publication_ready(target)) return 1;
+    if(known && track_ready(target)) return 1;
     ++dl_chain_deferred;
     if(!known || project_active()) { fail(DL_SELECT_UNAVAILABLE);return 0; }
     immediate_request(args,0,1);return 0;
@@ -153,7 +166,7 @@ static unsigned immediate_tick(void) {
         immediate_saved_kind=immediate_kind;immediate_saved_next=immediate_next;
         unsigned pass=immediate_passthrough;
         if(version!=immediate_version)return 1;
-        immediate_seen=version;immediate_pending=pass ? 0:1;
+        immediate_seen=version;immediate_pending=pass ? 0:1;immediate_track_waited=0;
         if(pass)return 1;
     }
     if(!immediate_pending)return 0;
@@ -170,6 +183,7 @@ static unsigned immediate_tick(void) {
     if(!capture(immediate_saved[0],immediate_saved[1],target,src)) {
         dl_selection_cancel(immediate_token);immediate_pending=0;fail(DL_SELECT_UNAVAILABLE);return 1;
     }
+    if(!modwerk_dsp_track_target(target)){immediate_track_waited=1;return 1;}
     if(immediate_pending==1) {
         extern int dl_publication_idle(void);
         if(!dl_publication_idle())return 1;
@@ -188,7 +202,9 @@ static unsigned immediate_tick(void) {
     int r=dl_publication_poll(immediate_token);
     if(r==DL_SELECT_WAIT)return 1;
     if(r!=DL_SELECT_READY) {
-        dl_selection_cancel(immediate_token);immediate_pending=0;fail(r);return 1;
+        dl_selection_cancel(immediate_token);
+        if(immediate_track_waited){immediate_pending=1;return 1;}
+        immediate_pending=0;fail(r);return 1;
     }
     if(version!=immediate_version)return 1;
     dl_publication_arm(immediate_token);++dl_publication_prepared;
@@ -218,11 +234,14 @@ void dl_publication_tick(void) {
         for(unsigned i=0;i<16;++i) if(now[i]!=ids[i]) equal=0;
         for(unsigned i=0;i<8;++i) if(src[i]!=sources[i]) equal=0;
         if(!equal) { dl_selection_cancel(token);pending=0;return; }
+        if(!modwerk_dsp_track_target(ids)){track_waited=1;return;}
         if(pending==2) { if(live_b==bank && live_p==pattern) pending=0;return; }
         int r=dl_publication_poll(token);
         if(r==DL_SELECT_WAIT) return;
         if(r!=DL_SELECT_READY) {
-            dl_selection_cancel(token);fail(r);hold_current();missed=0;pending=0;return;
+            dl_selection_cancel(token);
+            if(track_waited){missed=0x10000u|(bank<<8)|pattern;hold_current();pending=0;return;}
+            fail(r);hold_current();missed=0;pending=0;return;
         }
         dl_publication_arm(token);++dl_publication_prepared;pending=2;
         if(deferred) { missed=0;requeue(bank,pattern); }
@@ -233,7 +252,8 @@ void dl_publication_tick(void) {
     else if(missed) missed=0;
     if(b>=16 || p>=16 || (b==live_b && p==live_p)) return;
     if(!capture(b,p,ids,sources)) { fail(DL_SELECT_UNAVAILABLE);hold_current();missed=0;return; }
-    bank=b;pattern=p;deferred=retry;
+    if(!modwerk_dsp_track_target(ids))return; /* retain queued/missed intent */
+    bank=b;pattern=p;deferred=retry;track_waited=0;
     if(++serial==0) serial=0x40000001u;
     token=serial;
     int r=dl_publication_prepare(ids,sources,token);
@@ -289,6 +309,7 @@ static unsigned project_tick(void) {
     if(immediate_pending) {
         dl_selection_cancel(immediate_token);immediate_pending=0;immediate_seen=immediate_version;
     }
+    if(!modwerk_dsp_track_target(0))return 1;
     if(project_pending==1) {
         dl_selection_cancel(immediate_token);
         dl_selection_cancel(token);
