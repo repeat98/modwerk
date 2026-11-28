@@ -5,6 +5,8 @@
 // run on a zero image, and the layout and relocations run with the sites set aside (their stock bytes are unknown).
 // npm run digi:link-all (scripts/digi-link-all.ts) prints the summary.
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import CATALOG_JSON from '../../../vendor/elekloader/catalog/catalog.json' with { type: 'json' }
 import { cmpVersion, parseCatalog, planBuild, type Catalog, type CatalogMod, type Pin } from '../elektron/builder-catalog.ts'
 import { sha } from '../elektron/bytes.ts'
@@ -96,12 +98,26 @@ export function loadPackage(path: string | URL, name = String(path).split('/').p
   return new Mod2(readJson(raw, name) as Record<string, Loose>, name, raw)
 }
 
-export type Options = { machine: Machine; core?: string; os?: string; pairs?: boolean; stock?: Record<string, Uint8Array>; catalog?: Catalog }
+export type Options = { machine: Machine; core?: string; os?: string; pairs?: boolean; stock?: Record<string, Uint8Array>; catalog?: Catalog; packages?: string[] }
+
+/** The catalogue with each given package file in place of the catalogue's packages of its id, device and OS (a base's
+ * companions, such as the Digitakt base's code-free machine-pages, before they are in the catalogue). */
+export function withPackages(catalog: Catalog, paths: readonly string[]): Catalog {
+  const pins = paths.map(path => {
+    const m = loadPackage(path), doc = m.doc as Record<string, unknown>
+    const pin: CatalogMod = { file: pathToFileURL(resolve(path)).href, sha256: m.sha256!, id: m.id, version: m.version, device: m.dev.key, os: m.rel.version,
+      license: String(doc.license), source: { repo: 'repeat98/modwerk', commit: '0'.repeat(40), path: 'local' }, title: String(doc.title),
+      requires: m.requires, conflicts: m.conflicts, ...(m.needsCore ? { needs_core: m.needsCore } : {}) }
+    return pin
+  })
+  const replaced = (p: Pin) => pins.some(q => q.id === p.id && q.device === p.device && q.os === p.os)
+  return { ...catalog, mods: [...catalog.mods.filter(m => !replaced(m)), ...pins] }
+}
 
 /** The run: per OS, every module alone and, with pairs, every pair the metadata allows. */
 export function linkAll(options: Options): Result {
   const dev: Device = MACHINES[options.machine]
-  const catalog = options.catalog ?? parseCatalog(CATALOG_JSON)
+  const catalog = withPackages(options.catalog ?? parseCatalog(CATALOG_JSON), options.packages ?? [])
   const loaded = new Map<string, Mod2>()
   const load = (pin: Pin) => {
     if (!loaded.has(pin.file)) {
