@@ -6,7 +6,7 @@
   "changes": [
     "First release. FUNC + SMPL picks the sample's engine for each sound: SAMPLER (stock) or TRANSIENT, a punch or soft attack, a decay, a band and a shift for the sample alone, before its DAC."
   ],
-  "runtimeSourceSha256": "598bc73425496ab96fcb7c84a066bbc379de34379cc0e00ffe7f427c9cf93638",
+  "runtimeSourceSha256": "8331f37ab829f6eadf969d8a287aa04101ddd82529c684c6b5ef8c0fb2c3ca5b",
   "packages": [
     {
       "os": "1.74",
