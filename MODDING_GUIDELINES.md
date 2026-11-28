@@ -9,7 +9,7 @@ These rules cover Modwerk modules, machine ports and research, including what an
 ## Never share firmware
 
 - **Never upload, post, send or link a maker's firmware.** That means OS, update and SysEx files, code or tables taken from them, memory dumps, disassembly listings and built images that contain any of these. It includes leaked or decrypted firmware that someone else has published.
-- **Everyone works from their own official download.** Modwerk builds firmware on the user's own computer from the OS file they supply, and refers to stock code only by address, length and checksum.
+- **Everyone works from their own official download.** Modwerk builds firmware on the user's own computer from the OS file they supply, and refers to stock code only by address, length and checksum. The one exception is Modwerk's own: where the maker agreed, it hosts its prebuilt base for that maker's instruments, so the base installs without an OS file.
 - Share hashes, file layouts, addresses, notes and your own code instead.
 
 ## Respect the makers

@@ -46,6 +46,12 @@
     {
       "binding": "MEDIA",
       "bucket_name": "modwerk-forum-media"
+    },
+    // Hosted base images (docs/HOSTED_BASES.md): only the owner writes here, with scripts/base-publish.mjs.
+    // Create it once with `npx wrangler r2 bucket create modwerk-base-images`.
+    {
+      "binding": "BASES",
+      "bucket_name": "modwerk-base-images"
     }
   ],
   // One relay per remote debug session (server/remote-relay.ts); the site's Pages Functions have none and answer 503.

@@ -1,22 +1,19 @@
 import { inspectBaseFirmware } from './base'
 import { decodeFirmware } from './elek'
 import { recoverStockDsp } from './stock-dsp'
-import { buildBase, type BaseFill } from './elekloader/octatrack-base'
+import { buildPublishedBase } from './elekloader/published-base'
 // A file of its own, fetched when a base is built: the worker bundle inlines imports, and the package is 600 KB.
 import currentPackage from './assets/octatrack-base.elemod?url'
 import linkedPackage from './assets/linked-audio-0.7.11/octatrack-base.elemod?url'
 import { USB_AUDIO_PACKAGED } from '../config/usb-audio'
 import currentVariants from './assets/octatrack-base-variants.json?url'
 import linkedVariants from './assets/linked-audio-0.7.11/octatrack-base-variants.json?url'
-import { DEFAULT_LAYOUT, MEMBER_LAYOUT, variantPackage, type BaseVariants } from './elekloader/base-variants'
 import currentFills from './assets/octatrack-base-fills.json'
 import linkedFills from './assets/linked-audio-0.7.11/octatrack-base-fills.json'
 // The step base (base-step.ts), fetched only by an update that needs it.
 import stepPackage from './assets/octatrack-base-step.elemod?url'
 import stepVariants from './assets/octatrack-base-step-variants.json?url'
 import stepFills from './assets/octatrack-base-step-fills.json?url'
-import { STEP_ASSETS, STEP_DEFAULT_LAYOUT, STEP_IDENTITIES } from './elekloader/base-step'
-import { sha } from './elektron/bytes.ts'
 import type { EngineRequest, EngineResponse } from './protocol'
 const basePackage = USB_AUDIO_PACKAGED ? currentPackage : linkedPackage
 const baseVariants = USB_AUDIO_PACKAGED ? currentVariants : linkedVariants
@@ -38,28 +35,14 @@ export function createEngineSession(reply: (response: EngineResponse, transfer?:
       if (request.type === 'base') {
         const original = stock, current = generation
         if (!original) throw new Error('Choose and verify your OS 1.40C file first.')
-        // Another USB Audio layout is the default package with its reviewed patch (base-variants.ts). Without a layout
-        // from a module set, a member gets MEMBER_LAYOUT: USB MIDI alone. The step base is built the same way from
-        // its own three assets, each checked against its pin.
-        const step = request.step === true
-        const layout = !step && USB_AUDIO_PACKAGED ? MEMBER_LAYOUT : request.layout ?? MEMBER_LAYOUT
-        const asset = async (url: string, pin: string | undefined, what: string) => {
-          const response = await fetch(url)
-          if (!response.ok) throw new Error(what + ' did not load. Reload the page and try again.')
-          const text = await response.text()
-          if (pin !== undefined && sha(new TextEncoder().encode(text)) !== pin) throw new Error(what + ' is damaged. Reload the page and try again.')
-          return text
-        }
-        let text = await asset(step ? stepPackage : basePackage, step ? STEP_ASSETS.package : undefined, 'The base package')
-        let fills = step ? JSON.parse(await asset(stepFills, STEP_ASSETS.fills, 'The base package')) as BaseFill[] : baseFills as BaseFill[]
-        if (layout !== (step ? STEP_DEFAULT_LAYOUT : DEFAULT_LAYOUT)) {
-          const layouts = JSON.parse(await asset(step ? stepVariants : baseVariants, step ? STEP_ASSETS.variants : undefined, 'The base layouts')) as BaseVariants
-          const variant = step ? variantPackage(text, layouts, layout, { defaultLayout: STEP_DEFAULT_LAYOUT, identity: item => STEP_IDENTITIES[item] }) : variantPackage(text, layouts, layout)
-          if (variant) ({ text, fills } = variant)
-        }
-        const built = await buildBase(original, text, fills)
+        const urls = request.step === true ? { package: stepPackage, variants: stepVariants, fills: stepFills } : { package: basePackage, variants: baseVariants, fills: '' }
+        const built = await buildPublishedBase(original, async (name, step) => {
+          if (name === 'fills' && !step) return JSON.stringify(baseFills)
+          const response = await fetch(urls[name])
+          if (!response.ok) throw new Error((name === 'variants' ? 'The base layouts' : 'The base package') + ' did not load. Reload the page and try again.')
+          return response.text()
+        }, request.layout, request.step === true)
         if (current !== generation) throw new Error('The selected firmware changed. Build again.')
-        if (step && built.base !== STEP_IDENTITIES[layout]) throw new Error('The step base did not build as published. Reload the page and try again.')
         const buffer = built.bin.slice().buffer
         reply({ id: request.id, type: 'base', buffer, sha256: built.sha256, base: built.base }, [buffer]); return
       }

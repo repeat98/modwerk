@@ -179,7 +179,7 @@ const octatrack: FaqSection[] = [
         title: 'Where do I get the original OS file?',
         keywords: 'download base original stock official elektron os 1.40c bin syx zip extract',
         answer: <>
-          <p>From Elektron. Download <OfficialLink href={OFFICIAL_OS}>the original OS {OS} archive</OfficialLink>, unzip it and choose <code>{BASE_FIRMWARE.filename}</code> when the install guide asks for it. Choose the .bin, not the ZIP or the .syx.</p>
+          <p>From Elektron. Download <OfficialLink href={OFFICIAL_OS}>the original OS {OS} archive</OfficialLink>, unzip it and choose <code>{BASE_FIRMWARE.filename}</code> when the install guide asks for it. Choose the .bin, not the ZIP or the .syx. When the guide says Modwerk’s prebuilt base is ready, you need no OS file at all.</p>
           <p>It has to be exactly this version, even if Elektron releases a newer one. Modwerk verifies the file: a renamed, modified or different OS can’t be used. Don’t take a firmware file from another person.</p>
         </>,
       },
