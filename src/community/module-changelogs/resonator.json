@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "Moving MIX no longer crackles: turning it, the crossfader or an LFO on it now glides smoothly, also between 0 and 40, where the ring fades in steeply.",
+      "The sound at a still MIX is unchanged, and MIX 0 still passes your track untouched."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-24",
     "changes": [

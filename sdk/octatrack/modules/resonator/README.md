@@ -71,5 +71,5 @@ Each partial is a coupled-form resonator: a rotation by its pitch's angle, scale
 ## Develop
 
 - Check it: `python3 sdk/octatrack/modules/resonator/verify.py` (the render gate) and `npm run module:doctor -- resonator`.
-- Hear it: `npm run module:dev -- resonator --cycles 256 --cycles-kind executed --state 89` builds it and tries it on your unit over USB.
+- Hear it: `npm run module:dev -- resonator --cycles 256 --cycles-kind executed --state 91` builds it and tries it on your unit over USB.
 - The tables come from `tables.py`; the DSP is `resonator.asm`. Read the traps in sdk/octabam/AGENTS.md before changing it.

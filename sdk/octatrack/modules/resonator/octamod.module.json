@@ -3,7 +3,7 @@
   "id": "resonator",
   "key": "RESONATOR",
   "name": "Resonator",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "category": "effects",
   "author": {
     "github": "repeat98",
@@ -272,20 +272,20 @@
     "recorded": "2026-11-24",
     "storage": {
       "label": "DSP program / state",
-      "display": "1,511 words / 89-word state",
+      "display": "1,540 words / 91-word state",
       "value": null,
       "unit": "see display",
       "method": "static",
-      "conditions": "1,511 assembled program words on each DSP core (844 code, 667 table), placed in the space of SPRING REV and PLATE REV with 146 words to spare; 89 words of the 256-word X block per instance; no buffer and no Y memory.",
+      "conditions": "1,540 assembled program words on each DSP core (873 code, 667 table), placed in the space of SPRING REV and PLATE REV with 117 words to spare; 91 words of the 256-word X block per instance; no buffer and no Y memory.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "DSP instruction peak",
-      "display": "248 instructions/sample per instance",
+      "display": "255 instructions/sample per instance",
       "value": null,
       "unit": "see display",
       "method": "emulator",
-      "conditions": "benchmark_stock_dsp.py's method (one instance per core, 16-sample blocks, null stub subtracted) with the stock effects run through the same 106 cases: worst case 247.8 with a trig split (246.6 unsplit), against 314.2 for SPRING REV. Static loop count 225 cycles/sample. Executed instructions, not chip cycles.",
+      "conditions": "benchmark_stock_dsp.py's method (one instance per core, 16-sample blocks, null stub subtracted) with the stock effects run through the same 106 cases: worst case 254.8 with a trig split (253.6 unsplit), against 314.2 for SPRING REV. Static loop count 232 cycles/sample. Executed instructions, not chip cycles.",
       "source": "TESTING.md"
     },
     "cpuPrice": {
@@ -308,13 +308,13 @@
       "dsp": {
         "level": "moderate",
         "basis": "measured-comparison",
-        "rationale": "247.8 executed instructions/sample worst case with trig splits, against 314.2 for SPRING REV and 330.9 for DJ EQ (the dearest stock effect) under the same cases: 0.79 of SPRING REV. The static bound for four per core is 22,072 of 49,920 modeled cycles per 16-frame block. Chip timing is unmeasured.",
+        "rationale": "254.8 executed instructions/sample worst case with trig splits, against 314.2 for SPRING REV and 330.9 for DJ EQ (the dearest stock effect) under the same cases: 0.81 of SPRING REV. The static bound for four per core is 22,696 of 49,920 modeled cycles per 16-frame block. Chip timing is unmeasured.",
         "source": "TESTING.md"
       },
       "memory": {
         "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "1,511 program words per core in two given-up stock reverbs' space, 89 used words of the 256-word X block per instance, no buffer: 768 bytes per instance, 11,006 shared.",
+        "rationale": "1,540 program words per core in two given-up stock reverbs' space, 91 used words of the 256-word X block per instance, no buffer: 768 bytes per instance, 11,180 shared.",
         "source": "TESTING.md"
       }
     }

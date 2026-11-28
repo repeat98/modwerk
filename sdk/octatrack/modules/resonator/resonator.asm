@@ -26,10 +26,14 @@
 ;
 ; Input: (L+R)/8 through the TONE one-pole: low-pass below 64, flat at 64,
 ; high-pass above. Output: modes 0 and 1 centre, 2/4/6 left, 3/5/7 right,
-; mixed at constant power: dry (1 - MIX)^2, ring sqrt(1 - dry^2).
+; mixed at constant power: dry (1 - MIX)^2, ring sqrt(1 - dry^2). The
+; ring's gain glides 1/64 a sample (1.45 ms) toward MIX's: near MIX 0 it
+; rises steeply (0 to -15 dB in MIX's first step), so a moving MIX, by
+; hand, fader or LFO, stepped it audibly at every block's edge (#2173).
+; The dry's steps are at most 0.14 dB and stay exact.
 ; Every product uses an operand pair dsp_asm encodes as signed mpy/mac.
 ;
-; r7 block, 89 words ($00-$58), all zeroed by init:
+; r7 block, 91 words ($00-$5a), all zeroed by init:
 ;   mode m at 7m: C, S, ul, vl, uh, vh, G      ($00-$37)
 ;   $38/$3f right sum (low, high)  $39 wet gain  $3a ring's mix gain  $3b tone state
 ;   $3c tone k  $3d low-pass weight  $3e direct weight  $40 mode counter
@@ -38,14 +42,15 @@
 ;   $4c the dry's mix gain minus 1 $4d sin $4e cos $4f note
 ;   (also rzlerp's index) $50 mode $51 voice $52 partial $53 type row
 ;   $54 voice row $55 partial ratio $56 partial level $57 voice theta
-;   $58 exciter (read through r3)
+;   $58 exciter (read through r3)  $59 ring's mix target  $5a nonzero once
+;   the first block has set the mix
 ; P table (tables.py OFF): NOTE 0 (note 127 first), COL 24, R 152, G 185, SEMI 218, CRATIO 274,
 ; TRATIO 330, TAMP 386, VJ 442, TONEK 474, SNAP 508, KERNEL 628, WMIX 634.
 init:
         clr     a
         move    r7,r5
         move    #>$ffffff,m5
-        do      #>89,>rzwipe
+        do      #>91,>rzwipe
         move    a,x:(r5)+
 rzwipe:
         nop
@@ -105,7 +110,7 @@ rztdone:
         move    a1,x:(r7+$4f)
         move    #>634,x0
         bsr     rzlerp
-        move    a,x:(r7+$3a)
+        move    a,x:(r7+$59)
         move    y1,x0
         mpy     x0,x0,b
         move    x0,a
@@ -117,6 +122,24 @@ rztdone:
         move    #>$800000,y0
         teq     y0,b
         move    b,x:(r7+$4c)
+; The ring's gain snaps onto its target within 64 LSB, so MIX at rest is
+; exact (MIX 0 passes the dry bit for bit); the first block after init
+; starts on it.
+        move    x:(r7+$59),a
+        move    x:(r7+$3a),x0
+        sub     x0,a
+        abs     a
+        move    #>64,x0
+        cmp     x0,a
+        move    x:(r7+$3a),b
+        move    x:(r7+$59),y0
+        tlt     y0,b
+        move    x:(r7+$5a),a
+        tst     a
+        teq     y0,b
+        move    b1,x:(r7+$3a)
+        move    #>1,x0
+        move    x0,x:(r7+$5a)
         move    x:(r6+$0),a
         and     #>$7f0000,a
         asr     #$10,a,a
@@ -560,6 +583,13 @@ rzaudio:
         mac     y1,x1,b
         move    b,x:(r7+$3f)
         move    b0,x:(r7+$38)
+; the ring's gain glides 1/64 toward its target
+        move    x:(r7+$59),b
+        move    x:(r7+$3a),x1
+        sub     x1,b
+        asr     #6,b,b
+        add     x1,b
+        move    b1,x:(r7+$3a)
 ; ---- left: gain x256 in two limited steps of x16 (the accumulator keeps its
 ; eight guard bits), soft clip, then out = dry + ring*wet + (d - 1)*dry.
         asl     #$4,a,a
