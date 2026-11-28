@@ -60,32 +60,29 @@ Release-base window proof for **0.2.0** is the 28 November row above.
 
 ### CPU price with pattern playing and SCOPE open
 
-Catalog `resources.cpuPrice` comes from `npm run device:price -- scope
---write`. For SCOPE, take the reading while the pattern plays and the SCOPE
-window stays open (`ev_usb_frame` runs every block in that state). The tool
-labels it "at rest" (no effect slot), but you open the window by hand.
+**28 November 2026, MKII, development twin `4c7eb79b844c8139…`** (RAM-booted from
+`twin-dev-1014`, same 0.8.1 beta family as release base `eb667962`). Package
+`f8a1ffeb`, pattern playing.
+
+| State | How | Frame interrupt add | Record |
+| --- | --- | --- | --- |
+| Window **closed**, installed | `npm run device:price -- scope --write` (default path) | **+0.2** % | `evidence/cpu-price.json` (catalog `resources.cpuPrice`) |
+| Window **open** (DOWN+0x18 TEMPO held through readings) | same command; open by hand or `device do keys DOWN+24` while readings run | **+1.1** % | `evidence/cpu-price-open.json` |
+
+`device:price` needs a `--dev` twin (`guard` / `stats`). Release base
+`eb667962` on USB does not answer those requests; the open-window row was taken
+on twin `4c7eb79b` with the same catalog package bytes.
+
+Unset `MODWERK_DEV_SOCKET` if an old procedure left it in the shell:
 
 ```sh
-# Development twin or release base; USB connected; pattern B02 (or your medium pattern) selected and playing.
-npm run device -- serve --share /tmp/modwerk-share.sock
-# Unset a stale MODWERK_DEV_SOCKET if an old procedure left one in the shell.
 env -u MODWERK_DEV_SOCKET MODWERK_SHARE_SOCKET=/tmp/modwerk-share.sock \
   npm run device:price -- scope --write \
-  --base eb6679620d0c9ed7 \
-  --scene 'MKII, release base eb667962, bank B B02 playing, SCOPE window open (DOWN+TEMPO)' \
+  --base 4c7eb79b844c8139 \
+  --scene 'MKII, dev twin, pattern playing, SCOPE window open (DOWN+0x18 TEMPO)' \
   --share /tmp/modwerk-share.sock \
   public/octatrack-modules/scope/0.2.0-experimental.mwrm
 ```
-
-When the trial starts and the tool waits for readings, hold **DOWN** and press
-**TEMPO** so OSC shows a live trace. Keep the window open through each 8 s
-PLAY window (three readings by default). Close SCOPE only after the trial rolls
-back.
-
-The earlier `evidence/cpu-price.json` from test-procedure step 9 on base
-`311bb670` used the same transport-playing path with the window **closed**;
-its `scene` wrongly said transport stopped. Do not cite that row for the
-open-window catalog price.
 
 The procedure in `/private/tmp/scope-procedure-scope-020-20261127-2` tested
 SCOPE 0.2.0-experimental package SHA-256

@@ -82,7 +82,7 @@
       "Hold DOWN before TEMPO. Pressing TEMPO alone opens the stock tempo window.",
       "XY uses a hotter vertical scale than OSC. Clip ! appears only when the recent peak reaches 0 dBFS.",
       "DRAM unit: on a card build without another DRAM module, choosing SCOPE creates the platform DRAM reserve from Flex sample RAM (same class of cost as Tuner).",
-      "Catalog CPU price is the frame-interrupt share with the pattern playing and SCOPE's window open (see evidence/cpu-price.json and TESTING.md)."
+      "Catalog CPU price +0.2 % frame at rest (window closed, pattern playing). With the window open, +1.1 % on twin 4c7eb79b (evidence/cpu-price-open.json)."
     ]
   },
   "resources": {
@@ -110,7 +110,7 @@
       "cpu": {
         "level": "low",
         "basis": "measured-comparison",
-        "rationale": "Frame interrupt copies 16 stereo samples into a ring while open; the UI task redraws about 60 Hz. perf:audit records 602 cycles per block against a 9577 allowance. At-rest frame interrupt on base 311bb670 moved 0.1 point (evidence/cpu-price.json).",
+        "rationale": "Frame interrupt copies 16 stereo samples into a ring while open; the UI task redraws about 60 Hz. perf:audit records 602 cycles per block against a 9577 allowance. On twin 4c7eb79b: +0.2 % frame with the window closed (cpu-price.json), +1.1 % with the window open (cpu-price-open.json).",
         "source": "evidence/performance.json"
       },
       "dsp": {
@@ -127,12 +127,12 @@
       }
     },
     "cpuPrice": {
-      "value": 0.1,
+      "value": 0.2,
       "unit": "percent-of-frame",
       "measure": "frame-interrupt",
       "tool": "npm run device:price -- --write",
-      "date": "2026-11-27",
-      "conditions": "311bb670 test:procedure, pattern playing, window closed during readings (+0.1 % frame). Maintainer requested open-window rerun on eb667962; see TESTING.md before merge.",
+      "date": "2026-11-28",
+      "conditions": "MKII, dev twin 4c7eb79b, pattern playing, SCOPE installed, window closed (device:price at-rest path); base 4c7eb79b844c8139; 3 readings of 8 s a state. Frame interrupt 29.1 % before, 29.3 % installed and used nowhere; CPU meter 43.9 % before, 44.2 % at rest.",
       "source": "evidence/cpu-price.json"
     }
   },
@@ -147,7 +147,7 @@
     ],
     "qualification": {
       "moduleVersion": "0.2.0-experimental",
-      "sourceSha256": "9fae62515fc509723652f9e1f05ce82bc1c623d2503b86ca29b6f7d2ec09b3c9",
+      "sourceSha256": "06deb83ddb1b176fffa57119a14a393b6000f572ec9550d88f3ae04d8ce46f8d",
       "cycles": [
         {
           "processor": "coldfire",
