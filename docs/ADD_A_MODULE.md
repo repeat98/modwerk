@@ -319,7 +319,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 
 1. **Create the folder.**
    - *Porting:* copy the module's folder from octabam at an exact commit into `sdk/octatrack/modules/<id>/`, and put the author's original files it depends on under `upstream/`. Record every copied file with its source path and SHA-256 in `sdk/imports/<id>-<short-commit>.json`; `sidechain-compressor-f80ecfe.json` is an example. Add the licence to `sdk/octabam/licenses/manifest.json`, then run `npm run licenses:generate`.
-   - *New:* `npm run module:new` creates the draft in `sdk/drafts/<id>/`. Pick a free effect ID, and replace `verify.py`, which fails on purpose until you do.
+   - *New:* `npm run module:new` creates the draft in `sdk/drafts/<id>/`. Keep its effect ID (the base assigns one), and replace `verify.py`, which fails on purpose until you do.
    - Either way, read the traps in [octabam's AGENTS.md](../sdk/octabam/AGENTS.md) before writing DSP or ColdFire code. The DSP assembler silently mis-encodes some instructions, and several of these traps assemble cleanly into the wrong machine code.
 2. **Fill in the manifest** from [the template](../public/module-repository.example.json): every control, the access steps, compatibility and conflicts. The [gauges](MODULE_RESOURCE_GAUGES.md) and [`tests.qualification`](MODULE_QUALIFICATION.md) come from the evidence (step 3).
 3. **Measure and test.**

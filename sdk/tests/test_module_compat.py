@@ -132,9 +132,17 @@ class GateTests(unittest.TestCase):
                 problems = gate.check([module('a', 0x40004100)], events=[EVENT], subscriptions={'a': [entry]})
                 self.assertTrue(any(text in p['text'] for p in problems))
 
-    def test_pinned_effect_id_collision_names_another_chooser_row(self):
-        problems = gate.check([module('a', fx=0x1e), module('b', fx=0x1e)])
-        self.assertEqual(self.routes(problems), [(('a', 'b'), 'row')])
+    def test_a_shared_preferred_effect_id_installs_since_the_base_gives_each_its_own(self):
+        self.assertEqual(gate.check([module('a', fx=0x0a), module('b', fx=0x0a)]), [])
+        self.assertEqual(gate.check([module('a', fx=0x20), module('b', fx=0x20), module('c', fx=0x7f)]), [])
+
+    def test_a_pinned_effect_id_or_a_second_replacement_of_one_stock_effect_clashes(self):
+        pinned = sorted(gate.pinned_ids())[0]  # its ColdFire code names its id: the base gives it that one or none
+        problems = gate.check([module(pinned, fx=0x0e), module('b', fx=0x0e)])
+        self.assertEqual(self.routes(problems), [(tuple(sorted((pinned, 'b'))), 'row')])
+        replace = lambda name: Module(name=name, key=name.upper(), kind=Kind.CF_PATCH, doc='synthetic',
+                                      menu=MenuEntry(0x18, 0, b'T', b'TEST', replaces='COMPRESSOR'))
+        self.assertEqual(self.routes(gate.check([replace('a'), replace('b')])), [(('a', 'b'), 'row')])
 
     def test_same_key_gesture_or_screen_clashes_unless_declared_incompatible(self):
         ui = lambda **claims: {k: dict(uiClaims=v, conflicts=[]) for k, v in claims.items()}

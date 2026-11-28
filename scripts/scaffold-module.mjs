@@ -4,7 +4,6 @@ import { createHash } from 'node:crypto'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { freeFx2Ids } from './module-list.mjs'
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),args=process.argv.slice(2),id=args[0]
 const option=(name,fallback)=>{const i=args.indexOf(name);return i<0?fallback:args[i+1]}
 const kind=option('--kind','dsp'),author=option('--author',''),output=option('--output',null)
@@ -121,9 +120,8 @@ if(!output)try{await access(resolve(root,'sdk/octatrack/modules',id));throw new 
 try{await access(destination);throw new Error('Destination exists; refusing to replace a module: '+destination)}catch(error){if(error.code!=='ENOENT')throw error}
 await mkdir(destination,{recursive:true});await mkdir(resolve(destination,'media'))
 const template=resolve(root,'sdk/templates',kind),placeholder=kind==='dsp'?'_template':'_template_cf'
-// The template's fx2_id is a placeholder; a draft takes the first id stock and the listed modules leave (module-list.mjs).
-const NO_FX2_ID='No FX2 id is left: stock and the listed modules hold 0x04-0x1f, all the build takes. The draft keeps 0x0a, which clashes; a new effect waits until the build takes ids past 0x1f (docs/OCTATRACK_MORE_EFFECT_IDS.md). Ask the owner on Discord.'
-for(const file of await readdir(template)){if(file==='manifest.py'){let source=await readFile(resolve(template,file),'utf8');source=source.replaceAll('__AUTHOR__',author).replaceAll(placeholder,id).replaceAll(kind==='dsp'?'TEMPLATE':'TEMPLATE CF',document.key).replace('abbr=b"TMPL"','abbr=b"'+document.key.replace(/[^A-Z0-9]/g,'').slice(0,4)+'"').replace('fullname=b"Template"','fullname=b"'+document.name.slice(0,12)+'"');if(kind==='dsp'){const[fx2]=freeFx2Ids(root);if(fx2)source=source.replace('fx2_id=0x0a,','fx2_id='+fx2+',');else console.error(NO_FX2_ID)}await writeFile(resolve(destination,file),source)}else await copyFile(resolve(template,file),resolve(destination,file))}
+// The template's fx2_id is only preferred: the base gives every effect its own id at install, so no draft hunts for a free one.
+for(const file of await readdir(template)){if(file==='manifest.py'){let source=await readFile(resolve(template,file),'utf8');source=source.replaceAll('__AUTHOR__',author).replaceAll(placeholder,id).replaceAll(kind==='dsp'?'TEMPLATE':'TEMPLATE CF',document.key).replace('abbr=b"TMPL"','abbr=b"'+document.key.replace(/[^A-Z0-9]/g,'').slice(0,4)+'"').replace('fullname=b"Template"','fullname=b"'+document.name.slice(0,12)+'"');await writeFile(resolve(destination,file),source)}else await copyFile(resolve(template,file),resolve(destination,file))}
 if(upstream){
   // A port's reference model, its host test and the gates on the shared harness (sdk/octatrack/tools/dsp_gate.py), over the dsp
   // template; upstream's files as they are at the pinned commit, and the import record a listing moves to sdk/imports/.

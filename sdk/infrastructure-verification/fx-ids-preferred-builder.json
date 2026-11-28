@@ -1,0 +1,28 @@
+{
+ "schemaVersion": 1,
+ "kind": "fx-ids-preferred-builder-regression",
+ "baseCommit": "a6d3f0a049a55b98ae928cbe321aa2db89e7d73c",
+ "historicalRecord": "runtime-join-builder.json",
+ "builderAdaptations": {
+  "tools/remix/schema.py": {
+   "before": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
+   "after": "bc4214eef886a33b923ec889070d08f28c0be00e7788f488ef73be30ee4faef3"
+  },
+  "tools/remix/registry.py": {
+   "before": "f3b2fbfb90b97db33e360603ccf3eb0a703913dddaad78c681b9676287ee23e5",
+   "after": "212054b60b82f6e3442f805777da927c7a3cd8490274a297b22f93d9ef254f19"
+  }
+ },
+ "builderSourcesUnchanged": {
+  "tools/build/build_bus.py": "2788f1b854704fe80925776331abe65ff70d0d637ca451e6d5e0a28332c6a6cc",
+  "tools/remix/ledger.py": "73407d159a965671da2255aef5864bd0c745dfa2a600575918f48c40fc170f83"
+ },
+ "scope": "An effect's fx2_id is the id it prefers; the Modwerk base gives each effect its own at install (owner, 28 November 2026; docs/OCTATRACK_FX_TABLE_HOOK.md, tools). schema.py's MenuEntry drops its 0x1f upper bound (0x00-0x03 stay refused), registry.modules() refuses a shared id only on a stock effect's (two replacements), and registry.remix() refuses a card remix holding an id past 0x1f (registry.card_ids), since a card image writes stock's 32-entry id tables; two modules on one id in one card remix stay refused by ledger.check, unchanged. Validation only: build_bus.py and ledger.py are unchanged, and registry.modules() under the base commit's two files and under these, in one copy of this commit's sdk/octabam, returns the same 67 declarations (repr with object addresses removed, identical SHA-256 below), the highest fx2_id 0x1f, so card_ids refuses none of them. Every card selection therefore composes from identical inputs through an identical builder. No card image was built and no hardware result is inferred.",
+ "declarations": {
+  "count": 67,
+  "beforeSha256": "0ce9ed55fea21cb2a9a49e1586aabc87bd862646072b5acd56d7b62a15e593c5",
+  "afterSha256": "0ce9ed55fea21cb2a9a49e1586aabc87bd862646072b5acd56d7b62a15e593c5",
+  "highestFx2Id": 31,
+  "cardRefusals": []
+ }
+}

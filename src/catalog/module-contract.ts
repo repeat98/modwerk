@@ -2,6 +2,8 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { compareModuleVersions } from './versions.ts'
 import { parseModuleContributors, type ModuleContributor } from './module-authors.ts'
+// The base's effect ids (FX1 and FX2 alike): a module's effectId is only the one it prefers, and the base gives it its own at install.
+import octatrackFxIds from '../../sdk/machines/octatrack/elekloader/fx-ids.json' with { type: 'json' }
 // Shared by the web catalog and stock-free PR validation. No Python is evaluated.
 export type EvidenceMethod = 'unmeasured' | 'static' | 'emulator' | 'hardware'
 export type ModuleMetric = { label: string; display: string; value: number | null; unit: string; method: EvidenceMethod; conditions: string; source: string }
@@ -223,7 +225,7 @@ export function parseModuleDocument(value: unknown): ModuleDocument {
   const p=object(d.presentation,'presentation',['label','family','summary','overview','highlights','usage'])
   const c=object(d.compatibility,'compatibility',['firmware','effectId','location','conflicts','limitations'],['uiClaims'])
   const uiClaims='uiClaims' in c?list(c.uiClaims,'compatibility.uiClaims',24).map((v,i)=>uiClaim(v,'compatibility.uiClaims['+i+']')):undefined
-  if(c.effectId!==null&&(typeof c.effectId!=='number'||!Number.isInteger(c.effectId)||c.effectId<4||c.effectId>31))fail('compatibility.effectId','expected a valid effect ID or null for contributions without an effect slot')
+  if(c.effectId!==null&&(typeof c.effectId!=='number'||!Number.isInteger(c.effectId)||c.effectId<4||c.effectId>=octatrackFxIds.ids))fail('compatibility.effectId','expected an effect ID of 4 to '+(octatrackFxIds.ids-1)+', or null for contributions without an effect slot')
   if(c.firmware!=='1.40C') fail('compatibility.firmware','only 1.40C is supported')
   const r=object(d.resources,'resources',['recorded','storage','processing'],['impact','cpuPrice','cpuMeter'])
   const impact='impact' in r?parseModuleResourceImpact(r.impact):undefined

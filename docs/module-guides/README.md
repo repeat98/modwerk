@@ -87,7 +87,7 @@ Every Octatrack module must install beside every other active module and the Mod
 - **One owner per byte.** No two modules, and no module and the base, may patch overlapping stock bytes or relocate the same stock table (Elekloader's rule 5).
 - **Share behaviour through hooks.** When two modules need to act at the same stock site, the base owns that site as a [hook](#hooks), and each module subscribes to it or contributes to its table. Never patch a site the base owns (Elekloader's rule 4).
 - **Copy stock bytes only from bytes nobody patches.** A copy taken from bytes that another module or the base patches depends on install order. Take the identical bytes from an unpatched location instead. For example, a Tape Echo runtime port copied 13 bytes from 0x4000230e, under the machine group's Part-validator hook at 0x40002318; its fix takes the same instruction bytes from 0x4003886a.
-- **Pinned effect IDs and chooser rows are exclusive.** Pick a free one.
+- **An effect ID is only preferred.** The base gives each effect its own at install, so two modules may prefer one. Only a pinned ID (its ColdFire code names it: Tape Echo, Euclid, BBD) and the stock ID a replacement takes are exclusive.
 
 The only exceptions are the reviewed entries in `sdk/machines/octatrack/compatibility.json`. Each names both modules, the exact addresses and a reason:
 
@@ -182,7 +182,7 @@ The more of these the base owns, the more modules combine. Propose each hook on 
 | Site | Today |
 | --- | --- |
 | Track machine list (SRC SETUP) | Base table `ot_machines`; on the card, POLY8's shared machine list |
-| Effect lists (FX1, FX2) | USB: the base has 128 effect ids, 109 of them for modules, and gives each installed effect module its own ([wider ids](../OCTATRACK_MORE_EFFECT_IDS.md)); card: stock's 32, 13 of them for modules, pinned |
+| Effect lists (FX1, FX2) | USB: the base has 128 effect ids, 109 of them for modules, and gives each installed effect module its own, whatever it prefers ([wider ids](../OCTATRACK_MORE_EFFECT_IDS.md)); card: stock's 32, 13 of them for modules, one module an id |
 | SEQUENCER rows | Base table `ot_sequencer_rows` |
 | Part Edit window (FUNC+PART) rows | Base table `ot_part_menu`: a parent row and its actions, in two columns |
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
@@ -202,7 +202,7 @@ Each problem is one line naming the modules, the byte ranges and what each one p
 | `X copies stock bytes A..B (…), but Y patches C..D` | Copy the identical bytes from an unpatched location |
 | `X (table …)` meets another claim | The table already has an owner: propose a hook or a shared table |
 | `X (cave …)` or `linked unit` meets another claim | Pick free space, or let the build place the unit |
-| `fx2 id: X and Y both claim 0x…` | Pick another chooser row (a free effect ID) |
+| `fx2 id: X and Y both claim 0x…` | Only a pinned ID or two replacements of one stock effect: prefer another ID |
 | `core-private Y`, `DSP data range`, `FX2 instance buffers` | Claim free words, or request a base-owned region |
 | `relation …` | Correct `compatibility.json`; every entry needs owner review |
 | `X (key:…) and Y (key:…) take the same key gesture` (or screen) | Change one so both work, or list the other module in `compatibility.conflicts` ([UI claims](#ui-claims)) |

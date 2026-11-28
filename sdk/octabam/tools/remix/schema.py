@@ -290,8 +290,11 @@ class MenuEntry:
         if self.stock_dsp and not self.replaces: raise ValueError("stock_dsp requires replaces")
         # 0x00-0x03 are the ids stock treats as bare synonyms for "no effect";
         # the first hardware test used them and got correct names with dead
-        # knobs and garbage audio.
-        if not 0x04 <= self.fx2_id <= 0x1f:
+        # knobs and garbage audio. No upper bound here: on the Modwerk base the
+        # id is only preferred, and the base gives the effect its own at install
+        # (its count: sdk/machines/octatrack/elekloader/fx-ids.json); a card
+        # remix takes 0x04-0x1f only (registry.remix).
+        if self.fx2_id < 0x04:
             raise ValueError(f"fx2 id 0x{self.fx2_id:02x} is out of range "
                              f"(0x00-0x03 are stock's 'no effect' synonyms)")
         if len(self.abbr) > 4:
@@ -1316,8 +1319,7 @@ class Module:
                 f"STOCK effect -- the dispatch tables are shared with FX1, so "
                 f"this id would hijack that effect on both menus (see "
                 f"STOCK_FX2_IDS). Declare MenuEntry(replaces=\"<KEY>\") if "
-                f"that is what you mean. Free ids: "
-                f"{', '.join(f'0x{i:02x}' for i in range(0x04, 0x20) if i not in STOCK_FX2_IDS)}")
+                f"that is what you mean, or take an id stock does not use.")
         if self.menu is not None and self.menu.replaces:
             if self.kind is Kind.STOCK:
                 raise ValueError(f"{self.name}: a STOCK entry cannot replace "
