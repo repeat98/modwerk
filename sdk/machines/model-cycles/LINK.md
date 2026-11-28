@@ -111,7 +111,10 @@ detours the call that ends each composed frame and shows the frames counted; `fr
   creates through `0x400019ec`; caches as the Octatrack's (CACR `0xa50ce100` at boot, data ACR0 `0x4007e020`), so
   DDR's mirror at +0x0800_0000 is uncached, as the OS's own reverb and delay lines use it; the audio interrupt at
   level 5, so the loader's level-4 lock leaves it running; sites only in stock code below its `.data` image
-  (`0x4019b590`).
+  (`0x4019b590`), and never over the base's own: `machine:base` writes the core's and base.json's sites beside the
+  glue (`held-sites.h`) and `patchable` refuses a module site that touches one (`sdk/tests/test_machine_base.py`
+  checks them against the pinned package). The base recorded today was built before this check: it takes effect
+  with the next `machine:base -- model-cycles --write`.
 
 ## RAM boot
 

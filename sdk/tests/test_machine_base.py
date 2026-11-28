@@ -122,6 +122,44 @@ class MachineBases(unittest.TestCase):
             result = subprocess.run([temp + "/t"], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_a_model_cycles_runtime_module_never_patches_over_the_base(self):
+        """machine:base writes the base's own sites beside runtime.c (held-sites.h), from the core's and base.json's:
+        they are exactly the pinned package's sites, and the glue's patchable refuses any module site that touches one,
+        while stock bytes away from them stay patchable (as on the Analog Rytm MKII, owner's review of #1934)."""
+        import shutil, subprocess
+        config = json.loads((APP / "sdk/machines/model-cycles/elekloader/base.json").read_text())
+        identity = json.loads((APP / "sdk/machines/model-cycles/base-binding.json").read_text())["identity"]
+        package = APP / "sdk/imports/packages/modwerk-base-model-cycles" / ("modwerk-base-model-cycles-%s.elemod" % identity[:8])
+        with tempfile.TemporaryDirectory() as work:
+            core = machine_base.stage("model-cycles", config, pathlib.Path(work))
+            header = (core / "../base/held-sites.h").resolve()
+            ranges = [(int(a, 16), int(b, 16)) for a, b in re.findall(r"\{0x([0-9a-f]+)u, 0x([0-9a-f]+)u\}", header.read_text())]
+            sites = json.loads(package.read_text())["sites"]
+            self.assertEqual(machine_base.held_ranges(sites), ranges)
+            cc = shutil.which("cc")
+            if not cc:
+                self.skipTest("no host C compiler: the ranges were checked, patchable was not run")
+            probes = [(int(site["addr"], 16), site["len"]) for site in sites]
+            probes = [(a, n, 0) for a, n in probes] + [(a + n - 1, 4, 0) for a, n in probes] + [(a - 2, 4, 0) for a, n in probes]
+            free = [(end + 0x10, 6) for end, start in zip([r[1] for r in ranges], [r[0] for r in ranges[1:]]) if start - end >= 0x20]
+            probes += [(a, n, 1) for a, n in free[:20]] + [(0x400003fc, 6, 0)]
+            rows = "".join("    {0x%08xu, %du, %d},\n" % p for p in probes)
+            main = pathlib.Path(work) / "main.c"
+            main.write_text("#include <stdint.h>\n#include <stdio.h>\nint modwerk_machine_patchable(uint32_t, uint32_t);\n"
+                            "static const struct { uint32_t at, n; int ok; } p[] = {\n" + rows + "};\nint main(void) {\n"
+                            "    int bad = 0;\n    for (unsigned i = 0; i < sizeof p / sizeof p[0]; ++i)\n"
+                            "        if (!modwerk_machine_patchable(p[i].at, p[i].n) != !p[i].ok) { printf(\"%x %u\\n\", (unsigned)p[i].at, (unsigned)p[i].n); bad = 1; }\n"
+                            "    return bad;\n}\n")
+            base, rt = header.parent, APP / "sdk/runtime"
+            built = subprocess.run([cc, "-std=c11", "-DMODWERK_HOST", "-DRUNTIME_MODULES=16u", "-DRUNTIME_POOL_BYTES=65536u",
+                                    "-I", base, "-I", rt / "loader", "-I", rt / "upload", main, base / "runtime.c", base / "modules.c",
+                                    rt / "loader/loader.c", rt / "upload/upload.c", rt / "upload/wire.c", rt / "upload/sha256.c",
+                                    "-o", pathlib.Path(work) / "t"], capture_output=True, text=True)
+            self.assertEqual(built.returncode, 0, built.stderr)
+            ran = subprocess.run([pathlib.Path(work) / "t"], capture_output=True, text=True)
+            self.assertEqual(ran.returncode, 0, "wrongly judged " + ran.stdout)
+            self.assertGreater(len(free), 2)
+
     def test_model_cycles_link_on_the_host(self):
         """A development base's link on the host: RAMBOOT keeps an accepted request's numbers for the copy, and a reply
         goes out whole under stock's USB lock, never while another sender's SysEx is open."""
