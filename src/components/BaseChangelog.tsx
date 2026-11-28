@@ -12,6 +12,12 @@ type BaseRelease = {
 const releases: Record<'octatrack' | 'rytm' | 'zoom', [BaseRelease, ...BaseRelease[]]> = {
   octatrack: [
     {
+      version: '0.8.4', title: 'Module commands in Settings', note: '2026-11-28-octatrack-settings-direct-actions-proposal',
+      changes: [
+        { area: 'Settings', detail: 'Modules can offer commands that act when you press YES and keep the selected row in view. Installing or undoing a module does not repeat those commands.' },
+      ],
+    },
+    {
       version: '0.8.3', title: 'A point of CPU back in every frame', note: '2026-11-25-octatrack-part-read-sram',
       changes: [
         { area: 'CPU', detail: 'Every audio frame costs about one point of CPU less: the frame interrupt reads the playing Part from fast on-chip memory. On an MKII it fell from 37.0 to 36.0 % on a busy pattern and from 29.8 to 28.8 % stopped. Found and measured by Laslo.' },
