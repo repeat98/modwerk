@@ -100,6 +100,8 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 
 History, not current instructions.
 
+- [Syntakt native sequencer contracts](verification/2026-11-27-syntakt-sequencer.md): native step, queued request and accepted-trigger layers, ownership and bounded test evidence for a shared provider; [OS 1.42 guard ledger](verification/2026-11-27-syntakt-sequencer-guards.json).
+- [Syntakt static findings ledger](verification/2026-11-27-syntakt-static-findings-ledger.md): the original findings retained when the sequencer update made room in the main report.
 - The Analog BD Undo recording and BBD Delay buffer check are in the [Octatrack 0.7.10 test record](verification/2026-11-19-octatrack-0710-checks.md).
 - [Unused module cost](verification/2026-11-20-octatrack-unused-module-cost.md): what 24 installed, unused modules cost the frame interrupt, module by module, and resting machines, 20 November 2026.
 - The DSP stall on a project load with modules restored from the card, and its 0.7.11 fix, are in the [project-load record](verification/2026-11-19-octatrack-project-load-dsp.md).
