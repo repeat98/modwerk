@@ -47,9 +47,19 @@ HOOK_BUS = {
     "sdk/machines/model-cycles/elekloader/core/core.s",
 }
 
+# Modwerk's own Model:Cycles core (28 November 2026), written from a behavioural spec, at the paths of the core-mc 0.3
+# files it replaced: its recipe, firmware locations, ev_boot and headers. Their import record stays as history.
+OWN_CORE = {
+    "sdk/machines/model-cycles/elekloader/core-mc/mod.json",
+    "sdk/machines/model-cycles/elekloader/core-mc/fw.s",
+    "sdk/machines/model-cycles/elekloader/core-mc/boot.s",
+    "sdk/machines/model-cycles/include/model-cycles/core.h",
+    "sdk/machines/model-cycles/include/model-cycles/core.inc",
+}
+
 
 def still_imported(record):
-    return [item for item in record["files"] if item["to"] not in HOOK_BUS]
+    return [item for item in record["files"] if item["to"] not in HOOK_BUS | OWN_CORE]
 
 
 def release_sources(release, record):
@@ -91,33 +101,52 @@ class MachineBases(unittest.TestCase):
             self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
         self.assertIn("sdk/machines/digitakt-ii/include/digitakt-mk2/core.h", imported)
 
-    def test_model_cycles_base_source_is_core_mc_0_3_unchanged(self):
+    def test_model_cycles_core_is_modwerk_s_own_source(self):
+        # Every file the core-mc 0.3 import brought is now Modwerk's own: the hook bus and the own core. The import
+        # record stays as history, so the replaced files' hashes must differ from it.
         record = json.loads((APP / "sdk/imports/core-mc-source-f20ffda.json").read_text())
         self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
-        for item in still_imported(record):
-            self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
-        imported = {item["to"] for item in record["files"]} | HOOK_BUS
+        self.assertEqual(still_imported(record), [])
+        for item in record["files"]:
+            self.assertNotEqual(sha(APP / item["to"]), item["sha256"], item["to"])
+        for path in OWN_CORE:
+            first = (APP / path).read_text().splitlines()[0]
+            if path.endswith(".json"):
+                self.assertEqual(json.loads((APP / path).read_text())["license"], "GPL-3.0-or-later", path)
+            else:
+                self.assertIn("SPDX-License-Identifier: GPL-3.0-or-later", first, path)
         folder = APP / "sdk/machines/model-cycles/elekloader/core-mc"
         mod = json.loads((folder / "mod.json").read_text())
+        own = HOOK_BUS | OWN_CORE
         for source in mod["sources"]:
-            self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
-        self.assertIn("sdk/machines/model-cycles/include/model-cycles/core.h", imported)
-        # The sources the release was built from, by its own build record, but for the hook bus.
+            self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), own, source)
+        # The identity the package file name, catalogue records and digi-build.test.ts rely on; no stock bytes.
+        self.assertEqual((mod["id"], mod["version"], mod["device"], mod["os"]), ("core", "0.3", "model-cycles", "1.13"))
+        self.assertNotIn("sites", mod)
+
+    def test_model_cycles_bound_base_keeps_every_fw_value_of_core_mc_0_3(self):
+        # keeps compares export names only; every firmware location must also keep its address.
         release = json.loads((APP / "vendor/elekloader/catalog/core-mc-0.3.elemod").read_text())
-        hashes = {pathlib.Path(item["from"]).name: item["sha256"] for item in still_imported(record)}
-        sources = release_sources(release, record)
-        self.assertEqual(len(sources), 2)
-        self.assertEqual({name: hashes[name] for name in sources}, sources)
+        binding = json.loads((APP / "sdk/machines/model-cycles/base-binding.json").read_text())
+        package = APP / ("vendor/elekloader/catalog/modwerk-base-model-cycles-%s.elemod" % binding["identity"][:8])
+        self.assertEqual(sha(package), binding["identity"])
+        built = json.loads(package.read_text())
+        fw = [name for name in release["exports"] if name.startswith("fw_")]
+        self.assertEqual(len(fw), 25)
+        for name in fw:
+            self.assertEqual(built["symbols"].get(name), release["symbols"][name], name)
 
     def test_model_cycles_hooks_are_the_sites_the_base_builds(self):
-        # events.json is the registry: hooks 0-4 are core-mc's own sites, unchanged, and every later one is a site
+        # events.json is the registry: hooks 0-4 are the core's sites (base.json common), and every later one is a site
         # base.json adds. Each hook's guard is the SHA-256 of the stock bytes its site replaces, and the base declares
         # its collection; the core contract lists the same hooks.
         events = json.loads((APP / "sdk/machines/model-cycles/events.json").read_text())["events"]
         mod = json.loads((APP / "sdk/machines/model-cycles/elekloader/core-mc/mod.json").read_text())
-        add = json.loads((APP / "sdk/machines/model-cycles/elekloader/base.json").read_text())["add"]
-        guards = {site["addr"]: (len(bytes.fromhex(site["stock"])), hashlib.sha256(bytes.fromhex(site["stock"])).hexdigest())
-                  for site in mod["sites"]}
+        config = json.loads((APP / "sdk/machines/model-cycles/elekloader/base.json").read_text())
+        add = config["add"]
+        guards = {site["addr"]: (site["len"], site["stockSha256"]) for site in config["common"]["sites"]}
+        self.assertEqual([site["target"] for site in config["common"]["sites"]],
+                         ["boot", "core_tick", "core_draw", "core_key", "core_enc"])
         added = {site["addr"]: (site["len"], site["stockSha256"]) for site in add["sites"]}
         self.assertEqual([event["index"] for event in events], list(range(len(events))))
         self.assertEqual([event["event"] for event in events[:5]], list(mod["collections"]))

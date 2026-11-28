@@ -1,16 +1,17 @@
 # Model:Cycles base source
 
-Modwerk's base for Model:Cycles OS 1.13 starts from core-mc 0.3 at `f20ffda`, the commit of
-[Elekloader v0.11.0](https://github.com/elekloader/elekloader/releases/tag/v0.11.0). The imported `core-mc/` and
-`../include/model-cycles/` are byte-for-byte copies; `core/core.s` is Modwerk's own hook bus (GPL-2.0-or-later, 28 November
-2026), the Digitakt II's `core.s` byte for byte, with core-mc's `mod.json` choosing the boot's two displaced calls, the
-cache invalidation and `core_boot_init`; the
-[import record](../../../imports/core-mc-source-f20ffda.json) lists each file and its SHA-256. core-mc is drumkilla's,
-on irpina's hook bus. Its firmware locations (0.2), `ev_boot` and the boot cache invalidation (0.3) came in through
-Elekloader #192 to #194. The pinned kit's SDK has core-mc 0.1 and no Model:Cycles headers, so the headers come with the
-import.
+Modwerk's base for Model:Cycles OS 1.13 is Modwerk's own source (GPL-2.0-or-later). `core/core.s` is the hook bus,
+the Digitakt II's `core.s` byte for byte (28 November 2026). `core-mc/` is the core's recipe (`mod.json`: the boot's two
+displaced calls, the cache invalidation and `core_boot_init`), the OS's own routines and data by name (`fw.s`, 25
+`fw_*` symbols, no bytes) and `ev_boot` (`boot.s`); `../include/model-cycles/` declares them for C (`core.h`) and
+assembly (`core.inc`). These replaced drumkilla's core-mc 0.3 from
+[Elekloader v0.11.0](https://github.com/elekloader/elekloader/releases/tag/v0.11.0) on 28 November 2026, with the same
+names, values and sites, so whatever was built for core-mc 0.3 links to this core; the
+[import record](../../../imports/core-mc-source-f20ffda.json) stays as history. The core's five stock sites (boot,
+`ev_tick`, `ev_draw`, `ev_key`, `ev_enc`) are in [base.json](base.json)'s `common`, each named by its stock bytes'
+length and SHA-256.
 
-[base.json](base.json) builds core-mc's own `mod.json` and adds one hook, `ev_key_leds`
+[base.json](base.json) builds the core's `mod.json` and adds one hook, `ev_key_leds`
 ([base/key-leds.s](base/key-leds.s)): the key-LED frame after the LEDs are cleared and before the stock views set
 theirs, as the Digitakt II has it. Its site is the frame's clear call (`0x40006a6e`); `fw_led_set` names the OS's own
 setter, declared for C in [`../include/mc/core.h`](../include/mc/core.h). [events.json](../events.json) lists all six
@@ -30,6 +31,9 @@ npm run machine:base -- model-cycles --stock /private/model-cycles_OS1.13.syx --
 
 ## Results
 
+- Built 2026-11-28 with Modwerk's own core: package `c8e9966a…` ([base-binding.json](../base-binding.json)), 94 bytes
+  `.boot`, 38250 `.run`, 115796 `.bss`, 8 sites; its exports, imports, sites, tables, contributions and every `fw_*`
+  value equal those of `485c526a…`, the hook-bus base before it. Not yet run on a unit.
 - Built 2026-11-25 with m68k-elf GCC 16.2.0 and binutils 2.47 against the kit at `3b31ef3`: package `646706ff…`
   (see [base-binding.json](../base-binding.json)), 76 bytes `.boot`, 38214 `.run`, 115796 `.bss`, 8 sites, with the
   link, the audio load, the log and the runtime loader ([LINK.md](../LINK.md)). Before it, `4d4d91d2…` (24 November,

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * The Model:Cycles' glue for the machine-neutral runtime loader (sdk/runtime/loader, README.md "Porting to another
- * machine"), after the Octatrack's (sdk/machines/octatrack/elekloader/runtime.c), and the trampolines from core-mc's
+ * machine"), after the Octatrack's (sdk/machines/octatrack/elekloader/runtime.c), and the trampolines from the core's
  * hook bus to the live modules' hooks. Every base (base.json's add).
  *
  * What it rests on (OS 1.13, read from the code; the Octatrack's kernel and caches are the same design):
@@ -165,7 +165,7 @@ int modwerk_machine_patchable(uint32_t address, uint32_t length)
     return address >= STOCK_FROM && address < STOCK_DATA && length <= STOCK_DATA - address;
 }
 
-/* core-mc's hooks to the live modules', in position order (README.md "Package"). A module's draw gets the core's
+/* The core's hooks to the live modules', in position order (README.md "Package"). A module's draw gets the core's
  * bitmap (fw_fill, fw_text; y = 0 is the bottom row), its key the panel's key code and whether it went down. The
  * shared status word starts at 0 again whenever the live set changes, before the ticks run. */
 static uint32_t drawn_epoch, drawn_set;

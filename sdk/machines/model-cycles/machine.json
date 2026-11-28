@@ -4,7 +4,7 @@
   "order": 150,
   "name": "Model:Cycles",
   "status": "research",
-  "summary": "Six-track FM groovebox. Its OS file is rebuilt byte for byte and modified builds boot on units. A Modwerk base from core-mc 0.3's source, with a key-LED hook, runs on a unit; no modules yet.",
+  "summary": "Six-track FM groovebox. Its OS file is rebuilt byte for byte and modified builds boot on units. Modwerk's own base, with a key-LED hook, runs on a unit; no modules yet.",
   "firmware": {
     "releases": [
       {

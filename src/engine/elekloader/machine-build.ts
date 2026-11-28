@@ -44,7 +44,7 @@ const MODWERK_BASES: Partial<Record<ElekloaderMachine, { variants: Record<string
     variants: RYTM_BASE.variants,
     variant: moduleIds => rytmVariant(moduleIds, Object.values(RYTM_FX_IDS.ids), RYTM_VOICE_MODULES.ids),
   },
-  // The Model:Cycles base from core-mc 0.3's source, with ev_key_leds (sdk/machines/model-cycles/elekloader/README.md).
+  // The Model:Cycles base, Modwerk's own source, with ev_key_leds (sdk/machines/model-cycles/elekloader/README.md).
   'model-cycles': {
     variants: { base: CYCLES_BASE.identity },
     variant: () => 'base',

@@ -1,0 +1,1 @@
+Bases: the Model:Cycles base is now all Modwerk's own source: its core names the OS 1.13 routines and data modules use, runs the boot hook, and declares both for C and assembly, with the same names, addresses, sites and tables as before, so whatever was built for it links unchanged. Nothing changes for musicians until the next base release, which is tested on a unit first.

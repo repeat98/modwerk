@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Model:Cycles OS 1.13 base, built by npm run machine:base -- model-cycles: core-mc 0.3's source from Elekloader v0.11.0, unchanged (sdk/imports/core-mc-source-f20ffda.json) but for the hook bus, core/core.s, which is Modwerk's own. Modwerk adds ev_key_leds (base/key-leds.s), the key-LED frame, as the Digitakt II has it: one source, one site and its collection. Every base carries the link's part for musicians' units, as the Octatrack's does (base/link.c, LINK.md): its identity with the set identity, the audio load (base/load.c, load.s), the diagnostics log in the Octatrack's layout (base/diag.c) read through LOG, and the runtime loader (base/runtime.c, base/modules.c: the Octatrack's loader and upload controller from sdk/runtime/, wire frames in parts over the link), which loads modules to RAM on trial and keeps or undoes them without a reflash. The base keeps everything of the core-mc 0.3 release. A collection's number is its entry size in bytes (a handler's address), not a count: the linker puts every subscriber in the hook's table.",
+  "about": "Modwerk's Model:Cycles OS 1.13 base, built by npm run machine:base -- model-cycles, all of it Modwerk's own source: the hook bus core/core.s (shared with the Digitakt II and the Rytm MKII), and core-mc/, the recipe, the OS's routines and data by name (fw.s) and ev_boot (boot.s). common holds the core's five sites (boot, ev_tick, ev_draw, ev_key, ev_enc), each named by its stock bytes' length and SHA-256. Modwerk adds ev_key_leds (base/key-leds.s), the key-LED frame, as the Digitakt II has it: one source, one site and its collection. Every base carries the link's part for musicians' units, as the Octatrack's does (base/link.c, LINK.md): its identity with the set identity, the audio load (base/load.c, load.s), the diagnostics log in the Octatrack's layout (base/diag.c) read through LOG, and the runtime loader (base/runtime.c, base/modules.c: the Octatrack's loader and upload controller from sdk/runtime/, wire frames in parts over the link), which loads modules to RAM on trial and keeps or undoes them without a reflash. The base keeps every site, export, import, table and subscription of the core-mc 0.3 release it replaces (reference), so whatever was built for that release links to it. A collection's number is its entry size in bytes (a handler's address), not a count: the linker puts every subscriber in the hook's table.",
   "core": "core-mc",
   "include": "sdk/machines/model-cycles/include",
   "os": "1.13",
@@ -22,6 +22,45 @@
       "collections",
       "requires",
       "conflicts"
+    ]
+  },
+  "common": {
+    "sites": [
+      {
+        "addr": "0x4000052c",
+        "len": 8,
+        "stockSha256": "5880e46db520311a258ed2b990a1fa89bd4e7a65c18d550c30e88fa9c81ecd11",
+        "op": "jsr",
+        "target": "boot"
+      },
+      {
+        "addr": "0x400075f0",
+        "len": 6,
+        "stockSha256": "905f211dc8443c388043cf38112866e76f0b2c25d4cab9c01b93cb427e43713a",
+        "op": "jsr",
+        "target": "core_tick"
+      },
+      {
+        "addr": "0x4000765c",
+        "len": 6,
+        "stockSha256": "51f1819c6c3a0c516407638048ba448ed727f193756e252f5b573605a285fc63",
+        "op": "jsr",
+        "target": "core_draw"
+      },
+      {
+        "addr": "0x4000817a",
+        "len": 6,
+        "stockSha256": "b1f232778dac92307182d0f8b57841c85d248d460700f04c5c3b5b55fbe9e314",
+        "op": "jsr",
+        "target": "core_key"
+      },
+      {
+        "addr": "0x400081ce",
+        "len": 6,
+        "stockSha256": "2e675b2b0cf71462c7a39e74041eb2d05b3e06035d762e50e83baa9c332ca844",
+        "op": "jsr",
+        "target": "core_enc"
+      }
     ]
   },
   "add": {

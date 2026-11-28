@@ -1,18 +1,21 @@
-| SPDX-License-Identifier: GPL-2.0-or-later
-| core-mc 0.2 for the Model:Cycles (OS 1.13), in assembly: the constants that go
-| with the firmware locations (core.h has the same in C). Assembly names the
-| locations directly: fw_project, fw_fill, fw_key_held, ...
-| The SDK puts this folder on the include path:
-|
-|       .include "model-cycles/core.inc"
+| SPDX-License-Identifier: GPL-3.0-or-later
+| Modwerk's Model:Cycles core (OS 1.13): constants for assembly. The fw_* locations are
+| symbols of the core (fw.s); name them directly. C: model-cycles/core.h.
 
-        .equ    FW_KEY_FUNC,        1           | logical codes fw_key_held takes
-        .equ    FW_KEY_TRACK,       2
-        .equ    FW_KEY_RETRIG,      4
-        .equ    FW_KIT_SIZE,        7094        | fw_kits: 96 kits, this far apart
-        .equ    FW_KIT_SOUNDS,      28          | a kit's six track sounds, 100 bytes each
-        .equ    FW_KIT_POOL,        694         | its pool of 64 sounds
-        .equ    FW_SOUND_SIZE,      100
-        .equ    FW_SOUND_MACHINE,   38          | a sound's byte: its machine, 0-5 stock
-        .equ    FW_TRACK_OBJECTS,   212         | the project's track objects, 68 bytes apart;
-        .equ    FW_TRACK_OBJECT,    68          | +40 of one's vtable gives its live sound
+| Logical key codes fw_key_held takes.
+        .equ FW_KEY_FUNC, 1
+        .equ FW_KEY_TRACK, 2
+        .equ FW_KEY_RETRIG, 4
+
+| Kits: fw_kits + FW_KIT_SIZE * n is pattern n's kit (0-95); track sounds at +FW_KIT_SOUNDS
+| (six), the pool at +FW_KIT_POOL (64), FW_SOUND_SIZE bytes per sound.
+        .equ FW_KIT_SIZE, 7094
+        .equ FW_KIT_SOUNDS, 28
+        .equ FW_KIT_POOL, 694
+        .equ FW_SOUND_SIZE, 100
+        .equ FW_SOUND_MACHINE, 38
+
+| The project's track objects: the first at project + FW_TRACK_OBJECTS, FW_TRACK_OBJECT
+| bytes apart; word +40 of a track object's vtable returns its live sound.
+        .equ FW_TRACK_OBJECTS, 212
+        .equ FW_TRACK_OBJECT, 68
