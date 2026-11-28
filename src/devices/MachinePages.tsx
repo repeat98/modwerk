@@ -25,7 +25,7 @@ import { DownloadPeriodContext } from '../community/download-period'
 import { DeviceImage, PhotoCredit } from './DeviceImage'
 import { ALL_MACHINES, DEVICES, DEVICES_BY_ID, MC_UNIT_ROUTE, STATUS_LABELS, deviceHref, deviceSteps, deviceTitle, readyForMods, stepsDone, type DeviceProfile } from './registry'
 import { MACHINE_STACK } from './machine-contract'
-import { coreBuildPreviewOpen } from '../engine/elekloader/protocol'
+import { coreBuildPreviewOpen, isCoreBuildPreview } from '../engine/elekloader/protocol'
 import { useCommunity } from '../community/context'
 import { hasBetaUi } from '../community/beta-access'
 import { DIGI_CORES, DIGI_DEVICES, DIGI_MODS, estimateCombination, type DigiMod } from './digi-mods'
@@ -145,9 +145,8 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
   const w = useSetWords()
   const heading = useRef<HTMLHeadingElement>(null)
   const term = query.toLowerCase().trim()
-  const a4BuildPreview = coreBuildPreviewOpen('analog-four-mkii', betaUi)
-  const hasMods = !device || device.status === 'available' || device.status === 'preview' ||
-    (device.id === 'analog-four-mkii' && DIGI_MODS.some(mod => mod.device === device.id))
+  const canOpenBuild = (id: string) => betaUi || !isCoreBuildPreview(id)
+  const hasMods = !device || device.status === 'available' || device.status === 'preview'
   const families = Array.from(new Set([
     ...(!device || device.id === 'octatrack' ? octatrackCatalogue.map(module => module.type) : []),
     ...DIGI_MODS.filter(mod => !device || mod.device === device.id).map(mod => mod.category),
@@ -201,7 +200,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
     </header>
     {category === 'standalone' && <p className="service-note">{STANDALONE_NOTE}</p>}
     {phone && projectLink}
-    {phone ? resultsSlot && createPortal(<LibraryResultsBar summary={resultsSummary} sort={sort} onSortChange={onSortChange} family={libraryFamily} onFamilyChange={onFamilyChange} families={typeCounts} allCount={scopeFamilies.length} disabled={!hasMods} />, resultsSlot) : <LibraryTools family={libraryFamily} families={typeCounts.map(option => option.value)} onFamilyChange={onFamilyChange} sort={sort} onSortChange={onSortChange} comparisonCount={comparison.length} onCompare={onOpenComparison} buildHref={hasMods ? buildHref ?? deviceHref(device?.id ?? 'octatrack', 'configuration') : null} buildLabel={hasMods ? buildLabel ?? 'Build firmware for ' + (device?.name ?? 'Octatrack') : 'No modules to build yet'} categoryNav={categoryNav} categoryLabel={category && LIBRARY_CATEGORY_LABELS[category]} machine={typeof machinePicker === 'function' ? machinePicker(countLabel) : machinePicker} disabled={!hasMods} build={(device?.id !== 'analog-four-mkii' || a4BuildPreview) && (device?.family !== 'zoom' || isZoomSetDevice(device.id))} buildText={buildText ?? (device?.family === 'zoom' ? 'Your ' + device.name : undefined)} />}
+    {phone ? resultsSlot && createPortal(<LibraryResultsBar summary={resultsSummary} sort={sort} onSortChange={onSortChange} family={libraryFamily} onFamilyChange={onFamilyChange} families={typeCounts} allCount={scopeFamilies.length} disabled={!hasMods} />, resultsSlot) : <LibraryTools family={libraryFamily} families={typeCounts.map(option => option.value)} onFamilyChange={onFamilyChange} sort={sort} onSortChange={onSortChange} comparisonCount={comparison.length} onCompare={onOpenComparison} buildHref={hasMods ? buildHref ?? deviceHref(device?.id ?? 'octatrack', 'configuration') : null} buildLabel={hasMods ? buildLabel ?? 'Build firmware for ' + (device?.name ?? 'Octatrack') : 'No modules to build yet'} categoryNav={categoryNav} categoryLabel={category && LIBRARY_CATEGORY_LABELS[category]} machine={typeof machinePicker === 'function' ? machinePicker(countLabel) : machinePicker} disabled={!hasMods} build={(!device || canOpenBuild(device.id)) && (device?.family !== 'zoom' || isZoomSetDevice(device.id))} buildText={buildText ?? (device?.family === 'zoom' ? 'Your ' + device.name : undefined)} />}
     {hasMods && (term || libraryFamily !== 'all') && <div className="library-active-filters" role="group" aria-label="Active filters">
       <span>Filtered by</span>
       {term && onClearQuery && <button type="button" aria-label={'Remove search “' + query.trim() + '”'} onClick={() => clearFilter(onClearQuery)}><span>Search: {query.trim()}</span><Icon name="close" size={14} /></button>}
@@ -210,7 +209,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
     </div>}
     {(!device || device.id === 'octatrack') && Object.values(octatrackBlocks ?? {}).some(block => block.kind === 'limit') && <p className="library-limit-note" role="status"><Icon name="lock" size={16} /><span>{LIMIT_REACHED}</span></p>}
     {shownGroups.map(group => <section key={group.device.id} className={'machine-section' + (onlyGroup ? ' is-only-group' : '')} aria-labelledby={!device ? 'machine-' + group.device.id : undefined}>
-      {!device && <div className="library-subheading"><span id={'machine-' + group.device.id}>{group.device.name} <span className="subtle">· {group.count} {group.count === 1 ? 'module' : 'modules'}{group.device.status === 'preview' ? ' · preview' : ''}</span></span><div className="machine-library-actions"><a className="text-button" href={deviceHref(group.device.id)}>Open {group.device.name} library <Icon name="arrow" size={13} /></a>{group.device.family === 'zoom' && isZoomSetDevice(group.device.id) && <a className="button button-primary" href={zoomHubHref(group.device.id)}><Icon name="sliders" size={16}/>Your {group.device.name}</a>}{group.device.id !== 'octatrack' && group.device.family !== 'zoom' && (group.device.id !== 'analog-four-mkii' || a4BuildPreview) && <a className="button button-primary" href={deviceHref(group.device.id,'configuration')} aria-label={(mobile ? 'Open configuration for ' : 'Build firmware for ') + group.device.name}><Icon name="sliders" size={16}/>{mobile ? 'Open configuration' : 'Build firmware'}</a>}</div></div>}
+      {!device && <div className="library-subheading"><span id={'machine-' + group.device.id}>{group.device.name} <span className="subtle">· {group.count} {group.count === 1 ? 'module' : 'modules'}{group.device.status === 'preview' ? ' · preview' : ''}</span></span><div className="machine-library-actions"><a className="text-button" href={deviceHref(group.device.id)}>Open {group.device.name} library <Icon name="arrow" size={13} /></a>{group.device.family === 'zoom' && isZoomSetDevice(group.device.id) && <a className="button button-primary" href={zoomHubHref(group.device.id)}><Icon name="sliders" size={16}/>Your {group.device.name}</a>}{group.device.id !== 'octatrack' && group.device.family !== 'zoom' && canOpenBuild(group.device.id) && <a className="button button-primary" href={deviceHref(group.device.id,'configuration')} aria-label={(mobile ? 'Open configuration for ' : 'Build firmware for ') + group.device.name}><Icon name="sliders" size={16}/>{mobile ? 'Open configuration' : 'Build firmware'}</a>}</div></div>}
       <div className="module-grid">{group.cards}</div>
     </section>)}
     {hasMods ? <>

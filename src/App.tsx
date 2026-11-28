@@ -292,10 +292,11 @@ export default function App() {
   const allMachines = allRoute || overviewRoute || (!machineView && !octatrackRoute && remembered === ALL_MACHINES)
   const currentDevice = DEVICES_BY_ID[zoomHub ? zoomHub.device.id : mcUnit ? 'model-cycles' : machineView ? machineRoute!.device.id : octatrackRoute ? 'octatrack' : remembered && remembered !== ALL_MACHINES ? remembered : 'octatrack']
   const machineHasMods = !allMachines && (currentDevice.status === 'available' || currentDevice.status === 'preview')
-  const machineBuildPreview = !allMachines && coreBuildPreviewOpen(currentDevice.id, betaUi) && currentDevice.status === 'research' && !!currentDevice.sdk
-  const machineCanConfigure = machineHasMods || machineBuildPreview
-  // A machine that has mods or a core build preview, as machineCanConfigure asks of the page's machine.
-  const takesSets = (device: DeviceProfile) => device.status === 'available' || device.status === 'preview' || (coreBuildPreviewOpen(device.id, betaUi) && device.status === 'research' && !!device.sdk)
+  const machineBuildPreview = !allMachines && coreBuildPreviewOpen(currentDevice.id, betaUi) && !!currentDevice.sdk
+  const takesSets = (device: DeviceProfile) => isCoreBuildPreview(device.id)
+    ? coreBuildPreviewOpen(device.id, betaUi) && !!device.sdk
+    : device.status === 'available' || device.status === 'preview'
+  const machineCanConfigure = !allMachines && takesSets(currentDevice)
   // The overview shows All machines too, so the forum and other machine-less pages after it don't fall back to an older machine.
   useEffect(() => { if (allRoute || overviewRoute) rememberDevice(ALL_MACHINES); else if (machineView || octatrackRoute) rememberDevice(currentDevice.id) }, [allRoute, overviewRoute, machineView, octatrackRoute, currentDevice.id])
   // #devices, the old machine overview, opens the overview page.
