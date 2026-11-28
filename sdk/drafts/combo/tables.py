@@ -170,8 +170,8 @@ VOICES = (
     # boost: chiming upper mids, early soft break-up with even harmonics
     dict(hp=100.0, lp=(5000.0, 1.4), drive=1.0, curve=(0.75, 0.25), bias=0.12,
          split=(300.0, 2500.0), weights=(0.80, 1.00, 1.20), trim=1.0),
-    # rock: tight lows, mids forward, the most drive
-    dict(hp=180.0, lp=(3200.0, 1.1), drive=1.7, curve=(0.75, 0.25), bias=0.08,
+    # rock: tight lows, mids forward, the drive held where 2x keeps the aliasing lower
+    dict(hp=180.0, lp=(3200.0, 1.1), drive=0.85, curve=(0.75, 0.25), bias=0.08,
          split=(400.0, 3000.0), weights=(0.95, 1.25, 0.95), trim=1.0),
     # solid: flat and bright, clean until it clips hard at the top
     dict(hp=40.0, lp=(10000.0, 0.6), drive=0.6, curve=(0.9, 0.1), bias=0.0,

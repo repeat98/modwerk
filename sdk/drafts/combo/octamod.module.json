@@ -18,7 +18,7 @@
     "summary": "An amp and speaker cabinet for any track: drive, a three-band tone stack and four cabinets.",
     "overview": "Like a guitar amp it is mono: both sides are summed and run through the amp voice you pick on the SETUP page (VOIC): CLEAN, BOOST, ROCK, SOLID or BASS. Each voice has its own low cut and band-limit before the drive, its own drive range and curve, and its own tone stack. At twice the sample rate GAIN drives a soft curve that flattens at full scale, with the level following GAIN so it adds drive, not volume. BASS, MID and TREB set three bands, then one of four speaker cabinets or none, with PRES and a mic you can turn off axis and move back into the room, a DC blocker and LEV, and MIX blends it with the dry track. Use it to dirty up a drum bus, give a synth line an amp's grit, or put a sample through a small speaker.",
     "highlights": [
-      "Five amp voices on the SETUP page: CLEAN (bright, scooped, breaks up late), BOOST (chiming crunch with even harmonics), ROCK (tight lows, mids forward, the most drive), SOLID (flat, clean, hard clip at the top) and BASS",
+      "Five amp voices on the SETUP page: CLEAN (bright, scooped, breaks up late), BOOST (chiming crunch with even harmonics), ROCK (tight lows, mids forward, high gain), SOLID (flat, clean, hard clip at the top) and BASS",
       "GAIN from clean to fully driven at about the same volume, in every voice",
       "Four cabinets (1X10, 1X12, 2X12, 4X12) or OFF, each its own low thump, upper-mid bump and roll-off",
       "A SETUP page with TGHT (the low cut before the drive), PRES, the mic's AXIS and DIST (from near to far, into the room's early reflections, in stereo) and MIX (dry to amp, for parallel drive)"

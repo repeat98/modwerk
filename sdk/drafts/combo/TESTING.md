@@ -12,6 +12,7 @@ What was run, on which build, and what it showed. "Not tested" means exactly tha
 - **This build:** the developer asked for the voices named in Ableton's generic style and for the mic split in two, as Ableton's Cabinet does (near on axis, near off axis, far). BRIT is now BOOST and HGAIN ROCK (the same sound), and a fifth voice, BASS, is new; MIC is now AXIS (slot 9), DIST (slot 10) is new and MIX moves to slot 11. DIST reads four early reflections (6 to 18 ms, two a side, opposite signs) from a 1,024-word modulo ring at the slot's allocator base + $400, so COMBO now reads the allocator (`Claims(stock_instance_buffer=True, buffer_words=2048)`); the reflections stay silent until the ring has been written once. 392.6 instructions a sample, about 1.25 times SPRING REV. Two bugs the gates caught on the way: the table offsets of CAB and COMP were not moved for the fifth voice (a new gate checks them against tables.py), and verify.py's allocator table sat one word off (X:$256 instead of dsp_host's X:$255), so every instance read the next one's base until it was fixed. Commit cdb8e1cbf.
 - **This build (optimised):** the same arithmetic in fewer instructions, so reference.py did not change and every render is the same bit for bit. The 40 constants the sample loop reads (the pre filters', the half-band's, the curves', the tone splits', the cabinet's, KDC) now sit in a Y block at the slot's base + $100, in the order they are read, so each product reads its state from X and its coefficient from Y in one instruction; the state is walked with r3, the glides are pipelined two at a time. 392.6 to 309.7 instructions a sample, counted per section: the eight all-passes with their scratch moves 88 to 65, the four biquads 80 to 52, the glides 38 to 28, the two curves 48 to 40, the tone stack 36 to 29, the high-pass 19 to 14, the DC blocker 13 to 8.
 - **This build (coefficients in private memory):** on the unit the optimised build failed device:test: with seven COMBOs at once core 0 (T5-T8) peaked at 995 per mille, over the 900 limit, while the build before page 2 peaked at 764 on the same Part. One FX2 instance on core 0 gets its buffer in the shared window, where the 40 coefficient reads a sample cost about twice as much. The block moved into the instance's own X state ($4e..$75, 118 state words of the base's 132); each coefficient is now read by its own X move, 28 of them one instruction more. 309.7 to 337.7 instructions a sample, the same sound bit for bit; only DIST's ring stays in the buffer (five accesses a sample). On the unit it passed (below).
+- **This build (ROCK's drive halved):** the release review asked about the aliasing `fx:audit` finds at high drive, most in ROCK. Measured on the float model first: at GAIN 100 ROCK drove the curve about 90 times, close to a square wave, whose harmonics run past what 2x can hold. 4x took about 18 dB off the 1.1 kHz tone, antiderivative antialiasing about 14 dB, but both cost a division or a second oversampler, about 80 instructions a sample, more than seven at once leave room for; neither reached −60 dBc on every tone. The developer chose to halve ROCK's drive (1.7 to 0.85, tables.py only; ROCK at GAIN 127 now drives about as hard as it did at GAIN 85). The assembly did not change: verify.py passes bit for bit against the model, 337.7 instructions a sample. Not run on the unit and not listened to yet.
 
 ## Render gate (dsp_host, 26 November 2026, this build)
 
@@ -84,7 +85,16 @@ Per voice (this build), each at the GAIN it is rendered at for listening, CAB 1X
 
 DC stays below −130 dBFS and the output is digital silence after the input stops in every voice; page 2 turned up changes the aliasing by a few dB at most.
 
-This build, CAB 1X12:
+ROCK, GAIN 100, CAB 1X12 (`render.py --raw`, 27 November 2026), before and after its drive was halved:
+
+| Setting | 1.1 kHz −12 | 1.1 kHz −1 | 2.7 kHz −12 | 2.7 kHz −1 | 5.3 kHz −12 | 9.1 kHz −12 |
+| --- | --- | --- | --- | --- | --- | --- |
+| ROCK (then HGAIN), drive 1.7 | −44.2 | −32.1 | −29.5 | −27.4 | −21.5 | −26.8 |
+| ROCK, drive 0.85 (this build) | −57.3 | −34.8 | −34.0 | −28.1 | −35.4 | −46.6 |
+
+It still fails the audit's −60 dBc at GAIN 100, most on loud and bright tones. Reaching it would take 4x or more around the curve, which seven COMBOs at once have no room for; the limit is the audit's default, a judgement, and the figures stay here for the reviewer. Lower GAIN or TREB reduces it.
+
+Earlier build, CAB 1X12:
 
 | Setting | 1.1 kHz −12 | 1.1 kHz −1 | 2.7 kHz −12 | 2.7 kHz −1 | 5.3 kHz −12 | 9.1 kHz −12 |
 | --- | --- | --- | --- | --- | --- | --- |

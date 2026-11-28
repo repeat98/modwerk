@@ -32,7 +32,7 @@ SETUP page (hold FUNC and press FX1 or FX2; knobs A to F):
 
 | Knob | Values | Default | What it does |
 | --- | --- | --- | --- |
-| VOIC | CLEAN, BOOST, ROCK, SOLID, BASS | BOOST | The amp voice. CLEAN: bright, scooped mids, breaks up late. BOOST: chiming upper mids, an early soft break-up with even harmonics. ROCK: tight lows, mids forward, the most drive. SOLID: flat and clean, clipping hard only at the top; put CHORUS on the other FX slot for a wide clean sound. BASS: for bass, the lowest octave kept, a darker top and some growl in the low mids. |
+| VOIC | CLEAN, BOOST, ROCK, SOLID, BASS | BOOST | The amp voice. CLEAN: bright, scooped mids, breaks up late. BOOST: chiming upper mids, an early soft break-up with even harmonics. ROCK: tight lows, mids forward, high gain; its drive is held at half of the first build's, which keeps the aliasing 13 to 20 dB lower on the low and top tones. SOLID: flat and clean, clipping hard only at the top; put CHORUS on the other FX slot for a wide clean sound. BASS: for bass, the lowest octave kept, a darker top and some growl in the low mids. |
 | TGHT | -64 to +63 | 0 | Tightness: the low cut before the drive. 0 is the voice's own (40 to 180 Hz), -64 a fifth of it (loose, boomy drive), +63 about 1.8 times it (tight, for fast palm-muted parts). |
 | PRES | 0 to 127 | 0 | Presence: raises the cabinet's upper-mid bump to about +6 dB around 4 to 5 kHz. With CAB OFF it is a peak of up to +6 dB at 3.5 kHz. |
 | AXIS | 0 to 127 | 0 | The mic's axis on the speaker: 0 on the cone's axis (the brightest), 127 off axis, its top rolled off an octave lower. With CAB OFF it rolls the top off gently, down to 4.5 kHz at 127; DIST works with CAB OFF too. |
