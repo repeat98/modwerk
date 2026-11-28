@@ -127,8 +127,10 @@ class LinkedProof(unittest.TestCase):
         mapping.update(changes.pop('mapping', {}))
         moved = changes.pop('moved', {'manager.c': ('allocator', 'buffers'), 'transfer.c': ('jobs', 'pending', 'dl_tx'),
                                       'selection.c': ('pending',)})
-        bootstrap = changes.pop('bootstrap', '2:      movea.l #__bss_start + UNCACHED, %a1\n' + core.BOOT_CLEAR_SKIP)
-        return core.check_zero_state(SimpleNamespace(sections=sections, symbols=symbols), moved, layout, mapping, bootstrap)
+        bootstrap = changes.pop('bootstrap', '        ' + core.BOOT_CLEAR_START + '\n| MODWERK-SEAM: retained-skip\n')
+        switches = changes.pop('switches', {'MW_RETAINED_SKIP': '1'})
+        return core.check_zero_state(SimpleNamespace(sections=sections, symbols=symbols), moved, layout, mapping, bootstrap,
+                                     switches)
 
     def test_accepts_objects_inside_the_clear_and_outside_the_skip(self):
         proof = self.link()
@@ -160,8 +162,10 @@ class LinkedProof(unittest.TestCase):
                 ('retained skip past the clear', dict(mapping=dict(modwerk_retained_start=self.BSS[0] + 0x7000,
                                                                    modwerk_retained_end=self.BSS[0] + 0x9000))),
                 ('clear length disagrees', dict(mapping=dict(__bss_words=0x1fff))),
-                ('boot clear without the skip', dict(bootstrap='movea.l #__bss_start + UNCACHED, %a1\n3:      clr.l   (%a1)+')),
-                ('boot clear through the cached address', dict(bootstrap='movea.l #__bss_start, %a1\n' + core.BOOT_CLEAR_SKIP))):
+                ('boot clear without the skip', dict(bootstrap='        ' + core.BOOT_CLEAR_START + '\n')),
+                ('retained skip switched off', dict(switches={})),
+                ('boot clear through the cached address',
+                 dict(bootstrap='        movea.l #__bss_start, %a0\n| MODWERK-SEAM: retained-skip\n'))):
             with self.subTest(label), self.assertRaises(ValueError):
                 self.link(**changes)
 

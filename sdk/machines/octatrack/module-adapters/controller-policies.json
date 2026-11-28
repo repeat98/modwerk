@@ -2,7 +2,7 @@
  {
   "module": "sidechain-compressor",
   "moduleId": 2513434262,
-  "controllerSha256": "032e621c426f69008dc48a17319fa2bf20d03f342ff2c408dff809cc74bf8b05",
+  "controllerSha256": "be2c4b60cf14300f3aeb15e8a5870e87b7a76040b9ef946cb38522cabda76b3d",
   "sourcePolicySha256": "33d3ebe65c4f2a593644ef6b44dd8bc9a0ed66ba30ca4a8d2e05d9145c7bd283",
   "revisions": [
    1,
@@ -21,7 +21,7 @@
  {
   "module": "output-matrix",
   "moduleId": 3404814517,
-  "controllerSha256": "2bc4ac2e78abd6dc92a57afe1f9b5fa7876d3b21ed35b0eec248c51d39d92f90",
+  "controllerSha256": "8e38efcac768abb722f815c8fff83d899a5f09a9c9f8f2c72dd59cb754cd055c",
   "sourcePolicySha256": "0994f291fc10c4b89c827cf60802e30ba152bf49c6572027e9edc0a22524a232",
   "revisions": [
    1,
@@ -40,7 +40,7 @@
  {
   "module": "output-matrix",
   "moduleId": 3404814517,
-  "controllerSha256": "2bc4ac2e78abd6dc92a57afe1f9b5fa7876d3b21ed35b0eec248c51d39d92f90",
+  "controllerSha256": "8e38efcac768abb722f815c8fff83d899a5f09a9c9f8f2c72dd59cb754cd055c",
   "sourcePolicySha256": "0994f291fc10c4b89c827cf60802e30ba152bf49c6572027e9edc0a22524a232",
   "revisions": [
    1,
@@ -59,7 +59,7 @@
  {
   "module": "output-matrix",
   "moduleId": 3404814517,
-  "controllerSha256": "2bc4ac2e78abd6dc92a57afe1f9b5fa7876d3b21ed35b0eec248c51d39d92f90",
+  "controllerSha256": "8e38efcac768abb722f815c8fff83d899a5f09a9c9f8f2c72dd59cb754cd055c",
   "sourcePolicySha256": "0994f291fc10c4b89c827cf60802e30ba152bf49c6572027e9edc0a22524a232",
   "revisions": [
    1,
@@ -78,7 +78,7 @@
  {
   "module": "analog-bassdrum",
   "moduleId": 2883261509,
-  "controllerSha256": "24601ad33556d7e3b1d1aaa700914ff45c610654986cd4e126c131d8d2bde108",
+  "controllerSha256": "4a78ab49a5392931198370fd59988e4e0983cab0aaf1c73d35e2b8d886020efb",
   "sourcePolicySha256": "7b8c0f1ab076abe168e42da3f3069e99dfca89b18f9beb0482716fe23a8c1965",
   "revisions": [
    1,
