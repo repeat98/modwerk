@@ -37,6 +37,7 @@ Tool times cap inferred Cursor idle at 15 minutes per developer gap (this PR). C
 - `readCursorTranscript` + `buildSession` / `findTranscript` for Cursor JSONL.
 - `npm run session -- review` on Cursor; 15 min cap between user prompts.
 - Upload fallback until Worker lists `cursor` agent (share still opt-in).
+- `pr:ready` refuses `octatrack-qualify.py` on module PRs; `release/*` and fork-push notes; failed-check `--rerun-failed` hint; check pipe/rerun hints on pass only (folded #2375).
 
 ## Recommended follow-ups (not in this PR; separate Workflow/Improvement PRs)
 
@@ -47,4 +48,4 @@ Tool times cap inferred Cursor idle at 15 minutes per developer gap (this PR). C
 | W3 | `module:qualify` preflight: device socket, release base vs twin evidence |
 | W4 | `pr:ready` preview Documents gate growth on `docs/*.md` |
 | W5 | Skills: no tail on check; no close sibling PR; no session upload unless ask |
-| W6 | `gateEdits` refuse qualify on module PRs; release/fork notes in `pr:ready` (Improvement #2375) |
+| W6 | `gateEdits` refuse qualify on module PRs; release/fork notes in `pr:ready`; check pipe/rerun hints — **in this PR** (folded from #2375) |
