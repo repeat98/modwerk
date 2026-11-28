@@ -15,6 +15,7 @@ import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { alternation, moduleFolders } from './machine-folders.mjs'
+import { tidy } from './lane.mjs'
 import { changedFiles as branchFiles, descriptionProblems, instrumentFiles, readDescription } from './pr-body.mjs'
 
 const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:generate']]
@@ -225,6 +226,7 @@ async function main(argv) {
   const body = bodyFile ? readDescription(bodyFile) : null
   const npmCli = process.env.npm_execpath
   if (!npmCli) throw new Error('Run this through npm run pr:ready.')
+  tidy() // under 30 GB free, removes the other worktrees that are clean, pushed and idle for a day
   const npm = (...args) => spawnSync(process.execPath, [npmCli, 'run', ...args], { cwd: root, stdio: 'inherit' }).status === 0
   const changedFiles = () => git('status', '--porcelain', '--untracked-files=all').split('\n').filter(Boolean).map(line => line.slice(3))
 
