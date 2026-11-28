@@ -1,0 +1,665 @@
+{
+ "schema": 1,
+ "about": "Modwerk's Digitakt mk1 base for OS 1.53 and 1.54 (interface 2.1, sdk/digitakt/core/interface.json), built by scripts/elemod-base.mjs from Modwerk's October core (sdk/elemod/core) and this folder. It owns the boot, the seven events, the SRC machines of core_machines and the SRC and LFO pages of machines that describe their own, with ev_render_voices. A value given per OS ({\"1.53\": ..., \"1.54\": ...}) differs between the two. Sites name the stock bytes they displace by length and SHA-256 only; every displaced instruction is re-authored in the sources.",
+ "id": "core",
+ "version": "5.0",
+ "title": "Modwerk base",
+ "summary": "Modwerk's Digitakt base: boots the mods, runs their hooks and lists the SRC machines and pages they add. On its own it changes nothing the unit does.",
+ "author": "repeat98",
+ "license": "GPL-3.0-or-later",
+ "interface": "sdk/digitakt/core/interface.json",
+ "reference": {
+  "file": "vendor/elekloader/catalog/core-2.1.elemod",
+  "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb",
+  "keeps": [
+   "id",
+   "collections",
+   "requires",
+   "conflicts"
+  ]
+ },
+ "releases": [
+  "1.53",
+  "1.54"
+ ],
+ "sources": [
+  "sdk/elemod/core/boot.s",
+  "sdk/elemod/core/ui-hooks.s",
+  "sdk/elemod/core/event-hooks.s",
+  "sdk/elemod/core/event-bus.c",
+  "sdk/elemod/core/settings-api.c",
+  "resumes.s",
+  "machines.s",
+  "machines.c",
+  "pages.s",
+  "pages.c"
+ ],
+ "asflags": [
+  "--defsym",
+  "MW_BASE=1"
+ ],
+ "collections": {
+  "ev_tick": 4,
+  "ev_draw": 4,
+  "ev_key": 4,
+  "ev_enc": 4,
+  "ev_settings": 4,
+  "ev_render_in": 4,
+  "ev_render_out": 4,
+  "ev_render_voices": 4,
+  "core_machines": 4,
+  "fa_copies": 4
+ },
+ "subscribe": [
+  {
+   "event": "ev_tick",
+   "fn": "mw_pages_tick",
+   "order": 20
+  }
+ ],
+ "claims": [
+  "timer:DTIM0"
+ ],
+ "defsym": {
+  "mw_stock_boot": "0x40001c94",
+  "mw_stock_tick": {
+   "1.53": "0x400ca34c",
+   "1.54": "0x400ca574"
+  },
+  "mw_stock_draw": {
+   "1.53": "0x400ca382",
+   "1.54": "0x400ca5aa"
+  },
+  "mw_stock_key": "0x400084fe",
+  "mw_stock_enc": "0x40008550",
+  "mw_stock_allocate": {
+   "1.53": "0x400d4180",
+   "1.54": "0x400d43a8"
+  },
+  "mw_stock_function_manager": {
+   "1.53": "0x40137478",
+   "1.54": "0x401376a0"
+  },
+  "mw_stock_item_construct": {
+   "1.53": "0x400c423c",
+   "1.54": "0x400c4464"
+  },
+  "mw_stock_menu_append": {
+   "1.53": "0x400c3a72",
+   "1.54": "0x400c3c9a"
+  },
+  "mw_continue_settings": "0x40058806",
+  "mw_continue_render_in": "0x4007742e",
+  "mw_continue_render_out": "0x400784ce",
+  "mw_continue_render_voices": "0x40077fc0",
+  "mw_fw_track_blocks": "0x80001a18",
+  "MW_RV_A4": {
+   "1.53": "0x4199e444",
+   "1.54": "0x4199f444"
+  },
+  "MW_MLIST_LOOP": "0x40022fc0",
+  "MW_MLIST_DONE": "0x40022fec",
+  "MW_MSET_ON": "0x400225f8",
+  "MW_MSET_OFF": "0x40022708",
+  "MW_MSTEP_ON": "0x4002a4ec",
+  "MW_MSTEP_SKIP": "0x4002a4fa",
+  "MW_MOPEN_ON": "0x4002a9f8",
+  "MW_MOPEN_SKIP": "0x4002aa02",
+  "MW_DEFAULT_NAME": {
+   "1.53": "0x401c4084",
+   "1.54": "0x401c4404"
+  },
+  "MW_DEFAULT_SHORT": {
+   "1.53": "0x401c1d2f",
+   "1.54": "0x401c20af"
+  },
+  "MW_MICON_ON": "0x40029ea4",
+  "mw_fw_item_id": {
+   "1.53": "0x400c3fb8",
+   "1.54": "0x400c41e0"
+  },
+  "mw_fw_blit": {
+   "1.53": "0x400c2960",
+   "1.54": "0x400c2b88"
+  },
+  "MW_MPARAMS_ON": "0x40078f78",
+  "MW_MPARAMS_NONE": "0x40078f54",
+  "MW_MRENDER_DONE": "0x4007727a",
+  "MW_MLOAD_STORE": "0x4007a2fe",
+  "MW_TRACK_MACHINE": "0x4002200a",
+  "MW_PAGE_MACHINE": "0x4002b5d4",
+  "MW_MOWNER_ON": "0x40011328",
+  "MW_MOWNER_SKIP": "0x40011332",
+  "MW_MCC_ON": "0x400791dc",
+  "MW_MCC_GENERIC": "0x400791fe",
+  "MW_MNRPN_ON": "0x40079246",
+  "MW_MNRPN_GENERIC": "0x40079268",
+  "MW_MACHINE_TYPE": "0x40029e80",
+  "mw_fw_sample_knobs": {
+   "1.53": "0x4018470c",
+   "1.54": "0x40184a0c"
+  },
+  "MW_LAYOUT_ON": "0x400657d2",
+  "MW_LABEL_SHORT_ON": "0x4000fe94",
+  "MW_LABEL_LONG_ON": "0x4000feb6",
+  "MW_VALUE_TEXT_ON": "0x4000f32c",
+  "MW_KNOB_GFX_ON": "0x4000f2c4",
+  "MW_UI_RECORD_ON": "0x4006579e",
+  "MW_POPUP_ON": "0x400657f8",
+  "MW_RANGE": "0x40078f0c",
+  "MW_LFO_LABEL_ON": "0x40060b94",
+  "MW_LFO_LABEL_NAMED": "0x40060baa",
+  "mw_fw_param_table": {
+   "1.53": "0x401a9d9c",
+   "1.54": "0x401aa09c"
+  },
+  "MW_LFO_FORMAT": {
+   "1.53": "0x401d09ca",
+   "1.54": "0x401d0d7e"
+  },
+  "mw_fw_kit": {
+   "1.53": "0x4199dc44",
+   "1.54": "0x4199ec44"
+  },
+  "mw_fw_active_track": {
+   "1.53": "0x4197b6b4",
+   "1.54": "0x4197c6b4"
+  },
+  "mw_fw_src_param_vt": {
+   "1.53": "0x4017eb58",
+   "1.54": "0x4017ee58"
+  },
+  "mw_fw_sound_ref_vt": {
+   "1.53": "0x40181330",
+   "1.54": "0x40181630"
+  }
+ },
+ "sites": [
+  {
+   "addr": "0x40000538",
+   "len": 6,
+   "stockSha256": "c1a3cde7400c8be664852277311dbf1b3ce0b613123e9380d9cfde178b1fe0ac",
+   "op": "jsr",
+   "target": "mw_boot"
+  },
+  {
+   "addr": "0x4000a770",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "13ab557aaee5d356f2db123a198e1ffd86d3eff36974fe4b51d29956271f3a79",
+    "1.54": "17f64e76a33cd9f8211972ddc05c984d52cbd31fe16231ae768c5f0a6dce1388"
+   },
+   "op": "jsr",
+   "target": "mw_hook_tick"
+  },
+  {
+   "addr": "0x4000a7d6",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "12b965b9100a691a982969e270fc3e67aa394915187f4e4644d76f89470e374a",
+    "1.54": "1fd873aa9a14c8691484085d12abd1cd864aab22a56387dd6a682396ea2bf72a"
+   },
+   "op": "jsr",
+   "target": "mw_hook_draw"
+  },
+  {
+   "addr": "0x4000b770",
+   "len": 6,
+   "stockSha256": "fd093959ea0b44395bc971bb16a4bd179b9032cb712bdb5d06f4458fc148ef58",
+   "op": "jsr",
+   "target": "mw_hook_key"
+  },
+  {
+   "addr": "0x4000b7ba",
+   "len": 6,
+   "stockSha256": "b64e1b142d9a31dede4506a839e453a9c1ce529f3687898ea70489a111277e87",
+   "op": "jsr",
+   "target": "mw_hook_enc"
+  },
+  {
+   "addr": "0x40058800",
+   "len": 6,
+   "stockSha256": "c7589861366d298dd3e07f1f5ebce25db0435f9cad638eae321d68e7542f6c74",
+   "op": "jsr",
+   "target": "mw_hook_settings"
+  },
+  {
+   "addr": "0x40077428",
+   "len": 6,
+   "stockSha256": "0682088f8b8f8b0760d2f195d03bf17728bc872575efaf90dff0ac96d30db5ba",
+   "op": "jsr",
+   "target": "mw_hook_render_in"
+  },
+  {
+   "addr": "0x400784c8",
+   "len": 6,
+   "stockSha256": "1f662c862f0ad2083b74f2bd725af32176471631724d23772d24dc48a1e65895",
+   "op": "jsr",
+   "target": "mw_hook_render_out"
+  },
+  {
+   "addr": "0x40022fe6",
+   "len": 6,
+   "stockSha256": "6249bd4a5dff26d8db35e02ea29300b8ef070ff4e4dda2a0c742059af83e1eb3",
+   "op": "jmp",
+   "target": "mw_mlist"
+  },
+  {
+   "addr": "0x400225f0",
+   "len": 8,
+   "stockSha256": "c6e2fbb68acfbe73d3e27922d8e969ae112504d5302e463e40a9a12887c6475d",
+   "op": "jmp",
+   "target": "mw_mset"
+  },
+  {
+   "addr": "0x4002a76e",
+   "len": 4,
+   "stockSha256": "4d8287ec36bda4eb70db5e3717f1042a6441d17eaa29d135190d12354436d984",
+   "op": "bytes",
+   "new": "48780004",
+   "kind": "code"
+  },
+  {
+   "addr": "0x4002a4e0",
+   "len": 12,
+   "stockSha256": "610169769140ead48e768061b41909aa049b6a4472e0c999354a288c16cca7cb",
+   "op": "jmp",
+   "target": "mw_mstep"
+  },
+  {
+   "addr": "0x4002a9e8",
+   "len": 16,
+   "stockSha256": "5fb87f56bb92d5776d32984adada70d0548a60e98854d1990727760dd26d84d9",
+   "op": "jmp",
+   "target": "mw_mopen"
+  },
+  {
+   "addr": "0x40079124",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "9d472bf765b6ec74375e5d0c4ebe79a15bb19a2c4c437549d812568dde0a56fc",
+    "1.54": "563a70374d82729aaa3c1f4ee417f0bdea9f9e1b46af60c3ee3a63e94de6a017"
+   },
+   "op": "jmp",
+   "target": "mw_mname"
+  },
+  {
+   "addr": "0x40079144",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "b2f65c0245a338e520d1b20633ec75e5795666f0e76c805874cc389207dee815",
+    "1.54": "0844eafef60a238dfe91cdfe91328311d87ca5d68b640131f94764c46ef89ab5"
+   },
+   "op": "jmp",
+   "target": "mw_mshort"
+  },
+  {
+   "addr": "0x40029e9c",
+   "len": 8,
+   "stockSha256": "74c5c24f09bf544b8fad303723b3935f248a9f48eefdbd230049cf63bd8fee5e",
+   "op": "jmp",
+   "target": "mw_micon"
+  },
+  {
+   "addr": "0x40078f72",
+   "len": 6,
+   "stockSha256": "c73694c82b7e3dd6bf8b3c8e1516bb538a6b898e8b6c8c0e86ea9513419b2bbc",
+   "op": "jmp",
+   "target": "mw_mparams"
+  },
+  {
+   "addr": "0x40077272",
+   "len": 8,
+   "stockSha256": "847846956dd42e57096fe20c036a4964c0c607ac7125065f842d3934048ecea8",
+   "op": "jmp",
+   "target": "mw_mrender"
+  },
+  {
+   "addr": "0x4007a2ea",
+   "len": 20,
+   "stockSha256": "262ef31fb24fcfdfe92ab54be10be5d7139511487c4dbc39804ba25492a2f36a",
+   "op": "jmp",
+   "target": "mw_mload"
+  },
+  {
+   "addr": "0x4002ba7e",
+   "len": 6,
+   "stockSha256": "26708d2ffdc9267a0dc186240bb8403cdc29aa8a888bd6721d6f44c21385e36e",
+   "op": "jsr",
+   "target": "mw_mplays"
+  },
+  {
+   "addr": "0x4002aee0",
+   "len": 6,
+   "stockSha256": "26708d2ffdc9267a0dc186240bb8403cdc29aa8a888bd6721d6f44c21385e36e",
+   "op": "jsr",
+   "target": "mw_mplays"
+  },
+  {
+   "addr": "0x40028f7e",
+   "len": 6,
+   "stockSha256": "26708d2ffdc9267a0dc186240bb8403cdc29aa8a888bd6721d6f44c21385e36e",
+   "op": "jsr",
+   "target": "mw_mplays"
+  },
+  {
+   "addr": {
+    "1.53": "0x400a1706",
+    "1.54": "0x400a1862"
+   },
+   "len": 6,
+   "stockSha256": "26708d2ffdc9267a0dc186240bb8403cdc29aa8a888bd6721d6f44c21385e36e",
+   "op": "jsr",
+   "target": "mw_mplays"
+  },
+  {
+   "addr": "0x4003a43e",
+   "len": 6,
+   "stockSha256": "be9e9e9baabfef8751280894431da2a79a878246d7ea863e688b06c8c6ad4545",
+   "op": "jsr",
+   "target": "mw_mplays_page"
+  },
+  {
+   "addr": "0x40039e80",
+   "len": 2,
+   "stockSha256": "771260b3e7ad3e3bbe992aa16c9958440f42bf5762b268b299898d6eefe67772",
+   "op": "bytes",
+   "new": "727f",
+   "kind": "code"
+  },
+  {
+   "addr": "0x4003b49e",
+   "len": 2,
+   "stockSha256": "771260b3e7ad3e3bbe992aa16c9958440f42bf5762b268b299898d6eefe67772",
+   "op": "bytes",
+   "new": "727f",
+   "kind": "code"
+  },
+  {
+   "addr": "0x40039dac",
+   "len": 2,
+   "stockSha256": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+   "op": "bytes",
+   "new": "707f",
+   "kind": "code"
+  },
+  {
+   "addr": "0x4003afe4",
+   "len": 2,
+   "stockSha256": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+   "op": "bytes",
+   "new": "707f",
+   "kind": "code"
+  },
+  {
+   "addr": "0x4003b448",
+   "len": 2,
+   "stockSha256": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+   "op": "bytes",
+   "new": "707f",
+   "kind": "code"
+  },
+  {
+   "addr": "0x4003b6d4",
+   "len": 2,
+   "stockSha256": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+   "op": "bytes",
+   "new": "707f",
+   "kind": "code"
+  },
+  {
+   "addr": "0x40039e86",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "b5ab09c58fb2d52e2e93ffb4c3f2e595834e2d85405ea423f8c65ebb01aac747",
+    "1.54": "abe7c8a63931431833c642afd9342d2c6290f908c6fee1a7446d4ec4ac2344b9"
+   },
+   "op": "lea",
+   "target": "mw_samp_table",
+   "register": 0
+  },
+  {
+   "addr": "0x40039dcc",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "d8bd02f12d67d725d257228a403b9aadd37d7b90d2c098dc7ea0d3d7d0ac4d74",
+    "1.54": "dd2de8cb59053eabaf696fc007fc502de6b58c42b4e20fc563135f6f5f9cf664"
+   },
+   "op": "lea",
+   "target": "mw_samp_table",
+   "register": 4
+  },
+  {
+   "addr": "0x4003afee",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "5461b2bc1909bb527f76caa8042b3aabb167058f186c47e6da9afc61794fe66c",
+    "1.54": "af6dc59e1184d2992265d65f579fcb1c30671caa2674c4dc130746e3f73d4204"
+   },
+   "op": "lea",
+   "target": "mw_samp_table",
+   "register": 1
+  },
+  {
+   "addr": "0x4003b452",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "5461b2bc1909bb527f76caa8042b3aabb167058f186c47e6da9afc61794fe66c",
+    "1.54": "af6dc59e1184d2992265d65f579fcb1c30671caa2674c4dc130746e3f73d4204"
+   },
+   "op": "lea",
+   "target": "mw_samp_table",
+   "register": 1
+  },
+  {
+   "addr": "0x4003b4ac",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "7f00fec295b1073a29641c35a342ba167c53d48afe20d78c4625f944641df2cb",
+    "1.54": "fde04e9dc7455ea74f96aac1625d05ab755eaf8e0e011236ccef2de4965d2a95"
+   },
+   "op": "lea",
+   "target": "mw_samp_table",
+   "register": 3
+  },
+  {
+   "addr": "0x4003b6de",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "b5ab09c58fb2d52e2e93ffb4c3f2e595834e2d85405ea423f8c65ebb01aac747",
+    "1.54": "abe7c8a63931431833c642afd9342d2c6290f908c6fee1a7446d4ec4ac2344b9"
+   },
+   "op": "lea",
+   "target": "mw_samp_table",
+   "register": 0
+  },
+  {
+   "addr": "0x40011322",
+   "len": 6,
+   "stockSha256": "abfb2dc462ce68779ce4f21deb2739607f12bf3a7adb5433847b8b996d0c03bf",
+   "op": "jmp",
+   "target": "mw_mowner"
+  },
+  {
+   "addr": "0x400791d6",
+   "len": 6,
+   "stockSha256": "2ebc34e214f019af8a3f8cb7648e592edd431d5960908154cb3005b3f5b48b7c",
+   "op": "jmp",
+   "target": "mw_mcc"
+  },
+  {
+   "addr": "0x40079240",
+   "len": 6,
+   "stockSha256": "fab81bf4e78da1c198218679175eba41e275deb44cb4c80096a47a5e5330642c",
+   "op": "jmp",
+   "target": "mw_mnrpn"
+  },
+  {
+   "addr": "0x400657cc",
+   "len": 6,
+   "stockSha256": "3b618e4eaaafbc05f3a3649b08bde56616971a07cc578ed13570b010e70bf072",
+   "op": "jmp",
+   "target": "mw_layout"
+  },
+  {
+   "addr": "0x4000fe8a",
+   "len": 10,
+   "stockSha256": "5a18bd3f39db0448ad3452128af8f9e63d1e9c011cafecfc54210fba10c19677",
+   "op": "jmp",
+   "target": "mw_label_short"
+  },
+  {
+   "addr": "0x4000feac",
+   "len": 10,
+   "stockSha256": "5a18bd3f39db0448ad3452128af8f9e63d1e9c011cafecfc54210fba10c19677",
+   "op": "jmp",
+   "target": "mw_label_long"
+  },
+  {
+   "addr": "0x4000f324",
+   "len": 8,
+   "stockSha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
+   "op": "jmp",
+   "target": "mw_value_text"
+  },
+  {
+   "addr": "0x4000f2bc",
+   "len": 8,
+   "stockSha256": "7357d174dda33b71e4d29ed8e6d02a3b96a76167a0a44ebe35f2a439406880f4",
+   "op": "jmp",
+   "target": "mw_knob_gfx"
+  },
+  {
+   "addr": "0x40065794",
+   "len": 10,
+   "stockSha256": "6fac3f4794a986259c5b1076561f1b40f68fd968c6940bb6c785ee20e1334617",
+   "op": "jmp",
+   "target": "mw_ui_record"
+  },
+  {
+   "addr": "0x400657ee",
+   "len": 10,
+   "stockSha256": "6fac3f4794a986259c5b1076561f1b40f68fd968c6940bb6c785ee20e1334617",
+   "op": "jmp",
+   "target": "mw_popup"
+  },
+  {
+   "addr": "0x4000ff20",
+   "len": 6,
+   "stockSha256": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+   "op": "jsr",
+   "target": "mw_range"
+  },
+  {
+   "addr": "0x400100c4",
+   "len": 6,
+   "stockSha256": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+   "op": "jsr",
+   "target": "mw_range"
+  },
+  {
+   "addr": "0x4000f534",
+   "len": 6,
+   "stockSha256": "37ace07d53dc6aa9eba5ede1b616b09eb19800992fd652169e5fd1051c3ffde3",
+   "op": "jsr",
+   "target": "mw_range"
+  },
+  {
+   "addr": "0x4000f5fc",
+   "len": 6,
+   "stockSha256": "d3c6f631568fb7f26a844c1e364989f7ebc04db477e5d6bf13b33bda9b26878e",
+   "op": "lea",
+   "target": "mw_range_f",
+   "register": 2
+  },
+  {
+   "addr": "0x40077fba",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "5181c52f3e1d44ffa7a732058855f98b3431533e9c7f38684d4739f47fe261aa",
+    "1.54": "039364694af129be95aaf0f68e65e99e67c0a24eb30fb60a70981bff367fb4a6"
+   },
+   "op": "jsr",
+   "target": "mw_hook_render_voices"
+  },
+  {
+   "addr": "0x40060b8e",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "2089e24a3da4b21a87a1724df31552cb6f4ff6d713d2ff60a1750f391471e710",
+    "1.54": "348bda2f007e286fe03335905a468d107ca5b515969d4cd3adabcd24a09dd485"
+   },
+   "op": "jmp",
+   "target": "mw_lfo_label"
+  },
+  {
+   "addr": {
+    "1.53": "0x400a4374",
+    "1.54": "0x400a44d0"
+   },
+   "len": 6,
+   "stockSha256": "81ec6bd4f514d9f1ac3300455338b01169f581a9eba9bcbdb8c5d68c865084fa",
+   "op": "jsr",
+   "target": "mw_lfo_list"
+  },
+  {
+   "addr": {
+    "1.53": "0x400a43f0",
+    "1.54": "0x400a454c"
+   },
+   "len": 6,
+   "stockSha256": "3900fb0c2d68aa3c036b14b69338b9c4498b92b1a090707f96375c14607b45ed",
+   "op": "jsr",
+   "target": "mw_lfo_lshort"
+  },
+  {
+   "addr": "0x40065de6",
+   "len": 6,
+   "stockSha256": "752240e3f074673bf7d0e6dba45d264fa097aba6578c196030eeeada3d7b5fd5",
+   "op": "jsr",
+   "target": "mw_lfo_bgroup"
+  },
+  {
+   "addr": "0x40065e68",
+   "len": 6,
+   "stockSha256": {
+    "1.53": "034daf466a84a080e7aa51b52900b82e2b79577991ccfa4dbe9382f58e729569",
+    "1.54": "7afd5dfe45b41d3f80b646533b2647c26a8412b2d5463c7d930a06551737f2b3"
+   },
+   "op": "jsr",
+   "target": "mw_lfo_bname"
+  },
+  {
+   "addr": "0x4003b314",
+   "len": 6,
+   "stockSha256": "430d21da6f8a168fa69041d4619b17bc229ff0db503be583281dc96585cfbadc",
+   "op": "jsr",
+   "target": "mw_sample_d0"
+  },
+  {
+   "addr": "0x4003b5b2",
+   "len": 6,
+   "stockSha256": "7212dc8bce4d59b25677b6c581025995dd597668cc8a605473ad545d6c978e97",
+   "op": "jsr",
+   "target": "mw_sample_d2"
+  },
+  {
+   "addr": "0x4002a382",
+   "len": 6,
+   "stockSha256": "56b34659cd862f9a3842db744fdc66748017e519f8030fced7aca6cb52630d30",
+   "op": "jsr",
+   "target": "mw_mtype"
+  }
+ ],
+ "companions": [
+  {
+   "id": "machine-pages",
+   "version": "2.0",
+   "title": "machine pages",
+   "summary": "Machine Pages' contract is part of Modwerk's Digitakt base now: this package has no code and keeps the SRC machines that name it building unchanged.",
+   "conflicts": [
+    "digichain"
+   ]
+  }
+ ]
+}

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "digitakt",
   "interface": "2.1",
-  "status": "The Modwerk core implementing this interface is in development. Mods written for this interface link with it unchanged.",
+  "status": "Provided by Modwerk's Digitakt mk1 base (sdk/machines/digitakt/base, version 5.0) for OS 1.53 and 1.54, which builds and links every shipped mod unchanged; until a tester has run it on a unit, site builds keep linking the catalogue's core. Mods written for this interface link with either.",
   "events": [
     {
       "name": "ev_tick",
@@ -38,13 +38,18 @@
       "name": "ev_render_out",
       "when": "exit of the audio render",
       "handler": "void f(void)"
+    },
+    {
+      "name": "ev_render_voices",
+      "when": "in the render, after playback has written every track's block, before the overdrive",
+      "handler": "void f(int32_t *blocks); blocks = 8 tracks x 32 Q31 samples. Order 10-49 makes a track's sound, 50-89 changes one already made"
     }
   ],
   "tables": [
     {
       "name": "core_machines",
       "entry": 4,
-      "purpose": "Pointers to six-long descriptors for SRC machine ids 4–127; the OS lists, names, sets, loads and renders them as the stock machine they stand in for."
+      "purpose": "Pointers to descriptors for SRC machine ids 4–127 (six longs; with the tag \"UI30\" and a page pointer after them, the machine describes its own SRC and LFO pages); the OS lists, names, sets, loads and renders them as the stock machine they stand in for."
     }
   ],
   "exports": [
@@ -67,13 +72,28 @@
       "name": "core_zero",
       "prototype": "zero-filled data",
       "purpose": "What a weak import resolves to when no mod provides it."
+    },
+    {
+      "name": "core_machine_ui",
+      "prototype": "const struct cm_ui *core_machine_ui(int id)",
+      "purpose": "An added machine's SRC page (descriptor +28 when +24 is \"UI30\"), or zero."
+    },
+    {
+      "name": "cm_ui_v3",
+      "prototype": "const char cm_ui_v3[]",
+      "purpose": "The page marker an added machine's page names in its abi field."
+    },
+    {
+      "name": "cm_ui_v31",
+      "prototype": "const char cm_ui_v31[]",
+      "purpose": "The marker of a page whose knobs may draw their own graphic (DRAW)."
     }
   ],
   "claims": [
     "timer:DTIM0"
   ],
   "memory": {
-    "area": "0x47be0000-0x47c00000",
+    "area": "0x47bc0000-0x47c00000",
     "fast": "0x8000f700-0x80010000"
   }
 }
