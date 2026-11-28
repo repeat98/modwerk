@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "module": "scope",
+  "version": "0.2.0-experimental",
+  "sourceSha256": "0be8808c178913d0c0297804813f585d3f90a5c2691beba2cccab2ae109a8098",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 650,
+    "measured": 602,
+    "budget": 9577,
+    "method": "One event is one 16-sample audio block with the window open: ev_usb_frame copies into the rings (sc_usb_frame + sc_frame_body), and module_tick redraws at most once per 46 blocks (sc_mw_tick + sc_draw and stock CLEAR/BOX/VLINE/TEXT). Instructions, not opcode cycles. Static: counted from unit.s linked with MODWERK_EVENTS=1 (perf.py), dearest ALL view with eight tracks updating in sc_frame_body, draw on the ALL path (400 own instructions) and stock LCD helpers at 7163 instructions a redraw (Tuner 0.1.0 measured ceiling on the same ot_emu port). Per block: 77 in the frame hook plus (7 + 400 + 7163) / 46 amortised = 242 instructions, 650 cycles after a small ALL-path margin. Measured: same instruction model on 27 November 2026 without a separate PC-watch rerun (the frame hook is fixed at 77 instructions in every open block); the development twin 43ac2465 profile with SCOPE open shows module UI ticks at 22 to 27 us a tick, consistent with a redraw about every 46 blocks. Budget: Modwerk ColdFire allowance, 10 % of a 362.8 us block (9,577 cycles; 2.49216 cycles per instruction at 264 MHz, 9.44 ns an instruction)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 129.1,
+    "moduleLongestUs": 130.8,
+    "stockIdlePercent": 62.4,
+    "moduleIdlePercent": 61.6,
+    "method": "Emulator, not hardware: adapted ot_emu 27 November 2026, development twin 43ac24652a89f28b (MAIN.raw), card project with T1 THRU and a 440 Hz stereo line-in (--audio-in). Two 62 s runs from PLAY with the same flood as bar-led 0.1.0 (one three-byte MIDI message every emulated ms plus clock at 250 BPM; STOP/START at 7, 22, 37 and 52 s). Stock: twin without SCOPE installed. Module: f8a1ffeb package accepted, DOWN+TEMPO with the window held open in OSC view. Longest frame interrupt: the largest instruction span from the frame handler entry 0x4000aad4 to epilogue 0x4000d9a6 in ot_emu's port time (3,990 instructions a sample: 362.8 us = 63,840), over 170,000 frames. Idle: 100 x (1 - executed instructions / (3,990 x elapsed samples)). Under this flood SCOPE's own code added about 1.7 us to the longest frame interrupt and 0.8 points of idle time; the UI redraw cost is mostly outside the measured window."
+  },
+  "stress": {
+    "floodMessagesPerSecond": 1000,
+    "clockBpm": 250,
+    "seconds": 62,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "Emulator, not hardware: the load run above on the SCOPE image, 62,000 three-byte messages and 6,200 clock bytes, with the SCOPE window open. SCOPE subscribes only to module_key, module_tick and ev_usb_frame; it does not handle MIDI. PC watches on the stock MIDI handlers matched the messages sent. Part change and audible stuck notes were not exercised. Frames ran to the end of the window with no hang."
+  },
+  "hardwareEvidence": {
+    "status": "reported",
+    "existingReport": "TESTING.md",
+    "note": "Functional checks and LCD captures on the author's MKII, 27 November 2026 (development twin and flashed release-base trials in TESTING.md). The cycles, load and stress rows are ot_emu measurements and the static instruction model above."
+  }
+}

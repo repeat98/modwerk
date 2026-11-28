@@ -9,7 +9,7 @@ import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { compiledModuleVersions, moduleSourcePaths, moduleSourceFingerprint, sourceEntryHash, isDocumentationPath } from './module-source.mjs'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const catalog = JSON.parse(await readFile(resolve(root, 'sdk/catalog.json'), 'utf8'))
-const requested = ['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector']
+const requested = ['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'scope']
 describe('release package scope and reviewed source inventory', () => {
   it('keeps the committed release identity bound to the complete SDK source and compiler', async () => {
     const record = JSON.parse(await readFile(resolve(root, 'src/engine/assets/module-build.json'), 'utf8'))
