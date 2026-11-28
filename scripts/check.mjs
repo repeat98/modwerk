@@ -253,4 +253,5 @@ if (!passed && failed.size) {
 } else if (!passed && interrupted) console.log('Stopped before it finished: no check failed.')
 if (flaky.length) console.log(`${process.env.GITHUB_ACTIONS ? '::warning title=Flaky tests::' : ''}Failed in the full run and passed alone, so they did not fail the check: ${flaky.join(', ')}. A file listed here run after run needs its own fix.`)
 if (skipped.length) console.log(`Rerun: ${skipped.join(', ')} passed in the last run and did not run now. Run the full check (or pr:ready) before you push.`)
+if (!process.stdout.isTTY) console.log('Piped output: your shell may report the exit code of tail or head, not check. Use tee or run without a pipe before you trust the status.')
 if (!passed && !process.exitCode) process.exitCode = 1

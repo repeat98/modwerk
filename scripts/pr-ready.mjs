@@ -22,7 +22,7 @@ const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:gene
 // The checks that judge a module. A module pull request never edits them: a red check names the fix, and a wrong check is its own
 // Fix: pull request (AGENTS.md, "Setup and checks"). A module release still carries its builder list, assets, comparisons and test lists.
 const MODULE_FOLDER = new RegExp(`^sdk\\/(?:${alternation(moduleFolders())})\\/modules\\/[^/]+\\/|^sdk\\/drafts\\/[^/]+\\/`)
-const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|pr-check-plan|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract)\.py$)/
+const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates|dsp_register_contract)\.py$|scripts\/(?:modules|module-doctor|module-cpu-price|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|pr-check-plan|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates|dsp-register-contract|octatrack-qualify)\.py$)/
 /** The gate files a change edits while it also adds or changes a module; [] when it changes no module. */
 export function gateEdits(files) {
   return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []

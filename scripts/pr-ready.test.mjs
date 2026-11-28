@@ -165,6 +165,7 @@ describe('pr:ready verdict', () => {
     expect(gateEdits(['sdk/digitakt-ii/modules/track-names/build.json', 'scripts/change-scope.mjs'])).toEqual(['scripts/change-scope.mjs'])
     // The CPU price check is a gate; its pending list is not, so a module that names its price deletes its own line there.
     expect(gateEdits(['sdk/octatrack/modules/poly8/octamod.module.json', 'scripts/module-cpu-price.mjs', 'sdk/module-cpu-prices-pending.json'])).toEqual(['scripts/module-cpu-price.mjs'])
+    expect(gateEdits(['sdk/octatrack/modules/seq/octamod.module.json', 'scripts/octatrack-qualify.py'])).toEqual(['scripts/octatrack-qualify.py'])
     // What a module release legitimately carries (ARP KEY LOCKS, #954): the package builder's list, assets, the native comparison, test lists.
     expect(gateEdits(['sdk/octatrack/modules/arp-key-locks/manifest.py', 'scripts/build-module-packages.py', 'src/engine/assets/module-build.json', 'sdk/native-comparisons/arp-key-locks.json', 'scripts/module-release-scope.test.mjs', 'sdk/tests/test_arp_key_locks.py'])).toEqual([])
     // A Fix: pull request to the gate itself changes no module.
