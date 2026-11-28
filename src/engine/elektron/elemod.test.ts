@@ -6,7 +6,7 @@ import { ELE3_DEVICES } from './ele3'
 import A4_PROFILE from '../../../sdk/machines/analog-four-mkii/machine.json'
 import DN2_PROFILE from '../../../sdk/machines/digitone-ii/machine.json'
 import { readFileSync } from 'node:fs'
-import { fromImage } from '../../../vendor/elekloader/kit/src/store.ts'
+import { fromImage } from './store.ts'
 
 // A synthetic machine whose "stock" image is 4 KiB of NOPs: no Elektron firmware involved.
 const image = Uint8Array.from({ length: 4096 }, (_, i) => (i % 2 ? 0x71 : 0x4e))

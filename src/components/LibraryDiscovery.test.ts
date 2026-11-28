@@ -9,6 +9,7 @@ import { asBeta } from '../catalog/beta-fixture'
 import { countsTowardLimit, SET_MODULE_LIMIT } from '../catalog/set-limit'
 import { newConfiguration } from '../config/workspace'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { DIGI_MODS } from '../devices/digi-mods'
 import { MachineLibrary } from '../devices/MachinePages'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { LibrarySelection } from './LibrarySelection'
@@ -151,7 +152,7 @@ describe('live library selection details', () => {
 
   it('updates Digi memory and incompatibility details independently of an Octatrack set', async () => {
     const octatrack = newConfiguration('Live set', ['everb'])
-    const digitakt = newConfiguration('Drums', ['digimono', 'digistring'], false, undefined, 'digitakt')
+    const digitakt = newConfiguration('Drums', ['live-looper', 'ram-machines'], false, undefined, 'digitakt')
     const render = (moduleIds: string[]) => act(() => root.render(
       createElement(LibrarySelection, { sets: [octatrack, { ...digitakt, moduleIds }], betaAccess: false, collapsible: true }),
     ))
@@ -159,16 +160,20 @@ describe('live library selection details', () => {
     const details = container.querySelector('details')!
     const summary = details.querySelector('summary')!
     expect(details.open).toBe(false)
-    expect(summary.textContent).toContain('1 issue')
-    expect(details.textContent).toContain('Digi Mono and STRING cannot be used together')
+    expect(summary.textContent).toContain('3 issues')
+    expect(details.textContent).toContain('Live Looper and RAM Record and Playback cannot be used together')
     expect(details.textContent).toContain('Estimated memory')
     expect(details.querySelector('a[href="#digitakt/configuration"]')).not.toBeNull()
     details.open = true
-    await render(['digislicer', 'cc-names', 'midi-expression', 'euclidean', 'digineighbor', 'digistring'])
+    // The whole Digitakt library fits the shared area since the imported packages left (28 November 2026), so a synthetic
+    // module stands in for a set that does not.
+    const saved = DIGI_MODS.slice()
+    DIGI_MODS.push({ ...DIGI_MODS.find(mod => mod.device === 'digitakt' && mod.id === 'digistring')!, id: 'oversized', title: 'Oversized', claims: [], ramBytes: 1 << 20 })
+    try { await render(['oversized', 'digistring']) } finally { DIGI_MODS.splice(0, DIGI_MODS.length, ...saved) }
     expect(details.open).toBe(true)
     expect(details.textContent).toContain('Over the shared memory limit')
-    expect(details.textContent).not.toContain('Digi Mono and STRING')
-    await render(['digislicer', 'digineighbor'])
+    expect(details.textContent).not.toContain('Live Looper and RAM Record and Playback')
+    await render(['euclidean', 'digistring'])
     expect(summary.textContent).toBe('Selection details')
     expect(details.textContent).toContain('All stock FX kept')
   })

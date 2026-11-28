@@ -90,16 +90,16 @@ describe('community request database budgets',()=>{
   // Steady state: the once-per-process thread check has already run, so it costs this request nothing.
   await ensureModuleThreadsOnce(env.DB!)
   const id=(db.prepare('SELECT id FROM users WHERE username=?').get('performance_member') as {id:string}).id
-  db.prepare('INSERT INTO ratings(module_id,user_id,value) VALUES(?,?,?)').run('digitakt-digihealth',id,4)
-  db.prepare('INSERT INTO likes(module_id,user_id) VALUES(?,?)').run('digitakt-digihealth',id)
+  db.prepare('INSERT INTO ratings(module_id,user_id,value) VALUES(?,?,?)').run('digitakt-digiperform',id,4)
+  db.prepare('INSERT INTO likes(module_id,user_id) VALUES(?,?)').run('digitakt-digiperform',id)
   db.prepare("UPDATE module_download_meta SET value=? WHERE key='collection_started'").run('2026-10-01T00:00:00Z')
-  for(const [post,hidden] of [['count-visible',0],['count-hidden',1]] as const)db.prepare('INSERT INTO forum_posts(id,thread_id,user_id,body,hidden) VALUES(?,?,?,?,?)').run(post,'module-digitakt-digihealth',id,'A comment',hidden)
+  for(const [post,hidden] of [['count-visible',0],['count-hidden',1]] as const)db.prepare('INSERT INTO forum_posts(id,thread_id,user_id,body,hidden) VALUES(?,?,?,?,?)').run(post,'module-digitakt-digiperform',id,'A comment',hidden)
   const prepare=vi.spyOn(env.DB!,'prepare')
-  const data=await (await call('/modules/digitakt-digihealth','GET',undefined,token)).json()
+  const data=await (await call('/modules/digitakt-digiperform','GET',undefined,token)).json()
   expect(data).toMatchObject({ratings:{average:4,count:1},ownRating:4,likes:1,liked:true,downloads:0,downloadsStarted:'2026-10-01T00:00:00Z',discussionCount:1})
   expect(prepare.mock.calls.length).toBeLessThanOrEqual(6)
   expect(prepare.mock.calls.some(([sql])=>sql.includes('sqlite_master'))).toBe(false)
-  const anonymous=await (await call('/modules/digitakt-digihealth')).json()
+  const anonymous=await (await call('/modules/digitakt-digiperform')).json()
   expect(anonymous).toMatchObject({ratings:{average:4,count:1},ownRating:0,likes:1,liked:false})
  })
 
@@ -117,7 +117,7 @@ describe('community request database budgets',()=>{
   for(const [path,budget] of [
    ['/catalog',1],['/forum/shouts?compact=1',4],['/forum/threads',4],
    // A member's thread view also records the last post they received, so it writes once.
-   ['/forum/threads/module-digitakt-digihealth',9],
+   ['/forum/threads/module-digitakt-digiperform',9],
    // Each period reads page totals once; the 7-day view also reads its hours.
    ['/admin/statistics?days=7',8],['/admin/statistics?days=30',7],['/admin/insights',8],
   ] as const){

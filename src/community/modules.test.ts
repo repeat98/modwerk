@@ -44,6 +44,6 @@ describe('reviewed maintainer opt-outs', () => {
     expect(COMMUNITY_MODULES.some(module => module.maintainers.some(login => login.toLowerCase() === 'sambanks'))).toBe(false)
     expect(communityModule('usb-audio-out-tracks-main-cue')).toMatchObject({ author: 'markandrus', maintainers: [] })
     expect(communityModule('miniverb')?.maintainers).toEqual(['repeat98'])
-    expect(communityModule('digitakt-digihealth')?.maintainers).toEqual(['irpina'])
+    expect(communityModule('digitakt-digiperform')?.maintainers).toEqual(['ROMsets'])
   })
 })

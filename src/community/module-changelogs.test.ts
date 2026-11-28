@@ -70,15 +70,21 @@ describe('module release notes', () => {
     expect(mergeModuleReleases(notes)).toHaveLength(2)
   })
 
-  it.each(['euclid', 'digitakt-digieq', 'digitone-digitables'])('renders authored changes for %s before the history service responds', id => {
-    const html = renderToStaticMarkup(createElement(ModuleChangelog, { id }))
-    expect(html).toContain('module-release-notes')
-    expect(html).toContain('Current version')
-    expect(html).toContain('View changes')
-    const sourceCommit = moduleChangelogs[id][0].sourceCommit
-    if (sourceCommit) expect(html).toContain(sourceCommit)
-    expect(html).toContain(moduleChangelogs[id][0].changes[0])
-    expect(html).not.toContain('Loading changelog')
-    expect(html).not.toContain('No release history')
+  // No Digitakt changelog records a source commit since the imported packages left (28 November 2026), so the
+  // machine-qualified ids get a synthetic one on their current entry for the render.
+  it.each(['euclid', 'tapehead', 'digitakt-euclidean', 'digitakt-ii-chord-arp'])('renders authored changes for %s before the history service responds', id => {
+    const saved = moduleChangelogs[id][0]
+    if (id.startsWith('digitakt-')) moduleChangelogs[id][0] = { ...saved, sourceCommit: 'a'.repeat(40) }
+    try {
+      const html = renderToStaticMarkup(createElement(ModuleChangelog, { id }))
+      expect(html).toContain('module-release-notes')
+      expect(html).toContain('Current version')
+      expect(html).toContain('View changes')
+      const sourceCommit = moduleChangelogs[id][0].sourceCommit
+      if (sourceCommit) expect(html).toContain(sourceCommit)
+      expect(html).toContain(moduleChangelogs[id][0].changes[0])
+      expect(html).not.toContain('Loading changelog')
+      expect(html).not.toContain('No release history')
+    } finally { moduleChangelogs[id][0] = saved }
   })
 })

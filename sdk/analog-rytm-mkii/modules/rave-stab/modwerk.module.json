@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 3,
+  "id": "rave-stab",
+  "name": "Rave Stab",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "chevyone",
+    "credits": [
+      "chevyone"
+    ]
+  },
+  "maintainers": [
+    "chevyone"
+  ],
+  "presentation": {
+    "label": "RAVE STAB",
+    "family": "Machine",
+    "summary": "SY RAVE: a six-voice digital chord stab, thirteen chords and nine voicings a step can lock, detune, saw to pulse, a strum and a pitch drop, through the Rytm's own analog filter and AMP.",
+    "overview": "An original chord voice computed on the Rytm's ColdFire at 48 kHz. Six band-limited oscillators play a chord in a voicing, both taken at each hit so a pattern can lock a progression step by step. DET spreads them against each other, WAV runs from saw through square to a narrow pulse and PCH drops or scoops the chord into its pitch at the hit, the zap of a rave stab. The track's own analog filter, AMP and OVR shape it: the filter's envelope makes the stab's sweep. EURK keeps the chord a musician found by accident in HH Alloy's metal oscillators.",
+    "highlights": [
+      "Thirteen chords on CHD, nine voicings on VOI, each lockable per step.",
+      "Played chromatically: the note transposes the whole chord.",
+      "DET from exact to 30 cents of spread, WAV from saw to a 12 % pulse.",
+      "Tap the TUN encoder for the register: an octave down, two, at the note or up."
+    ],
+    "usage": [
+      "Select the BD track, press FUNC + SRC, scroll to SY RAVE in the SY section and press YES. Play the pad: the EURK chord.",
+      "On the FLTR page close the frequency, raise the resonance a little and give the filter envelope a short decay: the classic stab. Shorten the AMP's decay for a tighter one.",
+      "Turn CHD to MI11 and DET to 40 for a wide, beating stab; WAV to 0 for a saw; PCH to 100 for the zap; STR to 40 for a quick strum.",
+      "In CHROMATIC mode play notes: the whole chord transposes.",
+      "Lock CHD and VOI on a few steps (hold the trig, turn the knob) for a progression on one track."
+    ]
+  },
+  "access": {
+    "location": "The machine list of the BD, SD or BT track: SY RAVE, in the SY section. Its SYNTH page.",
+    "steps": [
+      "Select a track and press FUNC + SRC.",
+      "Choose SY RAVE and press YES.",
+      "On the SYNTH page, tap the TUN encoder to step the register."
+    ],
+    "screenshots": [
+      "media/machine-list.png",
+      "media/synth-page.png"
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, on the Modwerk base's digital voices.",
+      "Offered on the BD, SD and BT tracks only: one voice measured 6.8 % of an audio block on a MKII; several voices together have not been measured yet.",
+      "Not tested yet: several SY RAVE voices at once, and a project save and power cycle."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "machine:39",
+      "ui:SYNTH page of the SY RAVE machine",
+      "param:the value text of slot 39's CHD and VOI records (chord and voicing names)"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 4200,
+    "fastBytes": null,
+    "load": {
+      "display": "6.8 % of a block a voice (7.95 % at most)",
+      "method": "hardware",
+      "conditions": "mw_voice_meter on a MKII, OS 1.74, RH01: one voice ringing for 20 s while played; mean 6.76 %, dearest block 7.95 %."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "96509cc583150f679eeb3b719169f03018cc95af585a03ca10a3999c40e4030b",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-27",
+      "tester": "chevyone",
+      "durationMinutes": null,
+      "summary": "0.1.0-experimental on chevyone's Analog Rytm MKII, OS 1.74, RAM-booted over the development link (RH01 to RH06 with HH Alloy, on the development base's voices variant 879c6c23; RH06, whose sha256 this is, holds this source; RV07 with SY RAVE alone for the screenshots). The author played it by ear on every build (RH06: \"excellent\"); the SYNTH page and the CHD and VOI names seen on screen; mw_voice_meter 6.76 % of the block a voice on average, 7.95 % at the dearest block.",
+      "limitations": [
+        "Ran from RAM on a development base with a USB test link, not the published base.",
+        "Not run: locks of CHD and VOI across steps, several SY RAVE voices at once, a project save and power cycle with the register, rytm-emu."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host: 31 checks of pitch, the thirteen chords, voicings, the hit's latch, waves, band-limiting, the strum, the held level, the pitch drop, levels, velocity and smoothing (tools/host_test.c). On a MKII (RH01-RH03): the page, the CPU (6.76 % of a block a voice) and the developer's listening.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Select the BD track, press FUNC + SRC, scroll to SY RAVE in the SY section and press YES. Play the pad: the EURK chord.",
+          "On the FLTR page close the frequency, raise the resonance a little and give the filter envelope a short decay: the classic stab. Shorten the AMP's decay for a tighter one.",
+          "Turn CHD to MI11 and DET to 40 for a wide, beating stab; WAV to 0 for a saw; PCH to 100 for the zap; STR to 40 for a quick strum.",
+          "In CHROMATIC mode play notes: the whole chord transposes.",
+          "Lock CHD and VOI on a few steps (hold the trig, turn the knob) for a progression on one track."
+        ]
+      },
+      "screenshots": [
+        "media/machine-list.png",
+        "media/synth-page.png",
+        "media/chord-name.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by chevyone: no code, samples or tables from any instrument."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "SY RAVE",
+      "alt": "Six saw waves stacked as a chord, strummed from the lowest up, their pitch dropping into place.",
+      "credit": "chevyone",
+      "license": "GPL-3.0-or-later",
+      "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+    },
+    {
+      "path": "media/machine-list.png",
+      "kind": "screenshot",
+      "caption": "SY RAVE in the SY section of the SD track's machine list (FUNC + SRC).",
+      "alt": "The machine list over the SYNTH page: SY RAVE under the cursor, then UT NOISE, UT IMPULSE and DISABLE.",
+      "credit": "chevyone documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "hardware",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "d7697d672a32fb3176ab582ad00127d64a9af2ad4d80c7decf0418a955058c7b",
+        "setup": "A MKII running RV07: the Modwerk base's voices variant (879c6c23) and this folder's SY RAVE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, RAM-booted over USB. The screen read over the link at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/synth-page.png",
+      "kind": "screenshot",
+      "caption": "SY RAVE's SYNTH page.",
+      "alt": "SYNTH page: T-1, PCH, CHD, STR above WAV, VOI, DET, LEV.",
+      "credit": "chevyone documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "hardware",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "d7697d672a32fb3176ab582ad00127d64a9af2ad4d80c7decf0418a955058c7b",
+        "setup": "A MKII running RV07: the Modwerk base's voices variant (879c6c23) and this folder's SY RAVE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, RAM-booted over USB. The screen read over the link at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/chord-name.png",
+      "kind": "screenshot",
+      "caption": "CHD shows the chord's name while it turns: MIN9.",
+      "alt": "SYNTH page with CHORD in the title and MIN9 under knob C.",
+      "credit": "chevyone documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "hardware",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "d7697d672a32fb3176ab582ad00127d64a9af2ad4d80c7decf0418a955058c7b",
+        "setup": "A MKII running RV07: the Modwerk base's voices variant (879c6c23) and this folder's SY RAVE 0.1.0-experimental, linked by Modwerk on stock OS 1.74, RAM-booted over USB. The screen read over the link at 3x. UI documentation only."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Site: the credits page no longer lists the builder kit or the Digislicer, Digineighbor, Digihealth and digitables entries, and the projects page no longer lists DigiCosm, digiemu or the kit. Licence notices for code the site still ships stay in the licence notices.

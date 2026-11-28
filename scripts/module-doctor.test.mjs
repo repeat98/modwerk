@@ -4,7 +4,6 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, 
 import { homedir, tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { freeFx2Ids } from './module-list.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const moduleCheckTimeout = 30_000
@@ -20,7 +19,7 @@ describe('module doctor', () => {
     expect(result.error).toBeUndefined()
     expect(result.stdout + result.stderr).not.toContain('✗')
     expect(result.status).toBe(0)
-    for (const id of ['miniverb', 'sidechain-compressor', 'analog-bassdrum', 'euclid', 'digihealth']) expect(result.stdout).toContain(id)
+    for (const id of ['miniverb', 'sidechain-compressor', 'analog-bassdrum', 'euclid', 'digistring', 'kitbank']) expect(result.stdout).toContain(id)
     // The re-test queue is a report at the end: it lists, it never turns the run red.
     expect(result.stdout).toContain('Due for a re-run on the unit (a report: it fails nothing)')
   }, catalogCheckTimeout + 5000)
@@ -60,8 +59,6 @@ describe('module doctor', () => {
         const made = spawnSync(process.execPath, ['scripts/scaffold-module.mjs', id, '--kind', kind, '--author', 'example-author'], { cwd: root, encoding: 'utf8', env: { ...process.env, MODWERK_BOARD: 'off' } })
         expect(made.status, made.stderr).toBe(0)
         const result = doctor('--draft', id)
-        // Once stock and the listed modules hold every FX2 id the build takes, a new effect is told so plainly (owner, 25 November 2026).
-        if (kind === 'dsp' && !freeFx2Ids(root).length) { expect(made.stderr).toContain('No FX2 id is left'); expect(result.stdout).toContain('no FX2 id is left'); continue }
         expect(result.stdout).toContain('The experimental lines are green')
         expect(result.status, result.stdout).toBe(0)
         if (tools && (kind === 'dsp' || binutils)) {
@@ -106,11 +103,8 @@ describe('module doctor', () => {
       expect(host.status).not.toBe(0)
       expect(host.stderr).toContain('set PORTED = True')
       const result = doctor('--draft', id)
-      if (!freeFx2Ids(root).length) expect(result.stdout).toContain('no FX2 id is left')
-      else {
-        expect(result.stdout).toContain('The experimental lines are green')
-        expect(result.status, result.stdout).toBe(0)
-      }
+      expect(result.stdout).toContain('The experimental lines are green')
+      expect(result.status, result.stdout).toBe(0)
     } finally { rmSync(draft, { recursive: true, force: true }); rmSync(clone, { recursive: true, force: true }) }
     expect(existsSync(join(root, 'sdk/octatrack/modules', id))).toBe(false)
   }, moduleCheckTimeout + 30_000)

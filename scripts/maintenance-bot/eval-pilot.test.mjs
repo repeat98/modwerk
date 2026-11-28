@@ -49,27 +49,36 @@ it('pins the landed commit from the merged timeline event when GitHub omits the 
   await expect(pilotCandidates(read, [])).rejects.toThrow(/Missing merge commit.*#3/)
 })
 
-it('counts a case only on independent, merged and passing evidence for the exact source revision', async () => {
-  const row = { number: 8, merge: 'f'.repeat(40), authorId: 10, verdict: 'gap', task: 'task' }
-  const thread = async () => ({ message: { to: 'ada', pullRequest: 42, replies: [] } })
-  const pr = { number: 42, merged: true, base: { ref: 'main' }, head: { sha: 'test', ref: 'feature', repo: { id: 7 } }, user: { id: 11, login: 'ada' } }
-  const item = { id: 'node-fix-8', pr: 8, merge: row.merge }
-  const run = { conclusion: 'success', head_sha: 'test', head_repository: { id: 7 }, head_branch: 'feature', pull_requests: [] }
-  const read = async path => path.includes('/files?') ? [{ filename: 'scripts/agent-eval/cases.mjs', patch: "+  id: 'node-fix-8'" }]
-    : path.startsWith('/actions/') ? { workflow_runs: [run] } : pr
+it('opens one issue per gap unless one names the source PR, and counts a case only once main holds it with passing controls', async () => {
+  const gap = { number: 8, merge: 'f'.repeat(40), authorId: 10, verdict: 'gap', hint: 'Keeps the last row.' }
+  const covered = { ...gap, number: 1921 }
+  const issues = [{ number: 2379, state: 'open', title: 'Eval cases', body: 'Gaps from #1921, #1923 and #1925.' }, { number: 50, pull_request: {}, state: 'open', title: 'Fix #8', body: '' }]
+  const jobs = [{ name: 'controls', conclusion: 'failure' }]
+  const sent = []
+  const api = async (path, method, body) => {
+    if (method === 'POST') { sent.push([path, body]); return { number: 2400, state: 'open', ...body } }
+    if (path.startsWith('/issues?')) return issues
+    if (path.startsWith('/actions/workflows/')) { expect(path).toContain('head_sha=main-sha'); return { workflow_runs: [{ id: 1 }] } }
+    return { jobs }
+  }
   const bot = vi.fn()
-  await settlePilot(read, bot, thread, [row], [{ ...item, merge: 'old' }])
-  pr.user.id = row.authorId
-  await settlePilot(read, bot, thread, [row], [item])
-  pr.user.id = 11
-  run.conclusion = 'failure'
-  await settlePilot(read, bot, thread, [row], [item])
+  await settlePilot(api, bot, [gap, covered], 'main-sha', [])
+  // #2379 already names #1921; the pull request that names #8 is not an issue.
+  expect(sent).toEqual([['/issues', expect.objectContaining({ labels: ['workflow', 'help wanted'], title: 'Eval case for the Node fix in #8', body: expect.stringContaining('Keeps the last row. ') })]])
+  const item = { id: 'node-fix-8', pr: 8, merge: gap.merge }
+  issues.push({ number: 2400, state: 'open', title: 'Eval case for the Node fix in #8', body: '' })
+  await settlePilot(api, bot, [gap], 'main-sha', [{ ...item, merge: 'old' }])
+  await settlePilot(api, bot, [gap], 'main-sha', [item])
   expect(bot).not.toHaveBeenCalled()
-  run.conclusion = 'success'
-  await settlePilot(read, bot, thread, [row], [item])
-  expect(bot).toHaveBeenCalledWith('/eval-pilot/8', 'POST', { result: 'added', evidence: 42 })
-  const records = [...Array.from({ length: 4 }, () => ({ verdict: 'covered' })), row]
-  expect(pilotReport(records)).toMatch(/0 verified cases added.*1 awaiting/)
-  row.result = 'added'; row.evidence = 42
-  expect(pilotReport(records)).toMatch(/complete: 5\/5 fixes screened, 1 verified cases? added.*#42/)
+  jobs[0].conclusion = 'success'
+  await settlePilot(api, bot, [gap], 'main-sha', [item])
+  expect(bot).toHaveBeenCalledWith('/eval-pilot/8', 'POST', { result: 'added', evidence: 2400 })
+  Object.assign(issues[0], { state: 'closed', state_reason: 'not_planned' })
+  await settlePilot(api, bot, [covered], 'main-sha', [])
+  expect(bot).toHaveBeenLastCalledWith('/eval-pilot/1921', 'POST', { result: 'different-result' })
+  expect(sent).toHaveLength(1)
+  const records = [...Array.from({ length: 4 }, () => ({ verdict: 'covered' })), gap]
+  expect(pilotReport(records)).toMatch(/0 verified cases added.*1 awaiting a case on main/)
+  gap.result = 'added'; gap.evidence = 2400
+  expect(pilotReport(records)).toMatch(/complete: 5\/5 fixes screened, 1 verified cases? added.*#2400/)
 })

@@ -52,6 +52,33 @@ describe('session review', () => {
     expect(read.calls).toEqual([{ tool: 'shell', label: 'shell: make all', start: Date.parse(at(5)), seconds: 60, failed: true }])
   })
 
+  it('reads a Cursor agent-transcripts jsonl', () => {
+    const cursor = row => JSON.stringify(row)
+    const read = readCalls([
+      cursor({ role: 'user', message: { content: [{ type: 'text', text: '<timestamp>Sat, 28 Nov 2026 09:00:00 GMT</timestamp>\n<user_query>\nRun checks\n</user_query>' }] } }),
+      cursor({ role: 'assistant', message: { content: [
+        { type: 'tool_use', name: 'Shell', input: { command: 'npm run pr:ready', description: 'Run pr:ready' } },
+        { type: 'tool_use', name: 'Shell', input: { command: 'npm run pr:ready', description: 'Run pr:ready' } },
+        { type: 'tool_use', name: 'Shell', input: { command: 'npm run pr:ready', description: 'Run pr:ready' } },
+      ] } }),
+      cursor({ role: 'user', message: { content: [{ type: 'text', text: '<timestamp>Sat, 28 Nov 2026 09:10:00 GMT</timestamp>\n<user_query>\nci failed???\n</user_query>' }] } }),
+    ], 'cursor')
+    expect(read.prompts).toBe(2)
+    expect(read.calls.length).toBe(3)
+    expect(read.calls.every(call => call.seconds === 200)).toBe(true)
+    expect(reviewSession(read).repeated).toEqual([{ label: 'Bash: Run pr:ready · npm run pr:ready', times: 3 }])
+  })
+
+  it('caps Cursor tool timing when the developer is away for hours', () => {
+    const cursor = row => JSON.stringify(row)
+    const read = readCalls([
+      cursor({ role: 'user', message: { content: [{ type: 'text', text: '<timestamp>Sat, 28 Nov 2026 09:00:00 GMT</timestamp>\n<user_query>\nRun checks\n</user_query>' }] } }),
+      cursor({ role: 'assistant', message: { content: [{ type: 'tool_use', name: 'Shell', input: { command: 'npm run check' } }] } }),
+      cursor({ role: 'user', message: { content: [{ type: 'text', text: '<timestamp>Sat, 28 Nov 2026 19:00:00 GMT</timestamp>\n<user_query>\ndone?\n</user_query>' }] } }),
+    ], 'cursor')
+    expect(read.calls[0].seconds).toBe(15 * 60)
+  })
+
   it('finds what the developer corrected, interrupted and refused', () => {
     const refused = { type: 'user', timestamp: at(30), message: { content: [{ type: 'tool_result', tool_use_id: 'b', content: "The user doesn't want to proceed with this tool use.", is_error: true }] } }
     const review = reviewSession(readCalls(claude([

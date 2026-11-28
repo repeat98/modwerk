@@ -435,6 +435,36 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
       }
     ]
   },
+  seq: {
+    version: '0.1.0-experimental',
+    screenshots: [
+      {
+        path: 'media/seq-rhythm-open.png',
+        caption: 'Hold [TRACK] and press [PAGE]: SEQ opens on that track with the rhythm page. Set PULS and ROT on the focused lane (TRIG or PLCK), then press [YES] to write.',
+        alt: 'SEQ rhythm page on track 1 with PULS, ROT, TRIG lane and the step grid.',
+      },
+      {
+        path: 'media/seq-rhythm-audio-emulator.png',
+        caption: 'With LANE on TRIG, pick SRC / PTCH on D and set DPTH on E. The grid previews the rhythm; it does not show existing pattern trigs until you press [YES].',
+        alt: 'SEQ Rhythm on an audio track.',
+      },
+      {
+        path: 'media/seq-harmony-audio-emulator.png',
+        caption: 'Press [RIGHT] when D is SRC / PTCH: SCAL and ROOT set the scale; PHRS (RAND, UP, DOWN, ALT, TRI) and JUMP shape pitch locks.',
+        alt: 'SEQ Harmony on an audio track with RAND selected.',
+      },
+      {
+        path: 'media/seq-harmony-midi-emulator.png',
+        caption: 'On a MIDI track, Harmony sets VOIC, CHRD and the same phrase controls for NOTE fills.',
+        alt: 'SEQ Harmony on a MIDI track with RAND selected.',
+      },
+      {
+        path: 'media/seq-clear-menu-emulator.png',
+        caption: 'Press [FUNC] + [BANK] while SEQ is open: clear one destination, every destination, or locks and trigs together. Each row applies with one [YES].',
+        alt: 'SEQ clear menu.',
+      },
+    ],
+  },
   "recorder-loop-fix": {
     "version": "0.1.0-experimental",
     "screenshots": [
@@ -447,276 +477,6 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
         "path": "media/ot-recorder-setup.png",
         "caption": "Set recording length RLEN to 16 at 128 BPM and place recording and playback trigs at the bar start; SRC3 selects the source track for sound-on-sound. Record a sustained tone and listen through successive wraps, then STOP and PLAY to compare restarts. Fractional loop lengths can still repeat or skip one sample.",
         "alt": "RECORDING 1 SETUP 1 showing recording length 16 and SRC3 T1."
-      }
-    ]
-  },
-  "digitakt-digichain": {
-    "version": "1.6.1-experimental",
-    "screenshots": [
-      {
-        "path": "media/chooser.png",
-        "caption": "Include digichain with Digi Poly or Digi Mono; it provides their machine registration and has no page of its own. For this example, press FUNC + SRC, choose POLY and confirm with YES.",
-        "alt": "Digitakt machine chooser with POLY selected."
-      },
-      {
-        "path": "media/chord.png",
-        "caption": "Press TRIG, set NOT1 as the root, NOT2 to +4 and NOT3 to +7, then trigger the track for a major chord using the available voice pool. These are Digi Poly controls supplied through digichain. Select ONESHOT to return to sample playback.",
-        "alt": "Digitakt POLY TRIG page with NOT1 through NOT4 and chord controls."
-      }
-    ]
-  },
-  "digitakt-digieq": {
-    "version": "1.0.2-experimental",
-    "screenshots": [
-      {
-        "path": "media/eq.png",
-        "caption": "Press FUNC + LFO twice for Master EQ (2/4) and play a pattern. Knobs A–D set band levels and E–H their frequencies; try a small low-frequency cut with A and E. The four columns pair each level with its frequency.",
-        "alt": "Digitakt Master EQ page with four band levels at 0 dB and their frequencies."
-      },
-      {
-        "path": "media/q-type.png",
-        "caption": "Press A–D to edit band Q, or E–H to choose the filter type; press again to return to level and frequency. Hold FUNC and LFO, then press PLAY (CLEAR) to restore all four bands to the flat defaults. HP, LP, BP and notch still filter at 0 dB until their types are reset.",
-        "alt": "Master EQ with pressed knobs displaying Q and LSHF, BELL, BELL and HSHF types."
-      }
-    ]
-  },
-  "digitakt-digihealth": {
-    "version": "1.0.2-experimental",
-    "screenshots": [
-      {
-        "path": "media/settings.png",
-        "caption": "Open SETTINGS and tick SYSTEM INFO, then return to a playing pattern. The top bar alternates CPU/DSP load and free-memory figures every two seconds. Untick SYSTEM INFO to hide it.",
-        "alt": "Digitakt Settings with SYSTEM INFO enabled and CPU/DSP fields showing dashes."
-      },
-      {
-        "path": "media/status-a.png",
-        "caption": "Wait for the memory page: RAM is free heap memory and SMP is sample memory. These figures describe the current system, so compare the same project and passage when checking a change.",
-        "alt": "Digitakt AMP page with RAM 13.5M and SMP 64.0M in the top bar."
-      },
-      {
-        "path": "media/status-b.png",
-        "caption": "On the load page, CPU and DSP show current and recent peak workload on hardware. The dashes in this emulator capture mean timing is unavailable; they are not zero load. Keep the passage unchanged when comparing settings.",
-        "alt": "Digitakt SRC page with CPU and DSP timing fields displayed as dashes."
-      },
-      {
-        "path": "media/fast-audio.png",
-        "caption": "FAST AUDIO normally starts after boot; untick it in SETTINGS to disable it until the next power-on. Compare several readouts of the same passage with it enabled and disabled. The screenshot shows the setting, not a measured speed improvement.",
-        "alt": "Digitakt Settings with FAST AUDIO selected and enabled."
-      }
-    ]
-  },
-  "digitakt-digimatrix": {
-    "version": "1.0.1-experimental",
-    "screenshots": [
-      {
-        "path": "media/settings.png",
-        "caption": "Open SETTINGS, select MOD MATRIX and press YES. The 0/8 counter here means none of its eight routing slots is enabled yet. Set a slow LFO on a source track before adding a route.",
-        "alt": "Digitakt Settings with MOD MATRIX selected at 0/8."
-      },
-      {
-        "path": "media/slots-off.png",
-        "caption": "Choose a slot with UP/DOWN or LEVEL and press YES to enable it. Knobs edit only enabled slots; pressing YES again disables the selected route.",
-        "alt": "MOD MATRIX page with eight disabled slots and the first slot selected."
-      },
-      {
-        "path": "media/route.png",
-        "caption": "Use A for source track, B for LFO, C for destination track, D for parameter and E for depth. Here T1 LFO1 modulates T1 LFO1 speed at depth 2; try T4 and FLT.FREQ to hear a filter move instead. OWN controls whether the source also keeps its own LFO destination; NO leaves the page.",
-        "alt": "Enabled matrix slot routing T1 L1 to T1 L1.SPD with depth 2."
-      }
-    ]
-  },
-  "digitakt-digimono": {
-    "version": "0.13.3-experimental",
-    "screenshots": [
-      {
-        "path": "media/chooser.png",
-        "caption": "On an audio track, press FUNC + SRC, choose MONO SIN below SLICE and press YES. Digi Mono needs digichain in the build and synthesizes its own audio, so no sample is required.",
-        "alt": "Digitakt machine chooser with MONO SIN selected."
-      },
-      {
-        "path": "media/sin.png",
-        "caption": "Use knob A (TUNE) for pitch and AMP for a short note envelope. Press FUNC + TRK and play trig keys to hear the sine voice; the other SRC cells are blank because SIN has no extra controls. Stop and leave keyboard mode, or select ONESHOT to return to samples.",
-        "alt": "MONO SIN page with TUNE and seven unused SRC cells."
-      },
-      {
-        "path": "media/saw.png",
-        "caption": "Choose MONO SAW in FUNC + SRC for a brighter voice. UNIL and UNIW add unison level and detune, UNIX sets the number of unison saws, and SUB1/SUB2 add lower octaves. Shape note duration on AMP.",
-        "alt": "MONO SAW page with TUNE, UNIL, UNIW, UNIX, SUBX, SUB1 and SUB2."
-      },
-      {
-        "path": "media/noise.png",
-        "caption": "Choose MONO NOISE for noise synthesis. ST reduces the rate of new noise values, RED makes it darker and STON ties the noise to note pitch; use AMP to make a short percussion hit. The current emulator frame omits the common track/level sidebar.",
-        "alt": "MONO NOISE page with TUNE, ST, RED and STON.",
-        "additional": true
-      },
-      {
-        "path": "media/pulse.png",
-        "caption": "Choose MONO PULSE and use D (PW) to change pulse width, with E/F (PWAD/PWRS) for modulation depth and rate. G/H add SUB1/SUB2, matching MONO SAW; B/C retain the unison controls.",
-        "alt": "MONO PULSE page with unison, sub-octave and pulse-width controls.",
-        "additional": true
-      },
-      {
-        "path": "media/ens.png",
-        "caption": "Choose MONO ENS and set PCH2–4 to tune its extra oscillators. WAVE blends saw and pulse; raise CHRL from 0 for chorus and use CHRW for its width. The current emulator frame omits the common TUNE/sidebar regions; their full redraw is unverified.",
-        "alt": "MONO ENS page with PCH2, PCH3, PCH4, PW, WAVE, CHRL and CHRW.",
-        "additional": true
-      },
-      {
-        "path": "media/vo.png",
-        "caption": "Choose MONO VO and select the start and target vowels with VOC1 and VOC2. V-SW sets the glide between them; CONS, CLEN and CVOL add a consonant at note start. VOIC blends breath noise into the voice.",
-        "alt": "MONO VO page with vowel, breath and consonant controls.",
-        "additional": true
-      }
-    ]
-  },
-  "digitakt-digineighbor": {
-    "version": "0.6.1-experimental",
-    "screenshots": [
-      {
-        "path": "media/chooser.png",
-        "caption": "Put a sample and trigs on T1, then select T2 and choose NEIGHBOR with FUNC + SRC. Press YES to confirm; T2 will process another track’s audio rather than a sample of its own.",
-        "alt": "Digitakt T2 machine chooser with NEIGHBOR selected."
-      },
-      {
-        "path": "media/src.png",
-        "caption": "Set SLOT on T2 to 1 to receive T1, then add a T2 trig. Start with TUNE 0, GAIN 0 dB and LEV 100; SLOT 0 or T2’s own number produces silence. TUNE can pitch-shift the routed audio.",
-        "alt": "NEIGHBOR SRC page with TUNE, BR, SLOT, GAIN and LEV."
-      },
-      {
-        "path": "media/amp.png",
-        "caption": "On T2’s AMP page, use a long HOLD or DECAY so the envelope lets T1 through. Lower T1’s AMP VOL to hear only T2: the source tap is before that volume. Restore T1’s volume and set T2 SLOT to 0 when finished.",
-        "alt": "Receiving track controls for ATK, HOLD, DEC, OVER, DEL, REV, PAN and VOL."
-      },
-      {
-        "path": "media/filter.png",
-        "caption": "Press FLTR on T2 and change FREQ to filter T1’s routed audio. Add resonance with RESO or shape the filter envelope; these controls process the receiving route.",
-        "alt": "Receiving track filter page with FREQ, RESO, TYPE and envelope controls."
-      }
-    ]
-  },
-  "digitakt-digipoly": {
-    "version": "2.0.1-experimental",
-    "screenshots": [
-      {
-        "path": "media/chooser.png",
-        "caption": "Use a build containing Digi Poly and digichain, then load a sample and choose POLY with FUNC + SRC. Confirm with YES; POLY borrows other tracks’ voices to play extra chord notes.",
-        "alt": "Digitakt machine chooser with POLY selected."
-      },
-      {
-        "path": "media/settings.png",
-        "caption": "Open SETTINGS > POLY and leave enough tracks in its voice pool. LEFT/RIGHT selects a track and YES toggles whether it can lend its voice; extra chord notes are skipped when no voice is available.",
-        "alt": "Digitakt Settings with the POLY voice pool and tracks 1 through 8."
-      },
-      {
-        "path": "media/chord.png",
-        "caption": "On TRIG, set NOT1 as the root, NOT2 to +4 and NOT3 to +7; leave NOT4 off. Trigger the track to hear a major chord with the selected sample. Turn the extra notes off or select ONESHOT to return to single-note playback.",
-        "alt": "POLY TRIG page with root note, three extra-note controls and chord keyboard."
-      }
-    ]
-  },
-  "digitakt-digislicer": {
-    "version": "2.1.1-experimental",
-    "screenshots": [
-      {
-        "path": "media/chooser.png",
-        "caption": "On an audio track, press FUNC + SRC, choose DIGISLICER below SLICE and confirm with YES. Use a drum loop for the first example.",
-        "alt": "Digitakt machine chooser with DIGISLICER selected."
-      },
-      {
-        "path": "media/src.png",
-        "caption": "Select the loop with SAMP and press SRC again for the slice editor. SLICE selects the played slice and LEN sets how many slices a note spans; custom slices override GRID. This capture is before the loop is assigned.",
-        "alt": "DIGISLICER SRC page with TUNE, PLAY, BR, SAMP, SLICE, LEN, GRID and LEV."
-      },
-      {
-        "path": "media/editor.png",
-        "caption": "Press YES in the editor, choose CREATE GRID, select 16 with LEFT/RIGHT and confirm with YES; this replaces existing slices. A selects a slice, B moves its start and C fine-tunes it. Close with SRC or NO, wait a second for saving, then use FUNC + TRK to play slices on trig keys.",
-        "alt": "DIGISLICER waveform editor with four transients and slice, move, fine and zoom controls."
-      }
-    ]
-  },
-  "digitakt-digisophie": {
-    "version": "1.1.13-experimental.2",
-    "screenshots": [
-      {
-        "path": "media/chooser.png",
-        "caption": "Press FUNC + SRC on an audio track, choose SOPHIE and press YES. It synthesizes its own sound; no sample is needed. Place trigs or use the keyboard to play it.",
-        "alt": "Digitakt machine chooser with SOPHIE selected."
-      },
-      {
-        "path": "media/fuse.png",
-        "caption": "Use knob B to choose the model, shown here as FUSE, for a bright metallic tone. Start with SWEEP and FOLD at 0; TUNE sets pitch, METAL and COLOR shape the harmonics, and FBK adds oscillator feedback. Raise feedback gradually.",
-        "alt": "SOPHIE SRC page with FUSE selected and TUNE, FOLD, SWEEP, METAL, FBK and COLOR."
-      },
-      {
-        "path": "media/amp.png",
-        "caption": "Press AMP, set HOLD to NOTE and choose a finite DEC so trig LEN determines when release begins. Play the pattern and shape its envelope here. Press STOP and let the release finish; DEC INF keeps notes from finishing normally.",
-        "alt": "Digitakt AMP page with ATK, HOLD, DEC, OVER, DEL, REV, PAN and VOL."
-      },
-      {
-        "path": "media/boom.png",
-        "caption": "Turn the model selector to BOOM for a rounded sine body with an FM attack. Compare it with FUSE at the same pitch, then try PIPE or SHARD, or lock MODEL on individual trigs.",
-        "alt": "SOPHIE SRC page with BOOM selected.",
-        "additional": true
-      }
-    ]
-  },
-  "digitakt-digiutils": {
-    "version": "1.9.1-experimental",
-    "screenshots": [
-      {
-        "path": "media/waveform.png",
-        "caption": "Play a pattern, then hold the three-dots SONG key for about half a second to open the waveform. A short press keeps the normal SONG popup. This silent capture is flat; playing audio gives the trace something to show.",
-        "alt": "Digiutils waveform view with a flat trace from silent input."
-      },
-      {
-        "path": "media/spectrum.png",
-        "caption": "Press the three-dots key again for the frequency spectrum. Compare it while the same passage plays to see how its frequency balance changes. This capture has silent input, so no meaningful spectrum is shown.",
-        "alt": "Digiutils spectrum view with silent input."
-      },
-      {
-        "path": "media/xy.png",
-        "caption": "Press the three-dots key again for stereo X-Y, where the two channels form a shape. Silence produces the single point shown here; compare a playing stereo passage. Another three-dots press closes the utility page.",
-        "alt": "Digiutils stereo X-Y view with a single point from silent input."
-      },
-      {
-        "path": "media/fullscreen.png",
-        "caption": "Press YES to toggle fullscreen and hide the top bar. The underlying track knobs, mutes and transport still work while viewing the signal. Press NO to close the utility and STOP when finished.",
-        "alt": "Fullscreen X-Y view with the top bar hidden and a single point at the center."
-      }
-    ]
-  },
-  "digitone-digihealth": {
-    "version": "1.1.2-experimental",
-    "screenshots": [
-      {
-        "path": "media/settings.png",
-        "caption": "Open SETTINGS and tick SYSTEM INFO, then return to a playing pattern. Load and free-RAM pages alternate every two seconds; untick it to restore the normal top bar. This Digitone port has no FAST AUDIO toggle.",
-        "alt": "Digitone Settings with SYSTEM INFO enabled."
-      },
-      {
-        "path": "media/memory.png",
-        "caption": "Wait for the memory page to read free heap RAM. The picture shows RAM 13.1M; compare the same project when investigating a change. This is a system readout, not an individual module’s memory cost.",
-        "alt": "Digitone AMP page with RAM 13.1M in the top bar."
-      },
-      {
-        "path": "media/load.png",
-        "caption": "The load page shows CPU and audio-render DSP current and recent peak figures on hardware. DSP covers effects and mixing, not the separate FM voice CPU. Dashes in this emulator capture mean timing is unavailable, rather than zero load.",
-        "alt": "Digitone SYN1 page with CPU and DSP load fields showing dashes."
-      }
-    ]
-  },
-  "digitone-digitables": {
-    "version": "1.3.1-experimental",
-    "screenshots": [
-      {
-        "path": "media/tbl.png",
-        "caption": "Press AMP until its third page, or hold a track key for half a second and choose TABLES in the Mod Menu. Select a table with TBL and set SPD for its step rate, then hold the track key to open its editor. TBL OFF restores ordinary pitch playback.",
-        "alt": "Digitone AMP third page with TBL and SPD controls."
-      },
-      {
-        "path": "media/editor-step.png",
-        "caption": "Use trig keys or LEFT/RIGHT to choose a step and A or UP/DOWN for its semitone offset. Try offsets 0, +4 and +7, length 3 with C and loop point 1 with D; NO returns to TBL, where a held note plays the sequence. This picture shows table 1, length 4 and step 1 at +04.",
-        "alt": "Table 01 editor with length 04, loop 01 and step 01 NOTE +04."
       }
     ]
   },

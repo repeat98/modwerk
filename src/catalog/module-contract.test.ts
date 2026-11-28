@@ -10,6 +10,11 @@ describe('module folder contract',()=>{
   expect(claims(['key:UP+TEMPO','key:FUNC+LEFT@CHROMATIC','key:CUE+LEVEL','screen:TEMPO'])).toEqual(['key:UP+TEMPO','key:FUNC+LEFT@CHROMATIC','key:CUE+LEVEL','screen:TEMPO'])
   for(const invalid of [['key:UP+TMPO'],['key:up+TEMPO'],['TEMPO'],['screen:tempo'],'key:UP'])expect(()=>claims(invalid)).toThrow('compatibility.uiClaims')
  })
+ it('accepts any effect id the base has (4 to 127), past stock\'s 32',()=>{
+  const effectId=(id:unknown)=>parseModuleDocument({...example,compatibility:{...example.compatibility,effectId:id}}).compatibility.effectId
+  for(const id of [4,31,32,127,null])expect(effectId(id)).toBe(id)
+  for(const id of [0,3,128,10.5,'10'])expect(()=>effectId(id)).toThrow('compatibility.effectId')
+ })
  it('accepts encoder presses apart from turns, up to 24 claims',()=>{
   const claims=(uiClaims:unknown)=>parseModuleDocument({...example,compatibility:{...example.compatibility,uiClaims}}).compatibility.uiClaims
   const presses=['TRIG','SCENEA','SCENEB'].flatMap(held=>['A','B','C','D','E','F'].map(knob=>`key:${held}+PUSH${knob}`))

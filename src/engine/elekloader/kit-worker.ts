@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The site's builder worker: the vendored kit's worker, with the devices Modwerk's builder carries added to the kit's
-// device list (carried-devices.ts). The kit's worker reads no device until a call arrives, and this module's body runs
-// before the first message, so every call sees the carried devices.
-import '../../../vendor/elekloader/kit/src/kit/worker.ts'
+// The site's builder worker, with the machines carried-devices.ts adds. The worker reads no machine until a call
+// arrives, and this module's body runs before the first message, so every call sees them.
+import '../elektron/builder-worker.ts'
 import { carryDevices } from './carried-devices'
 
 carryDevices()
