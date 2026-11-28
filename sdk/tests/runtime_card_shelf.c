@@ -28,7 +28,7 @@ int olog_stock_open(struct file_object *f, const char *path, const char *mode, v
 {
     (void)io, (void)n;
     f->word[0] = path[8] == '1', f->word[1] = 0, f->word[2] = mode[0] == 'w', f->word[4] = 0;
-    return f->word[2] || card_length[f->word[0]] ? 0 : -1; /* a write keeps what the file held: in place */
+    return f->word[2] || card_length[f->word[0]] ? 0 : -12; /* a write keeps what the file held: in place; stock: no such file */
 }
 int modwerk_test_card_size(struct file_object *f) { return (int)card_length[f->word[0]]; }
 int olog_stock_read(struct file_object *f, void *out, unsigned n)

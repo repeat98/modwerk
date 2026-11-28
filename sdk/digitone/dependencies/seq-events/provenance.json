@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/elekloader/elekloader",
+  "revision": "b893c9317936633d7a32829b618c2867ee99277c",
+  "license": "GPL-2.0-or-later",
+  "upstreamVersion": "0.1",
+  "sources": {
+    "src/seq.s": "572dde3496674d6592ea8aab687b657bfae538d90d9f2823c6a4787d2b582b2b",
+    "src/seq.c": "4f4b31b0958c307c5d05b5ad202656ed3185b97b2fc57663c421179a7e3ad475",
+    "src/dev.h": "f56bf562497f89fe3939974655301a014645b339ad1acce947864078027fd9ab",
+    "src/seq-events.h": "ba17dc0205794956125521c9346235649d7eb1ac828580066c94c3b4d10632b9",
+    "src/digitone-mk1/seq.h": "abeed26545a34ba6cc67875db85c9122f9731856368b88b9eb3d71fca34306c7"
+  },
+  "adaptation": "Dracyr's seq-events 0.1 for the Digitone mk1 from elekloader commit b893c93 (identical to 0.11.0), source unchanged with the SDK headers it includes; its mod.json became build.json with hash guards, OS 1.44 only. The library pins the seq-events-0.1-os1.44 build that MUTINY was tested with (mbaumannn's release).",
+  "upstreamSourceBytesIdentical": true,
+  "sourcePath": "mods/seq-events-dn1, mods/seq-events/seq.c, elekloader/sdk/include/seq-events.h and digitone-mk1/seq.h",
+  "path": "dependencies/seq-events"
+}

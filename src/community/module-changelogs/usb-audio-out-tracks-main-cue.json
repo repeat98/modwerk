@@ -1,10 +1,21 @@
 [
   {
+    "version": "0.4.2-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "INPUTS on a Mac: audio played into the Octatrack began to buzz after about three minutes. While the computer plays in, the recording from the Octatrack now runs on the computer's clock too.",
+      "The Octatrack evens out the small speed difference on the recording side one sample at a time, smoothed over a tenth of a millisecond.",
+      "Recording MAIN + CUE to a computer now costs about half the CPU it did: the Octatrack no longer prepares track channels it does not send, and copies MAIN + CUE the way the built-in USB Audio does.",
+      "With INPUTS OFF, or while nothing plays into the Octatrack, the recording works as before. An Octatrack running 0.4.1 gets this version with its next sync.",
+      "Known issue: rarely, after installing or removing a module, the Octatrack drops off USB until a power cycle."
+    ]
+  },
+  {
     "version": "0.4.1-experimental",
     "date": "2026-11-24",
     "changes": [
       "INPUTS for Windows: with AB, CD or ABCD on, Windows stopped the Octatrack's audio device with Code 10. The computer now sends its audio at its own clock, the USB timing Windows supports.",
-      "Tested on Windows 11 with AB and ABCD; not yet confirmed on a Windows 10 computer or on macOS.",
+      "Known issue: not yet confirmed on a Windows 10 computer or on macOS.",
       "The Octatrack evens out the small speed difference between the computer's clock and its own, one sample at a time and smoothed over a third of a millisecond, so the inputs never run dry or overflow.",
       "INPUTS OFF and every output layout work as before. An Octatrack running 0.4.0 gets this version with its next sync."
     ]
@@ -38,7 +49,7 @@
       "Supports the Outbox 44.1 kHz handshake and keeps USB MIDI receive, clock and reset. USB settings are saved in backups; older ones keep the twenty-channel layout.",
       "On the Octatrack beta base, USB Audio now syncs over USB: the Load dialog installs the base for your layout.",
       "Documentation only: like every DRAM module it takes about 10 MB of sample memory, so a full project can show OUT OF MEMORY (#433).",
-      "Known issue: only the twenty-channel layout has run on a unit, and reports #548, #689, #718, #489 and #462 are still open."
+      "Known issue: reports #548, #689, #718, #489 and #462 are still open."
     ]
   },
   {

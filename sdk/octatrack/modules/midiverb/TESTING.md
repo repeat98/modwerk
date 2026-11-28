@@ -4,10 +4,77 @@ Record what you ran, on which build and which unit, and what you saw. "Not teste
 
 ## Emulator (dsp_host)
 
-- **Program table against the original machine** (`node generate.mjs --mv1 … --mv2 … --fex …`, 25 Nov 2026): every Midiverb, Midiverb II and Midifex program that fits the ring unchanged (15,614 words then; 15,608 since the stream's program area) runs bit-identical to the original machine's model (Brombaugh's semantics), its state exactly; the two output taps read a halved word, so they differ by at most 2 in the 16-bit domain. 24 Midiverb, 5 Midifex and 10 Midiverb II programs have their longest delay line shortened to fit (up to about 4.5 %). Midiverb II's 20 chorus and flange programs are run without their LFO: not handled yet.
+- **Program table against the original machine** (`node generate.mjs --mv1 … --mv2 … --fex …`, 25 Nov 2026): every Midiverb, Midiverb II and Midifex program that fits the ring unchanged (15,614 words then; 15,608 since the stream's program area) runs bit-identical to the original machine's model (Brombaugh's semantics), its state exactly; the two output taps read a halved word, so they differ by at most 2 in the 16-bit domain. 24 Midiverb, 5 Midifex and 10 Midiverb II programs have their longest delay line shortened to fit (up to about 4.5 %). Midiverb II's 20 chorus and flange programs are run without their LFO: not handled yet (since 26 Nov 2026 with it, below).
 - **Engine against the table** (`python3 verify.py`, the released source): bit-exact against a model of the table in the DSP's integer arithmetic in five cases: a program streamed from the start (Midiverb #12, LEVL 32, MIX 127), a switch to another program while it plays (to Midiverb II #25, the fade, the clear and the load; MIX 90), STOP's tail kill held for 40 calls mid-burst, no stream at all, and a broken checksum (both silent, the dry at its mix); and the handlers 16 words apart. MIX 0 is not among the cases: the engine then outputs dry − 0 · dry + 0 · wet, exactly dry outside a fade (by inspection). One instance per `dsp_host` run here; `stress.py` runs eight.
 
+- **All 225 programs, the chorus and flange LFOs included (26 Nov 2026, emulator only, not run on a unit).** Each claim runs from the ROMs on the developer's computer:
+  - *The LFOs are the firmware's* (`node generate.mjs --mv2 … --firmware 14000 --states FILE`): the Midiverb II's own 8031 code runs in `i8051.mjs`, each of the 20 programs picked the firmware's way after its boot. At every one of 14,000 updates (a full period of the slowest LFO, program 54's 13,100, and more) every program byte it writes to the DSP, its LFO RAM, and the state `lfoUpdate` keeps all equal the model's. Assumed, not read: one update every 8 samples (in the emulator the firmware's main loop runs free, 257 to 510 machine cycles a pass, a rare one 101,005), and the triggered flanges 50, 53 and 57 run free, with no trigger.
+  - *The program words are the original* (`node generate.mjs --mv1 … --mv2 … --fex …`): an LFO only moves addresses (steps 4-47 and 49-92 by its w, two reads in each by its row); `lfoForm` reads that from the firmware's patch model and holds it on 3,000 other states. These programs span under 9,000 words, so they run in the ring at their own addresses: 200,000 samples each, the ring plays exactly what the original's 16K play, and the streamed words, run as the engine runs them (`wordMachine`, now the third machine for every program), differ only in the output taps' lowest bit, their ring ending as the exact halves of the original's words. The 205 other programs pass as before.
+  - *The engine plays the words* (`python3 verify.py --all --lfo FILE`): all 225 streamed from the start at LEVL 127 and MIX 127, unsplit and split at frames 1 and 7, bit-exact against the model; for each LFO program `dsp_host` ran 14,200 calls, and the state in r7+$1c-$1f after every call equals the firmware's, update by update, and its program words end as the model's. Planted faults (a sine's top byte one bit over, a row mask one bit short) fail it.
+  - *0.1.0's projects keep their programs* (`python3 test_values.py`, owner, 26 Nov 2026): every PROG value 0.1.0 could store (0-58) in every bank selects, through stream.h's `mv_value` as `stream.c` reads it, the program it selected in 0.1.0 (its order as released: chart order less what it left out, held on the bank's last). The programs 0.1.0 left out take the values after (PROG 60-63, Midiverb II 60-102); every program has a value, and the message box shows each one's own number. The test fails on the chart-ordered tables this branch had before.
+  - *Screens:* all five in `media/` are hardware captures of the shipped package `d554753c` on the owner's MKII (27 Nov 2026, twin `ed5474c6`, see `media/capture.json`): the unit's own LCD read over USB, not edited. The chooser is byte-identical to 0.1.0's. The 26 Nov emulator capture of the PROG box is replaced.
+  - *Stress* (`python3 stress.py`, Midiverb II #69 the dear program half the time): eight instances pass as before; worst block per core 1,347.5 and 1,326.4 executed instructions a sample. Its test driver's call count moved from r7+$1e, now an LFO's, to r7+$40.
+  - *Cost:* dsp_host's worst block 330.4 executed instructions a sample (Midiverb II #69), static.py 325.1; sdk/cycle-scan's model 595.0 cycles a sample (Midiverb II #69; the chorus and flange programs 581.8-595.0, every other at most 576.2, the median of the 225 397.2), the cap 726. The LFO update takes 123 instructions (two triangles) to 221 (two sines) once every eighth program sample; the tick and the four pointer moves cost every program sample. Forms the released engine never ran on a unit: `move (r5)+n5` modulo the ring, `move (r4)+n4` and `jmp (r1)`.
+
 ## On the unit
+
+- **0.2.0 on the owner's MKII, 27 Nov 2026** (OS 1.40C, development twin `46c30886` of main's base 0.8.2, built from `48f4a9b9c`; Dev17 bank C, Part 1 as loaded after the RAM boot, C04, 126 BPM). Every trial was rolled back. None logged a crash, stall, freeze or skipped track.
+  - *PROG stopped at 58 at first.* That is 0.1.0's last value, so 0.2.0's 43 new values could not be picked. For a listed module, `module:dev` takes the FX page recipe from the committed `src/engine/assets/descriptor-recipes.json`, and that still held 0.1.0's PROG: a count of 59, and 59 labels in `menu-recipes.json`. The packages below are built with the page derived from this manifest (PROG 102, BANK 3), with Midiverb's entry left out of that file for the build. The release regenerates both recipe files from source.
+  - *Timing.* The same program on T1 (core 1) and T5 (core 0) on FX2, each read against a NONE baseline. Each reading is the mean of three `stats` lines with the transport stopped; the effect runs either way.
+    - Readings with C04 playing were discarded: the same program read 422 and 600 on core 0 in two trials, because each trig and sample changes the load.
+    - Stopped, the readings repeat to 0.1 cycle. Cycles a sample an instance, core 1 / core 0:
+
+      | Programs | Core 1 / core 0 |
+      | --- | --- |
+      | Midiverb II LFO programs (#53, #55-#69) | 599.9-613.3 / 580.0-593.0 |
+      | Midiverb II #10 | 586.8 / 567.4 |
+      | Midiverb #1 | 444.6 / 429.9 |
+
+    - Core 1 runs about 3 % above core 0. The dearest program, #69 (595 modelled), reads 613.3 / 593.0 twice.
+    - Single readings went up to 631.9 (#64) and 622.2 (#61); both read 612.5 when repeated.
+    - Not timed stopped: #51 and #54. The timing script overshot their PROG values; playing, they read like the others.
+  - *Release build:* `npm run module:dev -- midiverb --listed --build-only --slots fx2 --cycles 632 --cycles-kind hardware --state 32 --buffer 15870`, with the derived page. Package `1c2e43f69e96e82b…`, 59,348 bytes, DSP 929 words (timed and priced below); after PROG's range followed BANK the same command gives `d554753cf04faaf5…`, the shipped package, with the same DSP code. 632 is the highest single reading, rounded up; one instance may be charged 726.
+  - *Price and curve* (`npm run device:price -- --write --memory --curve T1,T3,T6,T7 --pick-pattern 2 --measure-pattern 4`, package `1c2e43f6`):
+    - At rest: frame +0, CPU +0.6.
+    - In use on T1 FX2: frame +1.5, CPU +2, DSP T1-4 +11. DSP T5-8 also read about +11, at rest and in use.
+    - Curve: first 1.6, each 1.6. Admitted alone on the empty pattern (longest frame 39.5 %) and the medium one (81.6 %), nothing dropped, no stalls.
+    - Module pool: 63,936 bytes.
+  - *PROG and BANK, package `1c2e43f6`* (a 300-s trial, transport stopped, T1 FX2; C04 Part 2 as the unit was left). Each value was set with the knobs and read back from the frame record; 30 of 30 passed.
+    - PROG 1, 30 and 59 on MV1, MV2 and FEX play the program 0.1.0 played at that value: MV1 1, 34, 63; MV2 4, 73, 99; FEX 1, 32, 63. The screen names them, e.g. "34 2.85 SMALL BRIGH".
+    - MV2 PROG 83 to 102 play MV2 50 to 69 in order. Two more turns past 102 stay on 102 ("69 FAST CHORUS 2").
+  - Not run: a Part saved with 0.1.0 and opened with 0.2.0 (the value map above is what it reads).
+
+### Test procedure: midiverb 0.2.0-experimental, 27 November 2026
+
+On the owner's MKII through the unit queue: development twin `ed5474c6` of base 0.8.3 (main `80ea1e584`, `build_core.py` with the beta flags plus `--dev`). Package `public/octatrack-modules/midiverb/0.2.0-experimental.mwrm`, SHA-256 `d554753cf04faaf5…`: the shipped package, rebuilt from source by the isolated build, with PROG's range following BANK. Built from `8bfd17721`; the checkout's only uncommitted changes were the step-1 Fix's two scripts (`scripts/module-doctor.mjs`, `scripts/test-procedure.mjs`), without which step 1 refuses every update of a listed module. Dev17 bank C: C04 Part 2 (working = saved), picks on the empty C02, the curve on C04, transport stopped.
+
+`npm run test:procedure -- midiverb --package public/octatrack-modules/midiverb/0.2.0-experimental.mwrm --share /tmp/modwerk-share.sock --no-emulator --measure-pattern 4`
+
+| # | Step | Result |
+| --- | --- | --- |
+| 1 | module:doctor (`--procedure`) | passed; the qualification record waited for this run |
+| 2 | modules:compat | passed: 48 active modules, 0 problems |
+| 3 | name the build | `d554753c` |
+| 4 | `cycle-scan.mjs check` | passed |
+| 5 | emulator | left out (`--no-emulator`) |
+| 6 | status, Part state, inventory | twin `ed5474c6`, empty inventory, C04 Part 2 clean |
+| 7 | `device:test` | passed: self-test; T1 admitted in 116 ms (peak 437 per mille), T5 in 117 ms (515); all at once three a core placed, the fourth on each refused by admission (CPU 576, core peaks 632 and 714); Part switches 12 of 12; rolled back |
+| 8 | soak | passed: 120 s of scenes, crossfader and program changes inside a trial; Part 2 reloaded; rolled back |
+| 9 | `device:price --curve T1,T3,T6,T7 --measure-pattern 4` | at rest frame +0, CPU +0; in use on T1 FX2 frame +2.3, CPU +2, DSP T1-4 +9.8, T5-8 +0. Curve on C04 first 2, each 2. Admitted alone on the empty pattern (longest frame 37.8 %) and the medium one (88.7 %), nothing dropped, no stalls |
+| 10 | inventory, Part state | unchanged, empty; C04 Part 2, working = saved |
+| 11 | by hand | 32 of 32 PROG and BANK cases on this package (below). Not done: the other screens (0.1.0's captures, unchanged), MAIN and CUE recorded over USB |
+| 12 | the owner's own stage | he played this exact package in a RAM trial, called the PROG knob great, and said "d554753c is tested" (27 November 2026, reported). Not done by the agent: MIDI, a large set, project save and reload, a Keep and a power cycle |
+
+Edge cases, by hand in a 300-s trial of `d554753c` (each value set with the knobs and read back from the frame record):
+
+| Case | Why this change makes it a risk | Result |
+| --- | --- | --- |
+| PROG 1, 30 and 59 on MV1, MV2 and FEX | 0.2.0 inserts programs; a 0.1.0 Part must open on the same program | passed: MV1 1, 34, 63; MV2 4, 73, 99; FEX 1, 32, 63, as 0.1.0 |
+| MV2 PROG 83 to 102 | the Midiverb II's added chorus and flange programs | passed: MV2 50 to 69 in order |
+| PROG turned 140 detents past the end on each bank | PROG's range now follows BANK | passed: stops at 102 on MV2 and at 63 on MV1 and Midifex, on each bank's last program |
+| A Part saved with 0.1.0 opened with 0.2.0 | the stored value reads through the same map | not run on the unit; the first case reads the same values |
+
+The earlier run on 27 November (package `1c2e43f6`, before the PROG range: steps 2 to 10 one by one, as step 1 then refused every update) passed the same steps. Its curve was read on C01, a light pattern (35.6 % of a frame with stock alone), so it was refused there.
 
 - **Trial, 25 Nov 2026, the owner's Octatrack** on flashed base `eb6679620d0c`, from commit ede56e7b6: package `midiverb.mwrm`, SHA-256 `8184ae0826318eced0dd1053b638dd58db4eb09097fd8ed0fb30c48b87dea653`, built by `npm run module:dev -- midiverb --slots fx2 --cycles 400 --cycles-kind executed --state 32 --buffer 15870`. The base admitted it and ran it as a RAM trial. The owner reported it "working great" (reported, not observed by the agent). Not run: the test procedure, its edge cases, scenes, locks, LFOs, several instances.
 - The first attempts were refused at verify, loader refusal 6 (RUNTIME_CYCLES): 824 declared cycles, then the builder's placeholder. One instance must fit beside seven stock slots on a core: 3,120 − 7 × 342 = 726 chip cycles, a draft's figure charged at 7/4, so at most 414 declared.
@@ -37,6 +104,15 @@ Record what you ran, on which build and which unit, and what you saw. "Not teste
 
 Four instances on one core take about half of it in the emulator (1,582 of 3,120 static), which leaves the other half to that core's four FX1 slots and its stock effects. On the unit the base admits by the measured frame and DSP cost, not by this figure: three instances on core 1 beside the stock effects peaked at 88.4 % of the core, and it refused a fourth.
 
+### perf:audit, 0.2.0 (`npm run perf:audit -- check sdk/octatrack/modules/midiverb/evidence/performance.json --stamp`, 26 Nov 2026, emulator figures)
+
+| Check | Result |
+| --- | --- |
+| record | dsp record for midiverb@0.2.0-experimental |
+| cycles | 4 x 325.1 = 1300.4 of 3120 per sample per core (42%), measured 330.4 per instance |
+| stock benchmark | 330.4 vs DARK REV 242.38 (1.36x); the dearest stock effect is 330.94 |
+| stress | 4 per core, eight tracks, 3 LFOs and 12 locked slots, 2 s, no clobber, no hang |
+
 ## Stock flows
 
 Not tested.
@@ -48,3 +124,5 @@ Not tested: `npm run fx:audit` (aliasing, DC, clipping, idle) was not run. The w
 ## Performance
 
 `dsp_host`, every program streamed by its index at LEVL 127 and MIX 127, unsplit and split at frames 1 and 7. On the first streaming engine 130 of 205 programs cost at most 400 executed instructions a sample (Midiverb 37, Midiverb II 45, Midifex 48), the dearest 589; the 75 over 400 were left out (generate.mjs OVER_BUDGET). On the owner's MKII (twin `4c7eb79b` of base 0.8.1, 25 Nov 2026) one instance of that engine took about 187 per mille of a DSP core, and `device:test` placed three on T1-T3, where core 1 peaked at 921 per mille, over its 900 limit. So the engine was made cheaper (25 Nov 2026): a unit's first word is now its handler's offset (the handlers 16 words apart from mvqJTAB), so it jumps straight there instead of through a branch table; ST and STN wrap the accumulator in place and fetch the next unit in parallel; END swaps the output taps in place. verify.py stays bit-exact in all five cases, its dearest case 356.8 to 294.2. The dearest of the 130 programs, Midiverb #48, went from 399.7 to 329.2, and 330.9 while it fades out during a trig split (402.9 before). Declared at 332, that let the base admit three instances on core 0 of the owner's MKII, where `device:test` read a peak of 998 per mille, so the declared worst case also sets admission. The 75 left out, measured again: 44 cost at most 400 and came back (owner, 25 Nov 2026: the ceiling 400), 31 cost 401 to 558 and stay out. 174 programs (Midiverb 59, Midiverb II 56, Midifex 59): the dearest, Midiverb #16, costs 397.1, and 395.6 fading out during a split; 398 is declared, the test driver's few instructions included. Against stock, from E-Verb's matched benchmark on the same stock image (`164f3122…`): DARK REV 242.38, SPRING REV 314.19, DJ EQ 330.94 (the dearest): 397.1 is 1.64, 1.26 and 1.20 times those. The DSP package is 645 words (671 with verify.py's test driver).
+
+**A cheaper engine, 26 Nov 2026: emulator only, not run on a unit, not packaged.** Every unit adds the reads before it and then does its operation: each handler sits behind seven unrolled read pairs (no DO, no count word, no dispatch of its own), a load is a read after a store that clears the accumulator, frame B stores the input itself and copies the last outputs instead of END swapping them, and MIX takes its fade path from a register chosen once a call. The halving's branch became `add y0,b ifmi` (the 56300's conditional ALU execution), a form the released engine never ran: the commit before it is the same engine with the branch. Checks: verify.py passes its five cases (its dearest case 294.2 to 202.1); stress.py passes (worst block per core 1,096.5 and 1,083.9, was 1,591.9 and 1,566.3). All 225 original programs (the 31 left out and Midiverb II's chorus and flange programs, without their LFO, included) streamed through verify.py's driver at LEVL 127 and MIX 127: each engine equals its model bit for bit (unsplit, split at 1 and 7, and a switch to the next program with a tail kill, split at 5), the old and the new program models agree over 6,000 samples each, and the output equals the released engine's in all 675 unsplit and split runs, started so that both play from the same call. static.py: the dearest of the 174 shipped 395.5 to 266.0 (Midiverb II #37; Midiverb #16 262.5), of all 225 474.5 to 316.5 (Midiverb II #10); `dsp_host`'s worst block of all 225, 477.6 to 327.8. Measured again on the released engine, the 31 left out cost 400.8 to 477.6 (static 399.0 to 474.5), not the 558 above; on this engine 272.3 to 327.8 (static 261.0 to 316.5). sdk/cycle-scan's model (interlock_scan.py on a steady block, a -steptrace `dsp_host`): Midiverb II #10 932 to 573 cycles a sample, the shipped worst 795 to 534 (Midiverb #16 760 to 482; on the released engine the unit's in-use reading, 17.8 points, is about 807 cycles). The DSP package is 666 words; the largest program 261 to 182 words. The declared 398, OVER_BUDGET and the packages are unchanged.

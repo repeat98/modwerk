@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.2.0",
+    "date": "2026-11-27",
+    "changes": [
+      "First release in Modwerk for the original Digitakt on OS 1.54: Track Solo, by ceredmeat.",
+      "Hold TRK + UP to hear the active track alone; TRK + DOWN latches it.",
+      "Not with Euclidean, or with Digi EQ, which builds only on the older core.",
+      "The author's own 0.2 file, unchanged."
+    ]
+  }
+]

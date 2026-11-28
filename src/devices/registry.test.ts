@@ -51,10 +51,15 @@ describe('device registry', () => {
 })
 
 describe('digi combination estimate', () => {
+  it('names the chosen modules with no CPU cost measured on a unit, and only those', () => {
+    expect(estimateCombination('analog-rytm-mkii', ['chorus', 'flanger', 'ctrl-all', 'analog-bd']).unmeasured).toEqual(['Chorus', 'Flanger'])
+    expect(estimateCombination('analog-rytm-mkii', ['ctrl-all', 'analog-bd']).unmeasured).toEqual([])
+  })
   it('fits small sets and rejects sets over the shared area', () => {
     expect(estimateCombination('digitakt', ['digineighbor', 'digisophie', 'digihealth']).fits).toBe(true)
     expect(estimateCombination('digitakt', ['digislicer', 'digineighbor']).fits).toBe(true)
-    expect(estimateCombination('digitakt', ['digislicer', 'digineighbor', 'digisophie', 'digihealth']).fits).toBe(false)
+    expect(estimateCombination('digitakt', ['digislicer', 'digineighbor', 'digisophie', 'digihealth']).fits).toBe(true)
+    expect(estimateCombination('digitakt', ['digislicer', 'cc-names', 'midi-expression', 'euclidean', 'digineighbor', 'digistring']).fits).toBe(false)
   })
 
   it('keeps machine slots apart between slicer and neighbor', () => {

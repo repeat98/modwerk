@@ -1,0 +1,754 @@
+{
+ "elemod": 2,
+ "id": "ctrlall",
+ "version": "0.2",
+ "title": "Ctrl All",
+ "description": "Ctrl All, after the Analog Rytm mod: hold TRK and press YES to turn CTRL ALL on or off (ALL shows in the top-right corner). While it is on, a parameter lock you set with a knob (hold a trig, turn a knob) is also set on the same step of every other track that has a trig there: the other audio tracks from an audio track, the other MIDI tracks from a MIDI track. Only knob turns are copied, never pastes, clears or CREATE RANDOM LOCKS.",
+ "category": "Sequencer",
+ "author": "Cere, made with Claude",
+ "license": "GPL-2.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.54",
+  "syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "section3_sha256": "5c58bf9e3949ef09977c5fc007a61e8d026931f67f1621238379dfb8ee4d31a2",
+  "section3_len": 2479680
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1013,
+   "parts": [
+    [
+     "stock",
+     "0x40002d58",
+     8
+    ],
+    [
+     "stock",
+     "0x4002380c",
+     8
+    ],
+    [
+     "stock",
+     "0x4002380c",
+     8
+    ],
+    [
+     "hex",
+     "2f2f0024"
+    ],
+    [
+     "stock",
+     "0x4002479a",
+     10
+    ],
+    [
+     "hex",
+     "24004ab90000000067764ab900000000676e4ab90000000066664a006762700fb0af0018655a723fb2af001c6552226f0014"
+    ],
+    [
+     "stock",
+     "0x40019666",
+     14
+    ],
+    [
+     "hex",
+     "671220794199ec3822000681ffffc710b28867384ab90000000066247001223c0000000023c000000000702423c100000000720123c00000000023c100000000"
+    ],
+    [
+     "stock",
+     "0x40020796",
+     8
+    ],
+    [
+     "hex",
+     "00104e757207b2af00185dc3222f001cd28177034483e78b2441720123c100000000223c0000038f45eac7104c03180028035084d5c1d5c0b6af00186724301208000000671c"
+    ],
+    [
+     "stock",
+     "0x4002380c",
+     8
+    ],
+    [
+     "hex",
+     "2f2f00242f032f2f0024"
+    ],
+    [
+     "stock",
+     "0x4002479a",
+     10
+    ],
+    [
+     "hex",
+     "528345ea038fb88366cc20024cd7041c42b900000000"
+    ],
+    [
+     "stock",
+     "0x400673b8",
+     10
+    ],
+    [
+     "hex",
+     "0000000042804e752f027402206f000c2228000c20280010b4816726740cb481661a4ab90000000066304ab900000000670a72197401c081b48067344280241f4e7572117401c081b48057c07100448023c000000000428060e47211c08153804a80670642b9000000007001241f4e7522390000000023c200000000"
+    ],
+    [
+     "stock",
+     "0x40132d5e",
+     8
+    ],
+    [
+     "hex",
+     "23c0000000004a816620203c00000000720123c000000000702423c00000000023c100000000700160be203c00000000720123c000000000702423c00000000023c10000000060de20390000000042b9000000004a806f1a538023c0000000007001206f000442b900000000114000204e754ab90000000067f67001206f000442b9000000001140002060e4"
+    ],
+    [
+     "stock",
+     "0x4000b0ea",
+     8
+    ],
+    [
+     "hex",
+     "262f00144ab900000000660000a64ab9000000006f0000922079000000004a88670000864a10670000ec428052804a30080066f8e58842a7784448780026e280448098802f0448780018240006820000003b2f022f032a000685000000404eb900000000"
+    ],
+    [
+     "stock",
+     "0x4003945a",
+     8
+    ],
+    [
+     "hex",
+     "2f044878"
+    ],
+    [
+     "stock",
+     "0x4015ba20",
+     8
+    ],
+    [
+     "hex",
+     "000000004fef002c2eb900000000487900000000487800184878001d2f054879000000002f034eb9000000004fef001c"
+    ],
+    [
+     "stock",
+     "0x40003af0",
+     10
+    ],
+    [
+     "stock",
+     "0x4002d292",
+     8
+    ],
+    [
+     "hex",
+     "007548780037487800672f034eb900000000"
+    ],
+    [
+     "stock",
+     "0x4002ccd2",
+     10
+    ],
+    [
+     "hex",
+     "007548780037487800672f034eb9000000004fef002c2ebc00000000"
+    ],
+    [
+     "stock",
+     "0x400ac20e",
+     10
+    ],
+    [
+     "hex",
+     "00694879000000002f034eb900000000"
+    ],
+    [
+     "stock",
+     "0x40032d50",
+     8
+    ],
+    [
+     "hex",
+     "42a7784448780026743b2f047a404878"
+    ],
+    [
+     "stock",
+     "0x4015ba20",
+     8
+    ],
+    [
+     "hex",
+     "00000000"
+    ],
+    [
+     "stock",
+     "0x4003945a",
+     8
+    ],
+    [
+     "hex",
+     "2f044878"
+    ],
+    [
+     "stock",
+     "0x4015ba20",
+     8
+    ],
+    [
+     "hex",
+     "000000004fef002c2eb900000000487900000000487800184878001d2f054879000000002f034eb9000000004fef001c6000ff324354524c20414c4c3a204e4f"
+    ],
+    [
+     "stock",
+     "0x401c1102",
+     8
+    ],
+    [
+     "hex",
+     "004354524c20414c4c204f4e004354524c20414c4c204f464600414c4c00257300"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 36
+  }
+ },
+ "symbols": {
+  "on": [
+   ".bss",
+   32
+  ],
+  "knob_turned": [
+   ".bss",
+   28
+  ],
+  "busy": [
+   ".bss",
+   24
+  ],
+  "warned": [
+   ".bss",
+   12
+  ],
+  "msg": [
+   ".bss",
+   8
+  ],
+  "msg_ticks": [
+   ".bss",
+   4
+  ],
+  "redraw": [
+   ".bss",
+   0
+  ],
+  "swallow_yes": [
+   ".bss",
+   16
+  ],
+  "trk_held": [
+   ".bss",
+   20
+  ],
+  "ctrlall_tick": [
+   ".run",
+   508
+  ],
+  "ctrlall_draw": [
+   ".run",
+   576
+  ],
+  "ctrlall_key": [
+   ".run",
+   312
+  ],
+  "ca_setlock": [
+   ".run",
+   0
+  ],
+  "ctrlall_enc": [
+   ".run",
+   300
+  ]
+ },
+ "exports": [
+  "ca_setlock",
+  "ctrlall_draw",
+  "ctrlall_enc",
+  "ctrlall_key",
+  "ctrlall_tick"
+ ],
+ "imports": [
+  "fw_fillrect",
+  "fw_font5",
+  "fw_framerect",
+  "fw_textf"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   42,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   50,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   58,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   124,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   134,
+   "abs32",
+   "sec:.run",
+   960
+  ],
+  [
+   ".run",
+   140,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   148,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   156,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   162,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   204,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   290,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   304,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   340,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   348,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   386,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   406,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   418,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   424,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   438,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   448,
+   "abs32",
+   "sec:.run",
+   981
+  ],
+  [
+   ".run",
+   456,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   464,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   470,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   480,
+   "abs32",
+   "sec:.run",
+   993
+  ],
+  [
+   ".run",
+   488,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   496,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   502,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   510,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   516,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   528,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   540,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   552,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   566,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   590,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   600,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   610,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   680,
+   "abs32",
+   "sym:fw_fillrect",
+   0
+  ],
+  [
+   ".run",
+   704,
+   "abs32",
+   "sym:fw_framerect",
+   0
+  ],
+  [
+   ".run",
+   714,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   720,
+   "abs32",
+   "sec:.run",
+   1010
+  ],
+  [
+   ".run",
+   736,
+   "abs32",
+   "sym:fw_font5",
+   0
+  ],
+  [
+   ".run",
+   744,
+   "abs32",
+   "sym:fw_textf",
+   0
+  ],
+  [
+   ".run",
+   784,
+   "abs32",
+   "sym:fw_fillrect",
+   0
+  ],
+  [
+   ".run",
+   812,
+   "abs32",
+   "sym:fw_framerect",
+   0
+  ],
+  [
+   ".run",
+   822,
+   "abs32",
+   "sec:.run",
+   1006
+  ],
+  [
+   ".run",
+   840,
+   "abs32",
+   "sym:fw_font5",
+   0
+  ],
+  [
+   ".run",
+   848,
+   "abs32",
+   "sym:fw_textf",
+   0
+  ],
+  [
+   ".run",
+   884,
+   "abs32",
+   "sym:fw_fillrect",
+   0
+  ],
+  [
+   ".run",
+   908,
+   "abs32",
+   "sym:fw_framerect",
+   0
+  ],
+  [
+   ".run",
+   918,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   924,
+   "abs32",
+   "sec:.run",
+   1010
+  ],
+  [
+   ".run",
+   940,
+   "abs32",
+   "sym:fw_font5",
+   0
+  ],
+  [
+   ".run",
+   948,
+   "abs32",
+   "sym:fw_textf",
+   0
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4002479a",
+   "len": 6,
+   "stock_sha256": "93aaa82de68fd2ccc97f44b49e4d3f43b137ab09d9dd12fb6d8174afaf153177",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ca_setlock",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_key",
+   "order": 20,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:ctrlall_key",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_enc",
+   "order": 90,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:ctrlall_enc",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_tick",
+   "order": 60,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:ctrlall_tick",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_draw",
+   "order": 71,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:ctrlall_draw",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "core": "4.1",
+  "names": [
+   "key:TRK+YES"
+  ]
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "build": {
+  "sources": {
+   "ctrlall.c": "08a9129466449d8cc216b1e041bbe11bdeff5b36e2fac79e98e8206976220761"
+  }
+ },
+ "signature": null
+}

@@ -55,10 +55,12 @@ export function GetStarted({ machine }: { machine?: string }) {
   const complete = !pending && !!steps && getStartedComplete(steps)
   useEffect(() => { if (complete && id) dismiss(id) }, [complete, id])
   if (!id || !steps || wasDismissed || closed || complete || (pending && failed === id && !saved)) return null
-  const done = steps.filter(step => step.done).length
+  const done = steps.filter(step => step.done).length, next = steps.find(step => !step.done)
   return <section className="get-started" aria-labelledby="get-started-title" aria-busy={pending}>
     <div className="get-started-heading">
-      <div><h2 id="get-started-title"><button className="get-started-toggle" type="button" aria-expanded={expanded} aria-controls={stepsId} onClick={() => setExpanded(value => !value)}><Icon name="back" size={14} />Get started</button></h2><p>{pending && !saved ? 'Checking your progress…' : done + ' of ' + steps.length + ' steps complete'}</p></div>
+      <div><h2 id="get-started-title"><button className="get-started-toggle" type="button" aria-expanded={expanded} aria-controls={stepsId} onClick={() => setExpanded(value => !value)}>Get started<Icon name="back" size={14} /></button></h2>
+        {/* A bar that has started wants finishing; folded, the card still names the next step. */}
+        <p>{pending && !saved ? 'Checking your progress…' : <><span className="get-started-meter" aria-hidden="true"><span style={{ width: done / steps.length * 100 + '%' }} /></span><span>{done} of {steps.length} done{!expanded && next && ' · Next: ' + next.title}</span></>}</p></div>
       <button type="button" className="text-button" onClick={() => { dismiss(id); setClosed(true) }}>Dismiss</button>
     </div>
     <ol id={stepsId} className="get-started-steps" hidden={!expanded}>{steps.map((step, index) => <li key={step.id} className={step.done ? 'is-done' : undefined}>

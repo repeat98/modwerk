@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/kitab.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-DPROJECT_AT=0x40138882",
+    "-DUI_STATE_AT=0x401389c4",
+    "-DCUR_PAT_AT=0x40092890",
+    "-DRELOAD_AT=0x40017c16",
+    "-DKIT_CHANGED_AT=0x4013c42c",
+    "-fno-late-combine-instructions"
+  ],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_key",
+      "fn": "kitab_key",
+      "order": 20
+    },
+    {
+      "event": "ev_tick",
+      "fn": "kitab_tick",
+      "order": 60
+    },
+    {
+      "event": "ev_draw",
+      "fn": "kitab_draw",
+      "order": 70
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:any page:TRK+NO"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.54": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}

@@ -10,7 +10,6 @@ import { Icon } from '../components/Icon'
 import { AudioPlayer } from '../components/AudioPlayer'
 import { MediaCredits } from '../components/MediaCredits'
 import { ModulePopularity } from './ModulePopularity'
-import { WORKS_REPORT_NOTE } from './ModuleWorksCount'
 import { modulePageHref, moduleThreadId } from './modules'
 import { useLoginPrompt } from './LoginPromptDialog'
 import { ForumThreadView } from './ForumThreadView'
@@ -93,17 +92,14 @@ export function ModuleCommunity({id,mode='all',onDiscuss,onReportIssue,onDiscuss
     {!!data?.media.length && <MediaGallery media={data.media}/>}
     {mode !== 'media' && !screenshots.length && !data?.media.length && <div className="media-empty"><Icon name="file" size={24}/><div><strong>Share a preview</strong><p>{onAddPreview ? 'Add an audio recording with Add preview. Screenshots can be submitted via PR.' : 'Share a screenshot or audio preview via PR.'}</p></div></div>}
   </section>
-  // Working reports and likes are the community's verdict on a module. The like tile is the like button.
-  const works=data?.worksReports
+  // Likes are the community's verdict here; the working count shows once, in the page's hero.
+  const unavailable=!session.available||(!data&&error)
   const signals = (overview:boolean) => <section className={'community-signals'+(overview?'':' detail-section')} aria-label="Community feedback">
     <h2>Community</h2>
-    <div className="signal-tiles">
-      {mode!=='likes'&&<div className="signal-tile is-works" title={WORKS_REPORT_NOTE}><Icon name="check" size={16}/><strong>{works?.toLocaleString()??'—'}</strong><span>Working</span></div>}
-      <button className="signal-tile is-like" title="Like this module" aria-label={(data?.liked?'Unlike ':'Like ')+id} aria-pressed={data?.liked??false} disabled={!session.available||!data||busy} onClick={gate('Sign in to like this module',()=>void toggleLike())}><Icon name="heart" size={16}/><strong>{data?.likes.toLocaleString()??'—'}</strong><span>{data?.liked?'Liked':'Likes'}</span></button>
-    </div>
+    <button className={'button community-like '+(data?.liked?'button-added':'button-quiet')} title="Like this module" aria-label={(data?.liked?'Unlike ':'Like ')+id} aria-pressed={data?.liked??false} disabled={!session.available||!data||busy} onClick={gate('Sign in to like this module',()=>void toggleLike())}><Icon name="heart" size={16}/><strong>{data?.likes.toLocaleString()??'—'}</strong><span>{data?.liked?'Liked':'Likes'}</span></button>
     <ModulePopularity statistics={data??undefined} id={id} secondary/>
     {overview&&<button className="button button-quiet" onClick={onDiscuss}>Join the discussion <Icon name="arrow" size={14}/></button>}
-    <p className="service-note">{!session.available||(!data&&error)?'Community figures unavailable.':mode==='likes'?'Likes come from registered members.':'Working counts members who tried it on their instrument.'}</p>
+    {(unavailable||mode==='likes')&&<p className="service-note">{unavailable?'Community figures unavailable.':'Likes come from registered members.'}</p>}
     {!data&&error&&<button className="text-button" onClick={()=>{setError('');void api<Data>('/modules/'+id).then(value=>setData(value)).catch(error=>setError(error.message))}}>Try again</button>}
     {!overview&&<MemberPrompt/>}
   </section>

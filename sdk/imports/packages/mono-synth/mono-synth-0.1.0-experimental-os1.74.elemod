@@ -1,0 +1,529 @@
+{
+ "elemod": 2,
+ "id": "mono-synth",
+ "version": "0.1.0-experimental",
+ "title": "Mono Synth",
+ "description": "SY MONO: a monophonic digital oscillator voice, saw and pulse with a sub, noise and a pitch LFO, through the Rytm's own analog filter and AMP.",
+ "category": "machines",
+ "author": "chevyone",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 3539,
+   "parts": [
+    [
+     "hex",
+     "2f2f00102f2f00102f2f00102f2f00104879000000004eb9000000004fef00144e754e56ffec222e000841f9000000002f0a22301c442f02740e2d41ffee202e0008222e00084c020800246e000c22701c2422301c042f2effee2f092f010680000000002f004eb9000000004fef00104a80661e206e001020080680000000804298b08866fa242effe4246effe84e5e4e75142a0009302a000373aa00051d6a0001fff41d6a0002fff71d6a0006fffae1891d42fff32400e18a71c0e088122a00073d41fff8d08275aefff33d40fff57003b082640642011d41fff3202e0008742e2f2e0010486efff44c0208002d6a000cfffc1d6efff3fffb0680000000002f004eb900000000242effe4246effe84fef000c4e5e4e754e56ffec202e0008720e2f0a2f02742e4c0108000680000000002f004eb900000000588f202e00084c0208002040d1fc000000004a10670c242effe4246effe84e5e4e75206e000c226e000c246e000c75a80005322800031d690001fff41d690002fff72042142900091d690006fffa1d42ffef2408e18a20422401e18a73c1e0892d42fff075aeffefd2aefff0224234083d41fff57203142a00073d42fff8b2896530206e000c068000000000486efff41d6effeffffb2d68000cfffc2f004eb900000000508f242effe4246effe84e5e4e754202206e000c068000000000486efff42d68000cfffc2f001d42ffef1d6effeffffb4eb900000000508f60c84feffff4701373af001348d7040c77af001f75af00170681ffffffc0e1a9102f002b20437618c5c2246f002c226f00345380e7a8d280203c00000c314c0208002481246f00302480707eb0886d0000c82208243c010204084c021800767e71af001be2812281b6806d0000c0223c010204084c0108002200e28171af002323410004743f206f0038b4805dc17301448120814a80671cb4806c40727eb2806d6e0680ffffffc0243c020820824c020800e28073af002723400008767eb6816d3a203c010204084c0018004cd7040ce2812341000c4fef000c4e75b4806730263c0210842153804c03080073af0027767ee28023400008b6816cc64cd7040c223c3fffffff2341000c4fef000c4e75203c3fffffff609c71af001b223c3fffffff767e2281b6806c00ff44223c3fffffff6000ff482f03223c00de18ea2f02202f000cef8802807fffff80a2000800a1c1068103547f90a2000800a1c106810f72c422a2000800a1c1761806812c5aa362242f000ce6a2226f00102282a2000800a1c0241f068040000000261f4e752f03203c00de18ea2f02222f0010ef8902817fffff80a0010800a1c0068003547f90a0010800a1c006800f72c422a0010800a1c0761806802c5aa362242f0010e6a22042a0010800a1c1203c016534c3068140000000226f000ca2400800a1c00c800fffffff6e700c80f00000006d70e788a2000800a1c00c803fffffff6e2c0c80c00000006d60d0804a886d28721eb2886d38223c400000002408e4a9b280652ae5a8671e241f261f4e754a886c1c203c7fffffff76e1b6886e0822084481e2a866e2241f7001261f4e75241f203c40000000261f4e75203c7fffffff6092203c80000000608a4a886ce0203c8000000060c22f03223c001096472f02202f000c4c01080022002400ef89203c00de18ea02817fffff80a0010800a1c0068003547f90a0010800a1c006800f72c422a0010800a1c0761806802c5aa362e6a22042a0010800a1c1203c00045e7b068140000000a2000800a1c00c803fffffff6e140c80c00000006d1cd0802208241f261fe3a84e752208203c7fffffffe3a8241f261f4e752208203c80000000e3a8241f261f4e75222f00042001d0809180b380d0800680800000004e75202f0004223c00000c314c0008004c0108004e752f027413222f00080681ffffffc0e5a9202f000c74185380e5a8241fd0814e754e56fffc206e0008203c400000002f0a223c2545f4912f02486efffc4290214000082141000c42a800104868001c4868001848680014246e000c75aa000573aa000771aa0006224275aa00042f0173aa00032f0071aa00022f092f022f012f0071922f004ebafc2c4fef002c206e00082f2800142f2a00084ebafda67201508f206e0008214000041141002c242efff4246efff84e5e4e754e56ff6448d73cfc266e000c486effc445eeffd075ab00072f0a486effcc73ab000671ab0005486effc82f0275ab000377ab00042f012f0073ab000271932f032f022f012f004ebafbb24fef002c206e0008222effc8202effcc28680014928c242800189082e681e680d9c1d480214c00142142001871ab00012f004ebafdfe226e00082200d2a900082001d080918023410008b380d080068080000000a4000800a1c0487408002f2b00084ebafcda2a6e00084fef000c2a6d00042200928d2d4dffbc4a816d00035eea812d41ff9c2200b0aeffbc6404222effbc76ff4c413003206e000849eefff0242e000806820000002c2140000441e8001c2d43ff9847eeffe02258201a9089e68022004a806d0001daea8126c9d3c02149fffc28c1b1c266e070012a6efffc2d6effc4ffa0262effa02d4dffa4dbeeffece7a82d4dff942a6e0008222efff02641242efff42442282efff82e04226e00102d55ffc02d41ffa8d7eeffe0d5eeffe42d42ffac2d40ffb8deaeffe8286d00102d44ffb02c2d000c206effbc4be90080222effc02d4dffb4d1eeff9c2001d288b0816302528c242effa0260ce4ab0c8179ffffff53c078012401e282c8830a82c000000071002a0444850a80c00000000a85c00000002d44ff8cb2886400012e282eff984c0148004684e28ca8040800a1c44becffffe284260dc6aeffb82d44ff90d48490844a836700013a4aaeff8c670001442a3c3fffffff2601068386000000b68864000142282eff984c0438004683e28ba6030800a1c3e283d083263c0019660d4c036800282eff9406863c6ef35f2606e283ae050800a8030800a1c3a6420800a4400800a1c024002800d483b584b583c8834a846d0001500c823fffffff6e00017e0c82c00000006d0001a6d482202effa4d7eeffa8d5eeffacdeaeffb0d1aeff9422c2b3eeffb46600feea2a6eff9c223c000001d2226effbc200d4c010800220941f1da00d2aeffc0226e0008d081234c00102346000c4cee3cfcff642208eb899288d28022814e5e4e7506810000001fea8126c9d3c02149fffc28c1b1c26600fe026000fe1e26014483b6886400ff06282eff984c04380028034684e28ca8040800a1c44bec0001e284260dc6aeffb82d44ff909484d0844a836600feca4aaeff8c670000ae282eff9044842d44ff902601068386000000daaeff90b6886500fec2263c7a0000009681b1c36300feca282eff984c0438004683e28ba6030800a1c3e283282eff949083263c0019660d4c03680006863c6ef35f2606e283ae050800a8030800a1c3a6420800a4400800a1c024002800d483b584b583c8834a846c00feb42400d4829582202effa4d7eeffa8d5eeffacdeaeffb0d1aeff940a827fffffff22c2b3eeffb46600fda66000feba2a3cc00000006000fe1a202effa4243c7fffffffd7eeffa8d5eeffacdeaeffb022c2d1aeff94b3eeffb46600fd746000fe8806810000001f6000fc9c202effa4243c80000000d7eeffa8d5eeffacdeaeffb022c2d1aeff94b3eeffb46600fd426000fe5600002f02740e222f00082001e5a82400200102823fffc000424048402242740fc480203c7fffffff9089e4a80c80000080016406203c000080010680ffff8000080100146716223c400000004c401001241f20010680000000104e75223c0a0000004c401001241f20010680000000104e757004206f000442a8000842a8000442903140000c4e752f02206f00081028000d660000b8202f001080af0014670000b6202f001471800c800000008066000092202f000c72015780b280650000844a28000c670a226f0010b3d0670000ae202f0010720e740120af0010e3a8222f0010216f00140004424148411142000c02803fffc0002240700fc280203c7fffffff9089e2a80c80000080016406203c00008001222f00100680ffff8000080100146744223c400000004c40100120010680000000105380214000087001241f4e75420270011142000c60f253801140000d700160e84a28000c67e0202800084a8066d2241f4e75223c0a0000004c401001200106800000001060ba202f0014b0a800046600ff4a202800084a8067d460a441f90000000021923c0021803c2021823c404e756d73616d000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000280000000000af000000000000000000000000000000000000007f64000000000000000000007f40010000000000000000007f00000000000000000000007f00000000000000000000007f40000000000000000000007f64000000000000000000007f00000000000000000000007f000000012804000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005359204d4f4e4f0053594d4f004c6576656c004c45560054756e650054554e0050756c7365204c6576656c00504c53005069746368204d6f64004d4f44004c464f2052617465004c464f00536177204c6576656c00534157004e6f697365204c6576656c004e534500537562204f736300535542005431360054756e6520313666740054380054756e65203866740054340054756e65203466740054320054756e652032667400"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 480
+  }
+ },
+ "symbols": {
+  "ms_engine": [
+   ".run",
+   0
+  ],
+  "ms_block": [
+   ".run",
+   34
+  ],
+  "gates": [
+   ".bss",
+   0
+  ],
+  "voices": [
+   ".bss",
+   112
+  ],
+  "ms_hit": [
+   ".run",
+   280
+  ],
+  "labels": [
+   ".run",
+   3340
+  ],
+  "targets.isra.0": [
+   ".run",
+   536
+  ],
+  "mono_synth_voice": [
+   ".run",
+   3316
+  ],
+  "ms_depth": [
+   ".run",
+   1362
+  ],
+  "ms_init": [
+   ".run",
+   1414
+  ],
+  "ms_gate_blocks": [
+   ".run",
+   2680
+  ],
+  "ms_lfo_inc": [
+   ".run",
+   1178
+  ],
+  "ms_amp_follow": [
+   ".run",
+   3080
+  ],
+  "ms_amp": [
+   ".run",
+   3100
+  ],
+  "ms_tri": [
+   ".run",
+   1340
+  ],
+  "ms_gate_block": [
+   ".run",
+   2814
+  ],
+  "ms_tune": [
+   ".run",
+   1382
+  ],
+  "ms_osc_inc": [
+   ".run",
+   934
+  ],
+  "ms_exp2_q30": [
+   ".run",
+   844
+  ],
+  "mono_synth_machine": [
+   ".run",
+   3200
+  ],
+  "ms_gate_hit": [
+   ".run",
+   2792
+  ],
+  "ms_render": [
+   ".run",
+   1566
+  ]
+ },
+ "exports": [
+  "mono_synth_machine",
+  "mono_synth_voice",
+  "ms_amp",
+  "ms_amp_follow",
+  "ms_depth",
+  "ms_exp2_q30",
+  "ms_gate_block",
+  "ms_gate_blocks",
+  "ms_gate_hit",
+  "ms_init",
+  "ms_lfo_inc",
+  "ms_osc_inc",
+  "ms_render",
+  "ms_tri",
+  "ms_tune"
+ ],
+ "imports": [
+  "mw_voice_run"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   18,
+   "abs32",
+   "sec:.run",
+   3316
+  ],
+  [
+   ".run",
+   24,
+   "abs32",
+   "sym:mw_voice_run",
+   0
+  ],
+  [
+   ".run",
+   44,
+   "abs32",
+   "sec:.run",
+   3100
+  ],
+  [
+   ".run",
+   96,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   104,
+   "abs32",
+   "sec:.run",
+   2814
+  ],
+  [
+   ".run",
+   252,
+   "abs32",
+   "sec:.bss",
+   112
+  ],
+  [
+   ".run",
+   260,
+   "abs32",
+   "sec:.run",
+   1566
+  ],
+  [
+   ".run",
+   302,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   310,
+   "abs32",
+   "sec:.run",
+   2792
+  ],
+  [
+   ".run",
+   328,
+   "abs32",
+   "sec:.bss",
+   156
+  ],
+  [
+   ".run",
+   450,
+   "abs32",
+   "sec:.bss",
+   112
+  ],
+  [
+   ".run",
+   474,
+   "abs32",
+   "sec:.run",
+   1414
+  ],
+  [
+   ".run",
+   500,
+   "abs32",
+   "sec:.bss",
+   112
+  ],
+  [
+   ".run",
+   528,
+   "abs32",
+   "sec:.run",
+   1414
+  ],
+  [
+   ".run",
+   3082,
+   "abs32",
+   "sec:.run",
+   3104
+  ],
+  [
+   ".run",
+   3204,
+   "abs32",
+   "sec:.run",
+   0
+  ],
+  [
+   ".run",
+   3212,
+   "abs32",
+   "sec:.run",
+   3372
+  ],
+  [
+   ".run",
+   3216,
+   "abs32",
+   "sec:.run",
+   3380
+  ],
+  [
+   ".run",
+   3220,
+   "abs32",
+   "sec:.run",
+   3385
+  ],
+  [
+   ".run",
+   3224,
+   "abs32",
+   "sec:.run",
+   3391
+  ],
+  [
+   ".run",
+   3232,
+   "abs32",
+   "sec:.run",
+   3395
+  ],
+  [
+   ".run",
+   3236,
+   "abs32",
+   "sec:.run",
+   3400
+  ],
+  [
+   ".run",
+   3244,
+   "abs32",
+   "sec:.run",
+   3404
+  ],
+  [
+   ".run",
+   3248,
+   "abs32",
+   "sec:.run",
+   3416
+  ],
+  [
+   ".run",
+   3256,
+   "abs32",
+   "sec:.run",
+   3420
+  ],
+  [
+   ".run",
+   3260,
+   "abs32",
+   "sec:.run",
+   3430
+  ],
+  [
+   ".run",
+   3268,
+   "abs32",
+   "sec:.run",
+   3434
+  ],
+  [
+   ".run",
+   3272,
+   "abs32",
+   "sec:.run",
+   3443
+  ],
+  [
+   ".run",
+   3280,
+   "abs32",
+   "sec:.run",
+   3447
+  ],
+  [
+   ".run",
+   3284,
+   "abs32",
+   "sec:.run",
+   3457
+  ],
+  [
+   ".run",
+   3292,
+   "abs32",
+   "sec:.run",
+   3461
+  ],
+  [
+   ".run",
+   3296,
+   "abs32",
+   "sec:.run",
+   3473
+  ],
+  [
+   ".run",
+   3304,
+   "abs32",
+   "sec:.run",
+   3477
+  ],
+  [
+   ".run",
+   3308,
+   "abs32",
+   "sec:.run",
+   3485
+  ],
+  [
+   ".run",
+   3324,
+   "abs32",
+   "sec:.run",
+   3340
+  ],
+  [
+   ".run",
+   3332,
+   "abs32",
+   "sec:.run",
+   280
+  ],
+  [
+   ".run",
+   3336,
+   "abs32",
+   "sec:.run",
+   34
+  ],
+  [
+   ".run",
+   3340,
+   "abs32",
+   "sec:.run",
+   3489
+  ],
+  [
+   ".run",
+   3344,
+   "abs32",
+   "sec:.run",
+   3493
+  ],
+  [
+   ".run",
+   3348,
+   "abs32",
+   "sec:.run",
+   3503
+  ],
+  [
+   ".run",
+   3352,
+   "abs32",
+   "sec:.run",
+   3506
+  ],
+  [
+   ".run",
+   3356,
+   "abs32",
+   "sec:.run",
+   3515
+  ],
+  [
+   ".run",
+   3360,
+   "abs32",
+   "sec:.run",
+   3518
+  ],
+  [
+   ".run",
+   3364,
+   "abs32",
+   "sec:.run",
+   3527
+  ],
+  [
+   ".run",
+   3368,
+   "abs32",
+   "sec:.run",
+   3530
+  ]
+ ],
+ "sites": [],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_amp_record",
+   "order": 80,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:ms_amp_follow",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "core_machines",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:mono_synth_machine",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "mw_voices",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:mono_synth_voice",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "mw_machine_sections",
+   "order": 50,
+   "data": "280b0000",
+   "relocs": [],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "machine:40",
+   "ui:SYNTH page of the SY MONO machine"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

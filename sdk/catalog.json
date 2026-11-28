@@ -69,7 +69,7 @@
     },
     {
       "id": "midiverb",
-      "version": "0.1.0-experimental",
+      "version": "0.2.0-experimental",
       "addedAt": "2026-11-25T20:15:00Z"
     },
     {
@@ -79,7 +79,7 @@
     },
     {
       "id": "usb-audio-out-tracks-main-cue",
-      "version": "0.4.1-experimental",
+      "version": "0.4.2-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
@@ -114,12 +114,12 @@
     },
     {
       "id": "playmodes",
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "addedAt": "2026-10-07T20:00:00Z"
     },
     {
       "id": "mute-modes",
-      "version": "0.2.3-experimental",
+      "version": "0.2.4-experimental",
       "addedAt": "2026-10-07T20:00:00Z"
     },
     {

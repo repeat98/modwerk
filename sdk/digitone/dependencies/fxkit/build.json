@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/fxkit.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-Os",
+    "-fno-tree-loop-distribute-patterns"
+  ],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "fxt_tick",
+      "order": 30
+    },
+    {
+      "event": "ev_note_queue",
+      "fn": "fxt_queue",
+      "order": 50
+    },
+    {
+      "event": "ev_render_in",
+      "fn": "fxt_rin",
+      "order": 40
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "fxt_rout",
+      "order": 40
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_audio",
+      "order": 40,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:fxt_owner",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_projdata",
+      "order": 40,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:fxt_projdata",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {
+    "fx_effects": 4
+  },
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "projdata:FXKT"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.43": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    },
+    "1.44": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}

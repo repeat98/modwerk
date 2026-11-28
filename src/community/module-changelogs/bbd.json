@@ -15,8 +15,7 @@
       "Now loads over USB on the Modwerk beta base beside other effects; Sync to Octatrack updates the base first. Card builds still include BBD for everyone.",
       "STOP, STOP, STOP now cuts BBD's tail, as it does the stock reverbs'. BBD also uses less DSP time at its worst, with the same sound.",
       "On the beta base, T5-T8 have less DSP memory: a bank whose Parts keep DARK REV on T5-T8 has no room for BBD there. A second BBD fits only on T1-T4.",
-      "Not offered beside Sidechain Compressor for now, because both claim the same memory on T3 and T7.",
-      "Known issue: the tail cut in card builds, project reload, power cycles and the MKI are not yet tested on hardware."
+      "Not offered beside Sidechain Compressor for now, because both claim the same memory on T3 and T7."
     ]
   },
   {
@@ -27,7 +26,7 @@
       "TIME sets the bucket clock (free-running, not tempo-synced) and glides, so locks and LFOs bend the repeats' pitch. TIME, FDBK, FRZ, TONE, FREQ and MIX take locks, LFOs, scenes and CC.",
       "SETUP: STGS picks 1024 stages (50-200 ms) or 4096 (200-800 ms), LIM sets the feedback limiter and HPF a 20-400 Hz input high-pass. MIX 0 is fully dry.",
       "Card builds replace SPRING REV and PLATE REV with BBD; DARK REV and all other stock effects stay. Not available over USB yet.",
-      "Known issue: STOP, STOP, STOP does not cut BBD's tail yet, it costs more DSP than any stock effect, and it is not yet tested on the MKI."
+      "Known issue: STOP, STOP, STOP does not cut BBD's tail yet, and it costs more DSP than any stock effect."
     ]
   }
 ]

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { CardSetButton } from './UnitPanel'
 import { loadStep, staysOff, type Inventory, type InventoryTarget } from '../config/inventory'
 import { recordSync, rememberSuccessfulSync } from '../config/octatrack-progress'
 import { LINK_BUSY, LinkBusyError, type OctatrackLink } from '../engine/elekloader/octatrack-link'
@@ -7,6 +8,7 @@ import { baseLayout, layoutName, type BaseLayout } from '../engine/elekloader/ba
 import { comesWithBase, USB_AUDIO_MODULE, USB_AUDIO_PACKAGED } from '../config/usb-audio'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { MODULES } from '../catalog/modules'
+import { moduleCaution } from '../catalog/module-cautions'
 import { isModuleAvailable } from '../catalog/availability'
 import { usbLagNote } from '../catalog/usb-only'
 import { limitedCount, overLimitMessage, SET_MODULE_LIMIT } from '../catalog/set-limit'
@@ -18,6 +20,7 @@ import { SupportLine } from './SupportDialog'
 import { useDownloadFollows } from '../community/useDownloadFollows'
 import { installedOnOctatrack } from '../community/installed-follow-up'
 import { StateChip } from './ModuleGrid'
+import { CautionBadge } from './ModuleCard'
 import { ModulePreview } from './ModulePreview'
 import { Icon } from './Icon'
 import { ProgressBar } from './BaseDialogFrame'
@@ -142,6 +145,10 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
   // while a track uses one (refusal 7), the most common failed sync in November 2026, so it is said before, not after.
   const leaving = [...changes?.remove ?? [], ...updates]
   const failed = step === 'done' && !!(error || notice?.tone === 'error')
+  const blocked = !!tooMany || !!problem || paused.length > 0
+  // Modules flagged High or Heavy CPU (module-cautions.ts) and USB Audio (owner, 26 November 2026) are for the studio, not
+  // for live: said after every sync that leaves one on the unit.
+  const studioOnly = set.moduleIds.filter(id => id === USB_AUDIO_MODULE || moduleCaution(id))
   /** After a failed sync, back to the review with the same set: the link has undone what it could and said what is left
    * (octatrack-link.ts failed), and the review reads the unit again. */
   function reviewAgain() { setStarted(false); setError(''); keeping.current = false; logged.current = false }
@@ -155,9 +162,24 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
         : !review?.needsSync && !problem ? <p className="base-install-intro">Your Octatrack already has exactly these modules.</p>
         : <>
           {putBack && <p className="base-install-intro">The base on your Octatrack changed, so it started without your modules. Sync them to put them back.</p>}
-          {putBack && comesBackOn.length > 0 && <p className="base-install-intro">{list([...comesBackOn])} {comesBackOn.length === 1 ? 'was' : 'were'} switched off on your Octatrack and {comesBackOn.length === 1 ? 'comes' : 'come'} back on. To switch {comesBackOn.length === 1 ? 'it' : 'them'} off again, use <strong>PROJECT › MODWERK › MODULES</strong> after the sync.</p>}
+          {putBack && comesBackOn.length > 0 && <p className="base-install-intro">{list([...comesBackOn])} {comesBackOn.length === 1 ? 'was' : 'were'} switched off on your Octatrack and {comesBackOn.length === 1 ? 'comes' : 'come'} back on. To switch {comesBackOn.length === 1 ? 'it' : 'them'} off again, use <code className="menu-path">PROJECT › MODWERK › MODULES</code> after the sync.</p>}
           <p className="load-summary">Adds {changes.add.length} · Removes {changes.remove.length}{updates.length > 0 && <> · Updates {updates.length}</>}</p>
-          <p className="base-install-intro">The modules stay on your Octatrack, also after a restart. Your project isn’t changed.</p>
+        </>}
+      {/* Why Sync is greyed out comes first, right under the counts, before a list that can run to 24 rows. */}
+      {tooMany && <div className="load-blocked" role="alert">
+        <p>{tooManyToPutBack || tooMany}</p>
+        <p><button type="button" className="text-button" onClick={onEdit}>Edit {set.name}</button></p>
+      </div>}
+      {paused.length > 0 && <div className="load-blocked" role="note">
+        <p>{list(paused)} {paused.length === 1 ? 'is' : 'are'} paused for now. Take {paused.length === 1 ? 'it' : 'them'} out of {set.name} to sync the rest.</p>
+        <p><button type="button" className="text-button" onClick={onEdit}>Edit {set.name}</button></p>
+      </div>}
+      {/* A base update is the next step, not a failure: a note, with its button in the footer. */}
+      {problem && !(problem instanceof SetLimitError) && <p className={needsBase ? 'base-install-note' : 'file-error'} role="alert">{problem.message}</p>}
+      {error && <p className="file-error" role="alert">{error}</p>}
+      {connected && changes && (review?.needsSync || problem) && <>
+          {leaving.length > 0 && !paused.length && <div className="module-caution load-in-use" role="note"><Icon name="warn" size={18} /><div><strong>Before you sync: a track can’t keep a module that leaves or is updated.</strong><p>If a track uses {list(leaving, 'disjunction')} as its effect or machine, pick another one on that track first (check the bank’s other Parts too).</p></div></div>}
+          {!blocked && <p className="base-install-intro">The modules stay on your Octatrack, also after a restart. Your project isn’t changed.</p>}
           {reconnects && <p className="link-hint" role="note">Your Octatrack reconnects on USB once during this sync, so your computer sees its new audio setup. A recording that is running stops; start it again afterwards.</p>}
           <ul className="load-changes">{([['load', 'Base', audio !== undefined && !audioOn ? [USB_AUDIO_MODULE] : []], ['load', 'Adds', changes.add], ['load', 'Updates', updates], ['leaving', 'Removes', changes.remove]] as const).flatMap(([state, label, ids]) => ids.map(id => {
             const module = MODULES.find(item => item.id === id)
@@ -167,21 +189,10 @@ export function LoadDialog({ link, set, putBack = false, comesBackOn = [], inven
               <StateChip state={state}>{label}</StateChip>
             </li>
           }))}</ul>
-          {leaving.length > 0 && !paused.length && <p className="link-hint load-in-use" role="note">Before you sync: a track can’t keep a module that leaves or is updated. If a track uses {list(leaving, 'disjunction')} as its effect or machine, pick another one on that track first (check the bank’s other Parts too).</p>}
           {!!stays.length && <details className="load-unchanged"><summary>Already on your Octatrack · {stays.length}</summary><ul>{stays.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}</li>)}</ul></details>}
-          {!!off.length && <details className="load-unchanged"><summary>Switched off on your Octatrack · {off.length}</summary><p>These stay off. Switch one on in PROJECT &gt; MODWERK &gt; MODULES on the Octatrack.</p><ul>{off.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}</li>)}</ul></details>}
-          {paused.length > 0 && <div className="load-blocked" role="note">
-            <p>{list(paused)} {paused.length === 1 ? 'is' : 'are'} paused for now. Take {paused.length === 1 ? 'it' : 'them'} out of {set.name} to sync the rest.</p>
-            <p><button type="button" className="text-button" onClick={onEdit}>Edit {set.name}</button></p>
-          </div>}
+          {!!off.length && <details className="load-unchanged"><summary>Switched off on your Octatrack · {off.length}</summary><p>These stay off. Switch one on in <code className="menu-path">PROJECT &gt; MODWERK &gt; MODULES</code> on the Octatrack.</p><ul>{off.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}</li>)}</ul></details>}
         </>}
-      {tooMany && <div className="load-blocked" role="alert">
-        <p>{tooManyToPutBack || tooMany}</p>
-        <p><button type="button" className="text-button" onClick={onEdit}>Edit {set.name}</button></p>
-      </div>}
-      {problem && !(problem instanceof SetLimitError) && <p className="file-error" role="alert">{problem.message}</p>}
-      {error && <p className="file-error" role="alert">{error}</p>}
-    </> : step === 'done' ? <><p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? LINK_BUSY + ' Nothing was sent.' : 'Done.')}</p>{failed && <SupportActions link={link} what="Sync to Octatrack" error={error || notice?.text} />}{followNotice && <p className="link-hint" role="status">{followNotice}</p>}{!failed && notice?.tone === 'success' && <SupportLine />}</>
+    </> : step === 'done' ? <><p className={'base-install-intro ' + (failed ? 'file-error' : studioOnly.length ? '' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? LINK_BUSY + ' Nothing was sent.' : 'Done.')}</p>{failed && !error && notice?.card && <p><CardSetButton set={set} onInstall={onInstallBase} /></p>}{failed && <SupportActions link={link} what="Sync to Octatrack" error={error || notice?.text} />}{!failed && studioOnly.length > 0 && <div className="module-caution load-studio-only" role="note"><Icon name="warn" size={18} /><div><strong>Studio only, not for live</strong><ul>{studioOnly.map(id => <li key={id}>{MODULES.find(module => module.id === id)?.name ?? id}<CautionBadge id={id} /></li>)}</ul><p>{studioOnly.length === 1 ? 'It puts' : 'They put'} a heavy load on the Octatrack and can drop out or crackle when a pattern gets busy. Before you play live, switch {studioOnly.length === 1 ? 'it' : 'them'} off on the Octatrack in <code className="menu-path">PROJECT › MODWERK › MODULES</code>, or sync a set without {studioOnly.length === 1 ? 'it' : 'them'}.</p></div></div>}{followNotice && <p className="link-hint" role="status">{followNotice}</p>}{!failed && notice?.tone === 'success' && <SupportLine />}</>
     : <>
       {(step === 'loading' || step === 'trial') && <ProgressBar value={step === 'loading' && !preparing && progress < 1 ? progress : undefined} label="Syncing" percent />}
       <p className="base-install-intro" role="status">{state.reconnecting ? 'Your Octatrack is reconnecting on USB with its new audio setup…' : step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? 'Sending your modules to the Octatrack…' : 'Starting them on the Octatrack…')

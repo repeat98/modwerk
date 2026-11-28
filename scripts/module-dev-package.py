@@ -135,6 +135,21 @@ def draft_page(m, Formatter):
                 integers=integers, strings=strings, formatters=formatters), notes
 
 
+def committed_page(module_id):
+    """A listed effect's committed page recipe (src/engine/assets/descriptor-recipes.json), as scripts/octatrack-module-page.mjs reads it."""
+    return json.loads(subprocess.run(['node', str(PAGE), module_id], capture_output=True, text=True, check=True).stdout)
+
+
+def recipe_matches(derived, page):
+    """The derived recipe against a committed one: integers, strings, donor and label formatters. A ROM unit's formatter
+    (Tape Echo's TIME, Spectrum's SHPE) comes from the base's units, so the derived page never has it."""
+    same = lambda key: sorted(map(json.dumps, derived[key])) == sorted(map(json.dumps, page[key]))
+    labelled = {f['slot'] for f in derived['formatters']}
+    key = lambda f: json.dumps(dict(f, wideMaximum=f.get('wideMaximum')), sort_keys=True)
+    formatters = sorted(map(key, derived['formatters'])) == sorted(key(f) for f in page['formatters'] if f['slot'] in labelled)
+    return same('integers') and same('strings') and derived['donor'] == page['donor'] and formatters
+
+
 def pack_page(build, page):
     """The bytes build.page_section makes of a page recipe (scripts/module-dev.test.mjs checks the two agree)."""
     import struct
@@ -177,18 +192,12 @@ def main():
     os.environ.setdefault('ELEKLOADER_UPSTREAM', str(a.upstream))
     build = load('modwerk_build', BUILD)
     if a.check_page:  # the packing against build.py, and the derived recipe against the committed one
-        page = json.loads(subprocess.run(['node', str(PAGE), a.check_page], capture_output=True, text=True, check=True).stdout)
+        page = committed_page(a.check_page)
         dsp_packages = load('modwerk_dsp_packages', DSP_PACKAGES)
         m = dsp_packages.Octabam(str(SDK)).modules[a.check_page]
         derived, _ = draft_page(m, sys.modules['remix.schema'].Formatter)
-        same = lambda key: sorted(map(json.dumps, derived[key])) == sorted(map(json.dumps, page[key]))
-        # Label formatters only: a ROM unit's formatter (Tape Echo's TIME, Spectrum's SHPE) comes from the base's units.
-        labelled = {f['slot'] for f in derived['formatters']}
-        key = lambda f: json.dumps(dict(f, wideMaximum=f.get('wideMaximum')), sort_keys=True)
-        formatters = sorted(map(key, derived['formatters'])) == sorted(key(f) for f in page['formatters'] if f['slot'] in labelled)
         print('packing ' + ('identical' if pack_page(build, page) == build.page_section(a.check_page) else 'differs'),
-              'recipe ' + ('identical' if all(map(same, ('integers', 'strings'))) and derived['donor'] == page['donor'] and formatters
-                           else 'differs'))
+              'recipe ' + ('identical' if recipe_matches(derived, page) else 'differs'))
         return
     folder = SDK / 'modules' / a.id
     if not (folder / 'manifest.py').exists():
@@ -236,8 +245,18 @@ def main():
             packages.write_text(json.dumps(dict(packages=[package])))
             args += ['--dsp', '%s:%s' % (packages, a.id), '--slots', slots, '--cycles', str(cycles),
                      '--cycles-kind', kind, '--state', str(state), '--buffer', str(buffer)]
-            if not listed_page:
+            try:
                 page, notes = draft_page(m, Formatter)
+            except ValueError:
+                if not listed_page: raise
+                page = None  # a listed page the manifest alone cannot make (a stock effect replaced in place): the committed one
+            # A listed effect whose manifest changed a control (Midiverb 0.2.0: PROG 59 -> 102 values) has a stale committed
+            # recipe until the release rebuilds the assets; its old count stopped PROG at 58 on the owner's MKII (27 Nov 2026).
+            stale = page is not None and listed_page and not recipe_matches(page, committed_page(a.id))
+            if stale:
+                print('Page: the committed recipe (src/engine/assets/descriptor-recipes.json) is stale for %s; built with the page from '
+                      'its manifest. The release refreshes it (bash scripts/build-modules-isolated.sh, docs/DEVELOPER_WORKFLOW.md).' % a.id)
+            if page is not None and (stale or not listed_page):
                 committed = build.page_section
                 build.page_section = lambda module_id: pack_page(build, page) if module_id == a.id else committed(module_id)
                 for note in notes:

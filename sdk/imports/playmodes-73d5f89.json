@@ -2,14 +2,15 @@
   "schemaVersion": 1,
   "repository": "https://github.com/pgstath/Octaplay",
   "revision": "73d5f89e4857411e27e2a5a396ebe681bb9f706c",
-  "moduleVersion": "0.2.0-experimental",
+  "moduleVersion": "0.2.1-experimental",
   "root": "sdk/octabam/modules/playmodes",
   "modules": [
     "playmodes"
   ],
   "notes": [
     "devilfish707's Play Modes with STEP REPEAT (the REPEAT mode and its trig-key detour) by pgstath, imported byte for byte from pgstath/Octaplay step-repeat, a fork of devilfish707/Octaplay; proposed upstream as devilfish707/Octaplay#2.",
-    "Native manifest retains the existing reviewed MACHINES adaptation and stock guards, plus the 0x40060cfc trig-key detour. No firmware or extracted stock bytes imported."
+    "Native manifest retains the existing reviewed MACHINES adaptation and stock guards, plus the 0x40060cfc trig-key detour. No firmware or extracted stock bytes imported.",
+    "Modwerk 0.2.1 adapts adapter.c, hooks.s, playmodes.s and test_adapter.c for #810: PROJECT > NEW resets the modes through the base's ev_project_new (runtime.json), while CHANGE and RELOAD keep the loaded project's. Upstream source identities are preserved; vendored hashes identify the adapted files."
   ],
   "files": [
     {
@@ -18,7 +19,7 @@
       "sourceBytes": 29604,
       "sourceGitBlob": "d490df5859c230eda3c3096a28da597df9fed0ef",
       "sourceSha256": "9768682fa55aa0c07000becf520279aba955426f06f981ecaa81e8bc327aeba0",
-      "vendoredSha256": "9768682fa55aa0c07000becf520279aba955426f06f981ecaa81e8bc327aeba0"
+      "vendoredSha256": "f79913dc6cbfe9620289f39c61e261470b9afd36c5c6a19d61fdd462a8a83d18"
     },
     {
       "path": "hooks.s",
@@ -26,7 +27,7 @@
       "sourceBytes": 19219,
       "sourceGitBlob": "b28d9419afb5b10668b8427eaedaf0706de287f5",
       "sourceSha256": "f200060a69a2c744330b2719159e36fe4c05f2d9fe98914b857aabb8b07a3849",
-      "vendoredSha256": "f200060a69a2c744330b2719159e36fe4c05f2d9fe98914b857aabb8b07a3849"
+      "vendoredSha256": "2b44e236ddbd9db898f60f2212ffeebaa22e4f2f6ef869781a7e21eefd09c0d9"
     },
     {
       "path": "playmode.c",
@@ -50,7 +51,7 @@
       "sourceBytes": 67842,
       "sourceGitBlob": "fea114399717ef14223a396f9dbe01923c1a452e",
       "sourceSha256": "261a9afb98c11ba6896ea06097db2c3d9bf974c545577274011048fcf9b3e99c",
-      "vendoredSha256": "261a9afb98c11ba6896ea06097db2c3d9bf974c545577274011048fcf9b3e99c"
+      "vendoredSha256": "e1126249d800abf97e13f38e174b986ff817a94cd9c1c84d791d0da5c79b0972"
     },
     {
       "path": "test_adapter.c",
@@ -58,7 +59,7 @@
       "sourceBytes": 29600,
       "sourceGitBlob": "04e29afe4a533cf2c2e835870ac9d86aa04dec2a",
       "sourceSha256": "6c27bbd71b36f146fc47899f7d9e899e0892d44ab3104e0423636ff94f9f00cb",
-      "vendoredSha256": "6c27bbd71b36f146fc47899f7d9e899e0892d44ab3104e0423636ff94f9f00cb"
+      "vendoredSha256": "0f098972df1750e29db95aa7d3fea14cf2a8a082495472ee044127ace26796dc"
     },
     {
       "path": "test_playmode.c",

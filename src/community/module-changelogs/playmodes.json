@@ -1,13 +1,21 @@
 [
   {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "Fixes a new project playing the previous project's modes: PROJECT > NEW now starts every pattern on NORMAL (#810).",
+      "PROJECT > CHANGE and RELOAD PROJECT still bring back the modes saved with the project.",
+      "Installs over USB on the Modwerk base with STEP REPEAT; until now USB sets got 0.1.1 without it (#764)."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-10-19",
     "changes": [
       "Adds STEP REPEAT, a seventh mode (REPEAT): while playing, hold trig keys and the track loops only those steps; letting go continues where the track would have been.",
       "Under SCALE MODE NORMAL every track repeats; under PER TRACK, only the tracks set to REPEAT.",
       "While playing with the current track in REPEAT, the trig keys in TRACKS trig mode control the repeat instead of triggering tracks. Everything else stays stock.",
-      "Contributed by pgstath, based on devilfish707’s Octaplay. Card builds have it; over USB the beta still installs 0.1.1 without STEP REPEAT (#764).",
-      "Known issue: not yet played on a unit; the MKI, PER TRACK and patterns longer than 16 steps in REPEAT are untested."
+      "Contributed by pgstath, based on devilfish707’s Octaplay. Card builds have it; over USB the beta still installs 0.1.1 without STEP REPEAT (#764)."
     ]
   },
   {
@@ -17,16 +25,14 @@
       "Imports devilfish707’s build-24 fixes: switching NORMAL to PER TRACK follows the track’s actual length, and PER TRACK uses MASTER SCALE.",
       "Keeps the full track length across short MASTER LENGTH passes.",
       "Both ping-pong modes restart at master loops, including 14/16 and 15/16 lengths, and the trig LEDs show the played step.",
-      "Available over USB on the Modwerk beta base; the module itself is unchanged.",
-      "Known issue: not yet tested on the MKI, and the USB package has not yet run on a unit."
+      "Available over USB on the Modwerk beta base; the module itself is unchanged."
     ]
   },
   {
     "version": "0.1.0-experimental",
     "date": "2026-10-07",
     "changes": [
-      "Adds forward, reverse and ping-pong playback directions per pattern and per audio track, with pattern defaults and track overrides.",
-      "Known issue: not yet tested on the MKI."
+      "Adds forward, reverse and ping-pong playback directions per pattern and per audio track, with pattern defaults and track overrides."
     ]
   }
 ]

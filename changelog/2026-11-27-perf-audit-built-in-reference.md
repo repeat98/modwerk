@@ -1,0 +1,1 @@
+Module checks: a module that takes over something the Modwerk base can also build in, like USB Audio, is now measured against that built-in version doing the same work, not against the Octatrack with nothing to do. The figures against the plain Octatrack are still recorded.

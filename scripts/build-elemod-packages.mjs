@@ -121,7 +121,10 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
       }
       // GCC 16.2's late-combine miscompile: refuse any C object that steps a register its destination reuses.
       const compiled = inputs.filter((_, index) => build.sources[index].endsWith('.c'))
-      if (compiled.length) execFileSync('python3', ['-B', resolve(root, 'sdk/runtime/m68k_codegen.py'), '--objdump', cross + 'objdump', ...compiled], { stdio: 'inherit' })
+      if (compiled.length) {
+        try { execFileSync('python3', ['-B', resolve(root, 'sdk/runtime/m68k_codegen.py'), '--objdump', cross + 'objdump', ...compiled], { stdio: 'inherit' }) }
+        catch { throw new Error(selectedId + ' ' + release + ': see the ColdFire check above. fix: add -fno-late-combine-instructions to the module\'s build.json cflags') }
+      }
       if (audioStack) {
         audioOffsets ??= fieldOffsets(audioStack, { run, work, includes: ['-I', resolve(root, 'sdk/machines', machine.id, 'include')], cflags })
         const objects = await Promise.all(build.sources.map(async (source, index) => ({ source: await resolveModuleFile(folder, source), object: resolve(work, index + '.o'), callgraph: resolve(work, index + '.ci'), c: source.endsWith('.c') })))

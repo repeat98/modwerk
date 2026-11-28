@@ -1,0 +1,1 @@
+Development: the Digitone core contract lists `ev_midi_cc`, `ev_key_leds`, `ev_note_queue` and the `core_audio` table, which the pinned elekloader core 5.4 already provides, so fxkit, the effect pedals and MUTINY pass the module checks.

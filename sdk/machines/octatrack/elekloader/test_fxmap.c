@@ -86,18 +86,21 @@ int main(void)
     modwerk_fxmap_assign(100, 0x100u, 2, "Hundred");
     modwerk_fxmap_assign(127, 0x127u, 3, "Last");
     /* Where a handle is named (the MISSING page): the current bank first, a working Part before a saved copy. */
-    unsigned bank, part, track;
-    CHECK(!modwerk_fxmap_where(99, &bank, &part, &track));
+    /* The slot it names (FX1 T1-T8, then FX2) and how many slots name it in all, working and saved, in every bank. */
+    unsigned bank, part, slot, places;
+    CHECK(!modwerk_fxmap_where(99, &bank, &part, &slot, &places) && !places);
     modwerk_test_banks[2][5][9] = 99;                                         /* bank C, saved Part 2, FX2 T2 */
-    CHECK(modwerk_fxmap_where(99, &bank, &part, &track) == 2 && bank == 2 && part == 1 && track == 1);
+    CHECK(modwerk_fxmap_where(99, &bank, &part, &slot, &places) == 2 && bank == 2 && part == 1 && slot == 9 && places == 1);
     modwerk_test_banks[6][3][4] = 99;                                         /* bank G, working Part 4, FX1 T5 */
-    CHECK(modwerk_fxmap_where(99, &bank, &part, &track) == 2 && bank == 2);   /* bank order: C before G */
+    CHECK(modwerk_fxmap_where(99, &bank, &part, &slot, &places) == 2 && bank == 2 && places == 2); /* bank order: C before G */
     modwerk_test_bank_now = 6;
-    CHECK(modwerk_fxmap_where(99, &bank, &part, &track) == 1 && bank == 6 && part == 3 && track == 4);
-    modwerk_test_banks[6][3][4] = 0, modwerk_test_bank_now = 15;
-    CHECK(modwerk_fxmap_where(99, &bank, &part, &track) == 2 && bank == 2);   /* the current bank last of all: still found */
+    CHECK(modwerk_fxmap_where(99, &bank, &part, &slot, &places) == 1 && bank == 6 && part == 3 && slot == 4 && places == 2);
+    modwerk_test_banks[6][7][12] = 99;                                        /* and its saved copy, on FX2 T5 */
+    CHECK(modwerk_fxmap_where(99, &bank, &part, &slot, &places) == 1 && slot == 4 && places == 3); /* working first */
+    modwerk_test_banks[6][3][4] = 0, modwerk_test_banks[6][7][12] = 0, modwerk_test_bank_now = 15;
+    CHECK(modwerk_fxmap_where(99, &bank, &part, &slot, &places) == 2 && bank == 2 && places == 1); /* the current bank last of all: still found */
     modwerk_test_bank_now = 99;                                                    /* no project: from bank A */
-    CHECK(modwerk_fxmap_where(99, &bank, &part, &track) == 2 && bank == 2);
+    CHECK(modwerk_fxmap_where(99, &bank, &part, &slot, &places) == 2 && bank == 2 && slot == 9);
     if (failures) { fprintf(stderr, "%u handle map checks failed\n", failures); return 1; }
     puts("Octatrack handle map: ids 9, 99, 100 and 127 saved to project.work and loaded back passed.");
     return 0;

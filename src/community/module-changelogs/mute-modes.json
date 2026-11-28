@@ -1,11 +1,19 @@
 [
   {
+    "version": "0.2.4-experimental",
+    "date": "2026-11-26",
+    "changes": [
+      "Costs nothing while MUTE MODE is OT, the default: Mute Modes then rests and the Octatrack runs its own mute code untouched.",
+      "Choosing OTFX, OTFX-T or DT-T wakes it within one screen refresh; tracks muted before keep the OT cut until unmuted, as before.",
+      "Needs Modwerk base 0.8.2 or newer: earlier bases do not accept this version as the owner of the PERSONALIZE rows."
+    ]
+  },
+  {
     "version": "0.2.3-experimental",
     "date": "2026-11-13",
     "changes": [
       "In OTFX-T and DT-T, a muted FM Synth track stays silent too once FM Synth asks Mute Modes which trigs to drop (FM Synth 0.1.4). Until then, use MUTE MODE OT for FM tracks.",
-      "Other machines that start their own notes can ask the same way; audio tracks behave as before.",
-      "Tested over USB on an MKI: all four modes, solo, a power cycle and removal."
+      "Other machines that start their own notes can ask the same way; audio tracks behave as before."
     ]
   },
   {
@@ -15,8 +23,7 @@
       "Fixes OTFX sometimes ignoring a mute while timestretched tracks are playing.",
       "Mute Modes no longer writes into memory that the Octatrack's timestretch uses, in any mode, OT included.",
       "Fixes a muted Sidechain KEY track becoming audible after KEY moves to another track: in DT-T its note played out (a looping sample kept going), and OTFX-T and OTFX let a click through.",
-      "Fixes a track still muted when MUTE MODE leaves OT becoming audible (in DT-T a looping sample kept going). It now stays cut until it is unmuted.",
-      "Tested on an MKI: all four modes, Part and project reload, a power cycle, and beside Sidechain Compressor."
+      "Fixes a track still muted when MUTE MODE leaves OT becoming audible (in DT-T a looping sample kept going). It now stays cut until it is unmuted."
     ]
   },
   {
@@ -26,8 +33,7 @@
       "One package now works with or without Sidechain Compressor: a muted track that another module listens to, such as a side-chain KEY, keeps feeding it.",
       "MUTE MODE now survives a power cycle when installed over USB on a Modwerk base.",
       "Needs a newer beta base; the site asks for a base update first.",
-      "Known issue: until Sidechain Compressor supports this, a muted Sidechain KEY track goes silent in the soft mute modes.",
-      "Known issue: not yet tested on hardware, including sound and power-cycle behaviour."
+      "Known issue: until Sidechain Compressor supports this, a muted Sidechain KEY track goes silent in the soft mute modes."
     ]
   },
   {
@@ -35,8 +41,7 @@
     "date": "2026-10-14",
     "changes": [
       "Over USB on a newer Modwerk base, Mute Modes can now be installed together with POLY8.",
-      "Needs a newer beta base; older bases refuse this package, and Undo keeps 0.1.0 for them.",
-      "Known issue: not yet tested on hardware."
+      "Needs a newer beta base; older bases refuse this package, and Undo keeps 0.1.0 for them."
     ]
   },
   {
@@ -45,7 +50,6 @@
     "changes": [
       "Adds OT, OTFX, OTFX-T and DT-T mute behaviours under PROJECT > SYSTEM > PERSONALIZE, keeping the MKII LED BRIGHTNESS row.",
       "Picks a matching variant automatically beside Sidechain Compressor, so a muted KEY track keeps feeding the compressor.",
-      "Known issue: not yet tested on hardware.",
       "Media only: new artwork showing the four mute behaviours."
     ]
   }

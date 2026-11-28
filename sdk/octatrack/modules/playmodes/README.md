@@ -1,6 +1,6 @@
 # Play Modes
 
-Version: `0.2.0-experimental` · author: [@devilfish707](https://github.com/devilfish707) · STEP REPEAT: [@pgstath](https://github.com/pgstath) · source: [pgstath/Octaplay `step-repeat`](https://github.com/pgstath/Octaplay/tree/step-repeat), a fork of [devilfish707/Octaplay](https://github.com/devilfish707/Octaplay)
+Version: `0.2.1-experimental` · author: [@devilfish707](https://github.com/devilfish707) · STEP REPEAT: [@pgstath](https://github.com/pgstath) · source: [pgstath/Octaplay `step-repeat`](https://github.com/pgstath/Octaplay/tree/step-repeat), a fork of [devilfish707/Octaplay](https://github.com/devilfish707/Octaplay)
 
 The sequencer's playhead in six directions, plus STEP REPEAT (hold trig
 keys to loop those steps), per pattern, shared by every track or set per
@@ -155,8 +155,12 @@ for CHAIN AFTER; a pattern on USE PAT SET. with PAT.LEN never changes
   page, not the page the trig LEDs show. MIDI note lengths over repeated
   steps, micro-timing, conditions and slides on repeated steps are
   untested.
-- Copying a single track does not copy that track's mode. PROJECT > NEW may
-  keep the previous project's modes (untested).
+- Copying a single track does not copy that track's mode.
+- PROJECT > NEW starts every pattern on NORMAL (0.2.1, #810). The base's
+  `ev_project_new` hook tells the module; PROJECT >
+  CHANGE and RELOAD PROJECT raise the same hook as part of their load, after
+  `ev_banks_load` or `ev_project_reloaded`, so the module keeps the modes the
+  load reads from `project.work` there (`runtime.json`, `adapter.c`).
 - Swing follows the step that plays (stock reads the swing bit of the step
   it is given). Trig conditions keep counting stock passes.
 - Micro-timing, trig conditions, slides and live recording were not checked

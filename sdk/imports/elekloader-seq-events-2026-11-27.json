@@ -1,0 +1,63 @@
+{
+ "schema": 1,
+ "kind": "elekloader-catalog",
+ "revision": "seq-events-2026-11-27",
+ "about": "Modwerk source-only seq-events 0.1.0 (Dracyr's seq-events 0.1 from elekloader v0.11.0) for Digitakt I OS 1.53 and 1.54, compiled from sdk/digitakt/dependencies/seq-events.",
+ "cores": [],
+ "mods": [
+  {
+   "file": "seq-events-0.1.0-os1.53.elemod",
+   "sha256": "674cf59034a54f2413a39390150cca0e6417750eaab5be44473f2388b25b0252",
+   "id": "seq-events",
+   "version": "0.1.0",
+   "device": "digitakt-mk1",
+   "os": "1.53",
+   "license": "GPL-2.0-or-later",
+   "source": {
+    "repo": "repeat98/modwerk",
+    "commit": "cc213a2a5dc43979f4bc6634f88b0bd2e2e9badc",
+    "path": "sdk/imports/packages/seq-events/seq-events-0.1.0-os1.53.elemod"
+   },
+   "title": "seq events",
+   "requires": [
+    "core"
+   ],
+   "conflicts": [
+    "euclidean"
+   ],
+   "summary": "The Digitakt's step fire as events, so several mods that change what the sequencer plays combine: generators (does an audio track's step fire, which note it plays) and effects over what every fire plays, audio and MIDI tracks (the step it reads, the trig, its condition, notes, velocity and locks), a step clock per track, and the playing pattern's facts when asked. Dracyr's seq-events 0.1 from elekloader. On its own it changes nothing the unit does.",
+   "description": "The Digitakt's step fire as events, so several mods that change what the sequencer plays combine: generators (does an audio track's step fire, which note it plays) and effects over what every fire plays, audio and MIDI tracks (the step it reads, the trig, its condition, notes, velocity and locks), a step clock per track, and the playing pattern's facts when asked. Dracyr's seq-events 0.1 from elekloader. On its own it changes nothing the unit does.",
+   "category": "System",
+   "author": "Dracyr",
+   "needs_core": "2.1",
+   "on_unit": "Shared dependency of the Digitakt sequencer mods; included automatically. Not run on a unit in Modwerk."
+  },
+  {
+   "file": "seq-events-0.1.0-os1.54.elemod",
+   "sha256": "1902c642a598b319b276a0a96fa719e094d7d96b3fe18c2d1d1bac9f5b191402",
+   "id": "seq-events",
+   "version": "0.1.0",
+   "device": "digitakt-mk1",
+   "os": "1.54",
+   "license": "GPL-2.0-or-later",
+   "source": {
+    "repo": "repeat98/modwerk",
+    "commit": "cc213a2a5dc43979f4bc6634f88b0bd2e2e9badc",
+    "path": "sdk/imports/packages/seq-events/seq-events-0.1.0-os1.54.elemod"
+   },
+   "title": "seq events",
+   "requires": [
+    "core"
+   ],
+   "conflicts": [
+    "euclidean"
+   ],
+   "summary": "The Digitakt's step fire as events, so several mods that change what the sequencer plays combine: generators (does an audio track's step fire, which note it plays) and effects over what every fire plays, audio and MIDI tracks (the step it reads, the trig, its condition, notes, velocity and locks), a step clock per track, and the playing pattern's facts when asked. Dracyr's seq-events 0.1 from elekloader. On its own it changes nothing the unit does.",
+   "description": "The Digitakt's step fire as events, so several mods that change what the sequencer plays combine: generators (does an audio track's step fire, which note it plays) and effects over what every fire plays, audio and MIDI tracks (the step it reads, the trig, its condition, notes, velocity and locks), a step clock per track, and the playing pattern's facts when asked. Dracyr's seq-events 0.1 from elekloader. On its own it changes nothing the unit does.",
+   "category": "System",
+   "author": "Dracyr",
+   "needs_core": "2.1",
+   "on_unit": "Shared dependency of the Digitakt sequencer mods; included automatically. Not run on a unit in Modwerk."
+  }
+ ]
+}

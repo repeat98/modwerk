@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "kind": "elekloader-catalog",
- "revision": "0da420d6532225851c0fb0ae7da58638054406c134bd34889a00c624e4a17687",
+ "revision": "3447b9794a8674090bae986a6d352eb0edc273c7",
  "about": "elekloader's curated catalog: the cores and mods a site may offer, each pinned by sha256 to its author's release or commit. docs/INTEGRATING.md.",
  "cores": [
   {
@@ -67,6 +67,58 @@
    "source": {
     "repo": "irpina/digitables",
     "tag": "v1.3"
+   }
+  },
+  {
+   "file": "core-4.4-os1.54.elemod",
+   "sha256": "dc65ffd32869036e961953707db304a5e9926e1b235b1bfbd28b772aae0b45ae",
+   "id": "core",
+   "version": "4.4",
+   "device": "digitakt-mk1",
+   "os": "1.54",
+   "license": "GPL-2.0-or-later",
+   "source": {
+    "repo": "elekloader/elekloader",
+    "tag": "v0.11.0"
+   }
+  },
+  {
+   "file": "core-4.4.elemod",
+   "sha256": "b51ef98a9bc5bc6ec8c81ffc83c288a9528e7c491e987f16a422409a8fced60a",
+   "id": "core",
+   "version": "4.4",
+   "device": "digitakt-mk1",
+   "os": "1.53",
+   "license": "GPL-2.0-or-later",
+   "source": {
+    "repo": "elekloader/elekloader",
+    "tag": "v0.11.0"
+   }
+  },
+  {
+   "file": "core-dn1-5.4-os1.44.elemod",
+   "sha256": "4fa199a6ac2a5e5f53b4a70e11981d7ac41e9b838c863c4ae6168e8daa6eac79",
+   "id": "core",
+   "version": "5.4",
+   "device": "digitone-mk1",
+   "os": "1.44",
+   "license": "GPL-2.0-or-later",
+   "source": {
+    "repo": "elekloader/elekloader",
+    "tag": "v0.11.0"
+   }
+  },
+  {
+   "file": "core-dn1-5.4.elemod",
+   "sha256": "a49e6adaa6d905a4a03485b93f3a9d4a21b0f731c58efeef850ff734ed5e645d",
+   "id": "core",
+   "version": "5.4",
+   "device": "digitone-mk1",
+   "os": "1.43",
+   "license": "GPL-2.0-or-later",
+   "source": {
+    "repo": "elekloader/elekloader",
+    "tag": "v0.11.0"
    }
   }
  ],

@@ -1,0 +1,1 @@
+Site: the check-in after a download now offers "Not sure which module? Report the whole set" when the firmware holds more than one module. It opens the whole-set report with the downloaded modules at their downloaded versions, so a freeze nobody can pin on one module can still be reported.

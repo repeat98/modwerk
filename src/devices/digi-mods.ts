@@ -39,6 +39,8 @@ export type DigiMod = {
   releases: string[]
   patchSites: Partial<Record<string, { addr: string; len: number }[]>>
   hardware?: string
+  /** No CPU cost measured on a unit or estimated (`resources.load.method` 'unmeasured'). */
+  loadUnmeasured: boolean
 }
 
 // The Modwerk core is not built yet; until it is measured, the estimate reserves room for it.
@@ -62,10 +64,11 @@ export const DIGI_MODS: DigiMod[] = (MACHINE_MODULES.modules as (ModwerkModule &
     ramBytes: module.resources.memoryBytes ?? 0, claims: module.platform.claims, conflicts: module.compatibility.conflicts, requires: module.compatibility.requires, exclusive: module.exclusive,
     releases: module.compatibility.releases, patchSites: module.patchSites,
     hardware: module.evidence.hardware ? module.evidence.hardware.summary : undefined,
+    loadUnmeasured: module.resources.load.method === 'unmeasured',
   }
 })
 
-export type DigiEstimate = { usedBytes: number; areaBytes: number; fits: boolean; compatibleReleases: string[]; clashes: { claim: string; mods: string[] }[] }
+export type DigiEstimate = { usedBytes: number; areaBytes: number; fits: boolean; compatibleReleases: string[]; clashes: { claim: string; mods: string[] }[]; unmeasured: string[] }
 
 export function estimateCombination(device: DigiMod['device'], ids: string[], release?: string): DigiEstimate {
   const core = DIGI_CORES[device]
@@ -111,7 +114,7 @@ export function estimateCombination(device: DigiMod['device'], ids: string[], re
   const compatibleReleases = releases.filter(version => !patchClashes.get(version)!.length)
   if (!releases.length) clashes.push({ claim: 'no shared supported OS release', mods: mods.map(mod => mod.title) })
   else if (!compatibleReleases.length) clashes.push(...[...patchClashes.values()].flat())
-  return { usedBytes, areaBytes: core.areaBytes, fits: usedBytes <= core.areaBytes, compatibleReleases: clashes.length ? [] : compatibleReleases, clashes }
+  return { usedBytes, areaBytes: core.areaBytes, fits: usedBytes <= core.areaBytes, compatibleReleases: clashes.length ? [] : compatibleReleases, clashes, unmeasured: mods.filter(mod => mod.loadUnmeasured).map(mod => mod.title) }
 }
 
 export const DIGI_DEVICES = Object.keys(DIGI_CORES) as DigiMachine[]
