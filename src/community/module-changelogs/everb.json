@@ -5,8 +5,7 @@
     "changes": [
       "Fixes E-Verb on T3 and T7 overwriting Sidechain Compressor's data in a card build with both: the reverb could play other tracks' audio and the compressor's key could break (#696).",
       "To make room, PRE now tops out at 227 ms: settings 124 to 127 all give 227 ms, and so does the REV window. Lower PRE settings sound the same.",
-      "Projects saved with 0.1.1 keep their knob values and should sound the same unless PRE is 124 or higher.",
-      "Known issue: not yet tested on hardware, including reloading a project saved with 0.1.1."
+      "Projects saved with 0.1.1 keep their knob values and should sound the same unless PRE is 124 or higher."
     ]
   },
   {
@@ -16,8 +15,7 @@
       "Holding FUNC while turning SIZE, DCY, ABSB or SPD now steps through 0, 64 and 127, as MIX and DPTH already did (#438).",
       "Plain knob turns, the sound and saved values are unchanged.",
       "Beta base update: picking E-Verb no longer shows DSP MEMORY FULL just because the effects of the bank's other Parts don't all fit.",
-      "Media only: a new audio preview with Legowelt's Juno 106 chord through dry, long hall and shimmer settings.",
-      "Known issue: this version is not yet tested on hardware."
+      "Media only: a new audio preview with Legowelt's Juno 106 chord through dry, long hall and shimmer settings."
     ]
   },
   {
@@ -26,8 +24,7 @@
     "changes": [
       "First E-Verb release: original Erbe-Verb-inspired FX2 feedback-delay reverb with size, saturation/sustain, absorption, chorus/grains/shimmer, reverse pre-delay, tilt and envelope routings.",
       "The six main-page controls support locks, LFOs, scenes and MIDI CC; SETUP controls are per Part. MIX 0 is exact dry passthrough.",
-      "In a card build E-Verb replaces SPRING REV and DARK REV; PLATE REV and the other stock effects stay.",
-      "Known issue: not yet tested on hardware at full DSP load or with heavy modulation."
+      "In a card build E-Verb replaces SPRING REV and DARK REV; PLATE REV and the other stock effects stay."
     ]
   }
 ]

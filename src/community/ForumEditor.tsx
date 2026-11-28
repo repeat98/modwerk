@@ -12,5 +12,5 @@ export function EditorFallback({id,label,value,onChange,name,placeholder='Write 
   </div>
 }
 export function RichTextEditor(props:ComponentProps<typeof Editor>){
-  return <RenderBoundary key={props.id} fallback={<EditorFallback {...props}/>}><Suspense fallback={<p className="service-note" role="status">Loading editor…</p>}><RichEditor {...props}/></Suspense></RenderBoundary>
+  return <RenderBoundary key={props.id} fallback={<EditorFallback {...props}/>}><Suspense fallback={<div className="forum-editor forum-editor-loading" role="status"><span className="sr-only">Loading editor…</span></div>}><RichEditor {...props}/></Suspense></RenderBoundary>
 }

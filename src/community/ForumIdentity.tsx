@@ -1,11 +1,14 @@
+import type { CSSProperties } from 'react'
 import { FORUM_CATEGORIES, type ForumCategory } from './forum-contract'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { apiUrl, assetUrl } from '../hosting'
 import { profileHref } from '../routing'
 import { CONTRIBUTION_LABELS, ROLE_LABELS, type ContributionRoles, type MemberRole } from './member-standing'
 
-export function ForumCategoryBadge({ category }: { category: ForumCategory }) {
-  return <span className="forum-category-badge" data-category={category}><span aria-hidden="true" />{FORUM_CATEGORIES[category]}</span>
+// With `href` the badge links to the topic, the natural next step after reading a thread.
+export function ForumCategoryBadge({ category, href }: { category: ForumCategory; href?: string }) {
+  const content = <><span aria-hidden="true" />{FORUM_CATEGORIES[category]}</>
+  return href ? <a className="forum-category-badge" data-category={category} href={href}>{content}</a> : <span className="forum-category-badge" data-category={category}>{content}</span>
 }
 
 export function ForumMachineBadge({ machine }: { machine: string | null }) {
@@ -13,11 +16,24 @@ export function ForumMachineBadge({ machine }: { machine: string | null }) {
   return device ? <a className="forum-machine-badge" href={'#forum?machine=' + device.id}>{device.name}</a> : null
 }
 
-// A member's picture when they set one, otherwise their initials on a colour picked from the username.
+// Without a picture a member gets a soft two-colour orb: colours, angle and highlight come from a hash of the username,
+// so the same member always looks the same. A deleted member gets a flat neutral disc.
+function avatarOrb(username: string) {
+  let hash = 2166136261
+  for (const character of username) hash = Math.imul(hash ^ character.charCodeAt(0), 16777619)
+  // Mix the bits once more: plain FNV gives short, similar names the same low bits, and so the same colours.
+  hash = Math.imul(hash ^ hash >>> 16, 0x85ebca6b); hash = Math.imul(hash ^ hash >>> 13, 0xc2b2ae35); hash = (hash ^ hash >>> 16) >>> 0
+  // The hues sit in wheel order, so index + 3..5 is always a far-away second colour. A light, middle or deep body and the
+  // highlight in one of four corners tell discs with the same pair apart even at 22px.
+  const first = hash % 8, second = (first + 3 + (hash >>> 3) % 3) % 8
+  return { '--orb-a': `var(--orb-${first})`, '--orb-b': `var(--orb-${second})`, '--orb-angle': (hash >>> 5) % 360 + 'deg', '--orb-x': [28, 72][hash >>> 26 & 1] + '%', '--orb-y': [26, 70][hash >>> 27 & 1] + '%', '--orb-depth': ['35%', '55%', '75%'][(hash >>> 24) % 3] } as CSSProperties
+}
+
+// A member's picture when they set one, otherwise their orb.
 export function ForumAvatar({ username, official, avatar }: { username: string | null; official?: unknown; avatar?: string | null }) {
   const tone = official ? 'official' : username ? [...username].reduce((sum, character) => sum + character.charCodeAt(0), 0) % 5 : 'neutral'
   const picture = !official && !!username && !!avatar
-  return <span className="forum-avatar" data-tone={tone} data-picture={picture || undefined} aria-hidden="true">{official ? <img src={assetUrl('modwerk-mark.svg')} alt="" /> : picture ? <img src={apiUrl('/forum/avatars/' + avatar)} alt="" loading="lazy" decoding="async" /> : username?.slice(0, 2).toUpperCase() ?? '—'}</span>
+  return <span className="forum-avatar" data-tone={tone} data-picture={picture || undefined} style={!official && !picture && username ? avatarOrb(username) : undefined} aria-hidden="true">{official ? <img src={assetUrl('modwerk-mark.svg')} alt="" /> : picture ? <img src={apiUrl('/forum/avatars/' + avatar)} alt="" loading="lazy" decoding="async" /> : null}</span>
 }
 
 // Official module threads have no public member profile.

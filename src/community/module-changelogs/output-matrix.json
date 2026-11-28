@@ -6,8 +6,7 @@
       "In MATRIX, the LEV box always shows each track’s destination (MN, PHN, M+C, …), not only while CUE is held. Turning LEVEL still shows the level.",
       "Uses less DSP time; the sound is unchanged. The module page now credits the author as Nathaniel Pavel (GitHub @npp1993).",
       "Over USB, update the Modwerk base before the next sync. The newer base also fixes the LEV box showing split bars until CUE is pressed.",
-      "On the newest beta base, Output Matrix installs even when DSP room is short; its routing starts once there is room.",
-      "Known issue: not yet tested on a unit as a card image, after a project or Part reload, or with MASTER TRACK and STUDIO."
+      "On the newest beta base, Output Matrix installs even when DSP room is short; its routing starts once there is room."
     ]
   },
   {
