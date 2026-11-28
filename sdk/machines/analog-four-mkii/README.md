@@ -86,7 +86,7 @@ Send the .syx with Elektron Transfer over USB (MIDI IN and OUT set to the device
 
 ## Status
 
-core-a4 0.1 and 0.2 are in elekloader (irpina/elekloader#154 and #180). On a unit, on OS 1.56: HC56 (core and hooks-check-a4) ran every hook; SC56 (store-check-a4) kept every storage field through saves, loads, power cycles and a Transfer round trip; CA56 (ddr-canary-a4) left the mods' area intact; PA56 (core 0.2 and pages-check-a4) passed the parameter page checks; the stock file restored the unit over MIDI DIN. The preview pins the Modwerk base built from Elekloader v0.10.0 source. Hardware qualification of the new base is pending.
+core-a4 0.1 and 0.2 are in elekloader (irpina/elekloader#154 and #180). On a unit, on OS 1.56: HC56 (core and hooks-check-a4) ran every hook; SC56 (store-check-a4) kept every storage field through saves, loads, power cycles and a Transfer round trip; CA56 (ddr-canary-a4) left the mods' area intact; PA56 (core 0.2 and pages-check-a4) passed the parameter page checks; the stock file restored the unit over MIDI DIN. The preview pins the Modwerk base built from Elekloader v0.10.0 source. The author reported that the standalone A4B1 build worked on their Analog Four MKII. See the [exact-build verification](../../../docs/verification/2026-11-28-analog-four-mkii-base.md).
 
 ## Credits
 

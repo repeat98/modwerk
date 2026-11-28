@@ -11,6 +11,6 @@ Two independent `npm run machine:base -- analog-four-mkii` builds matched the re
 | Browser selects the source-built base and builds OS 1.56 | Pass the owner's stock file through the site builder and compare the decoded main image with the standalone linker | Pass |
 | Base boots and accepts track selection, Play and Stop | Boot the site-built A4B1 in analog-emu and drive T2, PLAY and STOP | Pass in emulator |
 | Scale Loom works alongside the source-built base | Link Scale Loom against the same base as A4B2, reuse the SL18 storage lock and run the native generation, pitch reroll and Undo checks | Pass in emulator |
-| Standalone base on an Analog Four MKII | Boot A4B1, play a pattern in a scratch project, check panel and audio, then power cycle | Pending hardware test |
+| Standalone base on an Analog Four MKII | The author ran A4B1 on their unit | The author reported that A4B1 worked. Individual checks were not reported. |
 
-The earlier SL18 hardware report was for the upstream core package. A4B1 is the build for the new base's hardware report.
+The earlier SL18 hardware report was for the upstream core package. On November 28, dylthom reported that the source-built A4B1 worked on their Analog Four MKII.
