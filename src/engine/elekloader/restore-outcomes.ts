@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // What the base's restore at startup did with each saved module (USB request 43, elekloader/modset.c), in words: the
 // unit itself says only SOME MODULES FAILED or MODULES LEFT OUT.
-import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../elektron/bytes.ts'
 import { RESTORE_GUARD, type RestoreOutcome, type RestoreReport } from './upload-usb.ts'
 
 /** The self-test record's `saved` after a start that loaded only part of the card's set (modset.c REFUSED, LEFT_OUT). */

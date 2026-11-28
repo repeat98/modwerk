@@ -230,7 +230,7 @@ and framebuffer data are removed by the script.
 
 `capture-module-ui.py` reads stock's LCD plane, so it misses everything a base draws through `ev_draw`: the startup,
 the CUE + PROJ status, the MODWERK pages' dialogs, the update and sync screens. A base image also runs past the
-emulator's default instruction budget before it is ready (`BUDGET -- instruction budget exhausted`); pass `--max 4000000000`.
+emulator's default instruction budget before it is ready (`BUDGET -- instruction budget exhausted`); pass `--max 4000000000` to `ot_emu`, or `scripts/capture-module-ui.py --boot-max N` for the same limit on scripted captures.
 Capture those screens from a development twin (`build_core.py` with the release flags plus `--dev`) under `--usb-host`
 and `pace on`: `npm run device -- do 'PROJ w500 … png:FILE' --emulator --socket SOCK`, or the emulator's `peek` of the
 `screen` symbol (dev.c's composed frame) while `npm run device -- boot DIR` runs, which shows the real BASE UPDATE screen.
@@ -280,11 +280,10 @@ the module's hardware/audio/timing qualification.
 
 For native encoder regressions, send successive small `turn A 1 40` events
 rather than assuming one large-delta packet represents repeated detents.
-Digi Mono's regression needed successive events to demonstrate a parameter
-change through the pinned emulator's native panel driver. Compare structured
-parameter values before/after actual panel input and check other tracks for
-isolation; do not inject parameter state. See
-[the encoder regression helper](../scripts/verify-digimono-encoder-layout.py).
+A parameter regression needs successive events to demonstrate a change through
+the pinned emulator's native panel driver. Compare structured parameter values
+before/after actual panel input and check other tracks for isolation; do not
+inject parameter state.
 These readbacks establish software parameter mapping, not audible behavior,
 hardware timing or save/reboot persistence.
 
@@ -293,9 +292,9 @@ For local emulator captures, use digiemu revision
 Install them with digiemu's `tools/install-patched-unicorn.sh`, then run
 `.venv/bin/python -m emu.unicorn_compat` from the digiemu folder; the script's
 own final check fails when started from elsewhere. Run the capture with that
-`.venv/bin/python`. Build the author's pinned catalog release with the unchanged
-vendored elekloader kit and your own supported stock OS file: the site's builder,
-or `build(stock, mods, 'D001')` from `vendor/elekloader/kit/src/patch.ts` with the
+`.venv/bin/python`. Build the author's pinned catalog release with Modwerk's firmware builder and your
+own supported stock OS file: the site's builder, or
+`build(stock, mods, 'D001')` from `src/engine/elektron/firmware-build.ts` with the
 core and module packages in `vendor/elekloader/catalog/`, under Node 24. Then run the
 capture script in an isolated sandbox with network and user credentials denied
 (on macOS, `sandbox-exec` with a `(deny network*)` profile):
@@ -304,7 +303,7 @@ capture script in an isolated sandbox with network and user credentials denied
 python3 scripts/capture-digi-module-ui.py \
   --emulator /path/to/reviewed/digiemu \
   --firmware /private/capture/custom.syx \
-  --plan sdk/digitakt/modules/digislicer/media/capture-plan.txt \
+  --plan sdk/digitakt/modules/digistring/media/capture-plan.txt \
   --out /private/capture/new-session --fixture-loop
 ```
 

@@ -1,0 +1,1 @@
+Worktrees no longer fill the disk: under 30 GB free, `npm run pr:ready`, a new lane and a starting Claude session remove the worktrees that are clean, pushed (or already squash-merged into main) and unused for a day. On macOS a new lane clones `node_modules` (APFS) instead of a fresh `npm ci`, and the Octatrack base build deletes its temporary folder.

@@ -22,7 +22,7 @@ export const BASE_INSTALL_STAGES = ['opened', 'file-downloaded', 'first-connecti
 export type BaseInstallStage = typeof BASE_INSTALL_STAGES[number]
 /** Why the guide failed: the reasons it can report (BaseInstallDialog's BaseGuideFailure), and `other`, which the
  * browser and the server store for any reason not in this list. */
-export const BASE_INSTALL_FAILURES = ['no-webusb', 'site-outdated', 'build-failed', 'link-lost', 'update-refused', 'update-failed', 'wrong-base', 'other'] as const
+export const BASE_INSTALL_FAILURES = ['no-webusb', 'site-outdated', 'build-failed', 'link-lost', 'update-refused', 'update-failed', 'wrong-base', 'hosted-download-failed', 'other'] as const
 export type BaseInstallFailure = typeof BASE_INSTALL_FAILURES[number]
 /** Where the diagnostics invitation was shown: the install guide's last step, after a failure, on the first connection
  * in the hub or workspace (DiagnosticsInvitationGate), or opened by the member from the Diagnostics settings. */
@@ -32,9 +32,10 @@ export const DIAGNOSTIC_INVITATION_OUTCOMES = ['shown', 'shared', 'not-now'] as 
 export type DiagnosticInvitationOutcome = typeof DIAGNOSTIC_INVITATION_OUTCOMES[number]
 /** How far a run of the install guide got between opening and a first connection (BaseInstallDialog `onStep`), each at
  * most once per run, so the next look can see where people stop: the card steps (`card-…`, with `card-load-from-card`
- * for a browser without WebUSB, whose last step loads modules from the card), the OS file chosen or refused, the risk
+ * for a browser without WebUSB, whose last step loads modules from the card), the OS file chosen or refused or Modwerk's
+ * hosted base standing in for it (docs/HOSTED_BASES.md), the risk
  * accepted, the sign-in prompt asked, Connect pressed, and the USB update shown and started. */
-export const BASE_GUIDE_STEPS = ['card-download', 'os-file-ready', 'os-file-refused', 'risk-accepted', 'sign-in-asked', 'card-copy', 'card-install', 'card-connect', 'card-load-from-card', 'connect-pressed', 'usb-update-shown', 'usb-update-started'] as const
+export const BASE_GUIDE_STEPS = ['card-download', 'os-file-ready', 'hosted-base-ready', 'os-file-refused', 'risk-accepted', 'sign-in-asked', 'card-copy', 'card-install', 'card-connect', 'card-load-from-card', 'connect-pressed', 'usb-update-shown', 'usb-update-started'] as const
 export type BaseGuideStep = typeof BASE_GUIDE_STEPS[number]
 /** Why a USB sync failed (octatrack-link.ts `sync_failed`, or the unit going away mid-sync), as one fixed reason for the
  * identifier-free counts: the base's refusal by its code (sdk/runtime/loader-refusals.json), a refusal without one,

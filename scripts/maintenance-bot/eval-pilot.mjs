@@ -24,7 +24,7 @@ export async function pilotCandidates(api, records) {
     const files = await pages(api, '/pulls/' + pr.number + '/files')
     const scripts = files.filter(f => [f.filename, f.previous_filename].some(name => name && productionScript(name)))
     if (!scripts.length) continue
-    // The classifier selects public evidence by index. No model-written text crosses into a board task.
+    // The classifier selects public evidence by index. No model-written text crosses into a GitHub issue.
     const hints = [pr.title]
     for (const file of files) {
       const patch = file.patch ?? ''
@@ -60,43 +60,45 @@ export async function recordPilotReviews(api, bot, reviews) {
   }
 }
 
-// The board records a claim. GitHub and the corpus on trusted main establish what actually landed.
-export async function settlePilot(api, bot, readThread, records, corpus = cases) {
-  for (const row of records.filter(row => row.task && !row.result)) {
-    const thread = (await readThread('/messages/' + row.task))?.message
-    if (!thread?.to) continue
-    const observed = thread.replies.find(reply => reply.author === thread.to && reply.outcome === 'different-result')
-    if (observed) {
+const names = (issue, number) => new RegExp('#' + number + '(?!\\d)').test(issue.title + '\n' + (issue.body ?? ''))
+
+/** Main's agent eval controls passed at this commit (the replay job may still fail on the model). */
+async function controlsPass(api, sha) {
+  const { workflow_runs: runs } = await api('/actions/workflows/agent-eval.yml/runs?event=push&branch=main&head_sha=' + sha + '&per_page=10')
+  for (const run of runs) if ((await api('/actions/runs/' + run.id + '/jobs')).jobs.some(job => job.name === 'controls' && job.conclusion === 'success')) return true
+  return false
+}
+
+/**
+ * Each open gap is a GitHub issue labelled workflow and help wanted, opened once unless an issue already names the
+ * source PR. It counts once main's suite holds a case for that exact merge and main's controls pass at `sha`, the
+ * commit this job checked out. An issue closed as not planned records a different result.
+ */
+export async function settlePilot(api, bot, records, sha, corpus = cases) {
+  const gaps = records.filter(row => row.verdict === 'gap' && !row.result)
+  if (!gaps.length) return
+  const issues = (await pages(api, '/issues?state=all&labels=workflow')).filter(issue => !issue.pull_request)
+  let passed
+  for (const row of gaps) {
+    const issue = issues.find(item => names(item, row.number))
+    if (corpus.some(item => item.pr === row.number && item.merge === row.merge) && (passed ??= await controlsPass(api, sha))) {
+      await bot('/eval-pilot/' + row.number, 'POST', { result: 'added', evidence: issue?.number ?? row.number })
+    } else if (issue?.state === 'closed' && issue.state_reason === 'not_planned') {
       await bot('/eval-pilot/' + row.number, 'POST', { result: 'different-result' })
-      continue
+    } else if (!issue) {
+      issues.push(await api('/issues', 'POST', { labels: ['workflow', 'help wanted'], title: 'Eval case for the Node fix in #' + row.number,
+        body: 'The five-fix eval pilot found no replay case for the Node script fix in #' + row.number + '. ' + (row.hint ? row.hint.replace(/[.\s]+$/, '') + '. ' : '')
+          + '\n\nAdd a public offline case for it, as the five-fix pilot in docs/AGENT_EVALS.md describes: the parent fails, the merge passes and a working control stays green. Someone other than the fix\'s author writes it.' }))
     }
-    if (!thread.pullRequest || thread.pullRequest === row.number) continue
-    // A board link can be an issue number or a typo. Keep the task open so the holder can correct it.
-    const pr = await api('/pulls/' + thread.pullRequest).catch(error => {
-      if (error.message.endsWith(' HTTP 404')) return null
-      throw error
-    })
-    if (!pr?.merged || pr.base.ref !== 'main' || pr.user.id === row.authorId ||
-        pr.user.login.toLowerCase() !== thread.to.toLowerCase()) continue
-    const item = corpus.find(item => item.pr === row.number && item.merge === row.merge)
-    if (!item) continue
-    const files = await pages(api, '/pulls/' + pr.number + '/files')
-    if (!files.find(file => file.filename === 'scripts/agent-eval/cases.mjs')?.patch?.split('\n')
-      .some(line => line.startsWith('+') && (line.includes("'" + item.id + "'") || line.includes('"' + item.id + '"')))) continue
-    const runs = await api('/actions/workflows/agent-eval.yml/runs?event=pull_request&head_sha=' + pr.head.sha + '&per_page=100')
-    if (!runs.workflow_runs.some(run => run.conclusion === 'success' && run.head_sha === pr.head.sha &&
-      (run.pull_requests?.some(pull => pull.number === pr.number) ||
-        (run.head_repository?.id && run.head_repository.id === pr.head.repo?.id && run.head_branch === pr.head.ref)))) continue
-    await bot('/eval-pilot/' + row.number, 'POST', { result: 'added', evidence: pr.number })
   }
 }
 
 export function pilotReport(records) {
   const fixes = records.filter(row => row.verdict !== 'other')
-  const pending = fixes.filter(row => row.task && !row.result).length
+  const pending = fixes.filter(row => row.verdict === 'gap' && !row.result).length
   const added = fixes.filter(row => row.result === 'added')
   const counts = fixes.length + '/5 fixes screened, ' + added.length + ' verified case' + (added.length === 1 ? '' : 's') + ' added to the eval suite'
   const sources = added.map(row => '#' + row.evidence).join(', ')
   return 'Node eval pilot' + (fixes.length === fixLimit && !pending ? ' complete' : '') + ': ' + counts
-    + (sources ? ' (' + sources + ')' : '') + (pending ? ', ' + pending + ' awaiting independent verification or merge' : '') + '.'
+    + (sources ? ' (' + sources + ')' : '') + (pending ? ', ' + pending + ' awaiting a case on main' : '') + '.'
 }

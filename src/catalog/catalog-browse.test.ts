@@ -1,33 +1,38 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { catalogNeighbors, parseCatalogBrowse, type CatalogBrowse } from './catalog-browse'
 import { CatalogNavigation } from '../components/CatalogNavigation'
 import { DEFAULT_MODULE_SORT } from '../community/module-statistics'
 import { asBeta } from './beta-fixture'
+import { DIGI_MODS } from '../devices/digi-mods'
 
-const browse: CatalogBrowse = { route: 'all/system', query: 'health', family: 'all', sort: 'name', ids: ['digitakt-digihealth', 'digitone-digihealth'] }
+const browse: CatalogBrowse = { route: 'all/system', query: 'perform', family: 'all', sort: 'name', ids: ['digitakt-digiperform', 'digitone-digiperform'] }
 
 describe('paging through catalog results', () => {
+  // No module shares an ID across the Digi machines today, so a Digitone twin of digiperform stands in for one.
+  const original = DIGI_MODS.slice()
+  beforeAll(() => { DIGI_MODS.push({ ...DIGI_MODS.find(mod => mod.device === 'digitakt' && mod.id === 'digiperform')!, device: 'digitone', title: 'digiperform' }) })
+  afterAll(() => { DIGI_MODS.splice(0, DIGI_MODS.length, ...original) })
   it('keeps captured order and distinguishes modules with the same ID on different machines', () => {
-    const first = catalogNeighbors(browse, 'digitakt-digihealth')!
+    const first = catalogNeighbors(browse, 'digitakt-digiperform')!
     expect(first).toMatchObject({ previous: undefined, position: 1, total: 2, backHref: '#all/system' })
-    expect(first.next).toMatchObject({ href: '/digitone/module/digihealth/', name: 'digihealth · Digitone' })
-    const last = catalogNeighbors(browse, 'digitone-digihealth')!
+    expect(first.next).toMatchObject({ href: '/digitone/module/digiperform/', name: 'digiperform · Digitone' })
+    const last = catalogNeighbors(browse, 'digitone-digiperform')!
     expect(last.next).toBeUndefined()
-    expect(last.previous?.href).toBe('/digitakt/module/digihealth/')
+    expect(last.previous?.href).toBe('/digitakt/module/digiperform/')
     expect(last.position).toBe(2)
   })
 
   it('continues between machine groups and uses the canonical Octatrack slug', () => {
-    const mixed = { ...browse, route: 'all', ids: ['synth', 'digitakt-digihealth', 'digitone-digihealth'] }
-    expect(catalogNeighbors(mixed, 'digitakt-digihealth')?.previous?.href).toMatch(/module\/fm-synth\/$/)
-    expect(catalogNeighbors(mixed, 'digitakt-digihealth')?.next?.href).toBe('/digitone/module/digihealth/')
-    expect(catalogNeighbors({ ...mixed, ids: [...mixed.ids].reverse() }, 'digitakt-digihealth')?.previous?.href).toBe('/digitone/module/digihealth/')
+    const mixed = { ...browse, route: 'all', ids: ['synth', 'digitakt-digiperform', 'digitone-digiperform'] }
+    expect(catalogNeighbors(mixed, 'digitakt-digiperform')?.previous?.href).toMatch(/module\/fm-synth\/$/)
+    expect(catalogNeighbors(mixed, 'digitakt-digiperform')?.next?.href).toBe('/digitone/module/digiperform/')
+    expect(catalogNeighbors({ ...mixed, ids: [...mixed.ids].reverse() }, 'digitakt-digiperform')?.previous?.href).toBe('/digitone/module/digiperform/')
   })
 
   it('restores the selection and filters after reload, dropping removed or duplicate entries', () => {
-    const restored = parseCatalogBrowse(JSON.stringify({ ...browse, family: 'Utilities', ids: ['digitakt-digihealth', 'deleted-module', 'digitakt-digihealth', 'digitone-digihealth'] }))
+    const restored = parseCatalogBrowse(JSON.stringify({ ...browse, family: 'Utilities', ids: ['digitakt-digiperform', 'deleted-module', 'digitakt-digiperform', 'digitone-digiperform'] }))
     expect(restored).toEqual({ ...browse, family: 'Utilities' })
     expect(parseCatalogBrowse(JSON.stringify({ ...browse, route: 'effects', ids: ['miniverb'] }))?.route).toBe('effects')
     expect(parseCatalogBrowse(JSON.stringify({ ...browse, route: 'digitakt/system' }))?.route).toBe('digitakt/system')
@@ -39,8 +44,8 @@ describe('paging through catalog results', () => {
     const updated = { ...browse, sort: DEFAULT_MODULE_SORT, ids: [...browse.ids].reverse() }
     const restored = parseCatalogBrowse(JSON.stringify(updated))
     expect(restored).toEqual(updated)
-    expect(catalogNeighbors(restored, 'digitone-digihealth')?.next?.href).toBe('/digitakt/module/digihealth/')
-    expect(catalogNeighbors(restored, 'digitakt-digihealth')?.next).toBeUndefined()
+    expect(catalogNeighbors(restored, 'digitone-digiperform')?.next?.href).toBe('/digitakt/module/digiperform/')
+    expect(catalogNeighbors(restored, 'digitakt-digiperform')?.next).toBeUndefined()
   })
 
   it('does not page outside the selection or wrap a single result', () => {
@@ -64,11 +69,11 @@ describe('paging through catalog results', () => {
   })
 
   it('labels chevrons with the destination and exposes the keyboard shortcuts, disabling each endpoint', () => {
-    const first = renderToStaticMarkup(createElement(CatalogNavigation, { navigation: catalogNeighbors(browse, 'digitakt-digihealth')! }))
-    expect(first).toContain('aria-label="Next module: digihealth · Digitone"')
+    const first = renderToStaticMarkup(createElement(CatalogNavigation, { navigation: catalogNeighbors(browse, 'digitakt-digiperform')! }))
+    expect(first).toContain('aria-label="Next module: digiperform · Digitone"')
     expect(first).toContain('aria-keyshortcuts="ArrowRight"')
     expect(first).toContain('disabled="" aria-label="No previous module"')
-    const last = renderToStaticMarkup(createElement(CatalogNavigation, { navigation: catalogNeighbors(browse, 'digitone-digihealth')! }))
+    const last = renderToStaticMarkup(createElement(CatalogNavigation, { navigation: catalogNeighbors(browse, 'digitone-digiperform')! }))
     expect(last).toContain('aria-keyshortcuts="ArrowLeft"')
     expect(last).toContain('disabled="" aria-label="No next module"')
   })

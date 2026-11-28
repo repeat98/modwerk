@@ -3,7 +3,7 @@
 // (`?preview=usb-link`, `?preview=base-install`): enumerates like the base, answers IDENTIFY with
 // real bytes, and runs the upload session's phases with no device behind them.
 import type { Inventory, InventoryTarget } from '../config/inventory.ts'
-import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
+import { sha } from '../engine/elektron/bytes.ts'
 import { depackSection } from '../engine/elektron/codec/depack.ts'
 import { ELEKTRON_VENDOR_ID, OCTATRACK_PRODUCT_ID, OctatrackLink, type LinkDevice, type LinkSession, type LinkUsb } from '../engine/elekloader/octatrack-link.ts'
 import { UPLOAD_TIMEOUT_MAX_MS, UploadDeviceError, UploadUnconfirmedError } from '../engine/elekloader/upload-session.ts'

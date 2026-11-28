@@ -199,6 +199,9 @@ export function parseModuleCpuMeter(value: unknown, path='resources.cpuMeter'): 
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(Date.parse(date+'T00:00:00Z'))) fail(path+'.date','expected the day it was measured, YYYY-MM-DD')
   return {value:v,unit:'percent-of-meter',measure:'machine-meter',tool:text(p.tool,path+'.tool',200),date,conditions:text(p.conditions,path+'.conditions',1000),source:modulePath(p.source,path+'.source')}
 }
+// An Octatrack effectId is only the id the effect prefers: the base gives it its own at install. A Part stores the id as a signed byte,
+// so no base can give more than 127 (docs/OCTATRACK_MORE_EFFECT_IDS.md); how many the base has is its own build's (build_core.py FX_IDS).
+const OCTATRACK_EFFECT_ID_MAX = 127
 export function parseModuleDocument(value: unknown): ModuleDocument {
   const d=object(value,'module',['schemaVersion','id','key','name','version','category','author','nativeManifest','presentation','controls','compatibility','resources','tests','license','media'],['source','build','access'])
   if(d.schemaVersion!==2) fail('schemaVersion','expected 2')
@@ -223,7 +226,7 @@ export function parseModuleDocument(value: unknown): ModuleDocument {
   const p=object(d.presentation,'presentation',['label','family','summary','overview','highlights','usage'])
   const c=object(d.compatibility,'compatibility',['firmware','effectId','location','conflicts','limitations'],['uiClaims'])
   const uiClaims='uiClaims' in c?list(c.uiClaims,'compatibility.uiClaims',24).map((v,i)=>uiClaim(v,'compatibility.uiClaims['+i+']')):undefined
-  if(c.effectId!==null&&(typeof c.effectId!=='number'||!Number.isInteger(c.effectId)||c.effectId<4||c.effectId>31))fail('compatibility.effectId','expected a valid effect ID or null for contributions without an effect slot')
+  if(c.effectId!==null&&(typeof c.effectId!=='number'||!Number.isInteger(c.effectId)||c.effectId<4||c.effectId>OCTATRACK_EFFECT_ID_MAX))fail('compatibility.effectId','expected an effect ID of 4 to '+OCTATRACK_EFFECT_ID_MAX+', or null for contributions without an effect slot')
   if(c.firmware!=='1.40C') fail('compatibility.firmware','only 1.40C is supported')
   const r=object(d.resources,'resources',['recorded','storage','processing'],['impact','cpuPrice','cpuMeter'])
   const impact='impact' in r?parseModuleResourceImpact(r.impact):undefined

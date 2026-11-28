@@ -10,6 +10,27 @@ BASE=0x40000400
 RECIPES=Path(__file__).resolve().parents[2]/'src/engine/assets/descriptor-recipes.json'
 def mod(name,**kwargs):return Module(name=name,key=name,kind=Kind.CF_PATCH,doc='Synthetic fixture',**kwargs)
 class BuilderContracts(unittest.TestCase):
+    def test_an_effect_id_is_preferred_up_to_the_bases_and_a_card_remix_keeps_stocks_32(self):
+        from remix.schema import MenuEntry
+        effect=lambda name,fx:mod(name,menu=MenuEntry(fx,0,b'T',b'TEST'))
+        for fx in (0x06,0x1f,0x20,0x7f):self.assertEqual(effect('a',fx).menu.fx2_id,fx)
+        with self.assertRaises(ValueError):effect('a',0x03)
+        # Two on one preferred id: the base gives each its own at install; one card image cannot hold both.
+        self.assertEqual(ledger.check([effect('a',0x0a),effect('b',0x0a)]),['fx2 id: a and b both claim 0x0a'])
+        registry.card_ids('card',[effect('a',0x06),effect('b',0x1f),mod('c')])
+        for fx in (0x20,0x7f):
+            with self.assertRaisesRegex(SystemExit,"remix 'card': b takes an fx2 id past 0x1f"):registry.card_ids('card',[effect('a',0x1f),effect('b',fx)])
+    def test_the_registry_loads_two_modules_on_one_free_id_but_not_on_one_stock_id(self):
+        import tempfile
+        from remix.schema import MenuEntry
+        manifest=lambda name,fx,extra='':f"from remix.schema import Kind,MenuEntry,Module\nMODULE=Module(name={name!r},key={name.upper()!r},kind=Kind.CF_PATCH,doc='synthetic',menu=MenuEntry({fx},0,b'T',b'TEST'{extra}))\n"
+        for fx,extra,refused in ((0x0a,'',False),(0x18,",replaces='COMPRESSOR'",True)):
+            with self.subTest(fx=fx),tempfile.TemporaryDirectory() as folder:
+                for name in ('aa','bb'):(Path(folder)/name).mkdir();(Path(folder)/name/'manifest.py').write_text(manifest(name,fx,extra))
+                with patch.object(registry,'MODULES_DIR',Path(folder)),patch.object(registry,'PLATFORM_NAMES',()),patch.object(registry,'_cache',None):
+                    if refused:
+                        with self.assertRaisesRegex(SystemExit,'two modules claim FX2 id 0x18: aa and bb'):registry.modules()
+                    else:self.assertEqual({m.name for m in registry.modules().values() if m.menu.fx2_id==fx},{'aa','bb'})
     def test_offset_tail_overlap_and_adjacency(self):
         a=mod('a',detours=(Detour(BASE+0x100,b'\0'*4,target=BASE,pad_to=10),))
         for offset in (2,6,8):
