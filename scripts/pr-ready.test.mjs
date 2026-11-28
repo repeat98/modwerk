@@ -254,6 +254,7 @@ describe('pr:ready verdict', () => {
       copyFileSync(new URL('./machine-folders.mjs', import.meta.url), join(checkout, 'scripts', 'machine-folders.mjs'))
       // What runs on an instrument is defined once, beside the description check that also asks about it.
       copyFileSync(new URL('./pr-body.mjs', import.meta.url), join(checkout, 'scripts', 'pr-body.mjs'))
+      for (const file of ['lane.mjs', 'machine-slots.mjs']) copyFileSync(new URL('./' + file, import.meta.url), join(checkout, 'scripts', file)) // pr:ready tidies worktrees first
       mkdirSync(join(checkout, 'src', 'devices'), { recursive: true })
       copyFileSync(new URL('../src/devices/machines.generated.json', import.meta.url), join(checkout, 'src', 'devices', 'machines.generated.json'))
       // --body checks the description against the template, as CI's describe check does.
@@ -313,6 +314,7 @@ describe('pr:ready verdict', () => {
       copyFileSync(new URL('./pr-ready.mjs', import.meta.url), script)
       copyFileSync(new URL('./machine-folders.mjs', import.meta.url), join(checkout, 'scripts', 'machine-folders.mjs'))
       copyFileSync(new URL('./pr-body.mjs', import.meta.url), join(checkout, 'scripts', 'pr-body.mjs'))
+      for (const file of ['lane.mjs', 'machine-slots.mjs']) copyFileSync(new URL('./' + file, import.meta.url), join(checkout, 'scripts', file)) // pr:ready tidies worktrees first
       mkdirSync(join(checkout, 'src', 'devices'), { recursive: true })
       copyFileSync(new URL('../src/devices/machines.generated.json', import.meta.url), join(checkout, 'src', 'devices', 'machines.generated.json'))
       // The fixture files leave the checkout uncommitted, so the run stops before any generator or check.

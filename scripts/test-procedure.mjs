@@ -634,10 +634,25 @@ function realDeps(root) {
           throw new Error('the trial did not start: ' + state.output.trim().split('\n').slice(-3).join(' / '))
         },
         async stop() {
+          // Windows: child.kill('SIGINT') ends the process without its handler rolling back
+          // (octatrack-price.mjs). Recover afterwards so soak / unit trials leave an empty inventory.
           if (!ended) child.kill('SIGINT')
-          const code = await Promise.race([state.done, new Promise(r => setTimeout(() => r('timeout'), 60000))])
+          let code = await Promise.race([state.done, new Promise(r => setTimeout(() => r('timeout'), 60000))])
           if (code === 'timeout') { child.kill('SIGKILL'); return { code: 1, output: state.output + '\nthe trial did not end within 60 s: unplug USB, the base rolls back what was not kept' } }
-          return { code, output: state.output }
+          let output = state.output
+          if (process.platform === 'win32' && !/^rolled back/m.test(output) && !/^recovered from /m.test(output)) {
+            const share = env?.MODWERK_SHARE_SOCKET ?? process.env.MODWERK_SHARE_SOCKET ?? '47813'
+            const recover = await new Promise(resolve => {
+              const r = spawn(process.execPath, ['scripts/device.mjs', 'recover', '--socket', share], { cwd: root, env: { ...process.env, ...env } })
+              let text = ''
+              r.stdout?.on('data', c => { text += c }); r.stderr?.on('data', c => { text += c })
+              r.on('exit', c => resolve({ code: c ?? 1, output: text }))
+            })
+            output += recover.output
+            appendFileSync(log, recover.output)
+            if (/recovered from |now normal,/m.test(recover.output)) output += '\nrolled back (Windows recover after SIGINT kill)\n'
+          }
+          return { code, output }
         },
       }
     },
