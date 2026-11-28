@@ -54,6 +54,24 @@ export function moduleScopeProblems(files, { author = null, owner = null, opened
 const gateProblem = files => 'This pull request changes a module and also ' + files.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.'
 const baseProblem = files => 'This pull request changes a module and also the base: ' + files.join(', ') + '. Add the base commits directly to the machine’s base/<machine>-next branch and update its cumulative draft (docs/DEVELOPER_WORKFLOW.md#change-a-base). Resume the module on main once that draft has shipped.'
 
+/** Extra reminders on release/<module> branches (catalog first releases from a fork). */
+export function releaseBranchNotes(branch, changed) {
+  const match = /^release\/([^/]+)$/.exec(branch ?? '')
+  if (!match || !changed.some(file => MODULE_FOLDER.test(file))) return []
+  const id = match[1]
+  return [
+    `Release branch release/${id}: run npm run module:doctor -- --draft ${id} --release and module:qualify on the shipping base (docs/ADD_A_MODULE.md). A development twin alone is not the catalog record.`,
+    'Shared scripts (scripts/octatrack-qualify.py, checks, workflows) go in a separate Fix: or Workflow: PR; this branch should hold the module, catalog rows, evidence and packages only.',
+  ]
+}
+
+/** When the push remote is a fork, say where the upstream PR reads its commits from. */
+export function forkVisibilityNote(pushUrl) {
+  if (!pushUrl || /(^|:|\/)repeat98\/modwerk(\.git)?$/i.test(pushUrl)) return null
+  const short = pushUrl.replace(/^git@github.com:/, '').replace(/^https:\/\/github\.com\//, '').replace(/\.git$/, '')
+  return `Push remote ${short} is your fork: repeat98/modwerk updates only when this branch is pushed there (often git remote add fork … && git push -u fork HEAD). A local commit alone does not move the open upstream PR.`
+}
+
 /** Why the checks cannot run on this Python, or null. npm run check needs Python 3.12+: macOS's own 3.9 crashes inside
  * scripts/module-compat.py while it loads the Octatrack manifests, and 3.10 or 3.11 inside sdk:check, which parses Octatrack
  * build tools written with 3.12's f-strings, both with no word on why. */
@@ -95,8 +113,8 @@ export function mergeMain(git, ref) {
 }
 
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', target = 'main', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], baseDraft = instrument.some(file => BASE.test(file)), compiled = null, board = null, conflicts = [], draftOnly = false, description = null }) {
-  const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
+export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', target = 'main', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], instrument = [], baseDraft = instrument.some(file => BASE.test(file)), compiled = null, board = null, conflicts = [], draftOnly = false, description = null, releaseNotes = [], forkNote = null }) {
+  const problems = [...board?.problems ?? []], notes = [...releaseNotes, forkNote, ...board?.notes ?? []].filter(Boolean)
   if (python) problems.push(python)
   if (gateEdits.length) problems.push(gateProblem(gateEdits))
   if (baseEdits.length) problems.push(baseProblem(baseEdits))
@@ -105,7 +123,7 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
     ? `Merging current ${target} conflicts in ${conflicts.join(', ')}. Run git merge ${remote}/${target}, resolve them, commit, then run this again.`
     : `Your branch does not contain current ${target}. Merge it (git merge ${remote}/${target}), resolve any conflict, then run this again.`)
   if (regenerated.length) problems.push('The generated files were stale. They are regenerated now; commit them: ' + regenerated.join(', '))
-  if (!checkPassed) problems.push('npm run check failed: fix every failure above; CI runs the same checks.')
+  if (!checkPassed) problems.push('npm run check failed: fix every failure above; CI runs the same checks. Between fixes, npm run check -- --base ' + remote + '/' + target + ' --rerun-failed skips what already passed (do not pipe check through tail; the shell may report tail\'s exit code).')
   // --body: the description, as CI's describe check reads it (scripts/pr-body.mjs); null when no description was given.
   for (const problem of description ?? []) problems.push('Description: ' + problem)
   if (author) {
@@ -272,7 +290,14 @@ async function main(argv) {
   const baseDraft = changed.some(isBase) || /^base\/[^/]+-next$/.test(git('branch', '--show-current'))
   const draftOnly = process.env.MODWERK_EVIDENCE_PENDING === '1'
   const description = body === null ? null : descriptionProblems(body, { draft: argv.includes('--draft'), files: branchFiles(git, base) })
-  const verdict = readiness({ python, baseDraft, draftOnly, dirty, behind, conflicts, remote, target, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board, description })
+  const branch = git('branch', '--show-current')
+  let pushUrl = ''
+  try { pushUrl = git('remote', 'get-url', remote) } catch { /* no remote */ }
+  const verdict = readiness({
+    python, baseDraft, draftOnly, dirty, behind, conflicts, remote, target, regenerated, checkPassed, author, scope, guideEdits,
+    gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board, description,
+    releaseNotes: releaseBranchNotes(branch, changed), forkNote: forkVisibilityNote(pushUrl),
+  })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   // Once the work is ready, the agent reviews its session and asks whether to share it with the owner (docs/AGENT_SESSIONS.md), unless the developer said never.
