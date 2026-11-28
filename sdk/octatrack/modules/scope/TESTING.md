@@ -1,7 +1,140 @@
 # SCOPE testing
 
-Draft Modwerk port of octabam `modules/scope` at
-`3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9`.
+Modwerk catalog module. Octabam import pin `3fcf4fe45d8f0754828f5f2ef9b11935ac0dd9f9`.
+
+## Release procedure, 27 November 2026
+
+### Development-base window check
+
+Built a private development base from OS 1.40C with `--dev --dsp-loader
+--usb-midi --site-events` and RAM-booted it. The booted base identity was
+`43ac24652a89f28b…`; its private image SHA-256 was
+`e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd`.
+With B02 playing, `do gap` returned 428 µs before SCOPE. The exact
+`f8a1ffeb…` package ran for a 30-second RAM trial with its refusal counter
+steady at 3 and no logged crash, stall, freeze or skipped track; it rolled
+back. I then accepted a short install to read the open window. The author
+opened SCOPE with DOWN then TEMPO and confirmed B02 was audibly playing.
+Hardware LCD captures show a live trace (`media/scope-all-live.png`,
+`media/scope-live-trace.png`). With the window open and B02 playing, the
+development base reported CPU 95% and `do gap` 407 µs. These are readings
+at different times, not a matched worst-case comparison. YES closed the
+window; removal succeeded and inventory returned `[]`. The base remains
+RAM-booted until power cycle, which returns to the flashed base.
+
+The available USB device exposed no audio input on macOS, so the run did
+not capture MAIN/CUE or establish audio dropout counts. The unit's
+development stats give a frame-gap observation only. ColdFire cycles are
+in `evidence/performance.json`; stack is a disassembly bound in
+`evidence/memory.md`, not a hardware canary.
+
+On the flashed **0.8.1 release base** `eb6679620d0c9ed7…`, with B02 playing,
+the catalog USB package `f8a1ffeb984e…` ran as a 45-second RAM trial. The
+loader's verdict reported no crash, stall, freeze or skipped track; it rolled
+the trial back, and `do inventory` then returned `[]`. The loader's refusal
+counter rose from 216 to 228 during the trial; the release base does not answer
+development requests, so the cause was not established. macOS exposed no
+Octatrack audio input during this run, so no audio was captured and no dropout
+result is claimed. That run did **not** open the SCOPE window or read the
+panel.
+
+### 0.8.1 release base: open SCOPE while audio plays
+
+**Musician setup:** Modwerk **0.8.1** on the author's MKII (base id
+`eb6679620d0c9ed7…`, Elektron OS **1.40C**). Install catalog package
+`f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273` with a
+**Keep** on the card (or accept Keep at the end of a RAM trial). Load a pattern
+that plays on at least one audio track (author uses bank B, pattern **B02**).
+Start transport and confirm you hear the pattern.
+
+**Check:** Hold **[DOWN]**, press **[TEMPO]**. OSC should show a moving trace.
+Press **[UP]** / **[DOWN]** for XY and ALL. **[TEMPO]** alone should still
+open the stock tempo window. Close with **[TEMPO]**, **[YES]**, or **[NO]**.
+
+| When | Package | How | Result |
+| --- | --- | --- | --- |
+| 28 Nov 2026 | `f8a1ffeb…` (0.2.0) | By hand on flashed `eb667962…`, B02 playing, catalog package kept on card | **Pass (reported):** DOWN+TEMPO opens SCOPE with a live trace; OSC, XY and ALL respond; TEMPO alone stays stock; closes with TEMPO, YES or NO. |
+| 26 Nov 2026 | `48522941…` (0.1.0, three stock sites) | By hand during a RAM trial on the same release base | **Pass (reported):** DOWN+TEMPO opens SCOPE; OSC, XY and ALL draw live audio; closes cleanly. See table below. |
+
+Release-base window proof for **0.2.0** is the 28 November row above.
+
+### CPU price with pattern playing and SCOPE open
+
+**28 November 2026, MKII, development twin `4c7eb79b844c8139…`** (RAM-booted from
+`twin-dev-1014`, same 0.8.1 beta family as release base `eb667962`). Package
+`f8a1ffeb`, pattern playing.
+
+| State | How | Frame interrupt add | Record |
+| --- | --- | --- | --- |
+| Window **open** (DOWN+0x18 TEMPO held through readings) | `npm run device:price -- scope --write`; open by hand or `device do keys DOWN+TEMPO` while readings run | **+1.1** % | `evidence/cpu-price-open.json` (catalog `resources.cpuPrice`) |
+| Window **closed**, installed | same command default path (window closed) | **+0.2** % | `evidence/cpu-price.json` |
+
+`device:price` needs a `--dev` twin (`guard` / `stats`). Release base
+`eb667962` on USB does not answer those requests; the open-window row was taken
+on twin `4c7eb79b` with the same catalog package bytes.
+
+Unset `MODWERK_DEV_SOCKET` if an old procedure left it in the shell:
+
+```sh
+env -u MODWERK_DEV_SOCKET MODWERK_SHARE_SOCKET=/tmp/modwerk-share.sock \
+  npm run device:price -- scope --write \
+  --base 4c7eb79b844c8139 \
+  --scene 'MKII, dev twin, pattern playing, SCOPE window open (DOWN+0x18 TEMPO)' \
+  --share /tmp/modwerk-share.sock \
+  public/octatrack-modules/scope/0.2.0-experimental.mwrm
+```
+
+The procedure in `/private/tmp/scope-procedure-scope-020-20261127-2` tested
+SCOPE 0.2.0-experimental package SHA-256
+`f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273`
+on an MKII running an OS 1.40C Modwerk base identified as `311bb670`.
+Its unit steps 6–10 passed: inventory and Part read, scripted trial,
+120-second soak, CPU price, and restoration. The procedure did not run an
+emulator rehearsal. Its edge-case table and submitter stage may still be open; release-base
+open-window proof for 0.2.0 is recorded above (28 November 2026).
+
+The first procedure's price command labelled the scene as transport stopped
+and reported +0.1 percentage point of frame interrupt time at rest. A later
+procedure in `/private/tmp/scope-procedure-b02-20261127` used B02 and reported
++0.2 points. Its price command also labelled the scene as transport stopped,
+although its base label said "B02 playing project". The logs do not resolve
+whether playback was active during either measurement. Do not treat either
+price as a measured playing-audio cost until the transport state is established.
+
+### Shipped package vs development-twin image
+
+Procedure steps 6–10 used the committed USB package
+`f8a1ffeb984ea5e62aa2ce37f0eebdac3fbeda9fe9f3a4a7a9699326092e0273`
+on base `311bb670`. LCD captures and the open-window gap reading used a
+RAM-booted development twin whose private image SHA-256 was
+`e300c134bb0701d2a6e46f383d3a5a7888604bd310d413a460a7f1dbce5d94bd`, with the
+same SCOPE package bytes. The qualification record names the dev-twin image
+for hardware evidence; catalog install uses `f8a1ffeb`.
+
+### ColdFire performance (27 November 2026)
+
+Commands:
+
+```sh
+python3 sdk/octatrack/modules/scope/perf.py static
+npm run perf:audit -- check --stamp sdk/octatrack/modules/scope/evidence/performance.json
+```
+
+| Check | Result |
+| --- | --- |
+| record | coldfire record for scope@0.2.0-experimental |
+| cycles | worst event 602 of 9577 cycles (6%) |
+| stock benchmark | under the same flood the longest frame interrupt grows by 1.7 µs (0.5% of the 362.8 µs frame) and idle time falls by 0.8 points vs stock |
+| stress | 1000 messages/s at 250 BPM for 62 s, no stuck note, no hang, 0 dropped |
+
+Details and method strings: `evidence/performance.json` and `perf.py`.
+
+The **stress** row is MIDI and clock flood in **ot_emu** while SCOPE is open
+(`dropped` counts MIDI messages, not audio buffer gaps). It is not a MAIN/CUE
+USB dropout test. Dropout counts from recorded MAIN/CUE were not run: during
+dev-twin work on macOS the Octatrack often appeared as USB mass storage only,
+without a stable **Elektron Octatrack DPS-1** audio input in `ffmpeg
+avfoundation` device list (see session notes in the 27 November Codex thread).
 
 ## 0.2.0-experimental
 
