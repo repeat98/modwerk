@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "contribute": [
+    {"to": "ot_machines", "order": 50, "data": "descriptor"},
+    {"to": "ot_machine_starts", "order": 50, "data": "start_record"}
+  ]
+}

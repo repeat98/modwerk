@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 2,
+  "id": "colundi",
+  "key": "COLUNDI",
+  "name": "MICRO OSC (COLUNDI research draft)",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "author": {
+    "github": "btzz5w8w5d-star",
+    "credits": [
+      "btzz5w8w5d-star"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "MICRO OSC",
+    "family": "Absolute-frequency track machine",
+    "summary": "Play two synthetic reference pitches from SRC B locks.",
+    "overview": "Experimental monophonic sine voice for sequencer START.",
+    "highlights": [
+      "Independent Q32 oscillator per track."
+    ],
+    "usage": [
+      "Use the preloaded four-note emulator pattern in README.md."
+    ]
+  },
+  "controls": [
+    {
+      "name": "SRC B",
+      "default": 0,
+      "count": 128,
+      "doc": "Absolute test degree sampled at START. Only 78 and 79 sound.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Track machine",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Two test degrees only. First PLAY after late edits, persistence and hardware operation remain unqualified."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host PCM and native package build. See TESTING.md for emulator conditions.",
+    "hardwareStatus": "untested",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ],
+    "evidenceRevision": "d0ee901d90fba455eb17be6195c9e886690d3848"
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original MIT source and synthetic arithmetic fixtures; no official catalogue or media."
+  },
+  "media": [],
+  "access": {
+    "location": "Machine chooser > MICRO OSC (development emulator)",
+    "steps": [
+      "Select MICRO OSC on T1 and lock SRC B to 78 or 79 on a note trig."
+    ],
+    "screenshots": []
+  }
+}
