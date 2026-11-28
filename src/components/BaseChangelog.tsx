@@ -19,7 +19,7 @@ const releases: Record<'octatrack' | 'rytm' | 'zoom', [BaseRelease, ...BaseRelea
         { area: 'Effects', detail: 'An effect can keep delay lines longer than the DSP’s own memory in the Octatrack’s main memory, moved in and out every audio frame, as the Quadraverb’s do. One such effect plays at a time, beside USB audio input; a second is refused with STREAM FULL.', note: '2026-11-27-octatrack-stream-channel-release' },
         { area: 'MODULES', detail: 'Switching modules while the sequencer is paused or held by MIDI STOP now says STOP PLAYBACK FIRST instead of BUSY: TRY AGAIN, and a busy card says CARD BUSY: TRY AGAIN.' },
         { area: 'CPU', detail: 'A module machine pasted onto a track, or brought back by a Part reload, is checked against the CPU line the same way as picking it, so it can no longer push a full pattern over.' },
-        { area: 'Update screen', detail: 'The Octatrack shows MODWERK while it installs a base or a module set.' },
+        { area: 'Update screen', detail: 'The Octatrack shows MW 0.8.4 while it installs this base, and MODWERK while it installs a module set.' },
         { area: 'Reports', detail: 'Diagnostics say which check refused a module pick and what kind each late audio frame was, and the start no longer reports a late frame of its own.' },
         { area: 'Settings', detail: 'Modules can offer commands that act when you press YES and keep the selected row in view. Installing or undoing a module does not repeat those commands. By offtheheezystudio.' },
         { area: 'CPU', detail: 'A Part’s CPU budget charges each machine what one playing track of it was measured to take, so a project or Part with too many heavy machines starts the extras silent with CPU FULL instead of crackling.' },
