@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "note-octave-2026-11-16",
+  "about": "Modwerk source-only note-octave package for Digitakt I OS 1.54, compiled from sdk/digitakt/modules/note-octave.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "note-octave-0.1.0-experimental-os1.54.elemod",
+      "sha256": "2f9dce2e566bad49d747d377e8953e2edd2b4ede6f6f1771f597e709426312e6",
+      "id": "note-octave",
+      "version": "0.1.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "e0d1c3c9e5a0b198a17beaf15a2d724df4e5e7bb",
+        "path": "sdk/imports/packages/note-octave/note-octave-0.1.0-experimental-os1.54.elemod"
+      },
+      "title": "Note Octave",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "FUNC + turn on a trig's note moves it by an octave, on audio and MIDI tracks.",
+      "description": "On the TRIG page, FUNC + turn on NOTE or NOT1 to NOT4 moves the note an octave every three detents instead of stock's jump; with a trig held it moves that step's lock.",
+      "category": "Sequencer",
+      "author": "draadpiraat",
+      "needs_core": "2.1",
+      "on_unit": "Tried on the author's Digitakt I, OS 1.54 (NO08, which this package reproduces byte for byte with Core 2.1), 2026-11-16."
+    }
+  ]
+}

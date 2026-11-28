@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/octave.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:TRIG page:FUNC + turn on NOTE"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.54": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x40032bc8",
+          "op": "jsr",
+          "target": "noct_turn",
+          "len": 6,
+          "stockSha256": "b252fb5dd47b48f94d4adeb56555b385bcc5e722f82b89df67a289505ca02608"
+        },
+        {
+          "addr": "0x40032be0",
+          "op": "jsr",
+          "target": "noct_func",
+          "len": 8,
+          "stockSha256": "dd1b58b29051aeeaddc0881fbb818ce7c7187aa115c7e1d0bf36fe713ed536fa"
+        }
+      ]
+    }
+  }
+}

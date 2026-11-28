@@ -1,0 +1,171 @@
+{
+ "elemod": 2,
+ "id": "note-octave",
+ "version": "0.1.0-experimental",
+ "title": "Note Octave",
+ "description": "FUNC + turn on a trig's note moves it by an octave, on audio and MIDI tracks.",
+ "category": "playback",
+ "author": "draadpiraat",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.54",
+  "syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "section3_sha256": "5c58bf9e3949ef09977c5fc007a61e8d026931f67f1621238379dfb8ee4d31a2",
+  "section3_len": 2479680
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 280,
+   "parts": [
+    [
+     "hex",
+     "0c820000001267100c82000000196d0a0c820000001c6e02b4824e752a006100ffe0660000c24a86670000bc487800014eb9400d399c588f4a80670000a42039000000002200bd816a0000047000d086720c4c2b18000004b0816c0000104481b0816e00006e2a01600000042a01908523c000000000203c00000c004a856a00000444802a004feffff848d702024878ffff2f022f0a2052206800544e904fef000c4cd702024fef0008d08572344c0218002041d1fc401aa09cb0a800086d00000ab0a8000c6f0000082ebc40032c924e7523c0000000002ebc40032c924e7542b9000000004a856600ffe62ebc40032c924e756100ff0a66127c00223c00000c004a856a0244812a014e757227b28256c644864e750000"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 4
+  }
+ },
+ "symbols": {
+  "KEY_HELD": [
+   "abs",
+   1074608540
+  ],
+  "DONE": [
+   "abs",
+   1073949842
+  ],
+  "VIEW_VALUE": [
+   "abs",
+   84
+  ],
+  "PARAMS": [
+   "abs",
+   1075486876
+  ],
+  "PARAM_ROW": [
+   "abs",
+   52
+  ],
+  "PARAM_MIN": [
+   "abs",
+   8
+  ],
+  "PARAM_MAX": [
+   "abs",
+   12
+  ],
+  "STEP": [
+   "abs",
+   12
+  ],
+  "TURN_FACTOR": [
+   "abs",
+   4
+  ],
+  "noct_acc": [
+   ".bss",
+   0
+  ],
+  "is_note": [
+   ".run",
+   0
+  ],
+  "noct_turn": [
+   ".run",
+   28
+  ],
+  "noct_func": [
+   ".run",
+   244
+  ]
+ },
+ "exports": [
+  "noct_func",
+  "noct_turn"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   64,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   114,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   212,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   226,
+   "abs32",
+   "sec:.bss",
+   0
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x40032bc8",
+   "len": 6,
+   "stock_sha256": "b252fb5dd47b48f94d4adeb56555b385bcc5e722f82b89df67a289505ca02608",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:noct_turn",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40032be0",
+   "len": 8,
+   "stock_sha256": "dd1b58b29051aeeaddc0881fbb818ce7c7187aa115c7e1d0bf36fe713ed536fa",
+   "new": "4eb9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:noct_func",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:TRIG page:FUNC + turn on NOTE"
+  ],
+  "core": "2.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

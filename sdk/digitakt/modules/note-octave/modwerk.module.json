@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 3,
+  "id": "note-octave",
+  "name": "Note Octave",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt",
+  "category": "playback",
+  "exclusive": false,
+  "author": {
+    "github": "draadpiraat",
+    "credits": [
+      "draadpiraat"
+    ]
+  },
+  "maintainers": [
+    "draadpiraat"
+  ],
+  "presentation": {
+    "label": "NOTE OCTAVE",
+    "family": "Sequencer",
+    "summary": "FUNC + turn on a trig's note moves it by an octave, on audio and MIDI tracks.",
+    "overview": "On the TRIG page, FUNC + turn on a note moves it twelve semitones a detent instead of stock's jump. It covers the audio track's NOTE and the MIDI track's NOT1 to NOT4, moves the track's note or, with a trig held, that step's lock, and makes no octave that would leave the note's range.",
+    "highlights": [
+      "An octave every three detents, up or down, at FUNC + LEN's pace.",
+      "The track's note, or a held trig's lock.",
+      "No clamp at the edge: the note never changes, only its octave."
+    ],
+    "usage": [
+      "Select an audio track and press TRIG.",
+      "Hold FUNC and turn A three detents to the left: NOTE goes to -12.",
+      "Hold a trig key as well to move that step's note lock instead.",
+      "On a MIDI track, do the same on NOT1, or B to D for the chord notes."
+    ]
+  },
+  "access": {
+    "location": "TRIG page, note knobs, with FUNC held",
+    "steps": [
+      "Open TRIG on an audio or MIDI track.",
+      "Hold FUNC and turn the note knob (A, or B to D for a MIDI track's chord notes)."
+    ],
+    "screenshots": [
+      "media/audio-note-down.png",
+      "media/midi-not1-up.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "FUNC + A (NOTE, NOT1)",
+      "default": null,
+      "doc": "Moves the note an octave every three detents.",
+      "labels": null
+    },
+    {
+      "name": "FUNC + B-D (NOT2-NOT4)",
+      "default": null,
+      "doc": "Moves a MIDI chord note an octave every three detents.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.54"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "OS 1.54 only.",
+      "At most one octave an encoder message: a very fast spin moves a little less."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "2.1",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:TRIG page:FUNC + turn on NOTE"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 284,
+    "fastBytes": 0,
+    "load": {
+      "display": "No audio-path code",
+      "method": "static",
+      "conditions": "The module patches only the TRIG page's knob handler and runs on encoder events; it subscribes to no core events and adds no work to the audio block."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "07263fd1f018720417099b855414c8ec17147bfdc2f1746e82bc4c073f104a76",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "TESTING.md",
+      "evidence/emulator-testing.json",
+      "evidence/source-identity.json"
+    ],
+    "hardware": {
+      "model": "Digitakt I",
+      "release": "1.54",
+      "testedOn": "2026-11-16",
+      "tester": "draadpiraat",
+      "durationMinutes": null,
+      "summary": "draadpiraat ran NO03 (an octave a detent) on their Digitakt I, OS 1.54, found it worked but too fast, then NO08 (an octave every three detents, this release): \"note octave seems good, publish it.\"",
+      "limitations": [
+        "Held-trig locks, MIDI chord notes and the range edge were not reported one by one.",
+        "Run time was not stated."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "On a unit: the owner's Digitakt I, OS 1.54, NO08 (this build) good, after NO03 worked but was too fast. Emulator: an octave every three detents on audio NOTE and MIDI NOT1/NOT2, refused at the range edge, other knobs keep stock's jump.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: move a note an octave",
+        "steps": [
+          "Select an audio track and press TRIG.",
+          "Hold FUNC and turn A three detents to the left: NOTE goes to -12.",
+          "Hold a trig key as well to move that step's note lock instead.",
+          "On a MIDI track, do the same on NOT1, or B to D for the chord notes."
+        ]
+      },
+      "screenshots": [
+        "media/audio-note-down.png",
+        "media/midi-not1-up.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Note Octave",
+      "alt": "Trig notes on a grid, one moved an octave up and down",
+      "credit": "draadpiraat",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration in the library's signal-art style."
+    },
+    {
+      "path": "media/audio-note-down.png",
+      "kind": "screenshot",
+      "caption": "Audio track: FUNC + three detents left, NOTE at -12",
+      "alt": "Digitakt TRIG page with NOTE showing C 4 (-12)",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ca7b5b1e7f237fdee02005b7ebc515bf77370d446dc454faaba3920936a07877",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project, no audio (the sequencer does not run). No audio or cycle-timing qualification."
+      }
+    },
+    {
+      "path": "media/midi-not1-up.png",
+      "kind": "screenshot",
+      "caption": "MIDI track: FUNC + three detents right, NOT1 at 72",
+      "alt": "Digitakt MIDI TRIG page with NOT1 showing C 6 (72)",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "ca7b5b1e7f237fdee02005b7ebc515bf77370d446dc454faaba3920936a07877",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project, no audio (the sequencer does not run). No audio or cycle-timing qualification."
+      }
+    }
+  ]
+}
