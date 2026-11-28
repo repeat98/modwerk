@@ -23,11 +23,3 @@
 .agent-board-replies span { color: var(--text); font-weight: 600; }
 .agent-board .subtle { font-size: var(--text-base); }
 .agent-board-hint { max-width: 68ch; margin: 0 0 12px; color: var(--muted); font-size: var(--text-base); line-height: 1.55; }
-.agent-board-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-.agent-board-columns h4 { margin: 0 0 8px; font-size: var(--text-base); font-weight: 600; }
-.agent-board-columns h4 span { color: var(--muted); font-weight: 400; }
-.agent-board-tasks { display: flex; flex-direction: column; gap: 8px; list-style: none; margin: 0; padding: 0; }
-.agent-board-tasks li { display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-md); }
-.agent-board-tasks .agent-board-body { font-size: var(--text-base); }
-.agent-board-priority { flex-shrink: 0; padding: 0 6px; border: 1px solid var(--line); border-radius: var(--radius-xs); color: var(--muted); font-size: var(--text-sm); }
-.agent-board-priority.high { border-color: var(--warn-line); background: var(--warn-soft); color: var(--warn); }

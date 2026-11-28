@@ -171,6 +171,8 @@ jobs:
       contents: read
       pull-requests: read
       actions: read
+      # Each gap becomes a GitHub issue (docs/AGENT_EVALS.md#five-fix-pilot).
+      issues: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
