@@ -95,7 +95,9 @@
     "requires": [
       "machine-pages"
     ],
-    "conflicts": [],
+    "conflicts": [
+      "digihealth"
+    ],
     "limitations": [
       "There is one shared mono take; MAIN and IN LR average the two channels.",
       "A new capture replaces the old take. A record trig received while recording is ignored.",

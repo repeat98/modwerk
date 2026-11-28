@@ -105,7 +105,8 @@
     ],
     "requires": [],
     "conflicts": [
-      "digimono"
+      "digimono",
+      "digislicer"
     ],
     "limitations": [
       "SRC snapping works on ONESHOT and RAM-P1. RAM-P1 does not gain a file-backed waveform page.",

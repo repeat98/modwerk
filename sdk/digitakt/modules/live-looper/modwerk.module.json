@@ -144,7 +144,8 @@
       "machine-pages"
     ],
     "conflicts": [
-      "ram-machines"
+      "ram-machines",
+      "digihealth"
     ],
     "limitations": [
       "Built for OS 1.54 only, with Core 2.1 and Machine Pages.",

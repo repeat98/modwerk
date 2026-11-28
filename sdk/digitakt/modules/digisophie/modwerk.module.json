@@ -44,7 +44,7 @@
   "access": {
     "location": "SRC machine list",
     "steps": [
-      "Use a build containing SOPHIE for the original Digitakt on OS 1.53 or 1.54.",
+      "Use a build containing SOPHIE for the original Digitakt on OS 1.53 or 1.54; digihealth is optional.",
       "Select an audio track, press FUNC + SRC and choose SOPHIE from the machine list.",
       "Adjust TUNE through COLOR on the SRC page. Set note duration and release on AMP, then trigger the track from the sequencer or keyboard."
     ],
@@ -110,7 +110,10 @@
     "requires": [
       "machine-pages"
     ],
-    "conflicts": [],
+    "conflicts": [
+      "digineighbor",
+      "digislicer"
+    ],
     "limitations": [
       "One instance runs without FAST AUDIO; the author found two practical with FAST AUDIO on. Eight tracks are not claimed.",
       "Built by Modwerk from the author\u2019s 1.2.0 sources for Core 2.1 and Machine Pages, on OS 1.53 and 1.54. It has not been tested on a unit yet.",

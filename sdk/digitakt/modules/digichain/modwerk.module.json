@@ -58,6 +58,8 @@
     ],
     "requires": [],
     "conflicts": [
+      "digineighbor",
+      "digislicer",
       "digisophie"
     ],
     "limitations": [
