@@ -60,3 +60,43 @@ SL20 with `-DSL_LOAD_READOUT`, which draws the peak of `core_audio_load` over ea
 | The same pattern, 7 tracks on TRANSIENT, every control away from neutral | 93 % |
 
 About 11 points for 7 voices, 1.6 % of the block a voice. At 93 % the author found the screen and keys slow, as with stock's own load near the top.
+
+## Test procedure: sample-layer 0.1.0-experimental, 2026-11-28
+
+Build: revision `55b327d1380d`, package `sample-layer-SL20.syx` SHA-256 `3aa46eb277a64ad0196576ad041a11b9e41b6598e14dd3d19bfb7c7e539dceb8`. `npm run test:procedure -- analog-rytm-mkii:sample-layer --package /Users/chevyone/.modwerk/builds/sample-layer-SL20.syx`, 5 s. Emulator results are not hardware evidence; only what ran on the unit is.
+
+| # | Step | Layer | Result | Command | Evidence |
+|---|---|---|---|---|---|
+| 1 | Software checks | host | passed | `npm run module:doctor -- sample-layer` | logs/01-software.log |
+| 2 | Beside every other module | contract | not run: modules:compat compares the Octatrack's modules only; Analog Rytm MKII has no gate beside every other module yet: its link refuses two modules on one site, so link the image beside the modules it must work with |  |  |
+| 3 | Name the build | host | passed |  | logs/03-build.log |
+| 4 | DSP cost model | contract | not run: the DSP cycle scan models the Octatrack's DSP only |  |  |
+| 5 | Emulator rehearsal | emulator | not run: no cases: write them in sdk/machines/analog-rytm-mkii/tools/cases/sample-layer/ (TEST_RUNNER.md) or pass --cases DIR |  |  |
+| 6 | Read the unit | unit | not run: no --link: pass it to drive the unit over its development link (a RAM boot restarts it: with its owner's OK) | `python3 -B sdk/machines/analog-rytm-mkii/tools/rytm_link.py ident` |  |
+| 7 | Scripted unit pass | unit | not run: no cases: write them in sdk/machines/analog-rytm-mkii/tools/cases/sample-layer/ (TEST_RUNNER.md) or pass --cases DIR |  |  |
+| 8 | Soak | unit | not run: no soak for Analog Rytm MKII yet (scripts/octatrack-soak.mjs drives the Octatrack) |  |  |
+| 9 | Cost on the unit | unit | read by hand on SL21 (SL20 with a load readout): 81-82 % without, 93 % with 7 voices on TRANSIENT (Load, above) |  |  |
+| 10 | Put back | unit | not run: no --link: pass it to drive the unit over its development link (a RAM boot restarts it: with its owner's OK) | `python3 -B sdk/machines/analog-rytm-mkii/tools/rytm_link.py ident` |  |
+| 11 | Agent by hand | unit | the list and TRANSIENT's page captured over the link on SL20 and compared with the README (media/) |  |  |
+| 12 | Submitter's own stage | unit | @chevyone on SL20: "all working on the transient", kit save and power cycle included (Build SL20, above) |  |  |
+
+#### Edge cases for this change
+
+| Case | Why this change makes it a risk | How run | Result |
+|---|---|---|---|
+| SAMPLER plays bit for bit as stock | the voice mixer's call is patched for every voice | host test of the render on neutral settings; played on the unit | pass |
+| FUNC + SMPL, then NO, SMPL or another key | the list takes keys from stock's SMPL flow | on the unit, SL20 | pass (reported) |
+| A stock window (µTIME, RETRIG) over TRANSIENT's page | the band is drawn over stock's page | on the unit, SL14 | pass (reported) |
+| The list open over TRANSIENT's page | the band and the panel overlap | captured on the unit, SC09 | pass |
+| Kit save and power cycle | the engine lives in mod storage | on the unit, SL20 | pass (reported) |
+| Audio load with TRANSIENT on many voices | per-voice DSP in the audio interrupt | SL21's readout | pass: 93 % with 7 voices, the UI slow there |
+| A sound saved with a prototype engine | GRANULAR and SLICER are hidden | reasoned: no released sound can hold one | not run: only the author's test kits hold one |
+| Beside other modules (LFO RND, Improved AMP, Improved SMPL) | shared SMPL pages and audio time | not run yet | not run: no set with them built yet |
+
+#### Left for the submitter at their unit
+
+- how it sounds and plays, and timing by ear
+- MIDI, scenes and recording with it
+- it beside the other modules installed on their unit
+- two instances with different settings, on both FX slots and both DSP cores where it can (docs/MODULE_QUALIFICATION.md)
+- Part reload, project save and reload, and a power cycle with it saved: what survives (the Keep and the power cycle are theirs)
