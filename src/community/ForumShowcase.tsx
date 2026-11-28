@@ -5,7 +5,7 @@ import { useCommunity } from './context'
 import { Icon } from '../components/Icon'
 import { AudioPlayer } from '../components/AudioPlayer'
 import '../components/audio-preview.css'
-import { ForumAuthorName, ForumAvatar, ForumMachineBadge } from './ForumIdentity'
+import { ForumAuthorName, ForumAvatar, ForumMachineBadge, orbStyle } from './ForumIdentity'
 import { ForumTime } from './ForumTime'
 import type { ForumShowcaseItem } from './forum-contract'
 import { threadHref } from '../routing'
@@ -16,11 +16,10 @@ function Card({ item, machine }: { item: ForumShowcaseItem; machine?: string }) 
   const image = item.attachments.find(media => media.kind === 'image'), sound = item.attachments.find(media => media.kind === 'audio')
   const href = threadHref(item.thread_id, item.title, '?post=' + item.id + '&page=' + item.page), more = item.attachments.length - (image ? 1 : 0) - (sound ? 1 : 0)
   const caption = (image?.caption || sound?.caption || '').trim()
-  return <li className="forum-showcase-card" data-kind={image ? 'image' : 'audio'} data-category={item.category}>
+  return <li className="forum-showcase-card" data-kind={image ? 'image' : 'audio'} data-category={item.category} style={image ? undefined : orbStyle(item.id)}>
     <div className="forum-showcase-cover">
       {image && <img src={apiUrl('/forum/media/' + image.id)} alt={image.caption || 'Image from “' + item.title + '”'} loading="lazy" decoding="async" />}
       {sound && <div className="forum-showcase-sound" data-cover={!!image || undefined}>
-        {!image && <span className="forum-showcase-sound-mark" aria-hidden="true"><Icon name="wave" size={36}/></span>}
         {/* The module pages' compact player: a strip along the bottom of the cover. */}
         <div className="audio-preview-dock"><div className="audio-preview-player"><AudioPlayer src={apiUrl('/forum/media/' + sound.id)} label={'sound clip from “' + item.title + '”' + (sound.caption ? ': ' + sound.caption : '')} variant="dock"/></div></div>
       </div>}

@@ -1,0 +1,1 @@
+Site: a sound clip shared in the forum Showcase without a picture now gets a colour field of its own, lit from one corner, instead of a grey box with a wave icon. The compact sound player on Showcase cards and module cards is now a pane of glass over the artwork with a brighter waveform, and the small "+1 more" and "Audio" labels read clearly on any cover.
