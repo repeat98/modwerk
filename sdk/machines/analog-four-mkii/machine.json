@@ -7,7 +7,7 @@
     "MKII"
   ],
   "status": "research",
-  "summary": "OS 1.56 rebuilt byte-identical; modified OSes boot on hardware; stock recovers over MIDI DIN; core-a4 0.2 (the Rytm's core, with mod storage and parameter pages) runs on a unit.",
+  "summary": "OS 1.56 rebuilds byte-identically, modified builds run on hardware and MIDI DIN restores stock. The beta build preview uses Elekloader core-a4 0.5.",
   "firmware": {
     "releases": [
       {
@@ -61,7 +61,7 @@
       "version": "0.2",
       "path": "sdk/analog-four-mkii/core-profile"
     },
-    "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: core-a4 0.2 from the owner's exact OS 1.56 .syx.",
+    "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and Elekloader's builder. The beta preview uses core-a4 0.5 with the owner's exact OS 1.56 .syx.",
     "budgets": [
       {
         "name": "Shared mod memory",
@@ -72,8 +72,8 @@
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 8956,
-        "note": "Core 0.2 build (elekloader f02be99): 8,764 bytes .run plus 192 bytes .bss in the shared area, and an 88-byte .boot copier; the link check measures each selected module set."
+        "value": 44136,
+        "note": "Core 0.5 linked alone against OS 1.56. The link check measures the core and all selected modules together."
       }
     ]
   },

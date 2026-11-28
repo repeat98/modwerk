@@ -1,12 +1,12 @@
 # Analog Four MKII SDK
 
-**Platform:** elemod · **OS:** 1.56 · **Core:** elekloader core-a4 0.2 · **Modules:** [`sdk/analog-four-mkii/modules/`](../../analog-four-mkii/modules/) · **Status:** research
+**Platform:** elemod · **OS:** 1.56 · **Core:** Elekloader core-a4 0.5 for the build preview · **Modules:** [`sdk/analog-four-mkii/modules/`](../../analog-four-mkii/modules/) · **Status:** research
 
-The Analog Four MKII runs on the Analog Rytm MKII's platform, a ColdFire MCF5441x: its OS entry, bootstrap loader and UI loop are the Rytm's, instruction for instruction apart from addresses. Its core is elekloader's core-a4, which builds the Digitakt mk1's `core.s`, `settings.s` and `render.s` with the A4's addresses as core-ar2 does for the Rytm, and adds mod storage and parameter pages. The core hooks the shared sites and calls every subscribed mod's handler, in order, from tables the linker builds, so any set of mods that fits the budgets combines. Every hook below has run on a unit. Modwerk's linker has an A4 profile (`src/engine/elektron/elemod.ts`): on the owner's stock 1.56 file it links core-a4 0.2 alone, with each of elekloader's five A4 examples and with three of them together to the same main OS image and storage lockfile as `elekloader.patch`. There is no library module yet, and the browser builds nothing for the A4 until one exists.
+The Analog Four MKII runs on the Analog Rytm MKII's platform, a ColdFire MCF5441x: its OS entry, bootstrap loader and UI loop are the Rytm's, instruction for instruction apart from addresses. Its core is elekloader's core-a4, which builds the Digitakt mk1's `core.s`, `settings.s` and `render.s` with the A4's addresses as core-ar2 does for the Rytm, and adds mod storage and parameter pages. The core hooks the shared sites and calls every subscribed mod's handler, in order, from tables the linker builds, so any set of mods that fits the budgets combines. Every hook below has run on a unit. Modwerk's linker has an A4 profile (`src/engine/elektron/elemod.ts`): on the owner's stock 1.56 file it links core-a4 0.2 alone, with each of elekloader's five A4 examples and with three of them together to the same main OS image and storage lockfile as `elekloader.patch`.
 
 ## Modwerk stack
 
-Today the core is elekloader's core-a4 0.2, and nothing builds for the A4 yet. It is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)). It shares the Rytm's platform, so its base is planned as the Rytm's Modwerk base built with the A4's addresses, as core-a4 is core-ar2 built with them, not as a second design. None of it is started.
+The beta build preview uses Elekloader core-a4 0.5 for OS 1.56 and checks the owner's stock file locally. Downloads remain disabled pending review. The SDK continues to expose the core 0.2 contract below. The future Modwerk base will follow the [machine recipe](../../../docs/MACHINE_RECIPE.md) and build on the Analog Rytm MKII work.
 
 ## Create a mod
 
@@ -62,7 +62,7 @@ core_store_set(STORE(my_accent), live_pattern, track, v + 1);
 ## Memory and budgets
 
 - **Shared mod memory:** 128 KiB of DDR (`0x47BE0000–0x47C00000`) for the core and every mod's code and data, as on the Rytm. A boot-time fill of the area and the gaps beside it was read back intact on a unit, through normal use, Overbridge and a power cycle.
-- **Core image:** core 0.2 is 8,764 bytes `.run` plus 192 bytes `.bss` in the shared area, and an 88-byte `.boot` copier (elekloader `f02be99`). The linker remains authoritative for combined sizes and overlap.
+- **Core image:** the pinned core 0.5, linked by itself, uses 44,136 bytes of shared memory. The original core 0.2 reference build is 8,764 bytes `.run` plus 192 bytes `.bss` in the shared area, and an 88-byte `.boot` copier (elekloader `f02be99`). The linker remains authoritative for combined sizes and overlap.
 - **Fast SRAM:** none.
 - **Protected ranges:** none on OS 1.56.
 - **Flash:** the main OS must end below `0x300000`, where the OS keeps its voice calibration record; its settings store is at `0x380000–0x400000`.
@@ -91,7 +91,7 @@ Send the .syx with Elektron Transfer over USB (MIDI IN and OUT set to the device
 
 ## Status
 
-core-a4 0.1 and 0.2 are in elekloader (irpina/elekloader#154 and #180). On a unit, on OS 1.56: HC56 (core and hooks-check-a4) ran every hook; SC56 (store-check-a4) kept every storage field through saves, loads, power cycles and a Transfer round trip; CA56 (ddr-canary-a4) left the mods' area intact; PA56 (core 0.2 and pages-check-a4) passed the parameter page checks; the stock file restored the unit over MIDI DIN. Before a first module enters the library, the A4 needs a pinned core-a4 release (elekloader has none yet) and the browser's build preview.
+core-a4 0.1 and 0.2 are in elekloader (irpina/elekloader#154 and #180). On a unit, on OS 1.56: HC56 (core and hooks-check-a4) ran every hook; SC56 (store-check-a4) kept every storage field through saves, loads, power cycles and a Transfer round trip; CA56 (ddr-canary-a4) left the mods' area intact; PA56 (core 0.2 and pages-check-a4) passed the parameter page checks; the stock file restored the unit over MIDI DIN. The browser build preview pins core-a4 0.5 from Elekloader v0.10.0.
 
 ## Credits
 

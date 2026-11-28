@@ -19,7 +19,7 @@ type ComparisonProps = {
   betaAccess?: boolean
   ids: string[]
   selected: string[]
-  digiSelected: Record<DigiMod['device'], string[]>
+  digiSelected: Partial<Record<DigiMod['device'], string[]>>
   onToggle: (id: string) => void
   onToggleDigi: (device: DigiMod['device'], id: string) => void
   onClose: () => void
@@ -41,7 +41,7 @@ export function ModuleComparison({ betaAccess = false, ids, onClose, onToggle, s
     })),
     ...DIGI_MODS.map(module => ({
       key: module.device + '-' + module.id, name: module.title, author: module.author, authorUrl: module.repository,
-      href: deviceHref(module.device, 'module/' + module.id), selected: digiSelected[module.device].includes(module.id), toggle: () => onToggleDigi(module.device, module.id), full: false,
+      href: deviceHref(module.device, 'module/' + module.id), selected: digiSelected[module.device]?.includes(module.id) ?? false, toggle: () => onToggleDigi(module.device, module.id), full: false,
       values: {
         Machine: DEVICES_BY_ID[module.device].name, Version: 'v' + module.version, Purpose: module.summary,
         Location: module.category + ' · OS ' + module.releases.join(' / '),
