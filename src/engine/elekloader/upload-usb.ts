@@ -6,7 +6,7 @@ import type { UploadTransport } from './upload-session.ts'
 import { LOAD_BYTES, parseLoadReading, type LoadReading, SAVED_SET_METADATA_BYTES, SAVED_SET_CHUNK_BYTES,
   SAVED_SET_CHUNK_DATA, parseSavedSetMetadata, parseSavedSetChunk, ZERO_DIGEST, type SavedSetMetadata, type SavedSetSnapshot } from './upload-wire.ts'
 import { sha, toHex } from '../elektron/bytes.ts'
-import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog, type DeviceLog } from './device-log.ts'
+import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, DEVICE_LOG_SHEDS_PAGE, parseDeviceLog, parseShedsPage, type DeviceLog } from './device-log.ts'
 import { parseSetIdentity } from './set-package.ts'
 
 export const VENDOR_CLASS = 0xff
@@ -439,6 +439,14 @@ export class UsbVendorTransport implements UploadTransport {
       data.set(new Uint8Array(reply.data.buffer, reply.data.byteOffset, DEVICE_LOG_PAGE), page * DEVICE_LOG_PAGE)
     }
     return parseDeviceLog(data)
+  }
+  /** The frame guard's live counts (LOG's last page alone); undefined from a base that stalls LOG or doesn't page them. */
+  async sheds(signal?: AbortSignal) {
+    signal?.throwIfAborted()
+    const reply = await this.device.controlTransferIn(this.setup(DEVICE_LOG_REQUEST, DEVICE_LOG_SHEDS_PAGE), DEVICE_LOG_PAGE)
+    if (reply.status === 'stall') return undefined
+    if (reply.status !== 'ok' || reply.data?.byteLength !== DEVICE_LOG_PAGE) throw new VendorTransportError('The Octatrack did not answer the diagnostics log request.')
+    return parseShedsPage(new Uint8Array(reply.data.buffer, reply.data.byteOffset, DEVICE_LOG_PAGE))
   }
   /** The unit's self-test: start it (`start`), or read where it stands. Answered by the USB interrupt; undefined
    * when the base stalls the request (one built before the self-test). */

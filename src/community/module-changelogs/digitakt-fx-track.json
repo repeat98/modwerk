@@ -7,7 +7,7 @@
       "Ticked, the control changes a MIDI track sends on FX CONTROL CH go into the Digitakt instead of MIDI OUT and USB, so parameter locks and the LFO play the effects.",
       "Notes and all other messages still go out, and the messages also reach any track whose TRACK CHANNEL equals FX CONTROL CH. Unticked, MIDI output is stock.",
       "The setting is not saved and starts unticked at every power-on.",
-      "Known issue: not yet tested on the author's unit; one user reports it working (#1500). Documentation note: the tutorial now includes the RECEIVE CC/NRPN and INPUT FROM step."
+      "Documentation note: the tutorial now includes the RECEIVE CC/NRPN and INPUT FROM step."
     ]
   }
 ]

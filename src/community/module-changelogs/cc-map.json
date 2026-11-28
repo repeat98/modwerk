@@ -6,8 +6,7 @@
       "First Modwerk catalog release of Sam Banks's MIDI mapping patch: CC68–73 control the six FX1 SETUP parameters.",
       "Modwerk only repackages the upstream patch; the stock parts it changes are checked against your own firmware.",
       "Now loads over USB on the Modwerk beta base; the site asks for a base update first.",
-      "Updated for newer beta bases on 14 and 22 Oct without changing the module itself; update the base first when the site asks.",
-      "Known issue: the USB package is not yet tested on hardware."
+      "Updated for newer beta bases on 14 and 22 Oct without changing the module itself; update the base first when the site asks."
     ],
     "sourceCommit": "b98abc5fcefad5e7c180f3746aa740159c19c422"
   }

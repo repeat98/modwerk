@@ -6,8 +6,7 @@
       "New: in grid recording, hold trigs and press SCENE A, SCENE B or both. When you let go, the scene's values (or the blend) become p-locks on those steps.",
       "One scene writes every value it locks, even when muted, replacing that parameter's p-lock on the step. Both keys write what the step plays at the current fader position.",
       "A trig pressed or a knob turned while the scene key is held still selects a scene or writes a scene lock, and then no p-lock is written.",
-      "To remove the new p-locks, hold the trig and press PLAY, as on stock. SCENE + YES into the Part works as before.",
-      "Known issue: the new trig gesture is tested on one MKII over USB, not yet on the MKI."
+      "To remove the new p-locks, hold the trig and press PLAY, as on stock. SCENE + YES into the Part works as before."
     ]
   },
   {

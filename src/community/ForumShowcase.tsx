@@ -5,26 +5,25 @@ import { useCommunity } from './context'
 import { Icon } from '../components/Icon'
 import { AudioPlayer } from '../components/AudioPlayer'
 import '../components/audio-preview.css'
-import { ForumAuthorName, ForumAvatar, ForumMachineBadge } from './ForumIdentity'
+import { ForumAuthorName, ForumAvatar, ForumMachineBadge, orbStyle } from './ForumIdentity'
 import { ForumTime } from './ForumTime'
 import type { ForumShowcaseItem } from './forum-contract'
 import { threadHref } from '../routing'
 import { useReconnectRetry } from './useReconnectRetry'
 import { Skeleton } from './ForumSkeleton'
 
-function Card({ item }: { item: ForumShowcaseItem }) {
+function Card({ item, machine }: { item: ForumShowcaseItem; machine?: string }) {
   const image = item.attachments.find(media => media.kind === 'image'), sound = item.attachments.find(media => media.kind === 'audio')
   const href = threadHref(item.thread_id, item.title, '?post=' + item.id + '&page=' + item.page), more = item.attachments.length - (image ? 1 : 0) - (sound ? 1 : 0)
   const caption = (image?.caption || sound?.caption || '').trim()
-  return <li className="forum-showcase-card" data-kind={image ? 'image' : 'audio'} data-category={item.category}>
+  return <li className="forum-showcase-card" data-kind={image ? 'image' : 'audio'} data-category={item.category} style={image ? undefined : orbStyle(item.id)}>
     <div className="forum-showcase-cover">
       {image && <img src={apiUrl('/forum/media/' + image.id)} alt={image.caption || 'Image from “' + item.title + '”'} loading="lazy" decoding="async" />}
       {sound && <div className="forum-showcase-sound" data-cover={!!image || undefined}>
-        {!image && <span className="forum-showcase-sound-mark" aria-hidden="true"><Icon name="wave" size={36}/></span>}
         {/* The module pages' compact player: a strip along the bottom of the cover. */}
         <div className="audio-preview-dock"><div className="audio-preview-player"><AudioPlayer src={apiUrl('/forum/media/' + sound.id)} label={'sound clip from “' + item.title + '”' + (sound.caption ? ': ' + sound.caption : '')} variant="dock"/></div></div>
       </div>}
-      <span className="forum-showcase-chips"><ForumMachineBadge machine={item.machine} />{more > 0 && <span className="forum-showcase-more">+{more} more</span>}{sound && <span className="forum-showcase-audio-label" aria-hidden="true"><Icon name="wave" size={12}/>Audio</span>}</span>
+      <span className="forum-showcase-chips">{item.machine !== machine && <ForumMachineBadge machine={item.machine} />}{more > 0 && <span className="forum-showcase-more">+{more} more</span>}{sound && <span className="forum-showcase-audio-label" aria-hidden="true"><Icon name="wave" size={12}/>Audio</span>}</span>
     </div>
     <div className="forum-showcase-copy">
       <h3><a className="forum-showcase-title" href={href} title={item.title}>{item.title}</a></h3>
@@ -47,8 +46,11 @@ function LoadingCard({ ghost }: { ghost?: boolean }) {
   </li>
 }
 
-/** The newest images and sound clips, with an invitation to add one: a sideways strip on the front page, a wrapping gallery on the Showcase topic. */
-export function ForumShowcase({ machine, category, shareHref, layout = 'strip' }: { machine?: string; category?: string; shareHref: string; layout?: 'strip' | 'grid' }) {
+/** The newest images and sound clips, with an invitation to add one: a sideways strip, a wrapping gallery on the Showcase
+ * topic, or (`invite`) one slim row for a page with nothing to show yet. With `holdPlace` the strip keeps its height from
+ * the first render, loading cards and then the invitation alone; without it the strip appears only with shares and ends
+ * with the invitation. */
+export function ForumShowcase({ machine, category, shareHref, layout = 'strip', holdPlace = true }: { machine?: string; category?: string; shareHref: string; layout?: 'strip' | 'grid' | 'invite'; holdPlace?: boolean }) {
   const { session, settled = true } = useCommunity(), [items, setItems] = useState<ForumShowcaseItem[] | null>(null), [failed, setFailed] = useState(false), [revision, setRevision] = useState(0)
   const query = new URLSearchParams({ ...(machine ? { machine } : {}), ...(category ? { category } : {}) }).toString()
   useEffect(() => {
@@ -63,17 +65,28 @@ export function ForumShowcase({ machine, category, shareHref, layout = 'strip' }
   // storage is on wherever the forum runs; a failed load keeps the strip's place with only the invitation.
   if (settled && !session.forumMedia) return null
   const loading = !items && !failed, empty = !loading && !items?.length
+  if (layout === 'invite' ? !empty : !holdPlace && !items?.length) return null
+  if (layout === 'invite') return <section className="forum-showcase" data-layout="invite" aria-label="Showcase">
+    <a className="forum-showcase-share" href={shareHref}>
+      <span className="forum-showcase-invite-icon" aria-hidden="true"><Icon name="wave" size={16} /></span>
+      <span>Share a jam, a sound or a photo of your setup</span>
+      <span className="forum-showcase-share-action" aria-hidden="true">Share</span>
+    </a>
+    {failed && <small>Recent shares could not load. They come back when the connection does.</small>}
+  </section>
+  const invite = <li className="forum-showcase-invite"><a href={shareHref}>
+    <span className="forum-showcase-invite-icon"><Icon name="plus" size={20} /></span>
+    <strong>{items?.length === 0 ? 'Be the first to share' : 'Share yours'}</strong>
+    <span>A jam, a sound you made with a module, or a photo of your setup.</span>
+    {failed && !items && <small>Recent shares could not load. They come back when the connection does.</small>}
+  </a></li>
   return <section className="forum-showcase" data-layout={layout} aria-labelledby="forum-showcase-title" aria-busy={loading}>
-    <div className="forum-list-heading"><h2 id="forum-showcase-title">{layout === 'grid' ? 'Latest shares' : 'Showcase'}</h2>{layout === 'strip' && <a className="text-button" href={'#forum?category=showcase' + (machine ? '&machine=' + machine : '')}>Browse all<Icon name="arrow" size={13} /></a>}</div>
+    <div className="forum-list-heading"><h2 id="forum-showcase-title">{layout === 'grid' ? 'Latest shares' : 'Showcase'}</h2>{layout === 'strip' && items?.length !== 0 && <a className="text-button" href={'#forum?category=showcase' + (machine ? '&machine=' + machine : '')}>Browse all<Icon name="arrow" size={13} /></a>}</div>
     <ul key={feedKey} className="forum-showcase-strip" data-empty={empty || undefined}>
       {empty && <LoadingCard ghost />}
-      <li className="forum-showcase-invite"><a href={shareHref}>
-        <span className="forum-showcase-invite-icon"><Icon name="plus" size={20} /></span>
-        <strong>{items?.length === 0 ? 'Be the first to share' : 'Share yours'}</strong>
-        <span>A jam, a sound you made with a module, or a photo of your setup.</span>
-        {failed && !items && <small>Recent shares could not load. They come back when the connection does.</small>}
-      </a></li>
-      {items ? items.map(item => <Card key={item.id} item={item} />) : loading && [0, 1, 2].map(index => <LoadingCard key={index} />)}
+      {holdPlace && invite}
+      {items ? items.map(item => <Card key={item.id} item={item} machine={machine} />) : loading && [0, 1, 2].map(index => <LoadingCard key={index} />)}
+      {!holdPlace && invite}
     </ul>
   </section>
 }

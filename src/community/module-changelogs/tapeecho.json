@@ -17,7 +17,7 @@
       "Fixes Tape Echo turning the track down (#969). MIX now works like BBD's: up to 64 the echo rises on top of the whole dry signal, above 64 the dry fades out until only the echo is left at 127.",
       "A new Tape Echo starts at MIX 40 instead of 90. MIX 0 is still the exact dry signal.",
       "Projects saved earlier sound louder at the same MIX: up to 6 dB more dry and up to 6 dB more echo. MIX 0 and 127 are unchanged. Set MIX or the track level again to taste.",
-      "Known issue: not tested on hardware yet, and the freeze with seven instances is still open."
+      "Known issue: the freeze with seven instances is still open."
     ]
   },
   {
@@ -37,7 +37,7 @@
       "Projects saved earlier sound different: the dry signal is up to 10.7 dB louder at MIX 90 and the echoes sit lower. Lower MIX or the track volume to taste.",
       "Stereo echo, also asked for in #607, is not planned: the echo stays mono and the dry signal stays stereo.",
       "On the beta base, picking it no longer shows DSP MEMORY FULL just because the modules named in the bank's Parts do not all fit on one DSP core.",
-      "Known issue: not tested on hardware, and the freeze with seven instances is still open."
+      "Known issue: the freeze with seven instances is still open."
     ]
   },
   {
@@ -45,8 +45,7 @@
     "date": "2026-10-12",
     "changes": [
       "Media only: adds an audio preview of a Legowelt Juno 106 chord pluck with clean and worn echoes. The firmware is unchanged.",
-      "Installs over USB on the Modwerk beta base.",
-      "Known issue: the USB version has not yet run on a unit."
+      "Installs over USB on the Modwerk beta base."
     ]
   },
   {
