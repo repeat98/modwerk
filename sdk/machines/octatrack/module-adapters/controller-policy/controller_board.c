@@ -863,7 +863,10 @@ static void advance(unsigned at)
     default: break; /* QUARANTINED holds everything; nothing is retried */
     }
 }
-__attribute__((optimize("no-jump-tables"))) void modwerk_controller_tick(void)
+#if defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("no-jump-tables")))
+#endif
+void modwerk_controller_tick(void)
 {
     uint32_t irq = modwerk_machine_lock();
     ++ticks;
