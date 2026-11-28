@@ -1,0 +1,19 @@
+{
+  "base": "dce64a781f8581b44579ce50d4c92b6b084fa485e76f1dc596161baeb69ee02f",
+  "package": "8958a66f2942e4e0c5692c0cf075bab3c07e4f3347d716ac57405b1792cb6c47",
+  "before": {
+    "listLen": "48780004 48780004",
+    "namesLea": "47f9400b 2e664282"
+  },
+  "midTrial": {
+    "listLen": "48780005 48780004",
+    "namesLea": "47f940d7 ff104ef9"
+  },
+  "after": {
+    "listLen": "48780004 48780004"
+  },
+  "patchedExpect": {
+    "listLen": "48780005",
+    "namesLeaNotStockPrefix": "47f9400b"
+  }
+}

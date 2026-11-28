@@ -28,8 +28,9 @@ the development-twin rollback refusal returns with TRACK TRIG EDIT open and
 with it closed.
 
 **Ran 28 November 2026 (Europe/London), tip `f88922eff471`**, package
-`8958a66f…`, MKII OS 1.40C. No Accept / `device_keep`. Digs paused after this
-record.
+`8958a66f…`, MKII OS 1.40C. Steps 1–9 and rollbacks recorded first; LEVEL
+rows below were **re-dug the same day** on tip after that tip (no PC; twin
+stayed on `dce64a781f8581b4`). No Accept / `device_keep`.
 
 | Step | Result |
 | --- | --- |
@@ -47,18 +48,39 @@ Twin path for step 9: `npm run octatrack:base -- --stock OS.bin --step --out STE
 (`dce64a781f8581b4`). No flash. Prior SPOS twin `cdfb0c2755afedfd` has no
 guard; larger `--dev` twins would not stage from it.
 
+### MICRO T row dig (same tip / package / twin)
+
+Earlier LEVEL rows on this package were recorded **FAIL** (stock
+TRIGS/SLIDE/SWING/REC.TRG only). Re-probe on `dce64a781f8581b4` with Keep-safe
+trial of `8958a66f…`:
+
+- Mid-trial MEM: list-length poke `0x4007c07a` = `48780005` (stock was
+  `48780004`); names LEA `0x4007b7f2` rewritten off stock `47f9400b2e66…`.
+- LCD: **MIDI TRIG EDIT** shows TRIGS / **MICRO T** / SWING;
+  **TRACK TRIG EDIT** shows TRIGS / **MICRO T** / SLIDE / SWING (REC.TRG
+  still scrolls under the four-row window).
+- LEVEL on TRACK: footer `MT1:ON GRID` → `MT1:+23/384`
+  (`evidence/media/hw-catalog-track-level-plus23-mop246.png`).
+- LEVEL on MIDI: from +23, LEVEL −23 → `MT1:ON GRID`
+  (`evidence/media/hw-catalog-midi-level-ongrid-mop246.png`).
+- Rolled back; inventory empty. No Accept.
+
+**Root cause of the earlier FAIL:** not a package or site defect — sites
+apply and MICRO T is present. The first LEVEL pass mis-read a stock-looking
+page (wrong open / timing). No source fix required.
+
 ### Edge cases
 
 | Case | Why this change makes it a risk | How run | Result |
 |---|---|---|---|
-| LEVEL while playing | LEVEL rewrites every step through the stock writer while transport runs | Keep-safe trial of `8958a66f…` | **not run**: MICRO T row never appeared (see LEVEL rows) |
+| LEVEL while playing | LEVEL rewrites every step through the stock writer while transport runs | Keep-safe trial; LEVEL with transport not required for owner row | **not run** this pass (LEVEL at rest **PASS**) |
 | Part change | remembered row is module bss; Part change must not leave a stale row or hang | `device:test` Part switches inside step 7 | **PASS** (scripted; no hang) |
-| MIDI button | MIDI on/off selects which track LEVEL writes | Keep-safe trial | **not run**: no MICRO T row to exercise LEVEL |
+| MIDI button | MIDI on/off selects which track LEVEL writes | Keep-safe trial; MIDI toggle between TRACK and MIDI TRIG EDIT | **PASS** (both pages show MICRO T; LEVEL moves shared footer) |
 | USB removal while TRACK TRIG EDIT open | earlier Keep remove was refused (RUNTIME_UI_OPEN) with that key layer up | not this pass | **not run** |
 | Power cycle | remembered row must clear; trig offsets must stay | not this pass (no Accept) | **not run** |
 | Beside other TRACK TRIG EDIT / key-layer modules | shared gesture and screen claim | compat step 2 | **PASS** (0 conflicts); hardware beside others not run |
-| LEVEL audio track | owner-required: confirm LEVEL on audio with this package | trial on `cdfb0c27…` and on `dce64a78…`; REC + FUNC+BANK; LCD PNG | **FAIL**: TRACK TRIG EDIT opened (TRIGS/SLIDE/SWING/REC.TRG) with **no MICRO T row**; footer stayed stock quantize — no LEVEL fraction change observed |
-| LEVEL MIDI track | owner-required: confirm LEVEL on MIDI with this package | same trials; MIDI button | **FAIL**: MIDI TRIG EDIT showed TRIGS/SWING only — **no MICRO T**; no LEVEL fraction change |
+| LEVEL audio track | owner-required: confirm LEVEL on audio with this package | Keep-safe trial on `dce64a78…`; TRACK TRIG EDIT · MICRO T; LEVEL | **PASS** — MICRO T present; footer `MT1:ON GRID` → `MT1:+23/384` |
+| LEVEL MIDI track | owner-required: confirm LEVEL on MIDI with this package | same trial; MIDI TRIG EDIT · MICRO T; LEVEL −23 | **PASS** — MICRO T present; footer returns `MT1:ON GRID` |
 | Rollback with TRACK TRIG EDIT open | prior twin trial rollback refused (needs-recovery) | Keep-safe Undo with TRACK TRIG EDIT / MIDI TRIG EDIT open | **PASS** (rolled back; inventory `[]`) on both twins |
 | Rollback with TRACK TRIG EDIT closed | compare open vs closed key layer | Keep-safe Undo after NO closed the key layer | **PASS** (rolled back; inventory `[]`) |
 
