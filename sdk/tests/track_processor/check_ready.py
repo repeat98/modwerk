@@ -46,6 +46,7 @@ with tempfile.TemporaryDirectory(prefix='ms-set-ready-') as work:
     (work/'modset.c').write_text(source)
     fixture=(machine/'test_modset.c').read_text()
     declarations='''
+#define MODWERK_TEST_TRIAL_READY_IMPLEMENTED
 static int ms_set_busy,ms_set_settled;
 static unsigned ms_ready_calls;
 static uint32_t ms_owner_epoch=2;

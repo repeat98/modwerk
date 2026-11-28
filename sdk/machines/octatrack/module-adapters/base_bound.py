@@ -18,6 +18,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -54,6 +55,39 @@ def _builder():
     return builder
 
 
+def provided_dsp_features(build):
+    """Read the service mask from the exact compiled source, not the live SDK.
+
+    This is metadata extraction, never execution. A changed implementation must
+    be reviewed rather than silently inferred. A Base without this source has
+    no resident DSP service. Historical bindings without this field stay valid.
+    """
+    source = Path(build) / 'source/resident_engines.c'
+    if not source.exists():
+        return 0
+    recorded = json.loads((Path(build) / 'proofs.json').read_text())['sources']
+    for name in ('resident_engines.c', 'dsp_ledger.h'):
+        key = 'sdk/machines/octatrack/module-adapters/resident-runtime/' + name
+        if recorded.get(key) != hashlib.sha256((source.parent / name).read_bytes()).hexdigest():
+            raise ValueError('Compiled DSP service source differs from its build proof: ' + name)
+    ledger = (source.parent / 'dsp_ledger.h').read_text()
+    constants = {name: int(value) for name, value in re.findall(
+        r'^#define\s+(MW_DSP_[A-Z0-9_]+)\s+(\d+)u?\b', ledger, re.M)}
+    match = re.search(r'unsigned\s+modwerk_machine_dsp_features\(void\)\s*'
+                      r'\{\s*return\s+([^;{}]+);\s*\}', source.read_text())
+    if not match:
+        raise ValueError('Review the compiled Base DSP service declaration before binding it.')
+    mask = 0
+    for term in match.group(1).split('|'):
+        term = term.strip()
+        if term not in constants:
+            raise ValueError('Unknown compiled Base DSP service: ' + term)
+        mask |= constants[term]
+    if mask & ~constants.get('MW_DSP_FEATURES', 0):
+        raise ValueError('Compiled Base DSP service lies outside its own ledger.')
+    return mask
+
+
 def bind(build, policies):
     """The binding of one base build_core.py made (its directory), with the trust rows it was built with."""
     build = Path(build)
@@ -64,14 +98,17 @@ def bind(build, policies):
     if any(name not in stock_hook_controllers.UNITS and name not in MACHINES for name in controllers):
         raise ValueError('A trust row names a module that is not a controller.')
     return dict(schema=1, identity=bound['identity'], arena=bound['arena'], pool=bound['pool'],
-                symbols={name: symbols[name] for name in SYMBOLS if name in symbols}, controllers=controllers)
+                symbols={name: symbols[name] for name in SYMBOLS if name in symbols}, controllers=controllers,
+                dspFeatures=provided_dsp_features(build))
 
 
 def load(binding=None):
     binding = json.loads(BINDING.read_text()) if binding is None else binding
     if (binding.get('schema') != 1 or not isinstance(binding.get('identity'), str) or len(binding['identity']) != 64
             or any(type(binding.get(key)) is not int for key in ('arena', 'pool'))
-            or not isinstance(binding.get('symbols'), dict) or not isinstance(binding.get('controllers'), dict)):
+            or not isinstance(binding.get('symbols'), dict) or not isinstance(binding.get('controllers'), dict)
+            or ('dspFeatures' in binding and (type(binding['dspFeatures']) is not int
+                                            or not 0 <= binding['dspFeatures'] <= 65535))):
         raise ValueError('sdk/machines/octatrack/base-binding.json is malformed: rebuild the base.')
     return binding
 

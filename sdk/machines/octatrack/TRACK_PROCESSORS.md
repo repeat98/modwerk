@@ -104,6 +104,13 @@ CPU/load, persistence, normal-set and longer Undo qualification remain pending;
 an older1,562-second Undo failure is unresolved. Keep the proposal a draft.
 The later module release needs its own PR; the owner has approved its library copy.
 
+The generated Base binding records dspFeatures from the exact compiled
+resident_engines.c and DSP ledger, after checking both against the build proof.
+The browser uses the published binding's mask, preserving legacy key-bus-only
+bindings while accepting returning-service requirements when that Base is
+published. Draft source alone never advertises a service on an older download.
+An unknown service expression or changed compiled input refuses metadata binding.
+
 ## Review follow-up — 28 November 2026
 
 Board claims are linked to PR2248: dsp-region octatrack/returning-processor-chain reserves the existing DSP

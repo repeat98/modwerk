@@ -52,7 +52,7 @@ export class BaseUpdateRequired extends ModuleSetError {
 }
 /** A key bus reader on a base that may not have the key bus: the same guided update, saying why. */
 export class KeyBusBaseRequired extends BaseUpdateRequired {
-  constructor(module: string) { super(`${module} needs a Modwerk base with the key bus. Update to the latest Modwerk base, then sync again. Your selected modules will stay here.`) }
+  constructor(module: string, service = 'the key bus') { super(`${module} needs a Modwerk base with ${service}. Update to the latest Modwerk base, then sync again. Your selected modules will stay here.`) }
 }
 /** USB Audio is part of the base: its layout sets the USB descriptors, so another layout is another base, sent over
  * USB like any base update (base-variants.ts). The set's modules stay; nothing is synced until it runs. */
@@ -113,11 +113,15 @@ const bounded = (n: unknown, max: number) => typeof n === 'number' && Number.isI
 /** Header bytes by ABI (sdk/runtime/loader/README.md): ABI 9 adds requires u16, the claim count u8 and the hook-entry count
  * u8; ABI 10 is ABI 9's header, with engines for the base's hook sites. */
 const HEADERS: Record<number, number> = { 6: 68, 7: 72, 8: 76, 9: 80, 10: 80 }
-/** The base DSP features an ABI 9 package may require: the key bus (dsp-sites.json), which only a base built with the
- * resident engines on demand provides (resident_engines.c's modwerk_machine_dsp_features). An ABI 9 loader alone does
- * not say so, and the capability record has no bit for it, so the site offers a reader only to the bases it knows have
- * the bus (KEY_BUS_BASES); the loader would refuse it elsewhere with a bare RUNTIME_CONFLICT. */
-export const BASE_DSP_FEATURES: number = dspSites.features.find(feature => feature.name === 'keybus')?.bit ?? 0
+/** Service requirements belong to the published Base, which can differ from the
+ * cumulative source draft. New bindings record the exact compiled service mask;
+ * historical published bindings provide the key bus. Never expose a draft-only
+ * service merely because it appears in the current source registry. */
+const KEY_BUS_FEATURE = dspSites.features.find(feature => feature.name === 'keybus')?.bit ?? 0
+export const BASE_DSP_FEATURES: number = (baseBinding as { dspFeatures?: number }).dspFeatures ?? KEY_BUS_FEATURE
+const knownDspFeatures = dspSites.features.reduce((mask, feature) => mask | feature.bit, 0)
+if (!Number.isInteger(BASE_DSP_FEATURES) || BASE_DSP_FEATURES < 0 || BASE_DSP_FEATURES > 65535 || (BASE_DSP_FEATURES & ~knownDspFeatures))
+  throw new Error('The published Base service binding differs from its DSP registry. Regenerate and review the Base binding.')
 /** The bases with the key bus: the published one in each of its USB Audio layouts, built with the beta flags
  * (scripts/octatrack-base.mjs, --resident-on-demand); the layouts differ only in their USB descriptors. */
 export const KEY_BUS_BASES: readonly string[] = [...new Set([baseBinding.identity,
@@ -403,7 +407,8 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
       const { abi, features, sites, copies, requires } = requirements(entry, step.group)
       if ((!capabilities && (abi > 6 || features)) || capabilities && (abi > capabilities.abi || (features & capabilities.features) !== features || sites > capabilities.maxSites || copies > capabilities.maxCopies))
         throw new BaseUpdateRequired()
-      if ((requires & BASE_DSP_FEATURES) && !(base && KEY_BUS_BASES.includes(base))) throw new KeyBusBaseRequired(step.name)
+      if ((requires & BASE_DSP_FEATURES) && !(base && KEY_BUS_BASES.includes(base)))
+        throw new KeyBusBaseRequired(step.name, requires & ~KEY_BUS_FEATURE ? 'the required audio processing' : 'the key bus')
     }
     if (steps.length > 1 && !(capabilities && capabilities.features & RuntimeFeature.moduleSets)) throw new BaseUpdateRequired()
   }
