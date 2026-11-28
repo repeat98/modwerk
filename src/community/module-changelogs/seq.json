@@ -7,9 +7,7 @@
       "Lock rhythms for page-1 parameters, and a Harmony page for PTCH and NOTE: scale, root, phrase and jump; voices and chords on MIDI tracks.",
       "[YES] writes sample trigs, note trigs and parameter locks into the pattern; [FUNC] + [BANK] clears them.",
       "Settings are saved per project in seq.work, the same file octabam's SEQ writes.",
-      "Closing SEQ after using CUE clears stale references to SEQ from the stock key and encoder cache so Modwerk can unload it.",
-      "Documentation: emulator screenshots for rhythm, Harmony (audio and MIDI) and the clear menu; expanded usage steps and a longer module page, aligned with the octabam SEQ guide. Firmware unchanged.",
-      "Media only: new library thumbnail (TRIG / PLCK lane bars) and matching signal color for cards and OG previews."
+      "Closing SEQ after using CUE clears stale references to SEQ from the stock key and encoder cache so Modwerk can unload it."
     ]
   }
 ]
