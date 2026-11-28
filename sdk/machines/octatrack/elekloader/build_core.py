@@ -21,7 +21,7 @@ sys.path.append(str(APP / 'sdk'))  # firmware_codec
 import firmware_codec  # noqa: E402
 _spec = importlib.util.spec_from_file_location('modwerk_usb_post', HERE / 'usb_post.py')
 usb_post = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(usb_post)
-VERSION = '0.3.1-modwerk-dev.1'
+VERSION = '1.0.0-modwerk-dev.1'
 # The update name the resident bootloader shows while flashing (the ELEK header's ten-character field, right-justified);
 # src/engine/elekloader/octatrack-base.ts writes the same.
 UPDATE_NAME = 'MODWERK'
@@ -97,36 +97,29 @@ def check_saved_set_storage(mapping, layout):
                 snapshotCapacity=RUNTIME_POOL_BYTES + 0x1000, initializedAtBoot=True, hardware=False)
 
 
-# core-ot.s's .bss clear, through the uncached alias, steps over the logger's 8192 retained bytes (retained.s).
-BOOT_CLEAR_SKIP = '''3:      cmpa.l  #modwerk_retained_start + UNCACHED, %a1
-        bne.s   5f
-        lea     8192(%a1), %a1
-        sub.l   #2048, %d0
-        beq.s   4f
-5:      clr.l   (%a1)+'''
-# core-ot.s's word copy of .run: MAIN stores .run packed (run_pack.py), and run_unpack.s decodes it in its place.
-BOOT_RUN_COPY = '''        lea     __run_load, %a0         | where the RAM image was unpacked
-        movea.l #__run_start + UNCACHED, %a1
-        move.l  #__run_words, %d0
-        beq.s   2f                      | nothing to copy (core alone)
-1:      move.l  (%a0)+, (%a1)+
-        subq.l  #1, %d0
-        bne.s   1b'''
-# core-ot.s once .run is unpacked and .bss cleared: flash.c's digest of the packed .run, which stock's start then
-# overwrites. d1 is the only register the C call may change that .boot does not save.
-BOOT_FLASH_SEAM = '        move.b  %d0, core_up'
-BOOT_FLASH_SNAPSHOT = BOOT_FLASH_SEAM + '''
-        move.l  %d1, -(%sp)
-        jsr     modwerk_flash_snapshot  | flash.c: the packed .run's digest, for the USB base update
-        move.l  (%sp)+, %d1'''
+# The core's build switches (core/core.s): the base always places .run packed (run_pack.py, run_unpack.s), skips the
+# logger's 8192 retained bytes (retained.s) in the boot's .bss clear, and takes flash.c's boot snapshot of the packed
+# .run; MW_PREBOOT is added with --resident-stock-hooks. Each switch's code carries one marker line.
+CORE_SWITCHES = ('MW_RUN_PACKED', 'MW_RETAINED_SKIP', 'MW_FLASH_SNAPSHOT')
+CORE_SEAMS = {'MW_PREBOOT': 'preboot', 'MW_RUN_PACKED': 'run-packed', 'MW_RETAINED_SKIP': 'retained-skip',
+              'MW_FLASH_SNAPSHOT': 'flash-snapshot'}
+BOOT_CLEAR_START = 'movea.l #__bss_start + UNCACHED, %a0'
 
 
-def check_zero_state(elf, moved, layout, mapping, bootstrap):
+def core_switch(recipe, bootstrap, name):
+    """Turn on one of the core's build switches, after checking its code is there exactly once."""
+    if bootstrap.count('.ifdef  %s\n| MODWERK-SEAM: %s\n' % (name, CORE_SEAMS[name])) != 1:
+        raise ValueError('The core has no single %s switch; review core/core.s.' % name)
+    recipe.setdefault('defsym', {})[name] = '1'
+
+
+def check_zero_state(elf, moved, layout, mapping, bootstrap, switches):
     """Prove every object zero_state moved out of .data lies, in the final link, inside the uncached boot
     clear and outside its retained skip. Locals are found by their unit's FILE symbol, globals by name."""
     bss, base = layout.get('bss'), layout.get('sections', {}).get('core .bss')
     keep = mapping.get('modwerk_retained_start'), mapping.get('modwerk_retained_end')
-    if (bootstrap.count('movea.l #__bss_start + UNCACHED, %a1') != 1 or bootstrap.count(BOOT_CLEAR_SKIP) != 1 or
+    if (bootstrap.count(BOOT_CLEAR_START) != 1 or bootstrap.count('| MODWERK-SEAM: retained-skip\n') != 1 or
+            switches.get('MW_RETAINED_SKIP') != '1' or
             not isinstance(bss, list) or len(bss) != 2 or
             any(type(v) is not int for v in (*bss, base, *keep, mapping.get('__bss_words'))) or
             mapping.get('__bss_start') != bss[0] or bss[0] + 4 * mapping['__bss_words'] != bss[1] or
@@ -323,7 +316,7 @@ FX_IDS = 128
 VALIDATOR_CLAMPS = (0x400023b6, 0x400023bc, 0x400023de, 0x400023e4)  # the Part validator's moveq #31, FX1 then FX2
 FX_WORDS = (FX_IDS + 31) // 32
 # Modules installed at once and their memory (loader.h; owner, 12 October 2026: up to 128 modules). About 5 KB a
-# module today; the pool is taken from sample memory at boot (core-ot's arena pages), and modset.c keeps a copy of
+# module today; the pool is taken from sample memory at boot (the core's arena pages), and modset.c keeps a copy of
 # the set as staged beside it.
 RUNTIME_MODULES = 128
 RUNTIME_POOL_BYTES = 768 * 1024
@@ -1704,22 +1697,13 @@ def main():
         at = guard['address'] - device.main_load
         if at < 0 or sha(image[at:at+guard['length']]) != guard['sha256']:
             raise ValueError('Logger stock ABI guard failed: ' + key)
-    original_core = HERE / 'core-ot'  # the Octatrack core's boot copier, hook bus and gate, and its recipe
+    original_core = HERE / 'core'  # Modwerk's Octatrack core: boot copier, hook bus and draw gate, and its recipe
     recipe = json.loads((original_core / 'mod.json').read_text())
-    for name in ('core-ot.s', 'bus.s', 'gate.s'):
+    for name in ('core.s', 'bus.s', 'drawgate.s'):
         shutil.copyfile(original_core / name, source / name)
-    bootstrap = (source / 'core-ot.s').read_text()
-    marker = '3:      clr.l   (%a1)+'
-    if bootstrap.count(marker) != 1:
-        raise ValueError('Pinned boot clear seam changed; review before porting.')
-    bootstrap = bootstrap.replace(marker, BOOT_CLEAR_SKIP)
-    if bootstrap.count(BOOT_RUN_COPY) != 1:
-        raise ValueError('Pinned .run copy seam changed; review run_unpack.s before porting.')
-    bootstrap = bootstrap.replace(BOOT_RUN_COPY, '        jsr     mw_run_unpack           | .run is stored packed (run_unpack.s)')
-    if bootstrap.count(BOOT_FLASH_SEAM) != 1:
-        raise ValueError('Pinned core_up seam changed; review flash.c\'s boot snapshot before porting.')
-    bootstrap = bootstrap.replace(BOOT_FLASH_SEAM, BOOT_FLASH_SNAPSHOT)
-    (source / 'core-ot.s').write_text(bootstrap)
+    bootstrap = (source / 'core.s').read_text()
+    for name in CORE_SWITCHES:
+        core_switch(recipe, bootstrap, name)
     for p in logger.iterdir():  # frame_guard.c is card builds' (the base's own is machine_registry.c's)
         if p.suffix in ('.c', '.h') and p.name not in ('identity.c', 'frame_guard.c'):
             shutil.copyfile(p, source / p.name)
@@ -1736,7 +1720,7 @@ def main():
         raise ValueError('The logger read-back buffer changed; review the .bss edit.')
     adapter = adapter.replace('static uint8_t verify[512] = {0};', 'static uint8_t verify[512];')
     (source/'stock_140c.c').write_text(adapter)
-    # The recorder's zeroed buffers to .bss, which core-ot.s clears at boot: 43 KB of zeros out of the image, which a
+    # The recorder's zeroed buffers to .bss, which core.s clears at boot: 43 KB of zeros out of the image, which a
     # RAM boot must keep under 1.25 MiB (BOOT_IMAGE_BYTES), as selection.c's paste buffer (DSP_EDITS).
     recorder = (source/'octamod_log_firmware.c').read_text()
     zeroed = (('previous = {0}, snapshot = {0};', 'previous, snapshot;'), ('__attribute__((aligned(512))) = {0};', '__attribute__((aligned(512)));'))
@@ -1959,11 +1943,7 @@ def main():
             extra = usb_input.mailbox_initialization(image, device, dsp) if usb_input else None
             resident_boot_prepared = resident_boot_helper.prepare(image, device, dsp, dsp_layout, extra=extra)
             (source / 'resident-dsp-boot.s').write_text(resident_boot_prepared['assembly'])
-            bootstrap = (source / 'core-ot.s').read_text()
-            seam = '        jsr     BOOT_CONTINUE'
-            if bootstrap.count(seam) != 1:
-                raise ValueError('Pinned pre-DSP-boot seam changed; review the private resident port.')
-            (source / 'core-ot.s').write_text(bootstrap.replace(seam, '        jsr     mw_resident_dsp_boot\n' + seam))
+            core_switch(recipe, (source / 'core.s').read_text(), 'MW_PREBOOT')
             (source / 'resident-dsp-driver.c').write_text(resident_driver.controller_c(resident_boot_prepared))
             dsp_sites += resident_boot_prepared['sites']
         if args.resident_on_demand:
@@ -2080,7 +2060,7 @@ def main():
             policies = args.controller_policies.resolve()
             inputs[policies.relative_to(APP).as_posix() if policies.is_relative_to(APP) else 'private:controller-policies'] = \
                 sha(policies.read_bytes())
-    inputs.update({'elekloader/' + p.name: sha(p.read_bytes()) for p in original_core.iterdir() if p.is_file()})
+    inputs.update({p.relative_to(APP).as_posix(): sha(p.read_bytes()) for p in original_core.iterdir() if p.is_file()})
     artwork = APP / 'sdk/runtime/startup/artwork.json'
     inputs['sdk/runtime/startup/artwork.json'] = sha(artwork.read_bytes())
     inputs['sdk/runtime/startup/build.py'] = sha((artwork.parent/'build.py').read_bytes())
@@ -2214,7 +2194,7 @@ modwerk_retained_end:
         path = source / name
         if path.exists():  # the saved-set reader exists only with its option
             path.write_text('#pragma GCC optimize ("Os")\n' + path.read_text())
-    recipe.update(version=VERSION, title='Modwerk base prototype', author='irpina; Modwerk contributors',
+    recipe.update(version=VERSION, title='Modwerk base prototype', author='Modwerk contributors',
                   license='GPL-3.0-or-later',
                   description='Private core-only Elekloader base with logger/startup, a USB vendor interface and a runtime module loader (hooks and stock-code sites); NOT a flash candidate.')
     recipe['sources'] += [p.name for p in sorted(source.glob('*.c'))] + ['hooks.s', 'retained.s', 'usb_base.s', 'boot.s', 'boot_anim.s', 'crash.s', 'run_unpack.s'] + (
@@ -2333,7 +2313,7 @@ modwerk_retained_end:
                 raise ValueError('Payload %s P:%#x is not the dead vectors the park replaces.' % (tag, lo))
             recipe['sites'].append(dict(addr=hex(addr), stock=image[at:at+3*len(words)].hex(), op='bytes',
                                         new=b''.join(w.to_bytes(3, 'little') for w in words).hex(), kind='data'))
-    # The machine-neutral loader's events (sdk/runtime/loader/loader.h), from core-ot's bus.
+    # The machine-neutral loader's events (sdk/runtime/loader/loader.h), from the core's bus (core/bus.s).
     recipe.setdefault('subscribe', []).extend(dict(event='ev_' + e, fn='modwerk_runtime_' + e, order=90)
                                               for e in ('tick', 'draw', 'key', 'enc'))
     if args.sample_editor:
@@ -2518,7 +2498,8 @@ modwerk_retained_end:
     if args.resident_stock_hooks:
         from elekloader.sdk.elf import Elf
         zero_proof = check_zero_state(Elf.load(str(Path(path).parent / (recipe['id'] + '.work') / (recipe['id'] + '.o'))),
-                                      zero_state.MOVED, manifest['link']['layout'], mapping, (source / 'core-ot.s').read_text())
+                                      zero_state.MOVED, manifest['link']['layout'], mapping, (source / 'core.s').read_text(),
+                                      recipe.get('defsym', {}))
     if (int.from_bytes(main_out[:4], 'big') != OS_FIRST or len(main_out) > BOOT_IMAGE_BYTES or
             main_out[OS_VEROFF:OS_VEROFF+2] != image[OS_VEROFF:OS_VEROFF+2]):
         raise ValueError('The built MAIN image cannot be booted from RAM.')

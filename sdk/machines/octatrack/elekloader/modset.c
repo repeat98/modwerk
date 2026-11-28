@@ -48,6 +48,11 @@ void modwerk_diag_refused(uint32_t module, uint32_t refusal, uint32_t used, uint
 extern const struct mu_backend modwerk_runtime_backend;
 struct file_object { uint32_t word[6]; };
 #ifdef MODWERK_HOST
+/* Standalone card fixtures model no completed whole-set trial. A linked real
+ * loader or explicit readiness model overrides this conservative host default. */
+#ifndef MODWERK_TEST_TRIAL_READY_IMPLEMENTED
+__attribute__((weak)) int modwerk_runtime_set_trial_ready(void) { return 0; }
+#endif
 uint8_t modwerk_test_keys[8]; /* the panel's held-key rows */
 int modwerk_test_gate = 1;
 uint32_t modwerk_test_ticks;
