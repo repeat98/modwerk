@@ -1,12 +1,14 @@
 # Digitone SDK
 
-**Platform:** elemod · **OS:** 1.43 and 1.44 (mk1 and Digitone Keys share one file) · **Core:** 5.4 (elekloader's; mods use interface 2.2) · **Modules:** [`sdk/digitone/modules/`](../../digitone/modules/) · **Status:** preview
+**Platform:** elemod · **OS:** 1.43 and 1.44 (mk1 and Digitone Keys share one file) · **Core:** Modwerk base 3.0 (interface 2.2); site builds still take elekloader's 5.4 · **Modules:** [`sdk/digitone/modules/`](../../digitone/modules/) · **Status:** preview
 
 Digitone mods are linkable objects. One core patches the OS once at a few shared sites and calls every subscribed mod's handler, in order, from tables the linker builds. So any set of mods that fits the budgets combines. Modwerk builds them with its own TypeScript linker and OS writer, interoperable with the `.elemod` format. Building firmware in Modwerk is in development, so the machine is in preview.
 
 ## Modwerk stack
 
-Today mods reach the unit as a full OS file sent with Transfer. The Digitone is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): its core grows into a Modwerk base with a hook registry, a USB link, the runtime loader's ColdFire glue, base updates over USB, the MCP's device tools and the machine page. None of it is started. Until it ships this guide's core is what builds, a mod that needs a stock site other mods will want waits for the base's hook, and the full OS file sent with Transfer stays the fallback after it.
+Today mods reach the unit as a full OS file sent with Transfer. The Digitone is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): a Modwerk base with a hook registry, a USB link, the runtime loader's ColdFire glue, base updates over USB, the MCP's device tools and the machine page.
+
+**The base** is Modwerk's own, version 3.0 for OS 1.43 and 1.44, in [base/](base/README.md): the October core (`sdk/elemod/core/`) grown to the whole of interface 2.2, with DTIM0, the twelve hooks, the three parameter slots, the mod pages, one project data list shared with every writer, the Mod Menu and `core_audio`. `npm run elemod:base -- digitone` builds it from source and checks it against [base-binding.json](base-binding.json); its hooks are in [events.json](events.json). KitBank links on it on OS 1.44, and the base alone on OS 1.43 (`npm run digi:link-all -- --machine digitone --core <base>`). It has not run on a unit yet, so site builds still link the catalogue's cores until a tester has run the base; then the site switches over. The USB link, loader glue and machine page are not started; the full OS file sent with Transfer stays the fallback after them.
 
 ## Create a mod
 
@@ -47,7 +49,7 @@ Claim named resources (a machine slot, a SETTINGS row, a SysEx id, a +Drive path
 
 ## Toolchain
 
-m68k-elf GCC and binutils for ColdFire, and elekloader's builder, which Modwerk runs in the browser for the launch ([vendor/elekloader](../../../vendor/elekloader/README.md)). Modwerk's own linker, OS writer and core are frozen until work resumes; the core's contract is [core/interface.json](../../digitone/core/interface.json), and `npm run modules:check` rejects modules that use anything it does not provide.
+m68k-elf GCC and binutils for ColdFire, and elekloader's builder, which Modwerk runs in the browser for the launch ([vendor/elekloader](../../../vendor/elekloader/README.md)). Modwerk's own core is the base above; the core's contract is [core/interface.json](../../digitone/core/interface.json), and `npm run modules:check` rejects modules that use anything it does not provide.
 
 ## Flash and recover
 

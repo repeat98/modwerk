@@ -246,8 +246,8 @@
         {
           "name": "Shared mod memory",
           "unit": "bytes",
-          "value": 1310720,
-          "note": "Core 5.4’s area, shared by the core (about 110 KB) and every mod: the builder’s ram_area for core-dn1-5.4. Sets that build on core 2.0a or 2.2 keep their 131,072 bytes."
+          "value": 131072,
+          "note": "0x47BE0000–0x47C00000, shared by the core and every mod: Modwerk’s Digitone base (version 3.0, about 8 KB) and interface 2.2’s area. While site builds still take the catalogue’s cores, a set built on core-dn1 4.0 or newer gets that core’s 1.25 MiB (about 110 KB of it the core’s own)."
         },
         {
           "name": "Parameter slots",
