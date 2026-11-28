@@ -384,7 +384,8 @@
     {
      "event": "ev_fm_transport_stop",
      "fn": "mw_fm_transport_stop",
-     "order": 40
+     "order": 40,
+     "replaces": "po_stop"
     },
     {
      "event": "ev_fm_sequencer_retrig",
@@ -401,12 +402,14 @@
     {
      "event": "ev_midi_chromatic_on_gate",
      "fn": "mw_midi_chromatic_on_gate",
-     "order": 40
+     "order": 40,
+     "replaces": "po_mgate"
     },
     {
      "event": "ev_midi_chromatic_off_gate",
      "fn": "mw_midi_chromatic_off_gate",
-     "order": 40
+     "order": 40,
+     "replaces": "po_mogate"
     },
     {
      "event": "ev_midi_live_record_event",

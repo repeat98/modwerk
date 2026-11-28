@@ -271,13 +271,6 @@
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 11632,
-     "length": 12,
-     "address": 1073983040,
-     "sha256": "3e401f14e70d67d18fcec37faf084580fd6bfa25426424788fe2828eb89f5c53",
-     "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
-    },
-    {
      "offset": 11996,
      "length": 12,
      "address": 1074060574,
