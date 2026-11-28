@@ -1,8 +1,8 @@
 # Syntakt OS 1.40 / 1.42 research report
 
-Static research on the two Syntakt OS files the owner keeps outside the repository, done for the Syntakt core (step 4 of [Add a machine](ADD_A_MACHINE.md)). It records what the images show, what public research adds and what stays unknown, and it ends with the integration plan the core package in `sdk/syntakt/core/` follows. Everything here is static analysis: it never proves runtime behaviour. Hardware statements come only from named public reports; nothing was run on a unit for this report.
+Static research on the two Syntakt OS files the owner keeps outside the repository, done for the Syntakt core (step 4 of [Add a machine](ADD_A_MACHINE.md)). It records what the images show, what public research adds and what stays unknown, and it ends with the integration plan the core package in `sdk/syntakt/core/` follows. The original survey is static analysis. The dated §4.5 update adds bounded native emulator replay and attributed retained research, with explicit evidence tiers; it does not qualify a Modwerk sequencer on hardware. No unit was operated for this contribution.
 
-Tags: **[OBS]** seen in the image, **[INF]** inference from what was seen, **[PUB]** public research, **[UNK]** unknown. Addresses, lengths and SHA-256 guards only; no firmware bytes, code or tables.
+Tags: **[OBS]** seen in the image, **[INF]** inference from what was seen, **[PUB]** public research, **[UNK]** unknown; **[EMU]** bounded emulator observation in the dated update. Addresses, lengths and SHA-256 guards only; no firmware bytes, code or tables.
 
 ## 0. Inputs and tooling ledger
 
@@ -23,35 +23,10 @@ Public research consulted [PUB]: elektron-firmware-tool (container and transport
 
 ## 1. Findings ledger
 
-Evidence classes: *image* (bytes of the named section), *disasm* (Ghidra export of the named image), *boot window* (MC68020 import of the reset region), *public*. Search boundary says what was scanned to make a negative claim.
-
-| # | Claim | Evidence | Class | Boundary | Confidence |
-| --- | --- | --- | --- | --- | --- |
-| L1 | Both files are `ELE3` SysEx containers, device byte 0x16, 128-byte data messages carrying 101 decoded bytes each | repo reader `readEle3Syx` on both files | image | whole file | certain [OBS] |
-| L2 | Section roles per the table in §2 | headers, strings, disassembly of each section | image/disasm | every section | high; roles of 1, 8 are [INF] from structure |
-| L3 | Main OS loads at 0x40000400; the first longword is the reset entry 0x400004e8; 0x40000410 is the PIT0/`trap #0` context-switch handler | boot window | boot window | reset chain | certain [OBS] |
-| L4 | Reset: SP = 0x48000000; VBR = 0x40000000; vector table 0x40000000–0x400003ff filled with a default handler then selected vectors; SRAM 0x80000000–0x8000ffff fully written from the image (two copies, zero fill of the rest); BSS cleared 0x4033a000–0x45566490 (1.42) / 0x40322000–0x4554da50 (1.40); data cache enabled copy-back over 0x40000000–0x47ffffff through ACR0; no ACR1–3, no MMU base register written | boot window, both releases | boot window | reset chain and the three `movec` sites | certain [OBS]; cache-mode decoding of the control values is [INF] |
-| L5 | Heap: one buddy allocator, 16 MB pool 0x444e48c0–0x454e48c0 (1.42) / 0x444cbe80–0x454cbe80 (1.40), descriptor in initialised data (0x402d5324 / 0x402bddf0), 20 levels of 16-byte units; allocate 0x401036d0 / 0x400f6480, free 0x401038d6 / 0x400f6686 | disasm + data words | disasm | callers of the two most-called thunks | high [OBS] |
-| L6 | No immediate, absolute operand or initialised-data word reaches [0x45566490, 0x4d570000) except the initial SP and 7 halt-path stores to 0x48000000 | three scans: decoded immediates and operands; raw even-offset words with a plausible opcode before them; 4-aligned data words. Floats and ASCII filtered | disasm + raw | whole main image, both releases | high for what is decodable; undecoded EMAC holes are the gap |
-| L7 | Everything used above 0x48000000 is a fixed link-time arena: audio/DSP rings 0x4d570000–0x4d608000, serial rings and USB arena to 0x4d62f080, 2 MB OS-upgrade receive buffer to 0x4d82f080, SD bounce buffers to 0x4d84f2c0, 32 MB second-CPU sample packet to 0x4f84f2c1, second-CPU firmware staging to 0x4f8af2c9, FX/delay memory 0x4fc00000–0x50000000 (index masked to exactly 4 MB). 1.40: every arena 0x20000 lower, FX window identical | disasm, hand-decoded holes for the FX DMA | disasm | immediates, operands, data words | high [OBS]; purposes of the rings are [INF] |
-| L8 | CPU1 has no sample pool in SDRAM: sample slots are 64 × 512 KB on the eMMC, sample bytes are heap objects (≤ 0x80000 bytes each) serialised into the 32 MB packet for the second CPU | disasm of the sample functions (0x401133ce, 0x40112376, 0x40082334) | disasm | sample-related callers | high [OBS]; "the playing sample RAM is on CPU2" is [INF] |
-| L9 | Hardware observation: with samples loaded, the OS writes about a quarter of the 4 KB pages between 0x45570000 and 0x47eff000 (Synthack-OS 1.41, diagnostic build on the author's unit, issue #4) | public | public | — | reported, not reproduced here |
-| L10 | The mechanism behind L9 is not visible statically: no constant, no page-count or page-number constant, no descriptor | scans in L6 plus page-number candidates (base>>12, end>>12, counts) | disasm | whole main image | negative result; the page-based writer stays [UNK] (eDMA channel 47's buffers were not found either) |
-| L11 | SRAM [0x8000733c, 0x80008000) (3,268 bytes) has no reference in either release; the only nearby immediates are bound checks against 0x8000733c, 0x80007fff and 0x80008000; its boot-time content is zero; the two odd raw words that fell in the range are instruction fragments | disasm + raw + boot window | disasm | whole main image, both releases | high [OBS] |
-| L12 | SRAM [0x8000e9b0, 0x80010000) is the top of a stock audio buffer (stride constants, runs to the SRAM end); the rest of SRAM is initialised and referenced | disasm (0x40097766) | disasm | SRAM references | high [OBS] |
-| L13 | Image tail fill before the SRAM-init data: [0x40339730, 0x4033a000) = 2,256 bytes (1.42), [0x40321718, 0x40322000) = 2,280 bytes (1.40); zero, unreferenced, inside the BSS-clear range | raw + disasm | disasm | whole main image | high [OBS] |
-| L14 | Section 2 is the bootstrap itself (startup menu, OS receive, bootstrap upgrader), stored in host SPI flash 0x40000–0x7ffff; it reads the staged container from flash 0x80000 (table at 0x80020). Its version word is 4.00 in both releases, and it upgrades only when the staged version is higher, so no bootstrap upgrade happens between 1.40 and 1.42 | disasm of section 2 | disasm | all five section lookups in section 2 | high [OBS]; the flash geometry beyond that is [UNK] |
-| L15 | Section 4 is the RAM stage that tests DRAM, stages the packed main OS at 0x40200000 and depacks it in place to 0x40000400, then jumps through the image's first longword; its stored form has an 8-byte header so its code sits at 0x80000408 | disasm of section 4 | disasm | boot flow | high [OBS] |
-| L16 | Section 8 (new in 1.42) is firmware for a Cortex-M UI/USB MCU (i.MX RT image vector table at +0x1000, vector table at +0x2000, task strings); the main OS flashes it to that MCU in 101-byte frames (0x400bdfba). The bootstrap never touches it | image + disasm | disasm | section 8 and every section-8 lookup | high [OBS]; "performed after the first restart" is Elektron's note [PUB] |
-| L17 | Section 7 is the second ColdFire's OS: byte-identical in both releases, load base 0x40000400, entry 0x40001070, its own 128 MB SDRAM (same numeric map), 64 MB uploaded page area 0x4004f750–0x4404f750, BSS to 0x4404f980, SP 0x48000000, render ISR on vector 96 driven by PIT0, 1,024 bytes of output per block written to the link window by its eDMA channel 47 | disasm of section 7 | disasm | whole image (95 EMAC holes) | high [OBS]; period and parameter layout [UNK] |
-| L18 | Section 6 is the second CPU's first-stage loader: brings up PLL, crossbar, DDR2 and DSPI, pulls an `0xAA`/length/payload stream from CPU1 into 0x40000400 and jumps to section 7 | disasm of section 6 | disasm | whole stub | high [OBS] |
-| L19 | Link window: CPU1 FlexBus CS0 at 0x10000000 (128 KB) ↔ CPU2 CS0 at 0x0; +0..+0x1af host→CPU2 parameter block every block, +0x1b0..+0x5af render output, +0x800.. init-time page staging, +8 status | disasm both sides | disasm | both link state machines | high [OBS]; that both windows are the same memory is [INF] |
-| L20 | Timers: PIT0 10 ms scheduler tick (vector 205), PIT1 1 µs busy-wait (no IRQ), PIT2 8.33 ms tick (vector 207), PIT3 33/67 ms UI tick (vector 208), DTIM1 µs timeout (vector 97), DTIM3 33.3 ms tick (vector 99), DTIM0/DTIM2 read as free-running counters. No timer is unclaimed | disasm | disasm | every timer MMIO page | high [OBS]; purposes [INF] |
-| L21 | eDMA channels 15, 29, 30, 34–37, 42, 47, 52, 54, 59 are programmed, identically in both releases; all others untouched | disasm | disasm | every TCD write | high [OBS] |
-| L22 | Installed vectors: {0, 24, 32, 64, 66, 67, 68, 97, 99, 108, 121, 128, 134, 149, 154, 155, 156, 157, 172, 174, 180, 181, 191, 192, 205, 207, 208, 209, 221, 222, 223}; everything else keeps the default fault handler | disasm | disasm | every vector-table write by code | high [OBS]; computed-index writes would be missed |
-| L23 | SysEx: after `F0 00 20 3C`, a 24-slot product registry; for product byte 0x16 stock handles ids 0x50–0x5f, 0x60–0x6f, 0x7e, 0x7f; every other id is a no-op; product bytes 1–3, 5–0xf, 0x11–0x15 are unregistered | disasm (0x40104cae) | disasm | dispatcher and tables | high [OBS]; host-tool use of free ids [UNK] |
-| L24 | Parameter table: 486 rows × 52 bytes, ids up to 0x2df; CC numbers in use 3–5, 7, 9–10, 13–31, 51–57, 65, 70–93, 102–109, 111–119; 1.40→1.42 changes one row (FX-track FENR gained CC 93) | disasm + data | disasm | the table | high [OBS] |
-| L25 | Cross-release: 9,477 functions in 1.42; 67 unchanged in place, 7,948 moved, 956 modified (760 of them only by relative displacements), 506 new, 102 removed; code grew 82,078 bytes | function alignment by masked hash | disasm | all functions | high; individual pairings among identical tiny functions are arbitrary |
+The original static findings L1 onward are retained verbatim in the
+[dated ledger](verification/2026-11-27-syntakt-static-findings-ledger.md).
+The dated update in §4.5 adds bounded OS 1.42 sequencer evidence and keeps
+static observations, emulator results and hardware reports distinct.
 
 ## 2. Container and image inventory (A1)
 
@@ -96,6 +71,8 @@ Boot chain [OBS, order partly INF]: mask ROM → bootstrap (section 2 image in h
 DRAM size and base: the OS caches 0x40000000–0x47ffffff and places arenas up to 0x50000000, so it configures nothing itself (no DDR-controller access in the main OS; the bootstrap chain does it) and uses a 256 MB window [INF]. Section 4 tests only 0x40000000–0x44000000 [OBS].
 
 ## 3. Memory ownership map and verdicts (A3)
+
+**27 November update:** [#1411 reports failed retention](https://github.com/repeat98/modwerk/pull/1411#issuecomment-7190866875) across the proposed 128 KiB stack gap: BOOT L0 A0, RUN L32768 A0, both DDR views agreeing. The writer remains unknown. The static candidates below are not allocations; this gap is not qualified memory for a resident sequencer provider.
 
 Proof standard: *static* (no absolute reference, immediate, literal-pool entry, computed base plus offset, or table entry reaches the range in either release) **and** *allocator* (every allocator, pool, ring and DMA buffer is bounded away from it at its maximum size, and nothing clears, tests or fills it during boot or any later transition). Only **proven free** may be offered to mods.
 
@@ -174,7 +151,50 @@ Surveyed in 1.42 and confirmed in 1.40 through the function alignment. No displa
 | SSI DMA interrupt (channel 54, vector 174) | 0x40084464 | 0x400832a4 | 8 | `33ebd8d6…063837` | identical | interrupt, level 6 |
 | Periodic callback registration (the 8.33 ms service; a mod can call it instead of patching) | 0x40002de8 | 0x40002de8 | 8 | `efa23c0a…09ecf5` | identical | task |
 
-Not found: the frame buffer and draw path (the display DMA stream on channel 15 turned out to be a 1,000-byte control stream to the FPGA configuration master, not pixels), the project load and save entries (only the transfer-header validator, 0x400b728e, with project version ≤ 13 and sound version ≤ 7), and the sequencer step. These remain **unknown**.
+Not found in the original survey: the frame buffer and draw path (the display DMA stream on channel 15 was a 1,000-byte control stream to the FPGA configuration master, not pixels), and project load/save entries (only transfer-header validator 0x400b728e, project version ≤ 13, sound version ≤ 7). These remain **unknown here**. Native Song/sequence codecs and bounded sequencer-step paths on **1.42** are now recorded in §4.5; they do not establish the complete project transaction.
+
+### 4.5 Native sequencer research, OS 1.42 (27 November 2026)
+
+Native step paths are mapped on **1.42 only**. Main at
+`cbc4935da83d0c5c78e5602c2191cac3c495fd51` exports zero Syntakt events;
+[#1922](https://github.com/repeat98/modwerk/pull/1922) adds Synfact UI/status,
+not sequencer events. Digitakt/Digitone `seq-events` offers composition
+vocabulary, not Syntakt addresses or machine sizes.
+
+| 1.42 main-CPU site | Identity window | Meaning / limit |
+| --- | ---: | --- |
+| `0x4008c99c` | 8 B | Sequencer interrupt entry; not one track step per call. |
+| `0x4008d0ac` | 6 B | Native per-track loop, tracks 0..12 (FX last). |
+| `0x4008d15c` | 10 B | Due ordinary-step branch, after active/divider gating; before increment. |
+| `0x4008d1ca` | 6 B | Post-iteration, **also reached when no step advances**; D2 already track+1. |
+| `0x400a3bf4` | 6 B | Timed event consumer before native mute/source/Sound checks. |
+| `0x400a42b6` | 6 B | Sound-resolved note input; still not post-acceptance. |
+| `0x400a4c3e` | 6 B | D3 accepted audio-trigger mask, A2 effective working frame; can coalesce notes. |
+| `0x4010dc52` | 6 B | MIDI ingress; PC-relative control flow forbids blind relocation. |
+
+**[EMU] Fresh replay:** 1,105 native-branch cases passed: 832 common-length
+wraps, 78 per-track wraps, 13 disabled-track and 182 divider due/not-due cases;
+all 13 tracks, common lengths 1..64, seven divider codes. Full interrupt, clock,
+swing/microtiming and hardware deadlines remain untested. Length-1 tracks
+advance while the step byte stays zero; position comparison alone misses this.
+
+[Contracts and evidence](verification/2026-11-27-syntakt-sequencer.md) trace ARP,
+historical Beat Repeat, Song Morph, Track Dialogue and Pattern Sculpt through
+queue/lock ownership, four pattern publications and same-slot decode,
+complete-trig edits, Song rows and save-scratch ownership. Retained test totals,
+candidate hashes, user observations and external hardware reports are separate.
+[Full guard ledger](verification/2026-11-27-syntakt-sequencer-guards.json) contains
+47 address/length/SHA-256 windows authenticated against the §0 OS 1.42 main image.
+Windows are complete instructions; global inbound-edge/trampoline safety is
+not claimed. Helper-entry windows are identity checks, not patch permissions.
+
+Recommended boundary: one owner/dispatcher per site, separate native step,
+timed request/transform and accepted-trigger/effective-frame semantics; bounded
+subscribers, explicit reset/generation and lock lifetimes, and task-context edit
+and persistence transactions. Full generator/effect/condition/MIDI-fire stages
+remain to be mapped before promising the existing `seq-events` API. No event
+indices, RAM ownership, provider implementation or implementation GO are assigned
+here. No DigiKit-derived code or firmware accompanies the research.
 
 ## 5. Cross-release diff (A2)
 
