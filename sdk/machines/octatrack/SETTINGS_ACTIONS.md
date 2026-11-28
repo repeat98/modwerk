@@ -30,3 +30,9 @@ code natively, with native platform facts substituted. It covers original
 settings/presets and action behavior, repeat YES, retained row, refreshed value,
 stale epoch and no battery write or installation replay. No firmware, emulator
 or DSP executes. Current upstream port is not physically qualified.
+
+After changing the shared event header, recapture both USB Audio reconstruction
+recipes through usb_audio_package.py and verify their compiled images against
+the previous recipes. Regenerate the matching Base with octatrack:base --beta
+--write and its base-size record; refreshing only source hashes is insufficient.
+The development package in this proposal is not the final combined M/S build.
