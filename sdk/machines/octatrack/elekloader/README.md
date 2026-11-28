@@ -47,7 +47,7 @@ python3 -B sdk/machines/octatrack/elekloader/build_core.py \
 npm run octatrack:elekloader:verify -- \
   /private/OCTATRACK_OS1.40C.bin /private/NEW-ts-proof \
   /private/pinned-elekloader \
-  /private/NEW-core-output/package/core-0.3.1-modwerk-dev.1.elemod
+  /private/NEW-core-output/package/core-1.0.0-modwerk-dev.1.elemod
 ```
 
 ### The base in the browser
@@ -534,7 +534,7 @@ in the USB ISR and its controller on the engine task:
   data, bss, relocations, tick, draw, key and encoder hooks, and patches to
   stock code, with its safety rules). This
   folder's [`runtime.c`](runtime.c) is the Octatrack's glue: trampolines
-  from core-ot's `ev_tick`, `ev_draw`, `ev_key` and `ev_enc`; ENTER and
+  from the core's `ev_tick`, `ev_draw`, `ev_key` and `ev_enc`; ENTER and
   activation only while nothing plays or records (the logger's own check);
   module code and data on the uncached alias; instruction and branch cache
   invalidation with the OS's own CACR value (guarded); the patchable range
@@ -685,7 +685,7 @@ controller cannot yet execute them as runtime modules.
 python3 -B sdk/machines/octatrack/elekloader/build_ports.py \
   --stock /private/OCTATRACK_OS1.40C.bin \
   --upstream /private/pinned-elekloader \
-  --core /private/NEW-core-output/package/core-0.3.1-modwerk-dev.1.elemod \
+  --core /private/NEW-core-output/package/core-1.0.0-modwerk-dev.1.elemod \
   --module usb-midi --module usb-audio-out-tracks-main-cue --module cc-map \
   --output /private/NEW-source-ports
 ```

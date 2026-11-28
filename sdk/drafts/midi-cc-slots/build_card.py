@@ -102,7 +102,7 @@ def main():
         if sha(original[address-device.main_load:address-device.main_load+n])!=digest:raise ValueError('Stock-copy guard failed')
     module=out/f'midi-mode2-{CARD_VERSION}.elemod';module.write_text(json.dumps(document,indent=1)+'\n')
     os.environ['ELEKLOADER_CROSS']='m68k-elf-'
-    core,_=sdk.build(str(APP/'sdk/machines/octatrack/elekloader/core-ot'),str(args.stock),str(out/'core'))
+    core,_=sdk.build(str(APP/'sdk/machines/octatrack/elekloader/core'),str(args.stock),str(out/'core'))
     # Shared card-platform branding, independent of the MIDI implementation.
     spec=importlib.util.spec_from_file_location('modwerk_card_art',APP/'sdk/runtime/startup/build.py')
     artwork=importlib.util.module_from_spec(spec);spec.loader.exec_module(artwork)
@@ -111,7 +111,7 @@ def main():
         at=guard['address']-device.main_load
         if sha(original[at:at+len(authored)])!=guard['sha256']:raise ValueError('Startup artwork guard failed')
         core_doc['sites'].append({'addr':hex(guard['address']),'len':len(authored),'stock_sha256':guard['sha256'],'new':authored.hex(),'kind':'data'})
-    core_doc.update(version='0.3.1-modwerk-card.1',title='Modwerk standalone card platform',license='GPL-3.0-or-later',author='irpina; Modwerk contributors (startup artwork)')
+    core_doc.update(version='1.0.0-modwerk-card.1',title='Modwerk standalone card platform',license='GPL-3.0-or-later',author='Modwerk contributors')
     core=out/'core-modwerk.elemod';core.write_text(json.dumps(core_doc,indent=1)+'\n')
     outputs,manifest=patch.build(str(args.stock),[str(core),str(module)],version='MIDI2-C14')
     written=patch.save(outputs,manifest,str(out/'Midi-Mode-2-card-test.syx'))
