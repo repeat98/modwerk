@@ -1,0 +1,311 @@
+{
+  "date": "2026-11-28",
+  "evidence": "EMULATOR-PROVEN within explicit original fixture service boundaries",
+  "stock_main_sha256": "1a9723b19fb54d0566c1f690379d2e6dfe43227f77e170ad731dd029430eb3e7",
+  "stock_main_length": 3442576,
+  "load_address": "0x40000400",
+  "original_fixture_sha256": "062cbaf875e80710abc743e07c6de78538fde9f330c52e862a13b1358c32ec37",
+  "measurement_script_sha256": "3484123ed999aeea585e76a612db4539ad575e2e440356e5d1f1f2f2c5847455",
+  "unicorn_version": "2.1.4",
+  "cases": [
+    {
+      "case": "normal_LOAD_B",
+      "A_label": "OLD PROJECT",
+      "B_label": "NEW PROJECT",
+      "buffer_bytes": 4089348,
+      "A_initial_slot128_sha256": "11e97b66c85d1076170e7b53a303fccbab06d7c5999f338e62c884462d6d9c9b",
+      "B_input_slot127_sha256": "16e97596f19113aebfda0e3df64ea925493eb97cf5fd4f7b443879a22fcd58ce",
+      "A_and_B_full_buffers_differ": true,
+      "activation_return_low8": 1,
+      "LOAD_wrapper_return_low8": 1,
+      "UI_worker_return_d0": 0,
+      "live_project_after_LOAD": "B",
+      "live_name_after_LOAD": "NEW PROJECT",
+      "stored_slot128_name_after_LOAD": "NEW PROJECT",
+      "stored_slot128_sha256_after_LOAD": "fac0db7d1db1e563bbc921bf5cd4b55b49f24d848c96684630d4b0f3a6e394fb",
+      "stored_slot128_equals_A_full_buffer": false,
+      "stored_slot128_equals_original_B_input_full_buffer": false,
+      "stored_slot128_equals_actual_native_write_attempt": true,
+      "native_write_attempt": {
+        "event": "media_write",
+        "location": "0x7e000",
+        "bytes": 4089348,
+        "success": true,
+        "sha256": "fac0db7d1db1e563bbc921bf5cd4b55b49f24d848c96684630d4b0f3a6e394fb",
+        "activation_already_succeeded": true
+      },
+      "native_slot128_readback_return": 0,
+      "native_slot128_readback_bytes": 4089348,
+      "native_slot128_readback_sha256": "fac0db7d1db1e563bbc921bf5cd4b55b49f24d848c96684630d4b0f3a6e394fb",
+      "native_slot128_readback_equals_stored_full_buffer": true,
+      "native_readback_redzones_intact": true,
+      "verification_read_did_not_change_live_name_or_stored_buffer": true,
+      "verification_after_worker_return": true,
+      "operation_events": [
+        {
+          "event": "media_read",
+          "location": "0x17e000",
+          "bytes": 4089348,
+          "success": true
+        },
+        {
+          "event": "activation_return",
+          "pc": "0x4001d72c",
+          "d0": 1,
+          "d0_low8": 1,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "media_write",
+          "location": "0x7e000",
+          "bytes": 4089348,
+          "success": true,
+          "sha256": "fac0db7d1db1e563bbc921bf5cd4b55b49f24d848c96684630d4b0f3a6e394fb",
+          "activation_already_succeeded": true
+        },
+        {
+          "event": "media_read",
+          "location": "0x7e000",
+          "bytes": 512,
+          "success": true
+        },
+        {
+          "event": "file_writer_return",
+          "pc": "0x400c1942",
+          "d0": 0,
+          "d0_low8": 0,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "active_slot_save_return",
+          "pc": "0x4001d754",
+          "d0": 4294967041,
+          "d0_low8": 1,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "load_wrapper_return",
+          "pc": "0x4005bbae",
+          "d0": 1,
+          "d0_low8": 1,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "scheduled_callback",
+          "delay": 2,
+          "callback": "0x5000cf2e"
+        }
+      ],
+      "operation_native_visits": {
+        "native_activation": 1,
+        "native_transport_prepare": 1,
+        "native_slot_decode": 1,
+        "native_file_read": 1,
+        "normalizer": 1,
+        "project_import": 1,
+        "metadata_notify": 1,
+        "activation_succeeded": 1,
+        "save_active_called": 1,
+        "project_export": 1,
+        "native_file_write": 1
+      },
+      "verification_events": [
+        {
+          "event": "media_read",
+          "location": "0x7e000",
+          "bytes": 4089348,
+          "success": true
+        }
+      ],
+      "services": [
+        {
+          "address": "0x40001980",
+          "name": "OS mutex acquire (single task)"
+        },
+        {
+          "address": "0x40001aa2",
+          "name": "OS mutex release (single task)"
+        },
+        {
+          "address": "0x40001904",
+          "name": "OS mutex create (single task)"
+        },
+        {
+          "address": "0x4010394c",
+          "name": "owned fixture allocation"
+        },
+        {
+          "address": "0x40103958",
+          "name": "owned fixture free (arena retained)"
+        },
+        {
+          "address": "0x401100d4",
+          "name": "final media read"
+        },
+        {
+          "address": "0x40111628",
+          "name": "final media write"
+        },
+        {
+          "address": "0x40002550",
+          "name": "OS timer callback scheduling (recorded, not dispatched)"
+        }
+      ],
+      "invalid_accesses": []
+    },
+    {
+      "case": "active_slot_write_failure_after_B_activation",
+      "A_label": "OLD PROJECT",
+      "B_label": "NEW PROJECT",
+      "buffer_bytes": 4089348,
+      "A_initial_slot128_sha256": "11e97b66c85d1076170e7b53a303fccbab06d7c5999f338e62c884462d6d9c9b",
+      "B_input_slot127_sha256": "16e97596f19113aebfda0e3df64ea925493eb97cf5fd4f7b443879a22fcd58ce",
+      "A_and_B_full_buffers_differ": true,
+      "activation_return_low8": 1,
+      "LOAD_wrapper_return_low8": 0,
+      "UI_worker_return_d0": 1,
+      "live_project_after_LOAD": "B",
+      "live_name_after_LOAD": "NEW PROJECT",
+      "stored_slot128_name_after_LOAD": "OLD PROJECT",
+      "stored_slot128_sha256_after_LOAD": "11e97b66c85d1076170e7b53a303fccbab06d7c5999f338e62c884462d6d9c9b",
+      "stored_slot128_equals_A_full_buffer": true,
+      "stored_slot128_equals_original_B_input_full_buffer": false,
+      "stored_slot128_equals_actual_native_write_attempt": false,
+      "native_write_attempt": {
+        "event": "media_write",
+        "location": "0x7e000",
+        "bytes": 4089348,
+        "success": false,
+        "sha256": "fac0db7d1db1e563bbc921bf5cd4b55b49f24d848c96684630d4b0f3a6e394fb",
+        "activation_already_succeeded": true
+      },
+      "native_slot128_readback_return": 0,
+      "native_slot128_readback_bytes": 4089348,
+      "native_slot128_readback_sha256": "11e97b66c85d1076170e7b53a303fccbab06d7c5999f338e62c884462d6d9c9b",
+      "native_slot128_readback_equals_stored_full_buffer": true,
+      "native_readback_redzones_intact": true,
+      "verification_read_did_not_change_live_name_or_stored_buffer": true,
+      "verification_after_worker_return": true,
+      "operation_events": [
+        {
+          "event": "media_read",
+          "location": "0x17e000",
+          "bytes": 4089348,
+          "success": true
+        },
+        {
+          "event": "activation_return",
+          "pc": "0x4001d72c",
+          "d0": 1,
+          "d0_low8": 1,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "media_write",
+          "location": "0x7e000",
+          "bytes": 4089348,
+          "success": false,
+          "sha256": "fac0db7d1db1e563bbc921bf5cd4b55b49f24d848c96684630d4b0f3a6e394fb",
+          "activation_already_succeeded": true
+        },
+        {
+          "event": "media_read",
+          "location": "0x7e000",
+          "bytes": 512,
+          "success": true
+        },
+        {
+          "event": "file_writer_return",
+          "pc": "0x400c1942",
+          "d0": 2,
+          "d0_low8": 2,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "active_slot_save_return",
+          "pc": "0x4001d754",
+          "d0": 0,
+          "d0_low8": 0,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "load_wrapper_return",
+          "pc": "0x4005bbae",
+          "d0": 0,
+          "d0_low8": 0,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "scheduled_callback",
+          "delay": 2,
+          "callback": "0x5000cf2e"
+        }
+      ],
+      "operation_native_visits": {
+        "native_activation": 1,
+        "native_transport_prepare": 1,
+        "native_slot_decode": 1,
+        "native_file_read": 1,
+        "normalizer": 1,
+        "project_import": 1,
+        "metadata_notify": 1,
+        "activation_succeeded": 1,
+        "save_active_called": 1,
+        "project_export": 1,
+        "native_file_write": 1
+      },
+      "verification_events": [
+        {
+          "event": "media_read",
+          "location": "0x7e000",
+          "bytes": 4089348,
+          "success": true
+        }
+      ],
+      "services": [
+        {
+          "address": "0x40001980",
+          "name": "OS mutex acquire (single task)"
+        },
+        {
+          "address": "0x40001aa2",
+          "name": "OS mutex release (single task)"
+        },
+        {
+          "address": "0x40001904",
+          "name": "OS mutex create (single task)"
+        },
+        {
+          "address": "0x4010394c",
+          "name": "owned fixture allocation"
+        },
+        {
+          "address": "0x40103958",
+          "name": "owned fixture free (arena retained)"
+        },
+        {
+          "address": "0x401100d4",
+          "name": "final media read"
+        },
+        {
+          "address": "0x40111628",
+          "name": "final media write"
+        },
+        {
+          "address": "0x40002550",
+          "name": "OS timer callback scheduling (recorded, not dispatched)"
+        }
+      ],
+      "invalid_accesses": []
+    }
+  ],
+  "reused_original_file_cases": 14,
+  "new_file_cases": 0,
+  "new_LOAD_cases": 2,
+  "firmware_bytes_emitted": false,
+  "hardware_access": false,
+  "physical_slot128_contents": "OPEN: not measured on hardware",
+  "whole_B_input_preservation_through_activation_export": "Measured per case; equality is not assumed",
+  "passed": true,
+  "input_hash_unchanged": true
+}

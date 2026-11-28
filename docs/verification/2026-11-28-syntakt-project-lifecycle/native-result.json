@@ -1,0 +1,716 @@
+{
+  "date": "2026-11-28",
+  "evidence": "EMULATOR-PROVEN, isolated native CPU1 operations with explicit OS/media services",
+  "stock_main_sha256": "1a9723b19fb54d0566c1f690379d2e6dfe43227f77e170ad731dd029430eb3e7",
+  "stock_main_length": 3442576,
+  "load_address": "0x40000400",
+  "unicorn_version": "2.1.4",
+  "fixture_sha256": "062cbaf875e80710abc743e07c6de78538fde9f330c52e862a13b1358c32ec37",
+  "no_instruction_bytes_patched": true,
+  "instruction_budget_per_call": 300000000,
+  "timeout_us_per_call": 45000000,
+  "hardware_access": false,
+  "firmware_build": false,
+  "file_cases": [
+    {
+      "case": "full_file_roundtrip",
+      "slot": 0,
+      "location": "0x80000",
+      "write_return": 0,
+      "read_return": 0,
+      "full_buffer_equal": true,
+      "opaque_tail_equal": true,
+      "redzones_intact": true,
+      "events": [
+        {
+          "event": "media_write",
+          "location": "0x80000",
+          "bytes": 4089348,
+          "success": true,
+          "sha256": "16e97596f19113aebfda0e3df64ea925493eb97cf5fd4f7b443879a22fcd58ce",
+          "activation_already_succeeded": false
+        },
+        {
+          "event": "media_read",
+          "location": "0x80000",
+          "bytes": 512,
+          "success": true
+        },
+        {
+          "event": "media_read",
+          "location": "0x80000",
+          "bytes": 4089348,
+          "success": true
+        }
+      ],
+      "native_visits": {
+        "normalizer": 1
+      },
+      "services": [
+        {
+          "address": "0x40001980",
+          "name": "OS mutex acquire (single task)"
+        },
+        {
+          "address": "0x40001aa2",
+          "name": "OS mutex release (single task)"
+        },
+        {
+          "address": "0x40001904",
+          "name": "OS mutex create (single task)"
+        },
+        {
+          "address": "0x4010394c",
+          "name": "owned fixture allocation"
+        },
+        {
+          "address": "0x40103958",
+          "name": "owned fixture free (arena retained)"
+        },
+        {
+          "address": "0x401100d4",
+          "name": "final media read"
+        },
+        {
+          "address": "0x40111628",
+          "name": "final media write"
+        }
+      ],
+      "service_calls": {
+        "owned fixture allocation": 18,
+        "owned fixture free (arena retained)": 18,
+        "OS mutex acquire (single task)": 11,
+        "OS mutex release (single task)": 11,
+        "final media write": 1,
+        "final media read": 2
+      },
+      "invalid_accesses": []
+    },
+    {
+      "case": "full_file_roundtrip",
+      "slot": 127,
+      "location": "0x17e000",
+      "write_return": 0,
+      "read_return": 0,
+      "full_buffer_equal": true,
+      "opaque_tail_equal": true,
+      "redzones_intact": true,
+      "events": [
+        {
+          "event": "media_write",
+          "location": "0x17e000",
+          "bytes": 4089348,
+          "success": true,
+          "sha256": "16e97596f19113aebfda0e3df64ea925493eb97cf5fd4f7b443879a22fcd58ce",
+          "activation_already_succeeded": false
+        },
+        {
+          "event": "media_read",
+          "location": "0x17e000",
+          "bytes": 512,
+          "success": true
+        },
+        {
+          "event": "media_read",
+          "location": "0x17e000",
+          "bytes": 4089348,
+          "success": true
+        }
+      ],
+      "native_visits": {
+        "normalizer": 1
+      },
+      "services": [
+        {
+          "address": "0x40001980",
+          "name": "OS mutex acquire (single task)"
+        },
+        {
+          "address": "0x40001aa2",
+          "name": "OS mutex release (single task)"
+        },
+        {
+          "address": "0x40001904",
+          "name": "OS mutex create (single task)"
+        },
+        {
+          "address": "0x4010394c",
+          "name": "owned fixture allocation"
+        },
+        {
+          "address": "0x40103958",
+          "name": "owned fixture free (arena retained)"
+        },
+        {
+          "address": "0x401100d4",
+          "name": "final media read"
+        },
+        {
+          "address": "0x40111628",
+          "name": "final media write"
+        }
+      ],
+      "service_calls": {
+        "owned fixture allocation": 18,
+        "owned fixture free (arena retained)": 18,
+        "OS mutex acquire (single task)": 11,
+        "OS mutex release (single task)": 11,
+        "final media write": 1,
+        "final media read": 2
+      },
+      "invalid_accesses": []
+    },
+    {
+      "case": "full_file_roundtrip",
+      "slot": 128,
+      "location": "0x7e000",
+      "write_return": 0,
+      "read_return": 0,
+      "full_buffer_equal": true,
+      "opaque_tail_equal": true,
+      "redzones_intact": true,
+      "events": [
+        {
+          "event": "media_write",
+          "location": "0x7e000",
+          "bytes": 4089348,
+          "success": true,
+          "sha256": "16e97596f19113aebfda0e3df64ea925493eb97cf5fd4f7b443879a22fcd58ce",
+          "activation_already_succeeded": false
+        },
+        {
+          "event": "media_read",
+          "location": "0x7e000",
+          "bytes": 512,
+          "success": true
+        },
+        {
+          "event": "media_read",
+          "location": "0x7e000",
+          "bytes": 4089348,
+          "success": true
+        }
+      ],
+      "native_visits": {
+        "normalizer": 1
+      },
+      "services": [
+        {
+          "address": "0x40001980",
+          "name": "OS mutex acquire (single task)"
+        },
+        {
+          "address": "0x40001aa2",
+          "name": "OS mutex release (single task)"
+        },
+        {
+          "address": "0x40001904",
+          "name": "OS mutex create (single task)"
+        },
+        {
+          "address": "0x4010394c",
+          "name": "owned fixture allocation"
+        },
+        {
+          "address": "0x40103958",
+          "name": "owned fixture free (arena retained)"
+        },
+        {
+          "address": "0x401100d4",
+          "name": "final media read"
+        },
+        {
+          "address": "0x40111628",
+          "name": "final media write"
+        }
+      ],
+      "service_calls": {
+        "owned fixture allocation": 18,
+        "owned fixture free (arena retained)": 18,
+        "OS mutex acquire (single task)": 10,
+        "OS mutex release (single task)": 10,
+        "final media write": 1,
+        "final media read": 2
+      },
+      "invalid_accesses": []
+    },
+    {
+      "case": "slot_129",
+      "read_return": 2,
+      "write_return": 1,
+      "events": [],
+      "invalid_accesses": []
+    },
+    {
+      "case": "slot_minus_one",
+      "read_return": 2,
+      "write_return": 1,
+      "events": [],
+      "invalid_accesses": []
+    },
+    {
+      "case": "null_buffer",
+      "read_return": 2,
+      "write_return": 1,
+      "events": [],
+      "invalid_accesses": []
+    },
+    {
+      "case": "catalogue_unready",
+      "read_return": 5,
+      "write_return": 4,
+      "events": [],
+      "invalid_accesses": []
+    },
+    {
+      "case": "media_error",
+      "read_return": 3,
+      "write_return": 2,
+      "events": [
+        {
+          "event": "media_read",
+          "location": "0x80000",
+          "bytes": 4089348,
+          "success": false
+        },
+        {
+          "event": "media_write",
+          "location": "0x80000",
+          "bytes": 4089348,
+          "success": false,
+          "sha256": "958ab5b7744405dde31c8a2e0612e4f40d73b16bae133c055b15f7e0433e5f58",
+          "activation_already_succeeded": false
+        },
+        {
+          "event": "media_read",
+          "location": "0x80000",
+          "bytes": 512,
+          "success": false
+        }
+      ],
+      "invalid_accesses": []
+    },
+    {
+      "case": "missing_slot",
+      "read_return": 1,
+      "write_return": null,
+      "events": [],
+      "invalid_accesses": []
+    },
+    {
+      "case": "bad_footer",
+      "read_return": 4,
+      "write_return": null,
+      "events": [
+        {
+          "event": "media_read",
+          "location": "0x80000",
+          "bytes": 4089348,
+          "success": true
+        }
+      ],
+      "invalid_accesses": []
+    },
+    {
+      "case": "future_version",
+      "read_return": 4,
+      "write_return": null,
+      "events": [
+        {
+          "event": "media_read",
+          "location": "0x80000",
+          "bytes": 4089348,
+          "success": true
+        }
+      ],
+      "invalid_accesses": []
+    },
+    {
+      "case": "nonproject_512",
+      "read_return": null,
+      "write_return": 0,
+      "events": [
+        {
+          "event": "media_write",
+          "location": "0x80000",
+          "bytes": 512,
+          "success": true,
+          "sha256": "6b45adbab404029f2ac0f70ee17ec82df9fde9d02226128cdd005ec98d5e3d81",
+          "activation_already_succeeded": false
+        },
+        {
+          "event": "media_read",
+          "location": "0x80000",
+          "bytes": 512,
+          "success": true
+        }
+      ],
+      "invalid_accesses": []
+    },
+    {
+      "case": "write_protected",
+      "read_return": null,
+      "write_return": 3,
+      "events": [],
+      "invalid_accesses": []
+    },
+    {
+      "case": "protection_table_unavailable",
+      "read_return": null,
+      "write_return": 3,
+      "events": [],
+      "invalid_accesses": []
+    }
+  ],
+  "load_cases": [
+    {
+      "case": "load_success_control",
+      "entry": "0x4005bafa",
+      "return_d0": 0,
+      "return_low8": 0,
+      "before_live_name": "OLD PROJECT",
+      "after_live_name": "NEW PROJECT",
+      "root_runtime": "0x52000000",
+      "stored_active_name": "NEW PROJECT",
+      "selected_slot_after": 127,
+      "active_cache_valid": 1,
+      "native_visits": {
+        "native_activation": 1,
+        "native_transport_prepare": 1,
+        "native_slot_decode": 1,
+        "native_file_read": 1,
+        "normalizer": 1,
+        "project_import": 1,
+        "metadata_notify": 1,
+        "activation_succeeded": 1,
+        "save_active_called": 1,
+        "project_export": 1,
+        "native_file_write": 1
+      },
+      "events": [
+        {
+          "event": "media_read",
+          "location": "0x17e000",
+          "bytes": 4089348,
+          "success": true
+        },
+        {
+          "event": "activation_return",
+          "pc": "0x4001d72c",
+          "d0": 1,
+          "d0_low8": 1,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "media_write",
+          "location": "0x7e000",
+          "bytes": 4089348,
+          "success": true,
+          "sha256": "fac0db7d1db1e563bbc921bf5cd4b55b49f24d848c96684630d4b0f3a6e394fb",
+          "activation_already_succeeded": true
+        },
+        {
+          "event": "media_read",
+          "location": "0x7e000",
+          "bytes": 512,
+          "success": true
+        },
+        {
+          "event": "file_writer_return",
+          "pc": "0x400c1942",
+          "d0": 0,
+          "d0_low8": 0,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "active_slot_save_return",
+          "pc": "0x4001d754",
+          "d0": 4294967041,
+          "d0_low8": 1,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "load_wrapper_return",
+          "pc": "0x4005bbae",
+          "d0": 1,
+          "d0_low8": 1,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "scheduled_callback",
+          "delay": 2,
+          "callback": "0x5000cf2e"
+        }
+      ],
+      "services": [
+        {
+          "address": "0x40001980",
+          "name": "OS mutex acquire (single task)"
+        },
+        {
+          "address": "0x40001aa2",
+          "name": "OS mutex release (single task)"
+        },
+        {
+          "address": "0x40001904",
+          "name": "OS mutex create (single task)"
+        },
+        {
+          "address": "0x4010394c",
+          "name": "owned fixture allocation"
+        },
+        {
+          "address": "0x40103958",
+          "name": "owned fixture free (arena retained)"
+        },
+        {
+          "address": "0x401100d4",
+          "name": "final media read"
+        },
+        {
+          "address": "0x40111628",
+          "name": "final media write"
+        },
+        {
+          "address": "0x40002550",
+          "name": "OS timer callback scheduling (recorded, not dispatched)"
+        }
+      ],
+      "service_calls": {
+        "OS mutex create (single task)": 42,
+        "owned fixture allocation": 24113,
+        "owned fixture free (arena retained)": 12558,
+        "OS mutex acquire (single task)": 9086,
+        "OS mutex release (single task)": 9086,
+        "final media read": 2,
+        "final media write": 1,
+        "OS timer callback scheduling (recorded, not dispatched)": 1
+      },
+      "arena_high_water": 50581952,
+      "invalid_accesses": [],
+      "initial_notification_inhibits_restored": true
+    },
+    {
+      "case": "active_slot_write_failure",
+      "entry": "0x4005bafa",
+      "return_d0": 1,
+      "return_low8": 1,
+      "before_live_name": "OLD PROJECT",
+      "after_live_name": "NEW PROJECT",
+      "root_runtime": "0x52000000",
+      "stored_active_name": "OLD PROJECT",
+      "selected_slot_after": 0,
+      "active_cache_valid": 0,
+      "native_visits": {
+        "native_activation": 1,
+        "native_transport_prepare": 1,
+        "native_slot_decode": 1,
+        "native_file_read": 1,
+        "normalizer": 1,
+        "project_import": 1,
+        "metadata_notify": 1,
+        "activation_succeeded": 1,
+        "save_active_called": 1,
+        "project_export": 1,
+        "native_file_write": 1
+      },
+      "events": [
+        {
+          "event": "media_read",
+          "location": "0x17e000",
+          "bytes": 4089348,
+          "success": true
+        },
+        {
+          "event": "activation_return",
+          "pc": "0x4001d72c",
+          "d0": 1,
+          "d0_low8": 1,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "media_write",
+          "location": "0x7e000",
+          "bytes": 4089348,
+          "success": false,
+          "sha256": "fac0db7d1db1e563bbc921bf5cd4b55b49f24d848c96684630d4b0f3a6e394fb",
+          "activation_already_succeeded": true
+        },
+        {
+          "event": "media_read",
+          "location": "0x7e000",
+          "bytes": 512,
+          "success": true
+        },
+        {
+          "event": "file_writer_return",
+          "pc": "0x400c1942",
+          "d0": 2,
+          "d0_low8": 2,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "active_slot_save_return",
+          "pc": "0x4001d754",
+          "d0": 0,
+          "d0_low8": 0,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "load_wrapper_return",
+          "pc": "0x4005bbae",
+          "d0": 0,
+          "d0_low8": 0,
+          "live_name": "NEW PROJECT"
+        },
+        {
+          "event": "scheduled_callback",
+          "delay": 2,
+          "callback": "0x5000cf2e"
+        }
+      ],
+      "services": [
+        {
+          "address": "0x40001980",
+          "name": "OS mutex acquire (single task)"
+        },
+        {
+          "address": "0x40001aa2",
+          "name": "OS mutex release (single task)"
+        },
+        {
+          "address": "0x40001904",
+          "name": "OS mutex create (single task)"
+        },
+        {
+          "address": "0x4010394c",
+          "name": "owned fixture allocation"
+        },
+        {
+          "address": "0x40103958",
+          "name": "owned fixture free (arena retained)"
+        },
+        {
+          "address": "0x401100d4",
+          "name": "final media read"
+        },
+        {
+          "address": "0x40111628",
+          "name": "final media write"
+        },
+        {
+          "address": "0x40002550",
+          "name": "OS timer callback scheduling (recorded, not dispatched)"
+        }
+      ],
+      "service_calls": {
+        "OS mutex create (single task)": 42,
+        "owned fixture allocation": 24117,
+        "owned fixture free (arena retained)": 12560,
+        "OS mutex acquire (single task)": 9087,
+        "OS mutex release (single task)": 9087,
+        "final media read": 2,
+        "final media write": 1,
+        "OS timer callback scheduling (recorded, not dispatched)": 1
+      },
+      "arena_high_water": 50582048,
+      "invalid_accesses": [],
+      "initial_notification_inhibits_restored": true
+    },
+    {
+      "case": "read_failure_before_decode",
+      "entry": "0x4005bafa",
+      "return_d0": 1,
+      "return_low8": 1,
+      "before_live_name": "OLD PROJECT",
+      "after_live_name": "OLD PROJECT",
+      "root_runtime": "0x52000000",
+      "stored_active_name": "OLD PROJECT",
+      "selected_slot_after": 0,
+      "active_cache_valid": 0,
+      "native_visits": {
+        "native_activation": 1,
+        "native_transport_prepare": 1,
+        "native_slot_decode": 1,
+        "native_file_read": 1,
+        "project_import": 1,
+        "metadata_notify": 1
+      },
+      "events": [
+        {
+          "event": "media_read",
+          "location": "0x17e000",
+          "bytes": 4089348,
+          "success": false
+        },
+        {
+          "event": "activation_return",
+          "pc": "0x4001d72c",
+          "d0": 0,
+          "d0_low8": 0,
+          "live_name": "OLD PROJECT"
+        },
+        {
+          "event": "load_wrapper_return",
+          "pc": "0x4005bbae",
+          "d0": 0,
+          "d0_low8": 0,
+          "live_name": "OLD PROJECT"
+        },
+        {
+          "event": "scheduled_callback",
+          "delay": 2,
+          "callback": "0x5000cf2e"
+        }
+      ],
+      "services": [
+        {
+          "address": "0x40001980",
+          "name": "OS mutex acquire (single task)"
+        },
+        {
+          "address": "0x40001aa2",
+          "name": "OS mutex release (single task)"
+        },
+        {
+          "address": "0x40001904",
+          "name": "OS mutex create (single task)"
+        },
+        {
+          "address": "0x4010394c",
+          "name": "owned fixture allocation"
+        },
+        {
+          "address": "0x40103958",
+          "name": "owned fixture free (arena retained)"
+        },
+        {
+          "address": "0x401100d4",
+          "name": "final media read"
+        },
+        {
+          "address": "0x40111628",
+          "name": "final media write"
+        },
+        {
+          "address": "0x40002550",
+          "name": "OS timer callback scheduling (recorded, not dispatched)"
+        }
+      ],
+      "service_calls": {
+        "OS mutex create (single task)": 42,
+        "owned fixture allocation": 20633,
+        "owned fixture free (arena retained)": 9073,
+        "OS mutex acquire (single task)": 6901,
+        "OS mutex release (single task)": 6901,
+        "final media read": 1,
+        "OS timer callback scheduling (recorded, not dispatched)": 1
+      },
+      "arena_high_water": 1232112,
+      "invalid_accesses": [],
+      "initial_notification_inhibits_restored": true
+    }
+  ],
+  "passed": true,
+  "input_hash_unchanged": true
+}
