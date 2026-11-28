@@ -96,18 +96,27 @@ path and no device decoder change.
 
 Merged cumulative Base target817bc050b98d88365ed6ae6f20fc63fba1a4276e.
 Official native/browser builds agree on firmware SHA
-8cdc404ab9c661f8bee76cc935f202a848414e1179b2a5d8d5410e4eaae34b79.
-Base identity31ab1cf539a2efaed6d547b9207351d1757870f7764d9ba6ec09ae79276adddf.
-MAIN1363155 bytes; packed container849452/851712 bytes (2260 spare).
+a20b65f87c11100439575eeb144742ae66c036c0864e2bd2d73faf635f4593e9.
+Base identitye875ac1b6c71133b3219c3e3a94a93d5f4999a5da42d240f3aff3af052fed625.
+MAIN1363156 bytes; packed container849452/851712 bytes (2260 spare).
 The host file includes a16-byte wrapper outside that container.
 This exact build has NOT run on a unit. Structural bootloader preservation
 and byte equality do not prove successful boot, sound, load or Undo.
+
+The conservative host-only standalone card readiness default is suppressed
+when the real loader is included in the same native translation unit. Native
+card guards, legacy-engine relocation and current complete on-demand chains
+are checked without executing DSP code.
 
 Native fixtures cover16 members, separate state, owner/PC bounds, changed
 controller identity, both-core ACK freshness, capacity pauses and uncertain
 retirement. Runtime/allocator/DSP ACK facts are modelled; no firmware or DSP
 execution harness or emulator is used. Generated receiver instructions are
 checked by assembly/disassembly rather than execution.
+
+Linux source reproduction46141270869 passes using only the compiler, assembler
+and disassembler. Official import verifies every authored package byte matches
+the existing baseline; only source provenance changes.
 
 The separate Fix2358 retains fixed main-branch measurement assertions and is
 ready with its latest complete CI run green. This Base changes its own fixed

@@ -78,6 +78,10 @@ static struct {
 #define JUDGED_CAPABILITY 0u
 #endif
 int modwerk_runtime_set_busy(void) { return SET_ROWS != 0; }
+#ifdef MODWERK_HOST
+/* Included native loader/card fixtures already provide the real predicate. */
+#define MODWERK_TEST_TRIAL_READY_IMPLEMENTED 1
+#endif
 int modwerk_runtime_set_trial_ready(void)
 {
 #ifdef MODWERK_RUNTIME_SETS
