@@ -171,6 +171,11 @@ export function linkAll(options: Options): Result {
       }
       if (!given && !ids.length) { const core = plan([], catalog).core; if (core) cores[coreLabel(load(core))] = 0 }
       const singles: Group = { ok: 0, failed: [] }
+      // A given core for an OS no module ships for yet still links on its own: one set, the core alone.
+      if (given && !ids.length) {
+        const reasons = linkSet([given], stock)
+        if (reasons.length) singles.failed.push({ mods: ['(the core alone)'], reasons }); else cores[coreLabel(given)] = 1
+      }
       for (const id of ids) {
         const reasons = run([id])
         if (reasons.length) singles.failed.push({ mods: [id], reasons }); else singles.ok++
