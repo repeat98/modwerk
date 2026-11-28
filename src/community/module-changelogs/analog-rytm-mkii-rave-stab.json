@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-27",
+    "changes": [
+      "First version, for Analog Rytm MKII OS 1.74: SY RAVE, a six-voice digital chord stab on the BD, SD and BT tracks.",
+      "Thirteen chords (CHD) and nine voicings (VOI), taken at each hit so locked steps play a progression; the note transposes the chord; the knobs show their names.",
+      "DET spreads the voices, WAV runs saw to square to narrow pulse, PCH zaps the chord down or scoops it up and STR strums it upwards at the hit; tap the TUN encoder for the register."
+    ]
+  }
+]
