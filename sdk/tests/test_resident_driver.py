@@ -16,6 +16,7 @@ import resident_boot as boot
 import resident_dsp as dsp
 import resident_driver as driver
 import resident_source
+from resident_ledger_expectations import UNKNOWN_FEATURE, reset_end_expression
 
 
 class ResidentDriver(unittest.TestCase):
@@ -66,6 +67,7 @@ class ResidentDriver(unittest.TestCase):
             compiled = subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-pedantic', '-DDL_NATIVE_TEST',
                             '-DMODWERK_FX_IDS=64', '-DMODWERK_DSP_TABLE0=4096', '-DMODWERK_DSP_TABLE1=4096',
                             '-DMODWERK_DSP_WORDS0=2000', '-DMODWERK_DSP_WORDS1=2000', '-I' + str(work),
+                            '-DTEST_UNKNOWN_FEATURE=%du' % UNKNOWN_FEATURE,
                             str(work / 'transfer.c'), str(RUNTIME / 'test_resident_transport.c'), '-o', str(executable)],
                            capture_output=True, text=True)
             self.assertEqual(compiled.returncode, 0, compiled.stderr)
@@ -131,8 +133,7 @@ class ResidentDriver(unittest.TestCase):
             changed = changed.replace(old, new)
         private = driver.transport(changed)
         self.assertIn('dl_hook_reset_start', private)
-        self.assertIn('unsigned end=(feature == 1u ? (offset < 16u ? 16u : offset < 530u ? 530u : 1042u) : feature == 2u ? 193u : '
-                      'feature == 4u ? 3776u : feature == 8u ? (offset < 514u ? 514u : 1026u) : 0u);', private)  # one owned range per chunk
+        self.assertIn('unsigned end='+reset_end_expression()+';', private)  # every declared owned-range boundary
         self.assertIn('feature==8u ? 1026u', private)  # the key bus
         self.assertIn('op!=10u', private)
         self.assertEqual((core.DYNLOAD / 'transfer.c').read_text(), original)

@@ -55,6 +55,7 @@ import resident_engines  # noqa: E402
 import resident_journal  # noqa: E402
 import resident_placement  # noqa: E402
 import zero_state  # noqa: E402
+from resident_ledger_expectations import BITS, CORE_MASKS
 import test_controller_board as board  # noqa: E402
 _spec = importlib.util.spec_from_file_location('board_loader_build', ROOT / 'sdk/runtime/loader/build.py')
 loader_build = importlib.util.module_from_spec(_spec)
@@ -2274,11 +2275,11 @@ volatile uint8_t dl_engine_why[2];
             resident_engines.manager(once)
         transfer = resident_driver.transport(texts['transfer.c'])
         placed = resident_engines.transport(transfer)
-        self.assertIn('proc && ((id!=1u && id!=2u && id!=4u && id!=8u)', placed)
+        self.assertIn('proc && (('+ ' && '.join('id!=%du'%bit for bit in BITS)+')', placed)
         with self.assertRaisesRegex(ValueError, 'seam changed'):
             resident_engines.transport(placed)
         # The default resident transport keeps refusing every op-10 packet with a nonzero word 7.
-        self.assertIn('init&~(c ? 13u:15u) || proc)) return 0;', transfer)
+        self.assertIn('init&~(c ? %du:%du) || proc)) return 0;' % (CORE_MASKS['B'],CORE_MASKS['A']), transfer)
         status = resident_engines.status((ELEK / 'status.c').read_text())
         self.assertNotIn('modwerk_dsp_arena[0]', status.split('unsigned modwerk_dsp_arena_now(unsigned);')[1])
         import resident_source
