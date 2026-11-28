@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-digitakt-ii-2026-11-28-own-core",
+  "about": "Modwerk's Digitakt II base for OS 1.17 (a60c529b) on Modwerk's own core: the kit and project data, the PERSONALIZE, frame and key-LED events and the value rows beside the hook bus, built by npm run machine:base -- digitakt-ii. Same sites, exports, imports, tables and saved formats as d7ec4d3c; author Modwerk.",
+  "cores": [
+    {
+      "file": "modwerk-base-digitakt-ii-a60c529b.elemod",
+      "sha256": "a60c529bc40b1ba1012e18b2609fb65f220f4e65c03740360cb86fbba577a484",
+      "id": "core",
+      "version": "1.1",
+      "device": "digitakt-mk2",
+      "os": "1.17",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "09b0ec3dec5764f776bcac183a6a57d1ba9c2f89",
+        "path": "sdk/imports/packages/modwerk-base-digitakt-ii/modwerk-base-digitakt-ii-a60c529b.elemod"
+      }
+    }
+  ],
+  "mods": []
+}

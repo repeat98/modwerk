@@ -1,61 +1,36 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-/* What core-dt2 1.1 (Digitakt II 1.17) offers mods besides 1.0's hook bus
- * (docs/ADAPTING.md, "Project data, kit data and value rows (core-dt2 1.1, Digitakt II)"). */
-#ifndef DIGITAKT_MK2_CORE_H
-#define DIGITAKT_MK2_CORE_H
+/* Modwerk's Digitakt II core (OS 1.17): the kit data, project data and value rows a module may use. */
+#ifndef MODWERK_DIGITAKT_MK2_CORE_H
+#define MODWERK_DIGITAKT_MK2_CORE_H
+
 #include <stdint.h>
 
-/* ---- events (subscribe in mod.json) ---------------------------------------
- * ev_frame_params  void f(int16_t *values, int stride): interrupt level, each
- *                  frame; track t's value j at values[stride * t + j]
- *                  (stride 71), added to before the stock modulators.
- * ev_key_leds      void f(void *mgr): the LED frame, before the views set
- *                  theirs; set an LED with fw_led_set(mgr, logical, 2, value). */
-extern void fw_led_set(void *mgr, int logical, int layer, int value);
-
-/* ---- project data: the project file's header (+0x1c .. +0x200) -------------
- * Contribute a pointer to the descriptor to the table core_projdata and claim
- * projdata:<tag>, as on core-dn1 2.1. Saved with every save of the project,
- * taken out after a load (loaded(1)), or zeros and loaded(0) when the project
- * has none (saved without the mod). */
-typedef struct {
-    char tag[4];
-    uint32_t size;               /* bytes, a multiple of 4 */
-    void *data;                  /* the mod's copy in RAM */
-    void (*loaded)(int found);   /* or 0 */
-} core_projdata_t;
-
-/* ---- kit data: per kit, after each kit record's end mark ------------------
- * Contribute a pointer to the descriptor to the table core_kitdata and claim
- * kitdata:<tag>. data holds CORE_KITS blocks of size bytes, kit n's at
- * data + n * size (kit n is pattern n's). Core saves each kit's blocks with
- * the kit record (a project save, SAVE KIT, ...), takes them out when one is
- * loaded, and copies them when the firmware copies a kit in RAM (pattern
- * copy and paste, PASTE KIT, undo), through the clipboard and undo buffers
- * too. Then it calls changed(kit, found): found 0 when the kit had none for
- * this layout (saved without the mod, or with another set of kit-data mods),
- * and the block holds zeros. changed may run in any task: keep it short. The
- * blocks of every mod share the room a record has (191 bytes); a block that
- * does not fit is left out (core_kitdata_room() tells). */
+/* The project's kits; kit n is pattern n's kit. */
 #define CORE_KITS 128
+
+/* A module's per-kit block: data holds CORE_KITS blocks of size bytes, kit n's at data + n * size. The core saves
+ * them after each kit record's end mark (143 bytes for every module together, core_kitdata_room()), loads them back
+ * and follows the firmware's kit copies. changed(kit, found) runs after kit's block was replaced, in any task;
+ * found is 0 when nothing saved for this module was there (the block is then zero). Contribute a pointer to one to
+ * core_kitdata. */
 typedef struct {
     char tag[4];
-    uint32_t size;                           /* bytes */
-    void *data;                              /* CORE_KITS blocks */
-    void (*changed)(int kit, int found);     /* or 0 */
+    uint32_t size;
+    void *data;
+    void (*changed)(int kit, int found);
 } core_kitdata_t;
 
-int core_kit_on(void);                    /* the kit on (the pattern on's), -1 none */
-uint32_t core_kitdata_room(void);         /* bytes a kit record holds for the blocks */
-/* Times a save or a load met bytes in the mods' areas that are not core's (another
- * tool's, a later OS's): core left them as they were. */
-extern volatile uint32_t core_store_conflicts;
+/* A module's project block, saved in the project file's header gap; loaded(found) runs after every project load.
+ * Contribute a pointer to one to core_projdata. */
+typedef struct {
+    char tag[4];
+    uint32_t size;
+    void *data;
+    void (*loaded)(int found);
+} core_projdata_t;
 
-/* ---- value rows in SETTINGS > PERSONALIZE (and SETTINGS) --------------------
- * From ev_personalize (or ev_settings): core_addvalue(menu, &row) adds a row
- * that shows label and, on the right as LED INTENSITY does, values[get()].
- * Only LEFT and RIGHT step it (YES does nothing); each change calls set(new) and
- * redraws the menu. row stays the mod's (static). */
+/* A PERSONALIZE or SETTINGS row showing label and, on the right, values[get()]; LEFT and RIGHT step it through
+ * 0 .. count - 1 and call set. Value strings are drawn as a format: no '%'. */
 typedef struct {
     const char *label;
     const char *const *values;
@@ -63,6 +38,17 @@ typedef struct {
     uint32_t (*get)(void);
     void (*set)(uint32_t value);
 } core_value_t;
+
+/* The kit on (the pattern on's), or -1 for none. */
+int core_kit_on(void);
+/* Bytes a kit record holds for every module's kitdata block together. */
+uint32_t core_kitdata_room(void);
+/* How often a save or load met bytes in the modules' areas that were not the core's (left as they were). Read only. */
+extern volatile uint32_t core_store_conflicts;
+/* Add a value row from an ev_personalize or ev_settings handler. */
 void core_addvalue(void *menu, const core_value_t *row);
+/* Set a key LED from an ev_key_leds handler: layer 2 lights it with value (high nibble a colour), layer 1 turns
+ * it off. The first setter of an LED wins. */
+void fw_led_set(void *mgr, int logical, int layer, int value);
 
 #endif

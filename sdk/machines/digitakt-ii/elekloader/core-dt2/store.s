@@ -1,86 +1,84 @@
 | SPDX-License-Identifier: GPL-2.0-or-later
-| core-dt2 1.1: where the project's saves, loads and kit copies call core for
-| the mods' project and kit data (store.c). ColdFire V4; assemble with
-| -mcpu=54455. OS 1.17. The format and the firmware's routines:
-| docs/ADAPTING.md, "Project data, kit data and value rows (core-dt2 1.1, Digitakt II)".
-|
-| The sites, each a whole instruction the shim runs too:
-|   kit save      move.l #0xbacef00c,d1, before the kit serializer (0x400dbdca)
-|                 writes the record's end mark (0x400dbee4): a2 the record, a3
-|                 the kit's RAM
-|   kit load      the same instruction in the kit loader (0x400db898), after the
-|                 record's version check (0x400db8be): a2 the kit's RAM, a3 the
-|                 record
-|   project save  move.l #0xbeefbace,(a3), the file's mark, in the save
-|                 (0x400df66c) at 0x400df932: a3 the file; d0 is live after
-|   project load  move.l #0xbeefbace,d0, the load's (0x400df95a) check of the
-|                 mark at 0x400df99c: a3 the file
-|   memcpy        its first 12 bytes (0x40136388), three loads of its
-|                 arguments, by jmp: a copy of a kit's size (KIT_SIZE) also
-|                 calls core_kit_copied(dst, src); every other copy goes on
-|                 into memcpy at once
+| Modwerk's Digitakt II core: the stock entries of the kit-data and project-data store (store.c holds the logic)
+| and the memcpy hook that follows kit copies in RAM.
+
+        .ifne KIT_ROOM - 146
+        .error "store.s: store.c's kit-data area is 146 bytes; KIT_ROOM must be 146"
+        .endif
+
         .section .run, "ax"
-        .globl  core_kit_save, core_kit_load, core_proj_save, core_proj_load, core_memcpy
-        .globl  core_store_layout
 
-| The device's layout, for store.c: the kit table, its stride, the bytes of a
-| kit record after its end mark (offset, length), the pattern object's
-| pointer (the pattern on at +0x138).
+| Words startup-kitdata-refresh.c reads by index (0-2): keep the order and the word size.
+        .balign 4
+        .globl core_store_layout
 core_store_layout:
-        .long   FW_KITS, KIT_SIZE, KIT_PAD, KIT_ROOM, PATTERN_OBJ
+        .long FW_KITS, KIT_SIZE, KIT_PAD, KIT_ROOM, PATTERN_OBJ
 
+| core_kit_save: in the kit serializer, in place of "move.l #0xBACEF00C,d1" before the end mark is stored.
+| a2 = the record being written, a3 = the kit in RAM; leaves d1 as the replaced instruction did.
+        .globl core_kit_save
 core_kit_save:
-        move.l  %a3, -(%sp)
-        move.l  %a2, -(%sp)
-        jsr     core_kitdata_save       | (record, kit)
-        addq.l  #8, %sp
-        move.l  #0xbacef00c, %d1        | the instruction the site replaced
+        move.l %a3, -(%sp)
+        move.l %a2, -(%sp)
+        jsr core_kitdata_save
+        addq.l #8, %sp
+        move.l #0xbacef00c, %d1
         rts
 
+| core_kit_load: in the kit loader, after the version check and before the end-mark compare.
+| a2 = the kit in RAM, a3 = the record; leaves d1 as the replaced instruction did.
+        .globl core_kit_load
 core_kit_load:
-        move.l  %a3, -(%sp)
-        move.l  %a2, -(%sp)
-        jsr     core_kitdata_load       | (kit, record)
-        addq.l  #8, %sp
-        move.l  #0xbacef00c, %d1
+        move.l %a3, -(%sp)
+        move.l %a2, -(%sp)
+        jsr core_kitdata_load
+        addq.l #8, %sp
+        move.l #0xbacef00c, %d1
         rts
 
+| core_proj_save: in the project save, in place of "move.l #0xBEEFBACE,(a3)" (a3 = the file). Stores the
+| magic first, then saves the modules' project data. d0 is live after the site: d0-d1/a0-a1 are kept.
+        .globl core_proj_save
 core_proj_save:
-        move.l  #0xbeefbace, (%a3)      | the instruction the site replaced
-        lea     -16(%sp), %sp
+        move.l #0xbeefbace, (%a3)
+        lea -16(%sp), %sp
         movem.l %d0-%d1/%a0-%a1, (%sp)
-        move.l  %a3, -(%sp)
-        jsr     core_projdata_save      | (file)
-        addq.l  #4, %sp
+        move.l %a3, -(%sp)
+        jsr core_projdata_save
+        addq.l #4, %sp
         movem.l (%sp), %d0-%d1/%a0-%a1
-        lea     16(%sp), %sp
+        lea 16(%sp), %sp
         rts
 
+| core_proj_load: in the project load, in place of "move.l #0xBEEFBACE,d0" before the magic compare.
+        .globl core_proj_load
 core_proj_load:
-        move.l  %a3, -(%sp)
-        jsr     core_projdata_load      | (file)
-        addq.l  #4, %sp
-        move.l  #0xbeefbace, %d0
+        move.l %a3, -(%sp)
+        jsr core_projdata_load
+        addq.l #4, %sp
+        move.l #0xbeefbace, %d0
         rts
 
-| memcpy(dst, src, n): the cost of every other copy is the compare and the branch.
+| core_memcpy(dst, src, n): reached by jmp from memcpy's first 12 bytes (its three argument loads).
+| Any n but KIT_SIZE: the loads, then memcpy's body. A kit-sized copy runs the body as a subroutine (it
+| returns the word above its return address, so dst is pushed for it), then core_kit_copied(dst, src).
+        .globl core_memcpy
 core_memcpy:
-        move.l  12(%sp), %d0
-        cmpi.l  #KIT_SIZE, %d0
-        beq.s   1f
-2:      movea.l 4(%sp), %a1             | the three instructions the site replaced
+        move.l 12(%sp), %d0
+        cmpi.l #KIT_SIZE, %d0
+        beq.s .Lkit
+        movea.l 4(%sp), %a1
         movea.l 8(%sp), %a0
-        move.l  12(%sp), %d0
-        jmp     MEMCPY + 12
-1:      move.l  12(%sp), -(%sp)         | a kit: the copy, then the call
-        move.l  12(%sp), -(%sp)
-        move.l  12(%sp), -(%sp)
-        bsr.s   2b
-        lea     12(%sp), %sp
-        move.l  %d0, -(%sp)             | memcpy's result
-        move.l  12(%sp), -(%sp)         | src
-        move.l  12(%sp), -(%sp)         | dst
-        jsr     core_kit_copied
-        addq.l  #8, %sp
-        move.l  (%sp)+, %d0
+        jmp MEMCPY + 12
+.Lkit:
+        movea.l 4(%sp), %a1
+        movea.l 8(%sp), %a0
+        move.l %a1, -(%sp)
+        jsr MEMCPY + 12
+        addq.l #4, %sp
+        move.l 8(%sp), -(%sp)
+        move.l 8(%sp), -(%sp)
+        jsr core_kit_copied
+        addq.l #8, %sp
+        move.l 4(%sp), %d0
         rts

@@ -46,7 +46,7 @@ OS 1.17 offers USB MIDI in all three USB modes (MIDI, Audio/MIDI and Overbridge)
 
 ## Rules that matter most here
 
-- **Only your own code.** Nothing derived from an AGPL project comes in, because its terms would bind every build. The imported core keeps its GPL-2.0-or-later licence and its provenance in `sdk/imports/`.
+- **Only your own code.** Nothing derived from an AGPL project comes in, because its terms would bind every build. The core is Modwerk's own (GPL-2.0-or-later, so GPL-2.0-only mods can link with it); the import record of the core it replaced stays in `sdk/imports/` as history.
 - **Sequencer, LFO and voice sites go through the base.** A module never patches one of these sites. It proposes a base hook first ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
 - **What modules share belongs to the base.** That includes Mixer pages, a send bus, a sample pool and per-kit state. A kit record holds 143 bytes of kit data for all mods together.
 - **SHARC code** follows the [SHARC code rules](README.md#sharc-code-rules), and only a unit run proves it.
@@ -58,7 +58,7 @@ OS 1.17 offers USB MIDI in all three USB modes (MIDI, Audio/MIDI and Overbridge)
 ## Open questions
 
 - **More units.** The pinned base has run on one unit so far.
-- **Upstream drift.** The core 1.1 source is `0df8409`, the reviewed head of the open [elekloader#221](https://github.com/elekloader/elekloader/pull/221). When it merges, take the source again from the release and rebuild the base ([base source](elekloader/README.md)).
+- **Interface drift.** Modwerk's core keeps the interface of core-dt2 1.1 (the open [elekloader#221](https://github.com/elekloader/elekloader/pull/221) at `0df8409`). If a released mod needs a later core interface, add it to Modwerk's core and rebuild the base ([base source](elekloader/README.md)).
 - **A SHARC assembler.** Modwerk's own (`src/engine/elektron/sharc-asm.ts`) builds a machine module's `.sharc` player into its package and refuses code that breaks the rules above. It knows only the instruction forms a voice player has needed so far: add a form with its test, checked against the programming reference.
 
 ## How to join
