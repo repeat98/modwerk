@@ -1,0 +1,68 @@
+{
+  "module": "seq",
+  "version": "0.1.0-experimental",
+  "base": "Octatrack release base eb6679620d0c9ed7, RAM-booted twin 43ac24652a89f28b, MKII, OS 1.40C",
+  "scene": "author's project, bank A pattern 2, Part 1, stopped (release base eb667962 via RAM twin)",
+  "inputs": {
+    "transport": "playing"
+  },
+  "seconds": 8,
+  "readings": 3,
+  "measuredAt": "2026-11-27T23:16:58.768Z",
+  "result": {
+    "id": "seq",
+    "version": "0.1.0-experimental",
+    "packageSha256": "5c88a76b8748de8e656351884e2249805061c2d803ca387820fd2c74a565d771",
+    "before": {
+      "frame": 29.4,
+      "frameMax": 61.2,
+      "frames": 67160,
+      "skipped": 0,
+      "cpu": 44.1,
+      "dsp1to4": 34.3,
+      "dsp5to8": 41.6,
+      "dsp1to4Peak": 35.5,
+      "dsp5to8Peak": 42.6,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.1,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 0.9,
+        "dsp1to4Peak": 0.1,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "atRest": {
+      "frame": 29.4,
+      "frameMax": 64.7,
+      "frames": 67124,
+      "skipped": 0,
+      "cpu": 44.1,
+      "dsp1to4": 34.1,
+      "dsp5to8": 41.6,
+      "dsp1to4Peak": 35.4,
+      "dsp5to8Peak": 42.6,
+      "readings": 3,
+      "spread": {
+        "frame": 0,
+        "cpu": 0.3,
+        "dsp1to4": 0,
+        "dsp5to8": 0,
+        "frameMax": 1.5,
+        "dsp1to4Peak": 0,
+        "dsp5to8Peak": 0.9
+      }
+    },
+    "atRestAdds": {
+      "frame": 0,
+      "cpu": 0,
+      "dsp1to4": -0.2,
+      "dsp5to8": 0,
+      "dsp1to4Peak": -0.1,
+      "dsp5to8Peak": 0
+    },
+    "rolledBack": true
+  }
+}

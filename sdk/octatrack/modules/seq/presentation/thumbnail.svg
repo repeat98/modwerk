@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192">
+  <rect width="320" height="192" fill="#111316"/>
+  <g stroke="#fff" stroke-opacity=".07" stroke-width="1">
+    <path d="M0 52h320M0 97h320M0 142h320M64 0v192M128 0v192M192 0v192M256 0v192"/>
+  </g>
+  <g fill="#f4f4f4" font-family="monospace" letter-spacing="1.4">
+    <text x="19" y="28" font-size="10" opacity=".65">EUCLIDEAN TRIGS</text>
+    <text x="19" y="174" font-size="9" opacity=".48">TRIG  /  PLOCK</text>
+  </g>
+  <circle cx="160" cy="98" r="62" fill="none" stroke="#f4f4f4" stroke-opacity=".18" stroke-width="1"/>
+  <circle cx="217.28" cy="74.27" r="2.5" fill="#f4f4f4"/>
+  <circle cx="203.84" cy="141.84" r="2.5" fill="#f4f4f4"/>
+  <circle cx="136.27" cy="155.28" r="2.5" fill="#f4f4f4"/>
+  <circle cx="98.00" cy="98.00" r="2.5" fill="#f4f4f4"/>
+  <circle cx="136.27" cy="40.72" r="2.5" fill="#f4f4f4"/>
+  <circle cx="160" cy="98" r="52" fill="none" stroke="#f4f4f4" stroke-opacity=".18" stroke-width="1"/>
+  <circle cx="209.83" cy="83.13" r="2.5" fill="#f4f4f4"/>
+  <circle cx="180.77" cy="145.67" r="2.5" fill="#f4f4f4"/>
+  <circle cx="132.56" cy="142.17" r="2.5" fill="#f4f4f4"/>
+  <circle cx="112.84" cy="76.09" r="2.5" fill="#f4f4f4"/>
+  <circle cx="151.25" cy="46.74" r="2.5" fill="#f4f4f4"/>
+  <circle cx="160" cy="98" r="42" fill="none" stroke="#f4f4f4" stroke-opacity=".18" stroke-width="1"/>
+  <circle cx="198.20" cy="80.55" r="2.5" fill="#f4f4f4"/>
+  <circle cx="171.83" cy="138.30" r="2.5" fill="#f4f4f4"/>
+  <circle cx="118.43" cy="103.98" r="2.5" fill="#f4f4f4"/>
+  <circle cx="137.29" cy="62.67" r="2.5" fill="#f4f4f4"/>
+  <circle cx="160" cy="98" r="32" fill="none" stroke="#f4f4f4" stroke-opacity=".18" stroke-width="1"/>
+  <circle cx="189.67" cy="109.99" r="2.5" fill="#f4f4f4"/>
+  <circle cx="130.54" cy="110.50" r="2.5" fill="#f4f4f4"/>
+  <circle cx="147.50" cy="68.54" r="2.5" fill="#f4f4f4"/>
+  <circle cx="160" cy="98" r="22" fill="none" stroke="#f4f4f4" stroke-opacity=".18" stroke-width="1"/>
+  <circle cx="172.93" cy="115.80" r="2.5" fill="#f4f4f4"/>
+  <circle cx="139.08" cy="91.20" r="2.5" fill="#f4f4f4"/>
+  <path d="M229 98h29m-5-5 5 5-5 5" fill="none" stroke="#f4f4f4" stroke-width="1.4" opacity=".8"/>
+  <rect x="267" y="69" width="29" height="58" rx="2" fill="none" stroke="#f4f4f4" stroke-opacity=".38"/>
+  <path d="M271 116h5v-10h5v-14h5v7h5v-20h2" fill="none" stroke="#f4f4f4" stroke-width="1.5"/>
+  <g fill="#f4f4f4" opacity=".82">
+    <circle cx="273" cy="116" r="1.7"/><circle cx="278" cy="106" r="1.7"/>
+    <circle cx="283" cy="92" r="1.7"/><circle cx="288" cy="99" r="1.7"/>
+    <circle cx="293" cy="79" r="1.7"/>
+  </g>
+</svg>
