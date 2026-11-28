@@ -1,0 +1,1 @@
+Firmware builder: reading, rebuilding and verifying the Octatrack's OS files (the ELEK container in its .syx transport and the ELUP card file) is now Modwerk's own (`src/engine/elektron/octatrack-container.ts`). Builds are unchanged: it rebuilds the stock 1.40C .syx and .bin byte for byte and matched the previous code on 21,526 checks, corrupted files included.

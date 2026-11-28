@@ -9,7 +9,7 @@ import { defaultConfigurationChoice, resolveReportConfiguration } from './report
 import type { WorkspaceReportContext } from './report-context'
 
 const miniverb = machineModules('octatrack').find(module => module.id === 'miniverb')!
-const digihealth = machineModules('digitakt').find(module => module.moduleId === 'digihealth')!
+const digiperform = machineModules('digitakt').find(module => module.moduleId === 'digiperform')!
 const base = { model: 'mk2', flash: 'flashed', os: '1.40C', modules: [{ id: 'miniverb', version: '0.1.0' }], keepStockFx2: true, build: 'a'.repeat(64) }
 const log = { version: 2 as const, modules: [{ id: 'repitch', version: '0.1.0' }, { id: 'miniverb', version: '0.1.2' }], os: '1.40B', stockFx2: false }
 const empty: WorkspaceReportContext = { configurationName: '', modules: [], keepStockFx2: null, build: '', activeId: '', configurations: [] }
@@ -58,7 +58,7 @@ describe('the configuration a report carries', () => {
     const firstVisit: WorkspaceReportContext = { ...empty, activeId: 'first', configurations: [{ id: 'first', name: 'My first configuration', modules: [], keepStockFx2: null }] }
     expect(resolveReportConfiguration(choice, firstVisit, 'octatrack', null)).toMatchObject({ source: 'manual', modules: [{ id: 'miniverb', version: miniverb.version }] })
     expect(render({ machine: 'octatrack', moduleId: 'miniverb', workspace: firstVisit, log: null, value: choice, onChange: () => {} })).not.toContain('<select')
-    expect(resolveReportConfiguration(defaultConfigurationChoice(['digihealth']), empty, 'digitakt', null)).toMatchObject({ source: 'manual', modules: [{ id: 'digihealth', version: digihealth.version }] })
+    expect(resolveReportConfiguration(defaultConfigurationChoice(['digiperform']), empty, 'digitakt', null)).toMatchObject({ source: 'manual', modules: [{ id: 'digiperform', version: digiperform.version }] })
   })
 
   it('shows the log’s configuration without asking for one', () => {
@@ -83,15 +83,15 @@ describe('the configuration a report carries', () => {
   })
 
   it('asks for the modules by hand when nothing is saved, as chips plus a search box that scales with the catalog', () => {
-    const html = render({ machine: 'digitakt', moduleId: 'digihealth', workspace: empty, log: null, value: defaultConfigurationChoice(['digihealth']), onChange: () => {} })
+    const html = render({ machine: 'digitakt', moduleId: 'digiperform', workspace: empty, log: null, value: defaultConfigurationChoice(['digiperform']), onChange: () => {} })
     expect(html).toContain('>Configuration <span>Required</span>')
     expect(html).toContain('No configuration with modules is saved in this browser. Add the modules your Digitakt runs.')
     expect(html).not.toContain('<select')
-    expect(html).toContain('<li>' + digihealth.name + ' <span>' + digihealth.version + '</span><button type="button" aria-label="Remove ' + digihealth.name + '">×</button></li>')
+    expect(html).toContain('<li>' + digiperform.name + ' <span>' + digiperform.version + '</span><button type="button" aria-label="Remove ' + digiperform.name + '">×</button></li>')
     expect(html.match(/<li>/g)).toHaveLength(1)
     expect(html).toContain('placeholder="Add a module… (' + (machineModules('digitakt').length - 1) + ' more)"')
     expect(html).not.toContain('type="checkbox"')
     expect(html).not.toContain('Add at least one module')
-    expect(render({ machine: 'digitakt', moduleId: 'digihealth', workspace: empty, log: null, value: defaultConfigurationChoice([]), onChange: () => {} })).toContain('Add at least one module')
+    expect(render({ machine: 'digitakt', moduleId: 'digiperform', workspace: empty, log: null, value: defaultConfigurationChoice([]), onChange: () => {} })).toContain('Add at least one module')
   })
 })

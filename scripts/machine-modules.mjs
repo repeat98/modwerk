@@ -15,6 +15,7 @@ import { parseMachineProfile } from '../src/devices/machine-contract.ts'
 import { parseElemodBuild, parseModwerkModule, requireModwerkPublication } from '../src/catalog/module-contract-v3.ts'
 import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireFlaggedOverlaps, requireKnownConflicts } from './conflict-ids.mjs'
+import { RETIRED_DIGI_MODULE_IDS } from '../src/devices/retired-digi-modules.ts'
 import { USB_AUDIO_LAYOUTS } from '../src/config/usb-audio.ts'
 import { requireDistinctZdl, requireZdlBinary, unlistedZdl, zdlPath } from './zdl-binaries.mjs'
 const json=async path=>JSON.parse(await readFile(path,'utf8'))
@@ -119,7 +120,8 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
   // The pull-request check (--base) holds every Zoom effect to its vendored file; locally a newly scaffolded one passes npm ci's
   // prepare until its release is vendored, but a file that is there must match.
   if(zdl&&(baseCommit||existsSync(resolve(root,zdlPath(document)))))requireZdlBinary(root,label,document)
-  requireKnownConflicts(machine.id,document,new Set(dependencies.keys()))
+  // a conflict may still name a module the library retired: its package carries the flag, and nothing is left to clash with
+  requireKnownConflicts(machine.id,document,new Set([...dependencies.keys(),...(RETIRED_DIGI_MODULE_IDS[machine.id]??[])]))
   // Modules may use only what their machine's core interface provides.
   if(core){const events=new Set(core.events.map(event=>event.name)),tables=new Set([...core.tables.map(table=>table.name),...dependencyCollections(document,build,dependencies)])
    for(const entry of build.subscribe)if(!events.has(entry.event)&&!tables.has(entry.event))throw new Error(label+': '+entry.event+' is not an event of the '+machine.name+' core interface '+core.interface)

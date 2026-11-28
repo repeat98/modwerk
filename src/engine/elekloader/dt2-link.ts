@@ -3,8 +3,8 @@
 // builder worker runs) of the owner's stock file with the base and the packages, then composeDt2MachineBuild, which
 // the page's preflight runs on the kit's result. scripts/link-image.mjs uses it, so the image a test procedure takes
 // is the one a musician's browser makes from the same stock file, packages and version.
-import { build } from '../../../vendor/elekloader/kit/src/patch.ts'
-import type { Lock } from '../../../vendor/elekloader/kit/src/store.ts'
+import { build } from '../elektron/firmware-build.ts'
+import type { Lock } from '../elektron/store.ts'
 import { parseBuildMods } from './digi-preflight.ts'
 import { composeDt2MachineBuild } from './dt2-render-build.ts'
 

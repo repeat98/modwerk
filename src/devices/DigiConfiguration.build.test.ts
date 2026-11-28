@@ -19,8 +19,8 @@ vi.mock('../community/member-access', async original => ({
 vi.mock('../engine/elekloader/machine-build', async original => ({
   ...await original<typeof import('../engine/elekloader/machine-build')>(),
   createMachineBuilder: () => ({ dispose() {}, version: async () => ({ ok: true, name: 'test.syx' }) }),
-  prepareBuild: async () => ({ ok: true, enabled: ['digihealth'], check: { ok: true }, device: { default_version: '2.0a', version_len: 4 } }),
-  buildWithLock: async () => ({ ok: true, version: '2.0a', sha256: 'b'.repeat(64), bytes: 4, seconds: 1, mods: ['digihealth'], files: [{ name: 'test.syx', data: new ArrayBuffer(4) }] }),
+  prepareBuild: async () => ({ ok: true, enabled: ['digiutils'], check: { ok: true }, device: { default_version: '2.0a', version_len: 4 } }),
+  buildWithLock: async () => ({ ok: true, version: '2.0a', sha256: 'b'.repeat(64), bytes: 4, seconds: 1, mods: ['digiutils'], files: [{ name: 'test.syx', data: new ArrayBuffer(4) }] }),
 }))
 
 it('keeps a build through a rename and clears it when another set has the same modules', async () => {
@@ -29,8 +29,8 @@ it('keeps a build through a rename and clears it when another set has the same m
   const container = document.createElement('div'), root = createRoot(container)
   document.body.append(container)
   const device = { ...DEVICES_BY_ID.digitakt, id: 'digitakt' as const }
-  const first = newConfiguration('Live', ['digihealth'], false, undefined, 'digitakt')
-  const second = newConfiguration('Studio', ['digihealth'], false, undefined, 'digitakt')
+  const first = newConfiguration('Live', ['digiutils'], false, undefined, 'digitakt')
+  const second = newConfiguration('Studio', ['digiutils'], false, undefined, 'digitakt')
   const noop = () => {}
   const session = { ...emptySession, user: { id: 'member', displayName: 'Member', username: 'member', verified: true } }
   const render = (configuration: Configuration) => act(() => root.render(createElement(CommunityContext.Provider, {
