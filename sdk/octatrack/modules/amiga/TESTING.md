@@ -2,6 +2,28 @@
 
 Record what you ran, on which build and which unit, and what you saw. "Not tested" is a valid answer; never write a result you did not observe, and keep emulator runs apart from hardware ones.
 
+Version 0.3.1-experimental, package SHA-256 `9cbb74810f20494550534ee3365fe8752481d601f611fd073e8bac13d85d3170` (12,152 bytes; `node scripts/mirror-octatrack-modules.mjs && python3 -B scripts/octatrack-module-packages.py`). Only the frame interrupt's path changes, and the sound does not: the voice's fields are ordered so that a note at rest touches three cache lines of its voice and a stretched note five, a voice starts a line, the rarer work (a restart, a crossfade, SRR and LED, a reader turning round, a cycle's end, PCH's pitch) is in functions of its own, a note at rest takes a straight path of its own, the lane's words are copied in five moves (into a view aligned to longs), the packet's segment counts are checked without a loop, and RATE's and SYNC's remainder takes no second division. Not tested on a unit: its unit run is the owner's, still to come.
+
+- **The same samples.** `verify.py` (76 checks, one more than 0.3.0's: the gate's voice has the engine's size) passes. `bench.py --source <0.3.0's amiga.c>` and then `bench.py --compare` on this source, in ot_emu (emulator, not hardware), 22 November 2026: in every case below and in three sweeps of 1,500 frames that move every control, start notes, make the sample unreadable now and then and split frames into calls of 0 to 16 frames, the frames handed to the DSP, stock's voice and the lane after every call, and what the stand-in for stock's render and START read of the lane were identical to 0.3.0's, byte for byte.
+- **Emulator counts (not hardware).** `bench.py` traces the module's own code through `amiga_render`, two calls a frame of one track (a 16-bit stereo sample, 126 BPM), with stock's render and START replaced by stand-ins that are not counted. Per frame, 0.3.0 against 0.3.1; a line is 16 bytes, the cache's line, and the module's data is its voices and sample descriptions:
+
+  | Case | Instructions | Lines of code | Lines of the module's data |
+  | --- | --- | --- | --- |
+  | Voice not sounding | 184 / 130 | 52 / 34 | 0 / 0 |
+  | STR ON at its own pitch and speed, BITS 16 (at rest) | 698 / 400 | 178 / 108 | 10 / 4 |
+  | STR ON at rest, 8 bits | 974 / 688 | 186 / 120 | 12 / 6 |
+  | SYNC, the sample at the project's tempo (at rest) | 1,004 / 730 | 188 / 132 | 12 / 6 |
+  | SYNC, a 115 BPM sample at 126 (restarts every cycle) | 1,535 / 1,284 | 247 / 197 | 18 / 13 |
+  | STR OFF, 8 bits | 862 / 720 | 160 / 134 | 10 / 8 |
+  | An octave up | 2,115 / 1,809 | 259 / 198 | 18 / 13 |
+  | SPD 32 | 1,532 / 1,253 | 255 / 195 | 18 / 13 |
+  | SRR 16 | 1,379 / 1,273 | 236 / 218 | 14 / 10 |
+  | LED | 2,563 / 2,554 | 268 / 254 | 14 / 10 |
+  | An octave up, SRR 16, LED | 5,187 / 4,997 | 341 / 282 | 20 / 17 |
+  | An octave up, SPD 32, GRN 0, SRR 6, LED | 5,454 / 5,262 | 358 / 300 | 21 / 19 |
+
+  The sample's own lines (the crossfade reading it) and the battery-RAM reads (SYNC's ORIGINAL TEMPO, two a frame) are the same in both. The lowpass alone counts a few more instructions than before (the compiler allocates its registers differently), in fewer lines. On the unit the time followed the lines more than the instructions: 0.2.0 counted fewer instructions than 0.1.0 at the defaults and measured 2.2 points dearer.
+
 Version 0.3.0-experimental, package SHA-256 `acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e` (`npm run octatrack:module-packages` at `ee4d3ba69`). It adds STR's SYNC, makes it the default, and takes "is this note looped" from stock's voice instead of SETUP's LOOP byte. Its unit run is under "On the unit (0.3.0-experimental)".
 
 Version 0.2.1-experimental, package SHA-256 `b19184db0dbd37ce0411c27fa0bff132d087da70b0f78971324f485c520f3473` (12,540 bytes). It changes only how the page picks a control's widget (`modwerk_page_widget` in `sdk/machines/octatrack/include/modwerk_page.h`): the widget is reached as a 16-bit step from the lowest of the three addresses, so the package no longer carries a list of four stock widget addresses, which repeated 14 bytes of the stock OS (#1471). The engine is unchanged. Checked on the host on 14 November 2026: `verify.py` (72 checks pass), `generate.py --check`, `modules:compat -- amiga` (0 problems) and the stock scan (`octatrack:module-packages -- --stock`, OS 1.40C): the longest run shared with the stock OS is 11 bytes (it fails at 12; 0.2.0 had 14). On the owner's MKII on 14 November 2026 (flashed release base `a6b457a1…`, a published USB Audio layout of `10ec7118`, no other module installed), this exact package ran a 20-second RAM trial over USB (`device -- try`): it was admitted, ran to the end and rolled back clean, and the unit was left with no module and the same base. Nothing was played or listened to in that trial; 0.2.0's results below stand for the engine. Everything below is 0.2.0's and 0.1.0's.
@@ -10,7 +32,7 @@ Version 0.2.0-experimental, package SHA-256 `6bb8e598b76e359bda78fb420abaa96926f
 
 ## Host
 
-`python3 -B verify.py`: 75 checks pass. They cover the engine only:
+`python3 -B verify.py`: 76 checks pass. They cover the engine only:
 
 - `amiga_crunch`: bypass at SRR 0 / BITS 16 / LED off, the word mask and rounding, full scale, the averaged hold at SRR 16 and 127, the same output when a buffer is split across calls, a garbage state, clamped controls, and the lowpass (flat at 800 Hz, about -3 dB at 3.3 kHz, about -12 dB at 6.6 kHz, stereo, full scale, silence). Unchanged from 0.1.0.
 - `amiga_stretch`, `amiga_cross`, `amiga_seek` and `amiga_declick`, against a model reader: no restart and an untouched sample at speed 64 and pitch 0, a restart every cycle an octave up with the note keeping its length, half speed doubling it, speed 0 holding the first grain, looped notes wrapping, stock's own loop left alone, a long cycle two octaves up; no step in the frames handed on where the restarts were, whether the next grain lies behind the reader (slower, pitched up) or ahead of it (faster, a fourth down at its own length); and with a sample it cannot read, the step faded out instead.
@@ -37,7 +59,7 @@ A host model on the same day (the scratch scripts of this session, not committed
 
 ## Emulator (not hardware)
 
-`python3 -B bench.py --emulator <ot_emu> --main <a MAIN image the emulator boots> --output <folder>` counts the instructions the engine's own functions execute per audio frame of a note of stereo noise, in ot_emu (the macOS build of 14 October 2026 and the static-render twin's MAIN, 13 November 2026). It does not count stock's reader and START, nor the glue's page lookup. On the unit the time did not follow such counts in 0.1.0: a division and a multiply-accumulate cost far more than a move there. Read them for which path is dearer, not for time.
+With 0.2.0, `bench.py` counted the instructions the engine's own functions execute per audio frame of a note of stereo noise, in ot_emu (the macOS build of 14 October 2026 and the static-render twin's MAIN, 13 November 2026); since 0.3.1 it traces the whole render instead (above). It does not count stock's reader and START, nor the glue's page lookup. On the unit the time did not follow such counts in 0.1.0: a division and a multiply-accumulate cost far more than a move there. Read them for which path is dearer, not for time.
 
 | One track | 0.2.0 mean | 0.2.0 worst | 0.1.0 mean | 0.1.0 worst |
 | --- | --- | --- | --- | --- |

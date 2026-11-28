@@ -28,12 +28,12 @@ U32 = ctypes.c_uint32
 
 
 class Voice(ctypes.Structure):
-    _fields_ = [(name, U32) for name in ('rest', 'left', 'rem', 'back')] + [('l', ctypes.c_int32), ('r', ctypes.c_int32), ('phase', U32), ('al', ctypes.c_int32), ('ar', ctypes.c_int32),
-                ('count', U32), ('ic', ctypes.c_int32 * 4)] + [(name, U32) for name in (
-                    'pos', 'window', 'grain', 'played', 'since', 'got', 'first', 'length', 'sample', 'flags', 'origin', 'end')] + [
-                ('last', ctypes.c_int32 * 2), ('off', ctypes.c_int32 * 2)] + [(name, U32) for name in (
-                    'fade', 'jump', 'tail', 'down', 'xk', 'xlen', 'xstep', 'xnext')] + [
-                ('page', ctypes.c_void_p), ('pfirst', U32), ('pcount', U32), ('slice', U32), ('strt', U32)]
+    _fields_ = [(name, U32) for name in ('rest', 'left', 'back', 'window', 'pos', 'played', 'since', 'got', 'phase', 'count')] + [
+                ('l', ctypes.c_int32), ('r', ctypes.c_int32)] + [(name, U32) for name in ('xlen', 'jump', 'fade', 'rem')] + [
+                ('last', ctypes.c_int32 * 2), ('grain', U32), ('xnext', U32), ('al', ctypes.c_int32), ('ar', ctypes.c_int32),
+                ('ic', ctypes.c_int32 * 4), ('off', ctypes.c_int32 * 2)] + [(name, U32) for name in ('tail', 'down', 'xk', 'xstep')] + [
+                ('page', ctypes.c_void_p)] + [(name, U32) for name in (
+                    'pfirst', 'pcount', 'first', 'length', 'sample', 'flags', 'origin', 'end', 'slice', 'strt', 'spare')]
 
 
 LOCATE = ctypes.CFUNCTYPE(ctypes.c_size_t, ctypes.c_void_p, U32, ctypes.POINTER(U32), ctypes.POINTER(U32))
@@ -71,6 +71,7 @@ with tempfile.TemporaryDirectory() as tmp:
     subprocess.run(['cc', '-O2', '-shared', '-fPIC', '-DAMIGA_HOST', '-o', str(so), str(HERE / 'amiga.c')], check=True)
     lib = ctypes.CDLL(str(so))
     lib.amiga_strt.restype = lib.amiga_frame.restype = ctypes.c_uint32
+    check('the gate\'s Voice is the engine\'s size', ctypes.sizeof(Voice) == lib.amiga_voice_bytes(), f'{ctypes.sizeof(Voice)} {lib.amiga_voice_bytes()}')
 
     def crunch(samples, srr, bits, led=0, voice=None):
         voice = voice or Voice(phase=0x10000)
