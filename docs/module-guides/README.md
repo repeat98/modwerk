@@ -211,6 +211,15 @@ Each problem is one line naming the modules, the byte ranges and what each one p
 
 A module that is slow, or that only works when it is the only thing running, takes the room of every other module and of the stock instrument. So every new module carries `evidence/performance.json`: worst-case cycles, a benchmark against the closest stock effect and a stress run, which `npm run perf:audit` judges and `module:doctor` requires. A new FX aims for the cost of stock SPRING REV at its worst settings. Every Octatrack module also names its CPU price (`resources.cpuPrice`), measured on a unit; a machine's is its descriptor's `reserved[0]` too, and `modules:check` refuses a module without one. Read [MODULE_PERFORMANCE.md](../MODULE_PERFORMANCE.md) before you measure.
 
+### Keep the ColdFire cheap
+
+The Octatrack's ColdFire already runs stock at 40 to 75 % of its meter, and a slow knob is what a player notices first. Design for these from the start; each one cost a real module points of the meter on a unit ([measurements](../OCTATRACK_HARDWARE_TRAPS.md#coldfire-and-dsp-load)):
+
+- **Nothing in use, nothing spent.** Answer `ev_in_use` and mark your frame detours `"rests"` ([HOOKS.md](../../sdk/machines/octatrack/HOOKS.md)). Other hooks, a tick hook among them, are not rested by that: do their work only when something changed, never a scan, checksum or derivation on every tick.
+- **Module code runs uncached.** A loop over a pattern record or a 64-step table costs many times what it would in the base. On a knob turn, write only the bytes that change, in place, and never call a stock routine that rescans every track.
+- **A render is bounded.** Time it with DTCN3 and cap the work as POLY8's voice governor does ([machines](machines.md)). Take a write lease only where a call writes, at most once a frame.
+- **Measure before you release.** `npm run device:price` reads what the module adds installed and used nowhere: at most 0.2 points of the frame interrupt (unless it rests) and 2 points of the CPU meter. `modules:check` refuses a new release past either, and an effect or machine past its curve ([performance](../MODULE_PERFORMANCE.md#measure-a-module)). The emulator measures no load: only a unit shows this.
+
 ## Digitakt and Digitone
 
 Mods there are linked by one core per machine and built by elekloader's builder in the browser, so there is no native octabam comparison. Start from [the Digitakt guide](../../sdk/machines/digitakt/README.md) for the core hooks, budgets and claims, and test a two-mod build, since combinations are the point.
