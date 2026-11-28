@@ -170,6 +170,8 @@ def counters():
 
 
 def mem(addr, n): return bytes.fromhex(''.join(send('mem:%#x:%d' % (addr, n)).split()))
+def mem_refused(exc):
+    return isinstance(exc, RuntimeError) and 'refused this MEM read' in str(exc)
 def u32(addr): return int.from_bytes(mem(addr, 4), 'big')
 BANK, PART = 0x46c82456, 0x80000003  # the current bank's base; the current Part (docs/OCTATRACK_DRIVING.md)
 def part_fx(part, saved=False): return mem(u32(BANK) + (0x9504a if saved else 0x8ed80) + part * 6322, 16)
@@ -186,7 +188,9 @@ def chooser_names(slot):  # every effect's name in a chooser table (128 ids at m
             break
         try:
             names.append(fx_name(slot, fx))
-        except RuntimeError:
+        except RuntimeError as exc:
+            if not mem_refused(exc):
+                raise
             # Listed id points at a descriptor the development image cannot read (tail of the chooser
             # on release dev twins). Skip that index so the walk can still name installed packages;
             # chooser_name matches by string, not by index.

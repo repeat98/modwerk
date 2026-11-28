@@ -1,0 +1,1 @@
+Octatrack qualify: when `chooser_names()` walks the FX chooser table, skip an index whose descriptor name lies outside the development USB memory map instead of aborting `device:test`. USB loss and other device errors still raise (#2370, unblocks SEQ `test:procedure` on a release dev twin).
