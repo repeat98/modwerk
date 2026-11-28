@@ -123,10 +123,13 @@ static void proof(uint8_t *package, uint32_t n, uint8_t *expected, uint32_t expe
     CHECK(reads == 3 && !writes); CHECK(refusal == RUNTIME_STOCK);
     mu_sha256(main_image, main_bytes, digest_after); CHECK(!memcmp(digest_before, digest_after, sizeof digest_before));
 
-    /* The existing full identity check rejects before package admission. */
-    memcpy(main_image, original, main_bytes); reset(); card[0][20] ^= 1u; modwerk_modset_service();
-    CHECK(modwerk_modset_result == FOREIGN && !modwerk_runtime_active() && !writes && !owners);
-    CHECK(!memcmp(original, main_image, main_bytes)); card[0][20] ^= 1u;
+    /* Another base's set goes through the same package admission (modset.c: the set survives a base update), so
+     * the arena guard refuses it there too. */
+    reset(); card[0][20] ^= 1u; modwerk_modset_service();
+    CHECK(modwerk_modset_result == REFUSED && refusal == RUNTIME_STOCK && !modwerk_runtime_active() && !writes && !owners);
+    mu_sha256(main_image, main_bytes, digest_after); CHECK(!memcmp(digest_before, digest_after, sizeof digest_before));
+    memcpy(main_image, original, main_bytes); card[0][20] ^= 1u;
+    modwerk_test_guard.armed = 0; /* that start ran and settled: the boot guard holds nothing */
 
     /* Exact native restoration works; removing it restores every original site. */
     reset(); modwerk_modset_service();
@@ -202,6 +205,6 @@ int main(int argc, char **argv)
         switching(package, sizeof package);
     } else return 2;
     if (failures) return 1;
-    puts("Actual loader/card guard: native reconstruction, wrong-arena admission, matching-base card rejection, foreign-base rejection and exact removal passed; no card writes or module execution.");
+    puts("Actual loader/card guard: native reconstruction, wrong-arena admission, matching-base and foreign-base card rejection and exact removal passed; no card writes or module execution.");
     return 0;
 }

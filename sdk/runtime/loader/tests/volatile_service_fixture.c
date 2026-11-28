@@ -108,10 +108,11 @@ static void export_slot(uint32_t which,uint32_t generation,unsigned count,const 
     }
     CHECK(k==count && runtime_journal_set_digest(ids,sha,k,got) && !memcmp(got,digest,32));
 }
-/* Another base's whole set (its configuration hash differs) in slot 0, holding module 130. */
+/* Another base's whole set (its configuration hash differs) in slot 0, holding a module linked to that base (Analog
+ * BD's id, modset.c base_bound[]), which this base leaves out. */
 static void foreign_card(void)
 {
-    id=130;begin(32,0,0,0,0,1,0x30);site(STOCK+192,6);
+    id=0xabdb1445u;begin(32,0,0,0,0,1,0x30);site(STOCK+192,6);
     uint8_t *c=card[0];uint32_t bytes=84u+8u+((n+3u)&~3u);memset(c,0,(bytes+511u)&~511u);
     memcpy(c,"MWST",4);put32(c+4,1);put32(c+8,9);put32(c+12,1);put32(c+16,bytes);
     memcpy(c+20,modwerk_base_digest,32);c[20]^=0x80u;
@@ -131,8 +132,8 @@ int main(int argc,char **argv)
     if(argc==3 && !strcmp(argv[1],"boot")) return card_boot(argv[2]);
     if(legacy_main()) return 1;
     CHECK(argc==2 || argc==3);card_dir=argc==3?argv[2]:0;
-    if(!strcmp(argv[1],"keepforeign")) { /* a boot from only another base's set installs nothing */
-        uint8_t none[32];foreign_card();CHECK(card_dir && runtime_journal_set_digest(0,0,0,none));card_save(SET_FOREIGN,0,none);
+    if(!strcmp(argv[1],"keepforeign")) { /* a boot from only that set installs nothing: its one module is linked to its base */
+        uint8_t none[32];foreign_card();CHECK(card_dir && runtime_journal_set_digest(0,0,0,none));card_save(SET_REFUSED,0,none);
     }
     seed_saved_set();journal_enabled=journal_begin_safe=journal_admitted=1;
     if(!strcmp(argv[1],"keeprefuse")) { /* the saved set holds another 112 than the live one: not the live baseline */
@@ -202,7 +203,7 @@ int main(int argc,char **argv)
             modwerk_volatile_service(&svc,109);CHECK(!memcmp(svc.current,baseline_digest,32));
         } else if(!strcmp(c,"persist") || !strcmp(c,"foreign")) {
             /* Power lost before any sector of the Keep's save lands: a boot restores the previous set (never
-             * a half set, never the foreign one). Complete: exactly the identity Keep reported, the export
+             * a half set, never the foreign one's linked module). Complete: exactly the identity Keep reported, the export
              * reads it back, and a legacy install's save (overwriting in place) keeps the kept modules. */
             uint8_t status[212],kept[32],legacy[32];unsigned generation=modwerk_modset_generation;
             CHECK(card_dir!=0);
