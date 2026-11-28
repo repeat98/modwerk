@@ -199,7 +199,7 @@ export class LoaderModel {
       requires: [...m.requires], conflicts: [...m.conflicts], names: [...m.names], needs_core: m.needsCore ?? null,
     }
     // each site with the last relocation target it names
-    d.sites = m.sites.map(s => [s.addr, s.len, s.kind, s.relocs.reduce((t, r) => (r[2].startsWith('sym:') ? r[2].slice(4) : r[2]), '')])
+    d.sites = m.sites.map(s => [s.addr, s.len, s.kind, (s.relocs.length ? (t => (t.startsWith('sym:') ? t.slice(4) : t))(s.relocs[s.relocs.length - 1][2]) : '')])
     if (m.format !== 2) return Object.assign(d, { format: 1, ram: m.blob ? m.blob.len : 0, fast: 0, events: [], adds_to: [], tables: [], regions: [] })
     const m2 = m as Mod2
     d.format = 2

@@ -26,7 +26,7 @@ export class ElekError extends Error {}
 // checksum, then an empty data message and an end marker carrying the length.
 
 const toNibbles = (v: number) => [20, 16, 12, 8, 4, 0].map(shift => (v >>> shift) & 0xf)
-const fromNibbles = (nibbles: ArrayLike<number>) => Array.prototype.reduce.call(nibbles, (v: number, x: number) => (v << 4) | x, 0) as number
+const fromNibbles = (nibbles: ArrayLike<number>) => Array.from(nibbles).reduce((v, x) => (v << 4) | x, 0)
 
 export function packetChecksum(data: Uint8Array, nib: ArrayLike<number>): number {
   return (byteSum(data) + (nib[1] & 7) + nib[3] + nib[5] + ((nib[2] + nib[4]) << 4)) & 0xff
@@ -60,7 +60,7 @@ function decode87(payload: Uint8Array): Uint8Array {
 export function encodeSyx(container: Uint8Array, devId: number): Uint8Array {
   const head = [0xf0, ...ELEKTRON, devId, 0x00]
   const out: number[] = []
-  let previous = new Uint8Array(0)
+  let previous: Uint8Array = new Uint8Array(0)
   for (let offset = 0; offset < container.length; offset += CHUNK) {
     const data = container.subarray(offset, offset + CHUNK)
     const nibbles = toNibbles(FIRST_OFFSET + offset)
