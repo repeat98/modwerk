@@ -66,6 +66,42 @@ The developer, by ear on RH05: the strum is a good idea; the downward half is no
 
 `RV07`: the development base's voices variant (`879c6c23`) and rave-stab 0.1.0-experimental alone, sha256 `d7697d672a32fb3176ab582ad00127d64a9af2ad4d80c7decf0418a955058c7b`, ramSpare 100,400 B. RAM-booted over the link (back in 13.2 s, image crc de8e3c72; the flash still holds SC02). On the SD track: FUNC + SRC lists SY RAVE in the SY section, YES chooses it and the SYNTH page reads `T-1 PCH CHD STR / WAV VOI DET LEV`; a turn of CHD shows the chord's name (EURK, OCT and MIN9 seen). The three screens are in `media/`, their plans in `media/capture.json`.
 
+## Test procedure: rave-stab 0.1.0-experimental, 2026-11-28
+
+Build: revision `89af9ceb2048`, package `rave-stab.syx` SHA-256 `d155091065eeb4a4c8491f4d8ea92674f4db7ccd9022230c0f672853fd154c19`. `npm run test:procedure -- analog-rytm-mkii:rave-stab --stock STOCK.syx --elemod modwerk-base-analog-rytm-mkii-dev-879c6c23.elemod --label RV08 --out OUT`, 59 s. Emulator results are not hardware evidence; only what ran on the unit is.
+
+| # | Step | Layer | Result | Command | Evidence |
+|---|---|---|---|---|---|
+| 1 | Software checks | host | passed | `npm run module:doctor -- rave-stab` | logs/01-software.log |
+| 2 | Beside every other module | contract | not run: modules:compat compares the Octatrack's modules only; Analog Rytm MKII has no gate beside every other module yet: its link refuses two modules on one site, so link the image beside the modules it must work with |  |  |
+| 3 | Name the build | host | passed | `node scripts/link-image.mjs --stock STOCK.syx --version RV08 --out OUT/rave-stab.syx --elemod modwerk-base-analog-rytm-mkii-dev-879c6c23.elemod --module analog-rytm-mkii:rave-stab` | logs/03-build.log |
+| 4 | DSP cost model | contract | not run: the DSP cycle scan models the Octatrack's DSP only |  |  |
+| 5 | Emulator rehearsal | emulator | not run: no cases: write them in sdk/machines/analog-rytm-mkii/tools/cases/rave-stab/ (TEST_RUNNER.md) or pass --cases DIR |  |  |
+| 6 | Read the unit | unit | not run: no --link: pass it to drive the unit over its development link (a RAM boot restarts it: with its owner's OK) | `python3 -B sdk/machines/analog-rytm-mkii/tools/rytm_link.py ident` |  |
+| 7 | Scripted unit pass | unit | not run: no cases: write them in sdk/machines/analog-rytm-mkii/tools/cases/rave-stab/ (TEST_RUNNER.md) or pass --cases DIR |  |  |
+| 8 | Soak | unit | not run: no soak for Analog Rytm MKII yet (scripts/octatrack-soak.mjs drives the Octatrack) |  |  |
+| 9 | Cost on the unit | unit | not run: no price on the unit for the Rytm yet: read the audio load (core_audio_load, the base's CPU reading) with and without the change by hand, and record both |  |  |
+| 10 | Put back | unit | not run: no --link: pass it to drive the unit over its development link (a RAM boot restarts it: with its owner's OK) | `python3 -B sdk/machines/analog-rytm-mkii/tools/rytm_link.py ident` |  |
+| 11 | Agent by hand | unit | passed: RV07 (same source and base, sha256 d7697d67…) RAM-booted, SY RAVE chosen on the SD track over the link, the SYNTH page and CHD's names read and captured (Screenshots, above) | `rytm_link.py ramboot`, `rytm_link.py steps` | media/capture.json |
+| 12 | Submitter's own stage | unit | passed, as reported: the author played RH01 to RH06 by ear (RH06: "excellent") | by hand | the sections above |
+
+### Edge cases for this change
+
+In the edge-case table below (0.1.0-experimental, RH06); the Octatrack-only suggestions (Parts, the loader, DSP, USB admission) do not apply to a Rytm voice machine.
+
+### Left for the submitter at their unit
+
+- how it sounds and plays, and timing by ear
+- MIDI, scenes and recording with it
+- it beside the other modules installed on their unit
+- two instances with different settings, on both FX slots and both DSP cores where it can (docs/MODULE_QUALIFICATION.md)
+- Part reload, project save and reload, and a power cycle with it saved: what survives (the Keep and the power cycle are theirs)
+
+### For the pull request
+
+Not tested on a unit: no --link: pass it to drive the unit over its development link (a RAM boot restarts it: with its owner's OK).
+Edge cases: the table above, one row a case (or "Edge cases: none, because …").
+
 ## Edge cases (0.1.0-experimental, RH06)
 
 | Case | Why this change makes it a risk | How run | Result |
