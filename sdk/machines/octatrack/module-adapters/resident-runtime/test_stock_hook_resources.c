@@ -94,7 +94,7 @@ int main(void) {
     assert(!mw_hook_ranges_idle(2,&span,1,0,0,3)); /* Output Matrix's Y $c00+$c1 on core A */
     span=(struct mw_hook_span){0x3bdfe,1,0,MW_HOOK_Y}; assert(!mw_hook_ranges_idle(8,&span,1,0,0,3));
     span=(struct mw_hook_span){0xa00,1,0,MW_HOOK_Y}; assert(mw_hook_ranges_idle(8,&span,1,0,0,3));
-    assert(!mw_hook_ranges_idle(16,0,0,0,0,3) && !mw_hook_ranges_idle(9,0,0,0,0,3)); /* one known feature at a time */
+    assert(!mw_hook_ranges_idle(MW_DSP_FEATURES+1u,0,0,0,0,3) && !mw_hook_ranges_idle(9,0,0,0,0,3)); /* one known feature at a time */
     span=(struct mw_hook_span){0xc00,0xc1,1,MW_HOOK_Y}; assert(mw_hook_ranges_idle(2,&span,1,0,0,3));
     span.core=0; assert(!mw_hook_ranges_idle(2,&span,1,0,0,3));
     span=(struct mw_hook_span){0x2840,0xec0,0,MW_HOOK_Y}; assert(mw_hook_ranges_idle(4,&span,1,0,0,3));
@@ -136,7 +136,7 @@ int main(void) {
     span=(struct mw_hook_span){0x7a0,0x10,0,MW_HOOK_Y}; assert(mw_hook_claim_permitted(0,&span,1));
     span.space=MW_HOOK_P; assert(!mw_hook_claim_permitted(0,&span,0));
     span=(struct mw_hook_span){0x2fff0,0x20,0,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(0,&span,0));
-    span=(struct mw_hook_span){0x7a0,0x10,0,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(16u,&span,0) && !mw_hook_claim_permitted(0,&span,2));
+    span=(struct mw_hook_span){0x7a0,0x10,0,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(MW_DSP_FEATURES+1u,&span,0) && !mw_hook_claim_permitted(0,&span,2));
     /* Buffers keep clear of live claims: FX1 block 0 is Y $1000 on each core, FX2 block 2 core 0 holds $33dfe. */
     struct mw_hook_span live2[2]={{0x1000,1,1,MW_HOOK_Y},{0x33e00,4,1,MW_HOOK_Y}};
     assert(!mw_hook_buffer_clear_of(1,0,0,&fx1w,live2,2) && mw_hook_buffer_clear_of(0,0,0,&fx1w,live2,2));
