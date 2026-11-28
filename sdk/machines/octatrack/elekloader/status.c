@@ -1042,7 +1042,9 @@ static void settings_key(int code)
         }
         struct settings_cursor *cursor = view.fields ? &setting_field : &setting_option;
         settings_move(cursor, view.count, code);
-        if (code == YES && view.fields) {
+        if (code == YES && view.fields == 2u) {
+            modwerk_settings_choose(setting_module.row, setting_epoch, MODWERK_SETTING_FIELDS, setting_field.row);
+        } else if (code == YES && view.fields) {
             if (modwerk_settings_field(setting_module.row, setting_field.row, &view) && view.epoch == setting_epoch) {
                 choosing_setting = SETTING_FIELD;
                 setting_option = (struct settings_cursor){view.active, 0};
@@ -1907,7 +1909,7 @@ static void settings_page(unsigned char *frame)
     if (cursor->top + SETTING_ROWS < count) arrow(frame, X1 - 9u, Y0 + 45u, 0);
     if (count) {
         button(frame, X0 + 4u, Y1 - 10u, "YES");
-        label(X0 + 30u, Y1 - 8u, choosing_setting && !view.fields ? "SELECT" : "OPEN");
+        label(X0 + 30u, Y1 - 8u, choosing_setting && view.fields == 2u ? "APPLY" : choosing_setting && !view.fields ? "SELECT" : "OPEN");
     }
     button(frame, X1 - 24u, Y1 - 10u, "NO");
 }
