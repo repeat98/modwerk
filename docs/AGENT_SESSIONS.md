@@ -6,7 +6,7 @@ Since 19 November 2026. Developers build with coding agents on their own compute
 
 Since 20 November 2026. Before the final message of a session that did real work (about half an hour or 40 tool calls, not a short question), the agent looks back at it once with `/modwerk-post-eval`. `pr:ready` prints the reminder.
 
-1. **Measure.** `npm run session -- review` reads this session's transcript and prints the wall time per tool, the slowest calls, the failed calls, what ran three times or more, how long questions waited for the developer, the times the developer stopped the agent or refused a call, the prompts that read like a correction or frustration (pasted text left out), and the development processes that used the most processor time on this computer. Nothing is sent. A transcript holds no processor time, so wall time is the measure for calls, and it includes waiting for a permission prompt.
+1. **Measure.** `npm run session -- review` reads this session's transcript and prints the wall time per tool, the slowest calls, the failed calls, what ran three times or more, how long questions waited for the developer, the times the developer stopped the agent or refused a call, the prompts that read like a correction or frustration (pasted text left out), and the development processes that used the most processor time on this computer. Nothing is sent. A transcript holds no processor time, so wall time is the measure for calls, and it includes waiting for a permission prompt. Cursor keeps `~/.cursor/projects/<encoded-cwd>/agent-transcripts/<id>/<id>.jsonl`; name it with `--file` when the session ran in another editor window, or let the script pick the newest Claude Code, Codex or Cursor transcript for this checkout.
 2. **Add what the figures cannot show:** where you guessed and were wrong, which guide, check or error message sent you the wrong way or said nothing, and what the developer had to correct or say twice.
 3. **Tell the developer at most three findings**, a line each: what cost time, why, and the fix. When nothing would spare a later session time, say so in a line and stop.
 
@@ -32,7 +32,7 @@ When the developer answers "always" or "never", save it with `npm run session --
 
 ## What leaves the computer
 
-Only the conversation: the developer's prompts, the agent's replies, and one line per tool call (the command or file it touched, and whether it failed). The script finds the session's transcript (Claude Code's in `~/.claude/projects/`, Codex's in `~/.codex/sessions/`) and removes, before anything is sent:
+Only the conversation: the developer's prompts, the agent's replies, and one line per tool call (the command or file it touched, and whether it failed). The script finds the session's transcript (Claude Code's in `~/.claude/projects/`, Codex's in `~/.codex/sessions/`, Cursor's under `~/.cursor/projects/<encoded-cwd>/agent-transcripts/`) and removes, before anything is sent:
 
 - every tool output (including the output of commands the developer ran with `!`, which keep only the command), the agent's thinking, injected context (skill bodies, hook output, compaction summaries, context files) and subagent turns;
 - code blocks longer than 12 lines, hex dumps, runs of hex values and long data blobs;

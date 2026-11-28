@@ -435,6 +435,36 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
       }
     ]
   },
+  seq: {
+    version: '0.1.0-experimental',
+    screenshots: [
+      {
+        path: 'media/seq-rhythm-open.png',
+        caption: 'Hold [TRACK] and press [PAGE]: SEQ opens on that track with the rhythm page. Set PULS and ROT on the focused lane (TRIG or PLCK), then press [YES] to write.',
+        alt: 'SEQ rhythm page on track 1 with PULS, ROT, TRIG lane and the step grid.',
+      },
+      {
+        path: 'media/seq-rhythm-audio-emulator.png',
+        caption: 'With LANE on TRIG, pick SRC / PTCH on D and set DPTH on E. The grid previews the rhythm; it does not show existing pattern trigs until you press [YES].',
+        alt: 'SEQ Rhythm on an audio track.',
+      },
+      {
+        path: 'media/seq-harmony-audio-emulator.png',
+        caption: 'Press [RIGHT] when D is SRC / PTCH: SCAL and ROOT set the scale; PHRS (RAND, UP, DOWN, ALT, TRI) and JUMP shape pitch locks.',
+        alt: 'SEQ Harmony on an audio track with RAND selected.',
+      },
+      {
+        path: 'media/seq-harmony-midi-emulator.png',
+        caption: 'On a MIDI track, Harmony sets VOIC, CHRD and the same phrase controls for NOTE fills.',
+        alt: 'SEQ Harmony on a MIDI track with RAND selected.',
+      },
+      {
+        path: 'media/seq-clear-menu-emulator.png',
+        caption: 'Press [FUNC] + [BANK] while SEQ is open: clear one destination, every destination, or locks and trigs together. Each row applies with one [YES].',
+        alt: 'SEQ clear menu.',
+      },
+    ],
+  },
   "recorder-loop-fix": {
     "version": "0.1.0-experimental",
     "screenshots": [
