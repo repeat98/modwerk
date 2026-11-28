@@ -1,4 +1,4 @@
-# Octatrack base 0.8.4: on top of 0.8.3, with the Quadraverb base side, 27 November 2026
+# Octatrack base 0.8.4: on top of 0.8.3, with the Quadraverb base side and the open base work, 27-28 November 2026
 
 Source: `base/octatrack-next` after base 0.8.3, plus these commits, each its own:
 
@@ -40,6 +40,20 @@ Regenerated with `npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin --beta
 ## The core's sources in the repository, 28 November 2026
 
 The Octatrack core's boot copier, hook bus and gate (`sdk/machines/octatrack/elekloader/core-ot/`: `core-ot.s`, `bus.s`, `gate.s` and their `mod.json`) are now the base's own files, and no build reads an upstream checkout. Rebuilt: base 0.8.4 `35af17c249b60a7f6c4888deb4f0b43bf17de7216c221a477a96d443dbabc007`, package `36eb5648…`; against `fe4e7623` only the identity differs (`identity.c`'s hash and the identity string in `.run`). Browser `.bin` = `build_core.py` `.bin`: `41827d72a3d0504c15411458ea004db9d0e13e2929d9e03d2d43ffa79dfa2fa1` (838,976 bytes); 838,960 of 851,712 container bytes, 12,752 free. USB Audio 0.4.2 unchanged (`c2597a32…`).
+
+## The open base work, folded 28 November 2026
+
+Owner, 28 November 2026: "merge everything that is still open for the base in the cumulative draft". Each branch merged with its authors' commits, in the owner's order of 27 November 2026 (#2261 at 63, #2271 at 64, `ot_dsp_effects` at 65):
+
+- #2261, jonathanwardle1992-beep: the `ot_lfo_pmtr_dest` table at hook index 63 (`lfo_pmtr_dest.c`/`.s`): contributed audio LFO PMTR destinations past stock's 30. It owns the PMTR formatter, the count word, the SETUP encoder's beq and the destination store; the destination `lea` stays unclaimed while FM Synth patches beside it. No module contributes yet (unused-hooks.json).
+- #2271, jonathanwardle1992-beep: the `ev_audio_step` call hook at `0x400a2d6a`, index 64 (the pull request asked for 63): a module changes the pattern step a track plays. Play Modes' machine port subscribes at order 40 and replaces its own `pm_audio_step`; the published Play Modes 0.2.1 package is standalone and still patches that site, so this base's loader refuses it (RUNTIME_EVENT) until a Play Modes release subscribes. `modules:compat` does not see it, because it reads the port.
+- The Quadraverb base side (`work/base-stream-release`, repeat98): everything above from `base/octatrack-pool-raise` and `work/base-stream-release`; `ot_dsp_effects` moves from 63 to 65.
+- #2286, repeat98: the Part budget charges a machine its measured price (`cpu_price()`, `PRICE_BIT`), written against 0.8.3 and never in the draft before. Ran on the owner's MKII on a development twin of its branch (`145bb375`), not on this build.
+- #2359, offtheheezystudio: nonpersistent settings action rows (ABI 4 in `ot_settings`, `SETTINGS_ACTIONS.md`). No module contributes one yet.
+
+Re-pinned for the new inputs, each image unchanged: USB Audio's two reconstruction records (`modwerk_events.h`), the reviewed machine recipes (`machine_ports.py`, Analog BD recaptured identical) and the candidate recipes (`sdk/runtime/loader/build.py`).
+
+Rebuilt: base 0.8.4 `3a28f754ca85630f7d891e1140badbffcededb607983fa56d28ce728b75d6848`, package `c22a734a…`, fills `9c79d54b…`. Browser `.bin` = `build_core.py` `.bin`: `1c78652f8c17c754d35c0b205a6ab66c1286681ed55d1e805095a78df340628f` (846,924 bytes); bootloader copy identical, `.bin` and `.syx` carry the same OS, every change inside a declared site. 846,908 of 851,712 container bytes, 4,804 free (+9,016 since 0.8.3); MAIN 1,361,780 of 1,572,864. The base-bound packages (Sidechain, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) and USB Audio 0.4.2 (`c2597a32…`) keep their bytes; only their `requiredBase` moves.
 
 ## Tests
 
