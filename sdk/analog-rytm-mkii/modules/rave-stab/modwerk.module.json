@@ -80,11 +80,24 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "96509cc583150f679eeb3b719169f03018cc95af585a03ca10a3999c40e4030b",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-27",
+      "tester": "chevyone",
+      "durationMinutes": null,
+      "summary": "0.1.0-experimental on chevyone's Analog Rytm MKII, OS 1.74, RAM-booted over the development link (RH01 to RH06 with HH Alloy, on the development base's voices variant 879c6c23; RH06, whose sha256 this is, holds this source; RV07 with SY RAVE alone for the screenshots). The author played it by ear on every build (RH06: \"excellent\"); the SYNTH page and the CHD and VOI names seen on screen; mw_voice_meter 6.76 % of the block a voice on average, 7.95 % at the dearest block.",
+      "limitations": [
+        "Ran from RAM on a development base with a USB test link, not the published base.",
+        "Not run: locks of CHD and VOI across steps, several SY RAVE voices at once, a project save and power cycle with the register, rytm-emu."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
