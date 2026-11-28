@@ -662,6 +662,8 @@ export class OctatrackLink {
   }
   /** The unit's own diagnostics log (diag.c); background diagnostics call this only after explicit consent. */
   deviceLog(signal?: AbortSignal, allowed: () => boolean = () => true) { return this.read('diagnostics log', transport => transport.deviceLog(signal), signal, allowed) }
+  /** The frame guard's renders dropped since the start and their tracks, in one transfer. */
+  sheds(signal?: AbortSignal, allowed: () => boolean = () => true) { return this.read('dropped sound count', transport => transport.sheds(signal), signal, allowed) }
   /** Private recovery export: holds one link lock for both fixed saved files, with no card writes. */
   savedBackup(signal?: AbortSignal) { return this.read('saved module files', transport => transport.savedBackup(signal), signal) }
   /** The modules the unit's project names that are not installed, while it is idle ([] from a base without MISSING);
