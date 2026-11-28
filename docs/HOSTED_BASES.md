@@ -29,6 +29,10 @@ owner's `wrangler` login (`--dry-run` builds and checks without uploading). Crea
 already in the bucket with the same identity and SHA-256 is skipped; the same identity with another SHA-256 stops it. Contributors never run it and CI has no access to
 the bucket.
 
+After every base release (the Octatrack's 0.8.4, repeat98/modwerk#2333, is the next), run it again: the guide offers
+only the base this deploy publishes, so until the new images are up it falls back to the musician's own file. The
+step is in [Ship a base](OWNER_OPERATIONS.md#ship-a-base).
+
 ## Rules this changes
 
 The rule "firmware never enters Git or CI" holds as before. The one exception is these base images, built and uploaded

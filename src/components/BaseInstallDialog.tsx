@@ -29,6 +29,7 @@ export type BaseGuideStage = 'opened' | 'file-downloaded' | 'first-connection' |
  * - `no-webusb`: this browser has no WebUSB, so the guide can prepare the file but never connect;
  * - `site-outdated`: Modwerk was deployed since the page opened, so it asks for a reload instead of building a base;
  * - `build-failed`: the browser could not build the base from the OS file (card download or USB update);
+ * - `hosted-download-failed`: Modwerk's hosted base (docs/HOSTED_BASES.md) did not download or failed its checks;
  * - `link-lost`: the Octatrack stopped answering during a USB update (UploadUnconfirmedError);
  * - `update-refused`: the Octatrack refused a USB update (UploadDeviceError);
  * - `update-failed`: a USB update stopped for another reason (a restart that didn't come back, the wrong base after it);
@@ -219,7 +220,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     if (view !== 'steps' || outdated) return
     step(overUsb ? 'usb-update-shown' : stage === 'download' ? 'card-download' : stage === 'connect' && noUsb ? 'card-load-from-card' : `card-${stage}`)
   }, [view, outdated, overUsb, stage, noUsb]) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (firmwareReady && view === 'steps') step('os-file-ready') }, [firmwareReady, view]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (firmwareReady && view === 'steps') step(hosted ? 'hosted-base-ready' : 'os-file-ready') }, [firmwareReady, hosted, view]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (firmwareError) step('os-file-refused') }, [firmwareError]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (accepted) step('risk-accepted') }, [accepted]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (signIn) step('sign-in-asked') }, [signIn]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -250,7 +251,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     let at = 0, stepped = false, image: BaseImage
     try { image = await buildBase!(installLayout) }
     catch (error) {
-      console.error(error); report('failed', 'build-failed')
+      console.error(error); report('failed', hosted ? 'hosted-download-failed' : 'build-failed')
       return setUsb({ error: error instanceof Error ? error.message : 'The base could not be built.', at })
     }
     // One update, or two when the unit's base stages less than this base needs: the step base first, which every
@@ -291,7 +292,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
       setPending({ sha256: image.sha256, expectedBase: image.base, previousBase, returnSetId }); setDownload('done'); setStage('copy')
       report('file-downloaded')
     }
-    catch (error) { console.error(error); report('failed', 'build-failed'); setFailure(error instanceof Error ? error.message : ''); setDownload('failed') }
+    catch (error) { console.error(error); report('failed', hosted ? 'hosted-download-failed' : 'build-failed'); setFailure(error instanceof Error ? error.message : ''); setDownload('failed') }
   }
   const skipHint = MODULE_SKIP_HINT ? ' ' + MODULE_SKIP_HINT : ''
 
