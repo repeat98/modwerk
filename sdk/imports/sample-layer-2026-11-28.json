@@ -11,7 +11,7 @@
     {
       "os": "1.74",
       "path": "sdk/imports/packages/sample-layer/sample-layer-0.1.0-experimental-os1.74.elemod",
-      "sha256": "d6e2fb0a907b2aa8b0679e2ce1ad0428e501b0a12f1c391190a9daf08c774c96"
+      "sha256": "593a10d8a8f244f25490f3cef8f254d1006e37fb3cc2dfbf9f35392505364799"
     }
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",

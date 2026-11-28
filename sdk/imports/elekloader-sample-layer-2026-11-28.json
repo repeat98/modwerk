@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "sample-layer-0.1.0-experimental-os1.74.elemod",
-      "sha256": "d6e2fb0a907b2aa8b0679e2ce1ad0428e501b0a12f1c391190a9daf08c774c96",
+      "sha256": "593a10d8a8f244f25490f3cef8f254d1006e37fb3cc2dfbf9f35392505364799",
       "id": "sample-layer",
       "version": "0.1.0-experimental",
       "device": "analog-rytm-mk2",
@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "fb40498bfcee9db836e9f51317cf3995a1e5a031",
+        "commit": "b152c3b4386814008c57ab1b6b2c3fb25a112b2e",
         "path": "sdk/imports/packages/sample-layer/sample-layer-0.1.0-experimental-os1.74.elemod"
       },
       "title": "Sample Layer",
@@ -23,7 +23,7 @@
         "core"
       ],
       "conflicts": [],
-      "summary": "Sample engines for the SMPL key: FUNC + SMPL picks SAMPLER (stock) or TRANSIENT for each sound.",
+      "summary": "Sample engines for the SMPL key: the ENGINE page after SMPL's own picks SAMPLER (stock) or TRANSIENT for each sound.",
       "description": "TRANSIENT shapes a track's sample alone, before its DAC: a punch or a soft attack, a decay, a band (BAS and WID) and a shift of up to 30 ms after the analog voice. The analog machine, filter and AMP envelope are left as they are, and the engine and its settings are saved with the sound.",
       "category": "Sampling",
       "author": "chevyone",
