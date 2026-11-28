@@ -1,0 +1,1 @@
+The owner's diagnostics summary reads two kinds of USB record more plainly. A USB_GONE record from a computer that slept, idled the port or lost the cable now says so, apart from a port that is stuck. A lost claim on the unit no longer counts as a problem when the sync was kept within ten seconds.

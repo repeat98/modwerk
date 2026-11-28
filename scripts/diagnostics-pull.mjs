@@ -12,7 +12,7 @@ import { chmodSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from '
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { DSP_REPORT_NAMES, describeStallFrames, describeUsbGone, freezeSamples } from '../src/community/octatrack-diagnostics-contract.ts'
+import { DSP_REPORT_NAMES, describeStallFrames, describeUsbGone, freezeSamples, usbGone } from '../src/community/octatrack-diagnostics-contract.ts'
 import { USB_AUDIO_MODULE } from '../src/config/usb-audio.ts'
 import { crashNames, namesFor, withName } from '../src/dev/address-names.ts'
 // The pipeline may not import the maintenance bot's policy.mjs (npm run licenses:check), so it names the owner itself.
@@ -78,11 +78,16 @@ const cpuLine = r => !(r.a >>> 16 & 0xff) ? ` ${r.a & 0xffffff} machines refused
     const [type, a, b] = r.machines.slice(3 * t, 3 * t + 3)
     return `T${t + 1} ` + (type <= 1 && (a || b) ? String.fromCharCode(a, b) : 'stock')
   }).join(', ')}`
+/** A USB_GONE record the host caused: the base was settled when the frames stopped, and every sample shows either no
+ * VBUS (the cable or the host's port) or a configured, suspended port with the pull-up on (the computer slept or idled
+ * the port). #2290's stuck ports read otherwise: mid-reconnect, held in reset, or attached and not suspended. */
+export const hostLeft = r => (({ stopped, samples }) => stopped === 0 && samples.every(s => !(s.otgsc & 0x800) ||
+  s.usbcmd & 1 && s.portsc & 0x80 && s.ufState === 0 && s.flags & 2))(usbGone(r))
 const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m${r.second % 60}s ${r.kind}` +
   (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a === SET_ID_CAPACITY ? 'at least ' : ''}${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
     (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24}${refusedPool(r)})` : '') : '') +
   (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'freeze_pc' ? ' where the processor was: ' +
-    freezeSamples(r).map(s => `0x${s.pc.toString(16)} level ${s.level} in ${s.task}`).join('; ') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'cpu' ? cpuLine(r) : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'brake' ? (r.a >>> 23 & 1 ? ` module machines silenced on a pattern predicted past the frame ceiling (${r.a & 0x7fffff} since boot)` : ` module machines silenced (${r.a & 0xffffff} since boot), the frame fell behind`) : r.kind === 'late' ? ` late frame entries held, each a skipped DSP frame (${r.a & 0xffffff} since boot)` + (r.a >>> 24 ? `, ${r.a >>> 24} later than the wait can hold` : '') : r.kind === 'usb' ? ` the host never enumerated it: offered again (OTGSC 0x${(r.a >>> 16).toString(16)}, PORTSC1 0x${(r.a & 0xffff).toString(16)})` : r.kind === 'usb_gone' ? ': ' + describeUsbGone(r) : '') +
+    freezeSamples(r).map(s => `0x${s.pc.toString(16)} level ${s.level} in ${s.task}`).join('; ') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'cpu' ? cpuLine(r) : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : r.kind === 'brake' ? (r.a >>> 23 & 1 ? ` module machines silenced on a pattern predicted past the frame ceiling (${r.a & 0x7fffff} since boot)` : ` module machines silenced (${r.a & 0xffffff} since boot), the frame fell behind`) : r.kind === 'late' ? ` late frame entries held, each a skipped DSP frame (${r.a & 0xffffff} since boot)` + (r.a >>> 24 ? `, ${r.a >>> 24} later than the wait can hold` : '') : r.kind === 'usb' ? ` the host never enumerated it: offered again (OTGSC 0x${(r.a >>> 16).toString(16)}, PORTSC1 0x${(r.a & 0xffff).toString(16)})` : r.kind === 'usb_gone' ? ': ' + describeUsbGone(r) + (hostLeft(r) ? ' (the host suspended the port or the cable came out: not a stuck port)' : '') : '') +
   (STATELESS.includes(r.kind) ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
     `, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}, fx ${r.fx.map(f => f.toString(16)).join(' ')}, machines ${r.machines.join(' ')}`)
 
@@ -351,7 +356,11 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
   const saveFailures = new Set([...found.values()].flatMap(member => member.saveFailures ?? []))
-  const problems = events.filter(entry => !selection(entry) && (saveFailures.has(entry) || PROBLEMS.includes(entry.data.event) || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
+  // A claim that lost a race (another tab, or the unit's reconnect after an install) while the sync was kept all the same.
+  const kept = Map.groupBy(events.filter(({ data }) => data.event === 'kept'), entry => entry.username)
+  const race = ({ username, createdAt, data }) => data.event === 'link_failed' && data.failure === 'claim-failed' &&
+    (kept.get(username) ?? []).some(k => { const ms = Date.parse(k.createdAt) - Date.parse(createdAt); return ms >= 0 && ms <= 10_000 })
+  const problems = events.filter(entry => !selection(entry) && !race(entry) && (saveFailures.has(entry) || PROBLEMS.includes(entry.data.event) || entry.data.error || (entry.data.result && entry.data.result !== 'ok')))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const checks = Object.entries(Object.groupBy(events.filter(selection), entry => entry.username)).sort((a, b) => b[1].length - a[1].length)
   const days = Map.groupBy(counts, row => row.day)

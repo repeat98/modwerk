@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { describe, expect, it } from 'vitest'
-import { members, pullAll, reportsByMember, shedLines, summary, unitLines, when } from './diagnostics-pull.mjs'
+import { hostLeft, members, pullAll, reportsByMember, shedLines, summary, unitLines, when } from './diagnostics-pull.mjs'
 
 const entry = (n, username = 'tester', data = { event: 'health', phase: 'ready' }) =>
   ({ eventId: 'e' + n, username, createdAt: new Date(Date.UTC(2026, 9, 15, 0, 0, n)).toISOString(), data })
@@ -86,6 +86,25 @@ describe('diagnostics pull', () => {
       `  ${when(entry(6).createdAt)} @tester health ready card=save failed`,
       `  ${when(entry(3).createdAt)} @tester health ready card=save failed`,
     ])
+  })
+  it('keeps a lost claim out of the problems when the sync was kept within ten seconds', () => {
+    const lost = (second, user) => entry(second, user, { event: 'link_failed', phase: 'trial', failure: 'claim-failed' })
+    const text = summary({ events: [lost(0, 'tester'), entry(3, 'tester', { event: 'kept', phase: 'ready' }), lost(20, 'tester'), lost(1, 'other')], counts: [] })
+    expect(text).toContain('Problems (2, newest first')
+    expect(text.split('Problems (')[1]).toContain('@other link_failed trial')
+  })
+  it('tells a host that suspended the port from a port that is stuck', () => {
+    // A field record: settled, then four samples of a configured, suspended port with VBUS and the pull-up on.
+    const slept = { kind: 'usb_gone', a: 0x8200d00, screen: 0xa8000a85, tempo24: 0x80001, cpu: 0, dsp1to4: 0, dsp5to8: 0,
+      machines: [16, 0, 0, 0, 0, 0, 44, 147, 0, 0, 0, 0, 3, 0, 180, 180, 180, 0, 0, 0, 8, 32, 13, 0],
+      fx: [168, 0, 10, 133, 1, 0, 3, 0, 8, 32, 13, 0, 168, 0, 10, 133], keys: [1, 0, 3, 0, 8, 32, 13, 0, 168, 0, 10, 133, 1, 0, 3, 0] }
+    expect(hostLeft(slept)).toBe(true)
+    const unplugged = { ...slept, a: 0x8202100, screen: 0xac000004, tempo24: 0x80000, machines: slept.machines.map((v, i) => i < 20 ? v : 0), fx: slept.fx.map(() => 0), keys: slept.keys.map(() => 0) }
+    expect(hostLeft(unplugged)).toBe(true)
+    const reconnecting = { ...slept, machines: slept.machines.with(13, 2) } // off the bus when the frames stopped
+    expect(hostLeft(reconnecting)).toBe(false)
+    const attached = { ...slept, screen: 0xa8000a05 } // enabled and not suspended: the host is there and silent
+    expect(hostLeft(attached)).toBe(false)
   })
   it('keeps the card build’s refused selections out of the problems', () => {
     const check = n => entry(n, 'tester', { event: 'build_failed', phase: 'preparing', buildKind: 'octatrack-firmware', error: 'selection' })
