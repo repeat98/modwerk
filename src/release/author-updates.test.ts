@@ -63,6 +63,13 @@ describe('module author release authority', () => {
     expect(() => authorizeAuthorUpdate(registry, author, modules, [...update(), change('src/engine/assets/dsp-packages.json', pkg, { ...next, packages: [next.packages[0], { id: 'quantizer', code: 'tampered' }] })])).toThrow('common runtime')
     expect(() => authorizeAuthorUpdate(registry, author, modules, [...update(), change('src/engine/assets/bootstrap-package.json', { code: 'old' }, { code: 'new' })])).toThrow('common runtime')
   })
+  it('accepts import records whose files resolve inside the module through root (#1541)', () => {
+    const record = (extra: Record<string, unknown>) => change('sdk/imports/tapehead-1234567.json', null, { modules: ['tapehead'], ...extra })
+    for (const extra of [{ files: [{ path: 'modules/tapehead/a.s' }] }, { root: 'sdk/octabam/modules/tapehead', files: [{ path: 'a.s' }] }, { root: 'sdk/octatrack/modules/tapehead', files: [{ path: 'upstream/b.cpp' }] }])
+      expect(authorizeAuthorUpdate(registry, author, modules, [...update(), record(extra)]).modules).toEqual(['tapehead'])
+    for (const extra of [{ root: 'sdk/octabam/modules/tapehead', files: [{ path: '../quantizer/a.s' }] }, { root: 'sdk/octabam/modules/quantizer', files: [{ path: 'a.s' }] }, { root: 'sdk/drafts/tapehead', files: [{ path: 'a.s' }] }, { root: 'sdk/octabam/modules/tapehead', files: [{ path: 'modules/tapehead/../../../../x' }] }])
+      expect(() => authorizeAuthorUpdate(registry, author, modules, [...update(), record(extra)])).toThrow('Import records')
+  })
 })
 
 const run = { repository: { full_name: 'repeat98/modwerk' }, workflow_id: 12, path: '.github/workflows/module-pr.yml', event: 'pull_request', head_sha: head, status: 'completed', conclusion: 'success' }
