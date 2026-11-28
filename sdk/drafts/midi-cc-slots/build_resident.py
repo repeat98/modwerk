@@ -14,9 +14,7 @@ def sha(b):return hashlib.sha256(b).hexdigest()
 def main():
  p=argparse.ArgumentParser(description=__doc__)
  for n in ['package','upstream','output']:p.add_argument('--'+n,type=Path,required=True)
- a=p.parse_args();up=a.upstream.resolve();pin=json.loads((ROOT/'vendor/elekloader/kit/kit.json').read_text())['commit']
- def run(*cmd):return subprocess.check_output(cmd,text=True).strip()
- if run('git','-C',str(up),'rev-parse','HEAD')!=pin or run('git','-C',str(up),'status','--porcelain','--untracked-files=no'):p.error('Use the clean pinned Elekloader checkout')
+ a=p.parse_args();up=a.upstream.resolve()
  spec=importlib.util.spec_from_file_location('card_document',ROOT/'sdk/drafts/midi-cc-slots/build_card.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
  data=a.package.read_bytes();doc,copies=module.card_document(data,{})
  # The draft-specific ABI reader supplies a checked intermediate; this adapter

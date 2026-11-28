@@ -25,6 +25,10 @@ Regenerated with `npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin --beta
 - browser `.bin` = `build_core.py` `.bin`: `6aac87ccf481b1d55ac442a381f0a296865033e8d02b4d42a83d55dec459dd84` (838,984 bytes); 838,968 of 851,712 container bytes, 12,744 free.
 - USB Audio 0.4.2-experimental relinked to the same `c2597a32…`.
 
+## The core's sources in the repository, 28 November 2026
+
+The Octatrack core's boot copier, hook bus and gate (`sdk/machines/octatrack/elekloader/core-ot/`: `core-ot.s`, `bus.s`, `gate.s` and their `mod.json`) are now the base's own files, and no build reads an upstream checkout. Rebuilt: base 0.8.4 `35af17c249b60a7f6c4888deb4f0b43bf17de7216c221a477a96d443dbabc007`, package `36eb5648…`; against `fe4e7623` only the identity differs (`identity.c`'s hash and the identity string in `.run`). Browser `.bin` = `build_core.py` `.bin`: `41827d72a3d0504c15411458ea004db9d0e13e2929d9e03d2d43ffa79dfa2fa1` (838,976 bytes); 838,960 of 851,712 container bytes, 12,752 free. USB Audio 0.4.2 unchanged (`c2597a32…`).
+
 ## Tests
 
 Not tested on a unit. The update name needs a look at the bootloader screen during a flash; the other changes need the base test procedure on this exact build.

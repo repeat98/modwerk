@@ -108,8 +108,8 @@ def main():
         sdk / ('modules/' + args.module + '/octamod.module.json'), sdk / 'tools/remix/schema.py')}
     concrete.update({'adapter/' + str(path.relative_to(ROOT)): path for path in (
         ROOT / 'scripts/prepare-runtime-caves.py', ROOT / 'sdk/machines/octatrack/module-adapters/cave_runtime.py')})
-    for path in (args.upstream / 'elekloader/sdk/octabam.py', args.upstream / 'elekloader/formats.py'):
-        concrete['upstream/' + path.relative_to(args.upstream).as_posix()] = path
+    for path in (ROOT / 'sdk/firmware_builder/sdk/octabam.py', ROOT / 'sdk/firmware_builder/formats.py'):
+        concrete[path.relative_to(ROOT).as_posix()] = path
     for cave in module.cf_patches:
         for path in adapter.source_files(sdk, cave.source):
             concrete['sdk/octabam/' + path.relative_to(sdk).as_posix()] = path

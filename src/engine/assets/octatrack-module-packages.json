@@ -341,7 +341,7 @@
       "bytes": 2636,
       "sha256": "9fcc3e9c70d8dceea686566e65c3a79d6de010177390e042ccb63370992ceb7f",
       "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
-      "requiredBase": "001accdcb3b2cddad67aed8fc1c950f58e0e4c6eab9e7bf781b7b2b78c10d8f3"
+      "requiredBase": "ffe40c3228743683f8700f80d9fea017be6a665b433ba1fc5e9b805a9dadac1f"
     },
     {
       "id": "output-matrix",
@@ -357,7 +357,7 @@
       "bytes": 3740,
       "sha256": "f20d8a2242b0b91ba67959b5519fdc6b408975e26785bcb55ba454f5554841de",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "001accdcb3b2cddad67aed8fc1c950f58e0e4c6eab9e7bf781b7b2b78c10d8f3"
+      "requiredBase": "ffe40c3228743683f8700f80d9fea017be6a665b433ba1fc5e9b805a9dadac1f"
     },
     {
       "id": "cc-map",
@@ -373,7 +373,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "001accdcb3b2cddad67aed8fc1c950f58e0e4c6eab9e7bf781b7b2b78c10d8f3"
+      "requiredBase": "ffe40c3228743683f8700f80d9fea017be6a665b433ba1fc5e9b805a9dadac1f"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -451,7 +451,7 @@
       "bytes": 1818,
       "sha256": "99052ed864e212f81f60504bc16dd2bb00a291e266d0da15cd5ced73f2327c66",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "001accdcb3b2cddad67aed8fc1c950f58e0e4c6eab9e7bf781b7b2b78c10d8f3"
+      "requiredBase": "ffe40c3228743683f8700f80d9fea017be6a665b433ba1fc5e9b805a9dadac1f"
     },
     {
       "id": "analog-bassdrum",
@@ -467,7 +467,7 @@
       "bytes": 26172,
       "sha256": "b120a44cd9eda2bd95578af53c616202d0aaa05cc6e06421d38241921ca096d6",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "001accdcb3b2cddad67aed8fc1c950f58e0e4c6eab9e7bf781b7b2b78c10d8f3",
+      "requiredBase": "ffe40c3228743683f8700f80d9fea017be6a665b433ba1fc5e9b805a9dadac1f",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -876,7 +876,7 @@
       "copies": 4,
       "fills": 0,
       "installPresets": true,
-      "requiredBase": "001accdcb3b2cddad67aed8fc1c950f58e0e4c6eab9e7bf781b7b2b78c10d8f3"
+      "requiredBase": "ffe40c3228743683f8700f80d9fea017be6a665b433ba1fc5e9b805a9dadac1f"
     },
     "configurable-0.4.1": {
       "name": "USB Audio",

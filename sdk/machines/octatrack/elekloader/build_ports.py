@@ -70,10 +70,9 @@ def main():
         parser.error('Choose each source module once.')
     os.environ['ELEKLOADER_CROSS'] = args.cross
     upstream = args.upstream.resolve()
-    pin = json.loads((APP / 'vendor/elekloader/kit/kit.json').read_text())['commit']
-    if git(upstream, 'rev-parse', 'HEAD') != pin or git(upstream, 'status', '--porcelain', '--untracked-files=no'):
-        parser.error('Use the exact clean tracked Elekloader checkout pinned by Modwerk.')
     firmware_codec.use_elekloader(upstream)
+    import firmware_builder
+    builder_version = firmware_builder.__version__
     from elekloader import elemod, formats
     from elekloader.sdk import build, octabam as port
     stock, device, release = formats.load(str(args.stock))
@@ -121,7 +120,7 @@ def main():
         print(name + ': ' + result['status'])
     if before != source_inputs(root) or sha(args.stock.read_bytes()) != stock_pin or sha(args.core.read_bytes()) != core_pin:
         raise ValueError('Source SDK, stock or core changed during the comparison.')
-    report = dict(schema=1, kind='modwerk-elekloader-source-ports', upstream=pin,
+    report = dict(schema=1, kind='modwerk-elekloader-source-ports', builder=builder_version,
                   sourceCommit=git(APP, 'rev-parse', 'HEAD'), sourceInputs=before,
                   recipeSha256=sha(Path(__file__).read_bytes()), stockSha256=stock_pin,
                   core=dict(id=core.id, version=core.version, sha256=core_pin), results=results,

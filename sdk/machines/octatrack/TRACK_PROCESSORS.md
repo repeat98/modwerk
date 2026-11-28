@@ -116,16 +116,16 @@ The private RAM pair named above still contains both proposals. Splitting the
 source does not turn it into physical qualification of the eventual merged Base.
 
 The processor source is merged with current cumulative Base0.8.4 at
-3d7054f7826447e66dd2cd3dbf05be7fab3d4a52, including Modwerk's own Python
-firmware builder. Native returning contract, board and generated transport
+607cb058fc13f3739691b082f962b0f574fb102a, including Modwerk's own Python
+firmware builder and repository-owned core sources. Native returning contract, board and generated transport
 fixtures pass on that merged source. Earlier private bundle identities above
 do not name a build of this merge. A fresh official compiler/structural build
 now passes; exact unit qualification is still required. The erroneous octatrack/0 hook claim
 was released as requested; the chain claim uses the DSP-region kind.
 
 Current processor-only Base identity:
-001accdcb3b2cddad67aed8fc1c950f58e0e4c6eab9e7bf781b7b2b78c10d8f3.
-The packed container is849464 of851712 bytes (2248 spare); MAIN is1363236
+ffe40c3228743683f8700f80d9fea017be6a665b433ba1fc5e9b805a9dadac1f.
+The packed container is849472 of851712 bytes (2240 spare); MAIN is1363240
 of1572864. The browser and native firmware images match exactly. Strict
 stock-free package scanning passes. Analog BD's recipe was recaptured against
 the actual new Base imports; its source hashes and six reconstruction copies

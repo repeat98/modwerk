@@ -83,18 +83,11 @@ def stock_sha(machine, os_version):
     raise ValueError('machine.json lists no stock file for OS %s.' % os_version)
 
 
-def check_upstream(path):
-    """The kit-pinned Elekloader checkout, at the kit's commit and with no edits of its own."""
-    commit = json.loads((APP / 'vendor/elekloader/kit/kit.json').read_text())['commit']
-    # In the toolchain image the mounted checkout belongs to another user, which Git otherwise refuses to read.
-    git = ['git', '-c', 'safe.directory=' + str(path), '-C', str(path)]
-    head = run(git + ['rev-parse', 'HEAD'])
-    if head.returncode or head.stdout.strip() != commit:
-        raise ValueError('%s is not the Elekloader checkout at the kit commit %s: run npm run upstream:tools.'
-                         % (path, commit[:7]))
-    if run(git + ['status', '--porcelain', '--untracked-files=no']).stdout.strip():
-        raise ValueError('%s has local edits; keep your own work out of this checkout.' % path)
-    return commit
+def builder_version():
+    """The version of Modwerk's firmware builder (sdk/firmware_builder) a base is built with."""
+    sys.path.insert(0, str(APP / 'sdk'))
+    import firmware_builder
+    return firmware_builder.__version__
 
 
 def carried_devices():
@@ -336,7 +329,7 @@ def build(machine, stock, upstream, out, dev=False):
         raise ValueError('base.json of %s has no dev: this machine has no development base yet.' % machine)
     if sha(stock.read_bytes()) != stock_sha(machine, config['os']):
         raise ValueError('%s is not the original OS %s file machine.json names.' % (stock, config['os']))
-    kit = check_upstream(upstream)
+    builder = builder_version()
     check_toolchain(config['toolchain'])
     reference = config['reference']
     reference_bytes = (APP / reference['file']).read_bytes()
@@ -348,7 +341,7 @@ def build(machine, stock, upstream, out, dev=False):
     device = config.get('recipe', {}).get('device')
     if device and not any(d.key == device for d in devices.devices()):
         if not carry_device(devices, device):
-            raise ValueError('The pinned Elekloader kit has no %s device yet, so this base cannot be built with it.' % device)
+            raise ValueError('The builder has no %s device yet, so this base cannot be built with it.' % device)
     os.environ['ELEKLOADER_CROSS'] = config['toolchain']['cross']
     built = []
     if out:
@@ -388,7 +381,7 @@ def build(machine, stock, upstream, out, dev=False):
         'package': file,
         'sections': sizes(package),
         'sites': len(package['sites']),
-        'built': {'kit': kit, 'toolchain': config['toolchain'], 'stock': stock_sha(machine, config['os'])},
+        'built': {'builder': builder, 'toolchain': config['toolchain'], 'stock': stock_sha(machine, config['os'])},
     }
     if 'variants' in config:
         binding['variants'] = {name: identity for name, identity, _, _ in built}

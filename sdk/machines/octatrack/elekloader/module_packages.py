@@ -166,9 +166,9 @@ def dsp_words(data):
 
 
 def tools(entry, upstream):
-    """Whether this machine can build the entry: an Octabam or machine one needs m68k-elf binutils and Elekloader's checkout."""
+    """Whether this machine can build the entry: an Octabam or machine one needs m68k-elf binutils."""
     return not (entry.get('octabam') or entry.get('machine') or entry.get('tables') or entry.get('base')) or bool(
-        shutil.which('m68k-elf-as') and (upstream / 'elekloader/sdk/octabam.py').is_file())
+        shutil.which('m68k-elf-as'))
 
 
 def main():
