@@ -24,9 +24,10 @@ VERSION = 1
 TOOLS = {
     'usb_probe.py': {
         'source': 'fe1cb7f931564abcd91afcdc620caf59f2eff328f64f3b33509654350489b591',
-        'output': 'f1d3cefcf1d33098592cee725b5eac06b42c82743769f43340e8edd8d5e3f988',
+        'output': '488a6266de7aeae4e0b99b2c5878eeb74c1cfd6cf7ece910203ed088fdc51c60',
         'reason': 'Poller shadowed Thread._stop(); join() then fails before '
-                  'the JSON report is written on affected Python runtimes.',
+                  'the JSON report is written on affected Python runtimes. '
+                  'A zero poll span left the rates None and the summary line crashed.',
         'edits': [
             ('        self._stop = threading.Event()\n',
              '        # Thread.join() calls Thread._stop(); do not shadow that method.\n'
@@ -34,15 +35,30 @@ TOOLS = {
             ('while not self._stop.is_set():', 'while not self._stop_event.is_set():'),
             ('self._stop.wait(self.interval)', 'self._stop_event.wait(self.interval)'),
             ('        self._stop.set()\n', '        self._stop_event.set()\n'),
+            # A zero poll span (a coarse Windows clock) leaves the rates None:
+            # print n/a instead of crashing, and judge it as no drain evidence.
+            ('        ir = summary["ep3_in"]\n',
+             '        ir = summary["ep3_in"]\n'
+             '        rate = "n/a" if ir["consumed_rate_hz"] is None else f"{ir[\'consumed_rate_hz\']:.0f}"\n'
+             '        drain = "n/a" if ir["drain_ratio"] is None else f"{ir[\'drain_ratio\']:.3f}"\n'),
+            ("(drained {ir['consumed_rate_hz']:.0f}/s, ratio {ir['drain_ratio']:.3f})",
+             "(drained {rate}/s, ratio {drain})"),
+            ('    if ratio is None or ir is None:\n',
+             '    if ratio is None or ir is None or ir["drain_ratio"] is None:\n'),
         ],
         # Any remaining use would still reach the shadowed attribute.
         'absent': 'self._stop.',
         # Further reviewed sources (Octabam main, 19 Oct 2026: docstrings and messages reworded, the same edits;
         # 24 Oct 2026: an optional libusb-package backend before the Homebrew lookup, the same edits).
         'revisions': {'86c2b8c55a00cc3f98a631841752b6502a3a84d27b7dad9c692fb4a204e46ff5':
-                      '6b2aa3500ca9283aceb81ef804cd899bfe82622f3f6eaf8233df8fc0261231ab',
+                      '616a43adf46ae867181008fd713c58e86471371cd027e4cea7fdf8d807551403',
                       '901b003b7ad085c499f7e7b25f27ae1613261cde48afa49335afab01639d4bde':
-                      '3f469ddf306354d64647142a8225e7f79b487f0ea68e4340c8899dd7caa0d2d5'},
+                      '7dcf99523e5cf1a17c68bd81b845b18264c366bb40d244a298a8d91e49dc4cc9'},
+        # Earlier reviewed outputs (before the zero-span repair, 28 Nov 2026), which
+        # upstream:tools may find in a developer's checkout and replaces.
+        'superseded': ('f1d3cefcf1d33098592cee725b5eac06b42c82743769f43340e8edd8d5e3f988',
+                       '6b2aa3500ca9283aceb81ef804cd899bfe82622f3f6eaf8233df8fc0261231ab',
+                       '3f469ddf306354d64647142a8225e7f79b487f0ea68e4340c8899dd7caa0d2d5'),
     },
     'rec.swift': {
         'source': '9aa5b59ae5104be517abb96e5b644da9ca55f9f0aa0d13bcb61fd796041465db',

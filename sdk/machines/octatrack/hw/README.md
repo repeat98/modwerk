@@ -14,7 +14,7 @@ outside every Git checkout, with a `tools.json` of source and output hashes.
 
 | Tool | Repair |
 | --- | --- |
-| `usb_probe.py` | `Poller` no longer shadows `Thread._stop()`. Python 3.9's `join()` called it and failed before the JSON report was written. |
+| `usb_probe.py` | `Poller` no longer shadows `Thread._stop()`. Python 3.9's `join()` called it and failed before the JSON report was written. A zero poll span (a coarse Windows clock) prints `n/a` for the rates and judges the run AMBIGUOUS instead of crashing the summary line. |
 | `rec.swift` | Float samples are scaled in Double. Float rounds `2147483647` up, so a positive full-scale sample trapped on conversion to `Int32`. |
 
 Each repair is bound to the imported file's SHA-256, every edit must match

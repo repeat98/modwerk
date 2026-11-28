@@ -83,7 +83,9 @@ def repair(path):
 def check_edits(path, allowed):
     """Refuse local edits other than the reviewed repairs in their exact repaired form."""
     for item in edits(path):
-        if item not in allowed or sha((path / item).read_bytes()) not in adapter.reviewed(adapter.TOOLS[Path(item).name]).values():
+        spec = adapter.TOOLS.get(Path(item).name, {})
+        known = (*adapter.reviewed(spec).values(), *spec.get('superseded', ())) if spec else ()
+        if item not in allowed or sha((path / item).read_bytes()) not in known:
             raise ValueError('%s has local edits (%s); keep your own work out of this checkout.' % (path, item))
 
 
