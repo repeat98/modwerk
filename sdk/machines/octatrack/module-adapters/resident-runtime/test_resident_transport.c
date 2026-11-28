@@ -28,7 +28,7 @@ int main(void) {
     assert(!dl_hook_reset_start(0,1,0,RESET_DATA+1,words));
     assert(!dl_hook_reset_start(2,1,0,1,words));
     assert(!dl_hook_reset_start(1,2,0,1,words));
-    assert(!dl_hook_reset_start(0,16,0,1,words));
+    assert(!dl_hook_reset_start(0,TEST_UNKNOWN_FEATURE,0,1,words));
     assert(!dl_hook_reset_start(0,8,513,2,words)); /* the key bus: one owned range per chunk, the window's 514 then 512 */
     assert(!dl_hook_reset_start(1,8,1026,1,words) && !dl_hook_reset_start(1,8,1020,7,words));
     assert(!dl_hook_reset_start(0,1,15,2,words) && !dl_hook_reset_start(0,1,529,2,words)); /* Sidechain: MON 16, window 514, bus 512 */
@@ -58,7 +58,7 @@ int main(void) {
             flags[core]=(flags[core]^1u)&1u; /* answered; the next packet goes in the next frame */
         }
         dl_frame(); assert(dl_job_status(core)==1); dl_job_release(core);
-        assert(!dl_command_start(core,10,0,16,0)); /* no such feature (8 is the key bus, on both cores) */
+        assert(!dl_command_start(core,10,0,TEST_UNKNOWN_FEATURE,0)); /* first bit outside the declared ledger */
         assert(!dl_command_start(core,10,0,1,1));
         if(core) assert(!dl_command_start(core,10,0,2,0));
         assert(dl_command_start(core,10,0,5,0)); dl_frame(); checksum(core);

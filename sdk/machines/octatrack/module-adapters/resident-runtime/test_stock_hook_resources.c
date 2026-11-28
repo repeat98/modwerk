@@ -72,7 +72,7 @@ int main(void) {
     assert(!mw_hook_buffer_permitted_held(MW_HOOK_SIDECHAIN,0,1,2,&fx2head)); /* SC's shared Y at 0x33dfe */
     assert(!mw_hook_buffer_permitted_held(MW_HOOK_SIDECHAIN,1,1,2,&fx2head)); /* and its alias seen from core 1 */
     assert(mw_hook_buffer_permitted_held(MW_HOOK_SIDECHAIN,0,1,3,&fx2w)); /* 0x34000 starts where SC's span ends */
-    assert(!mw_hook_buffer_permitted_held(16u,0,0,0,&fx1w)); /* an unknown held bit refuses */
+    assert(!mw_hook_buffer_permitted_held(MW_DSP_FEATURES+1u,0,0,0,&fx1w)); /* an unknown held bit refuses */
     /* The key bus (dsp_ledger.h): the window both cores see, and Y $800..$9ff on each core; Sidechain holds it too. */
     assert(!mw_hook_buffer_permitted_held(MW_DSP_KEYBUS,0,1,2,&fx2head) && !mw_hook_buffer_permitted_held(MW_DSP_KEYBUS,1,1,2,&fx2head));
     assert(mw_hook_buffer_permitted_held(MW_DSP_KEYBUS,0,1,3,&fx2w) && mw_hook_buffer_permitted_held(MW_DSP_KEYBUS,1,0,0,&fx1w));
@@ -94,7 +94,7 @@ int main(void) {
     assert(!mw_hook_ranges_idle(2,&span,1,0,0,3)); /* Output Matrix's Y $c00+$c1 on core A */
     span=(struct mw_hook_span){0x3bdfe,1,0,MW_HOOK_Y}; assert(!mw_hook_ranges_idle(8,&span,1,0,0,3));
     span=(struct mw_hook_span){0xa00,1,0,MW_HOOK_Y}; assert(mw_hook_ranges_idle(8,&span,1,0,0,3));
-    assert(!mw_hook_ranges_idle(16,0,0,0,0,3) && !mw_hook_ranges_idle(9,0,0,0,0,3)); /* one known feature at a time */
+    assert(!mw_hook_ranges_idle(MW_DSP_FEATURES+1u,0,0,0,0,3) && !mw_hook_ranges_idle(9,0,0,0,0,3)); /* one known feature at a time */
     span=(struct mw_hook_span){0xc00,0xc1,1,MW_HOOK_Y}; assert(mw_hook_ranges_idle(2,&span,1,0,0,3));
     span.core=0; assert(!mw_hook_ranges_idle(2,&span,1,0,0,3));
     span=(struct mw_hook_span){0x2840,0xec0,0,MW_HOOK_Y}; assert(mw_hook_ranges_idle(4,&span,1,0,0,3));
@@ -127,7 +127,8 @@ int main(void) {
     assert(!mw_hook_claim_permitted(0,&span,0) && !mw_hook_claim_permitted(MW_DSP_MATRIX,&span,0));
     assert(mw_hook_claim_permitted(MW_DSP_SIDECHAIN,&span,0)); /* Sidechain implies the bus */
     span=(struct mw_hook_span){0xff0,0x10,1,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0)); /* MON words */
-    span=(struct mw_hook_span){0x800,0x200,1,MW_HOOK_Y}; assert(mw_hook_claim_permitted(0,&span,1)); /* the old bus: no feature's */
+    span=(struct mw_hook_span){0x800,0x200,1,MW_HOOK_Y};
+    assert(mw_hook_claim_permitted(0,&span,1)); /* the old bus: no feature's */
     span=(struct mw_hook_span){0x3bdfe,0x202,1,MW_HOOK_Y}; assert(mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0));
     span.core=0; span.space=MW_HOOK_X; assert(mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0)); /* one window, any view */
     span=(struct mw_hook_span){0x3bdfd,2,1,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0)); /* past it */
@@ -136,7 +137,7 @@ int main(void) {
     span=(struct mw_hook_span){0x7a0,0x10,0,MW_HOOK_Y}; assert(mw_hook_claim_permitted(0,&span,1));
     span.space=MW_HOOK_P; assert(!mw_hook_claim_permitted(0,&span,0));
     span=(struct mw_hook_span){0x2fff0,0x20,0,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(0,&span,0));
-    span=(struct mw_hook_span){0x7a0,0x10,0,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(16u,&span,0) && !mw_hook_claim_permitted(0,&span,2));
+    span=(struct mw_hook_span){0x7a0,0x10,0,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(MW_DSP_FEATURES+1u,&span,0) && !mw_hook_claim_permitted(0,&span,2));
     /* Buffers keep clear of live claims: FX1 block 0 is Y $1000 on each core, FX2 block 2 core 0 holds $33dfe. */
     struct mw_hook_span live2[2]={{0x1000,1,1,MW_HOOK_Y},{0x33e00,4,1,MW_HOOK_Y}};
     assert(!mw_hook_buffer_clear_of(1,0,0,&fx1w,live2,2) && mw_hook_buffer_clear_of(0,0,0,&fx1w,live2,2));

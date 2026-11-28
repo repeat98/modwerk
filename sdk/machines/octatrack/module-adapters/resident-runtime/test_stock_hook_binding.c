@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "stock_hook_driver.h"
 #include "stock_hook_resources.h"
+#include "dsp_ledger.h"
 #include "fxids.h"
 #include "loader.h"
 #include "controller_write_lease.h"
@@ -59,7 +60,7 @@ int main(void) {
     head=1; assert(modwerk_dsp_buffer_permitted(0,1,2,32));
     controllers=MW_HOOK_SIDECHAIN; assert(!modwerk_dsp_buffer_permitted(0,1,2,32)); /* a held board controller's range */
     assert(modwerk_dsp_buffer_permitted(0,1,3,32));
-    controllers=16u; assert(!modwerk_dsp_buffer_permitted(0,1,0,32)); /* unknown held bit */
+    controllers=MW_DSP_FEATURES+1u; assert(!modwerk_dsp_buffer_permitted(0,1,0,32)); /* unknown held bit */
     controllers=8u; assert(!modwerk_dsp_buffer_permitted(0,1,2,32) && modwerk_dsp_buffer_permitted(0,1,3,32)); /* the key bus: window held */
     /* Stock's own effect (id 13) keeps T3/T7's FX2 block 2 beside a held Sidechain; a module handle (26) does not. */
     policy=0; head=0;
