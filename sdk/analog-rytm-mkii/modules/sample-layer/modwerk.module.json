@@ -115,9 +115,9 @@
     "memoryBytes": 62524,
     "fastBytes": 0,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+      "display": "About 1.6 % of the audio block a voice at peak; 93 % with 7 voices",
+      "method": "hardware",
+      "conditions": "Test build SL21 (SL20 with a load readout, -DSL_LOAD_READOUT) on the author's MKII, OS 1.74, RAM-booted, 28 November 2026: the peak of core_audio_load over each second, read from the screen. Stopped 78 %; one pattern with 7 tracks on SAMPLER (one TRANSIENT, neutral) 81-82 %; the same pattern with 7 tracks on TRANSIENT, every control away from neutral, 93 %, where the author found the UI getting slow."
     }
   },
   "evidence": {

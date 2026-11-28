@@ -47,4 +47,16 @@ Reported by @chevyone after playing SL20: "all working on the transient". This i
 | Every screen goes dark with the screen saver | @chevyone saw the list stay lit on SG03 (27 November 2026); fixed since, not rechecked on SL20 |
 | A sound saved with a prototype engine (GRANULAR, SLICER) plays as SAMPLER | not tested |
 | Beside other modules (LFO RND, Improved AMP, Improved SMPL) | not tested |
-| Audio load with TRANSIENT on every voice | not tested |
+| Audio load | measured on SL21 (below) |
+
+## Load, test build SL21 (28 November 2026)
+
+SL20 with `-DSL_LOAD_READOUT`, which draws the peak of `core_audio_load` over each second in TRANSIENT's title bar (sha256 `666d96bbe6cddc146a419c5ab297664325e723e904968048f8854cd7d92ff698`, ramSpare 47,880 B). RAM-booted on @chevyone's MKII, OS 1.74; the agent read the screen over the link while the author played.
+
+| Condition | Peak load |
+| --- | --- |
+| Stopped | 78 % |
+| One pattern, 6 tracks on SAMPLER, one on TRANSIENT with every control neutral | 81 to 82 % |
+| The same pattern, 7 tracks on TRANSIENT, every control away from neutral | 93 % |
+
+About 11 points for 7 voices, 1.6 % of the block a voice. At 93 % the author found the screen and keys slow, as with stock's own load near the top.

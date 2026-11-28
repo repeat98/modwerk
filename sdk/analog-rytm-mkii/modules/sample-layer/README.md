@@ -49,7 +49,7 @@ Choose the engine per sound, then shape the sample on TRANSIENT's page while a p
 - It takes FUNC + SMPL for its list, and draws TRANSIENT's band over knobs E and F. Every drawing goes dark with the screen saver.
 - The settings cannot be p-locked or reached over MIDI: they live outside the sound's parameters.
 - A change reaches a voice that is playing within about 50 ms.
-- TRANSIENT runs in the audio interrupt for each voice whose track uses it; SAMPLER costs nothing.
+- TRANSIENT runs in the audio interrupt for each voice whose track uses it, about 1.6 % of the audio block a voice at peak; SAMPLER, or TRANSIENT with every control neutral, costs nothing. With TRANSIENT on 7 tracks of a busy pattern the load reached 93 % and the Rytm's screen and keys grew slow: keep it to the tracks that need it.
 
 ### Mod storage
 
@@ -63,7 +63,7 @@ That is 40 of the sound's 56 bits: beside Voice DAC (39) a set does not link.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md): host tests of the render, and the author's unit for builds SL03 to SL20. The audio load is not measured yet. The tables in `src/tables.h` are written by `python3 tools/tables.py > src/tables.h`.
+See [TESTING.md](TESTING.md): host tests of the render, and the author's unit for builds SL03 to SL20. The audio load was measured on the author's unit: about 1.6 % of the audio block a voice at peak. The tables in `src/tables.h` are written by `python3 tools/tables.py > src/tables.h`.
 
 ## Authorship and licences
 

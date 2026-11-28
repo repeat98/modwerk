@@ -1445,6 +1445,21 @@ void sample_layer_draw(void *bmp, void *ctrl)
     }
     if (page_seen && !window_open())     // under the list too, as stock's page stays under SRC's
         draw_band();
+#ifdef SL_LOAD_READOUT
+    if (page_seen && !list_open) {      // test builds: the block's peak load over the last second
+        char b[12] = "CPU ";
+        int k;
+
+        put_u(b + 4, (load_shown * 100 + 128) >> 8);
+        for (k = 4; b[k]; k++)
+            ;
+        b[k] = '%';
+        b[k + 1] = 0;
+        bm_fill(0, 0, 69, 8, 0);
+        label(bmp, 2, 6, 0, b);
+        bm_flip(0, 0, 69, 8);
+    }
+#endif
     page_seen = 0;
     if (list_open) {
         int r, x;
