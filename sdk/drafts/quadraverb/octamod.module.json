@@ -178,12 +178,12 @@
     },
     "processing": {
       "label": "DSP cycles",
-      "display": "up to 354 cycles/sample per instance, 366 while fading (model)",
+      "display": "234-353 cycles/sample per instance (unit, knobs centred), declared 370",
       "value": null,
       "unit": "see display",
-      "method": "emulator",
-      "conditions": "interlock_scan's stall model on step traces in dsp_host of the release form, one instance, every place a tick can fall in a 16-sample block (engine/verify_area.py --cycles --knobs): the dearest, program 53, 354.2 in its dearest block and 365.8 while a pick fades it with TIME at 1 ms; declared 366 modeled. A model, not a measurement on a unit.",
-      "source": "evidence/performance.json"
+      "method": "hardware",
+      "conditions": "Measured on the owner's MKII (28 Nov 2026, twin8-release-stream c715700e, package 94a3e39b): one instance, transport stopped, knobs B-E at the centre, each of the 74 programs against a NONE baseline; core 0 234.1-341.3, core 1 241.9-352.6 (53 BALLAD SNARE 2 the dearest, peak 358.1). Declared 370 hardware: 352.6 plus the stall model's fade (+11.6) and TIME-at-1-ms (+4) margins. See TESTING.md.",
+      "source": "TESTING.md"
     },
     "cpuPrice": {
       "value": 15,

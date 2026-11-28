@@ -18,7 +18,7 @@ E=~/.cache/modwerk-local/quadraverb/engine                    # programs.json an
 python3 -B engine/qvarea.py areas $E/programs.json $E/lfo-all     # gen/areas.json: the release's areas
 python3 -B engine/qvcf.py gen $E/programs.json $E/lfo-all --areas gen/areas.json   # gen/qv_tables.h
 python3 -B engine/qvcf.py asm                                     # gen/qv_runtime.s
-npm run module:dev -- quadraverb --build-only --out qv-raw.mwrm --slots fx2 --cycles 355 --cycles-kind modeled \
+npm run module:dev -- quadraverb --build-only --out qv-raw.mwrm --slots fx2 --cycles 370 --cycles-kind hardware \
   --state 132 --buffer 15870
 python3 -B sdk/runtime/loader/abi9.py qv-raw.mwrm --requires programs -o quadraverb-0.1.0.mwrm
 ```
@@ -78,6 +78,28 @@ Not done: a unit run, and an emulator capture of the box (docs/MODULE_UI_CAPTURE
 knob handler. With Scale Quantizer or FM Synth installed the names do not show (they take the knob store first, as
 Midiverb's TESTING.md says).
 
+### Timed on the unit, and declared 370 hardware (28 November 2026)
+
+The owner heard the knobs build (`94a3e39b`) on his MKII on twin8-release-stream (`c715700e`): "it's great, well
+done". The coordinator then timed it there with `~/.cache/modwerk-local/quadraverb/qvtime.py` (as Midiverb's
+mvtime.py): Quadraverb alone on one track's FX2, transport stopped, knobs B-E at the centre (64), each of the 74
+programs set by PROG and read three times on the base's stats against a NONE baseline on that track, cycles a sample
+the difference (`timing-knobs-T5.jsonl`, `timing-knobs-T1.jsonl` in that folder). Every PROG read-back matched.
+
+| Core | Track | Cycles a sample, the 74 | The dearest five (average; peak) |
+| --- | --- | --- | --- |
+| 0 | T5 | 234.1-341.3 | 53 BALLAD SNARE 2 341.3; 66 HOLMES'PLATE 334.7; 52 BALLAD SNARE 1 334.3; 19 LRG VOCALPLATE 334.1 (335.4); 79 VELOCITY-REVRB 332.9 |
+| 1 | T1 | 241.9-352.6 | 53 352.6 (peak 358.1); 19 345.2 (349.0); 52 345.2 (353.5); 66 345.1 (349.0); 78 VELOCITY+REVRB 343.2 (349.0) |
+
+The stall model put 53 at 350.2 in its dearest block at the centre, within 2.4 of core 1's 352.6. The package now
+declares **370 hardware** cycles: 352.6 measured, plus what the timing could not reach and the model prices, the fade at
+a pick (+11.6) and TIME at 1 ms, where the area copies from the line's head (+4), rounded up. The base charges a
+hardware price as declared, so one instance takes 370 of the 726 admission allows.
+`quadraverb-0.1.0-knobs-hw370.mwrm` (in `~/.cache/modwerk-local/quadraverb/pkg/`), 221,700 bytes, SHA-256
+`ba7aff2ac4a9400c88b3f4990a5fb51ec5b64fe925ffb2709120571badb552c7`, is `94a3e39b` rebuilt the same way with
+`--cycles 370 --cycles-kind hardware`: only header bytes 44-46 differ (the cycles, 366 to 370, and their kind). Not
+timed: knobs off the centre, a pick's fade, two instances, the transport running.
+
 ### Live knobs and 74 programs (27 November 2026)
 
 B LEN, C TIME, D SPD and E DEP are live (ENGINE.md, "Live knobs"), and 59 GREASE GUITAR is back: each area word is
@@ -100,8 +122,8 @@ python3 -B engine/qvk.py                                          # each program
 `quadraverb-0.1.0-knobs.mwrm` in `~/.cache/modwerk-local/quadraverb/pkg/`, 221,700 bytes, SHA-256
 `94a3e39b003ffa231abe8e5eeb6b0497dc3e661d646eb0a61fdcc5093f6cf153`: ABI 9, requires `programs`, image 220,808 of
 262,144, bss 180,244 (the ring pool, 44 ECHO 2the LEFT's 176 KiB), both 401,052 of 524,288; 25 DSP words of shell;
-areas of 895-1,876 words; `--cycles 366` modeled. Built in the `base/octatrack-pool-raise` checkout (`f35ec5c41`) as
-before.
+areas of 895-1,876 words; `--cycles 366` modeled (now 370 hardware, above). Built in the `base/octatrack-pool-raise`
+checkout (`f35ec5c41`) as before.
 
 - **Module pool** (`poolExtent`'s terms): 401,904 bytes; with every published Octatrack module (931,600) and USB Audio
   0.4.2 (131,776), 1,465,280, 107,584 under 1.5 MiB.
