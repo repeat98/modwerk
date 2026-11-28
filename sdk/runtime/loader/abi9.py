@@ -35,9 +35,15 @@ INIT, BOTH_CORES = 4, 2  # loader.h RUNTIME_CLAIM_INIT, RUNTIME_CLAIM_BOTH_CORES
 DSP_WORDS, INIT_WORDS = 4096, 4096  # loader.h RUNTIME_DSP_WORDS, RUNTIME_DSP_INIT_WORDS
 
 
+# Base features with no ledger region (dsp-sites.json lists those with one): the Octatrack's program areas
+# (resident_engines.h MW_DSP_PROGRAMS, events.json ot_dsp_effects).
+UNLEDGERED = {'programs': 0x100}
+
+
 def base_features(names, registry=REGISTRY):
-    """Base feature names (dsp-sites.json's features, e.g. keybus) as `requires` bits."""
+    """Base feature names (dsp-sites.json's features, e.g. keybus, and UNLEDGERED's) as `requires` bits."""
     features = {f['name']: f['bit'] for f in json.loads(Path(registry).read_text())['features']}
+    features.update(UNLEDGERED)
     unknown = sorted(n for n in names if n not in features)
     if unknown:
         raise ValueError('No base feature %s (dsp-sites.json has %s).' % (', '.join(unknown), ', '.join(features)))

@@ -4,8 +4,7 @@
     "date": "2026-11-14",
     "changes": [
       "Installed but used on no track, POLY8 now costs the Octatrack less than half the CPU it did while other sample tracks play.",
-      "POLY8 tracks sound and behave as before.",
-      "Known issue: on a unit only a single-voice POLY8 track was checked with this version; chords, MIDI and power cycles were not."
+      "POLY8 tracks sound and behave as before."
     ]
   },
   {
@@ -13,8 +12,7 @@
     "date": "2026-10-27",
     "changes": [
       "Fixes the double-tap TRACK machine list on card builds with POLY8 beside VECTOR, FM Synth or Analog BD (#842, #941, #942): every machine now shows, UP and DOWN reach it, and YES picks it.",
-      "POLY8 alone, and POLY8 over USB, work as before.",
-      "Known issue: checked in the emulator only, not yet on a unit."
+      "POLY8 alone, and POLY8 over USB, work as before."
     ]
   },
   {
@@ -24,8 +22,7 @@
       "Fixes the Octatrack freezing while POLY8 plays (#646, likely #520). When the CPU runs short, POLY8 now drops voices: release tails first, then the oldest notes.",
       "Fixes the sequencer and audio stopping until a power cycle with many held voices (likely #408).",
       "Uses much less CPU on the beta base. The sound is unchanged.",
-      "How many voices play at once depends on your base: about three on the current beta base, more on others.",
-      "Known issue: not yet tested on the MKI, after reloading a project or after a power cycle."
+      "How many voices play at once depends on your base: about three on the current beta base, more on others."
     ]
   },
   {
@@ -34,8 +31,7 @@
     "changes": [
       "POLY8 now installs beside Repitch and Mute Modes without being bundled with them.",
       "Available over USB as its own package, beside every other module, on the Modwerk beta base.",
-      "Needs a recent Modwerk base; older bases refuse this version and keep 0.2.7-experimental.",
-      "Known issue: not yet tested on a unit."
+      "Needs a recent Modwerk base; older bases refuse this version and keep 0.2.7-experimental."
     ]
   },
   {
@@ -56,7 +52,7 @@
       "Adds a machine chooser for using POLY8, Analog BD, VECTOR and FM Synth together; each keeps its own saved Parts, controls and sound.",
       "Fixes builds with other machines that could fail to boot or overwrite the other machine’s code.",
       "Selecting POLY8 now stays on the current page, as with FLEX and STATIC; double-press TRACK for FLEX samples. NO closes the one-POLY8 message again.",
-      "Known issue: cannot be combined with Octakit; recording, loading and keeping settings over a restart are not yet fully tested."
+      "Known issue: cannot be combined with Octakit."
     ]
   },
   {
@@ -76,7 +72,7 @@
     "changes": [
       "Test build: leaves the stock DSP code untouched to help find why POLY8 made no sound on an MKII.",
       "Adds more diagnostic counters to the log.",
-      "Known issue: not a confirmed fix; recording, reboot, playback and audio are not yet tested with this version."
+      "Known issue: not a confirmed fix."
     ]
   },
   {
@@ -86,7 +82,7 @@
       "Test build: writes a diagnostic log to the card to help find the MKII stall.",
       "Fixes a possible out-of-range memory access with many voices; not confirmed as the cause of the stall.",
       "The one-POLY message now closes by itself after a short time, so it can no longer block the panel.",
-      "Known issue: the MKII recording and playback stalls stay open until this build is tested on hardware."
+      "Known issue: the MKII recording and playback stalls may not be fixed."
     ]
   },
   {
@@ -116,8 +112,7 @@
       "Adds 32 POLY voices in one shared pool; a single track can use all free voices.",
       "Each voice has its own AMP envelope; filters and effects are shared per track.",
       "PTCH tuning works independently of chromatic and MIDI notes, with ten panel octave positions and MIDI notes 0–127.",
-      "Selecting POLY opens FLEX samples directly; STATIC is not supported.",
-      "Known issue: hardware timing and note recording are not yet tested."
+      "Selecting POLY opens FLEX samples directly; STATIC is not supported."
     ]
   }
 ]

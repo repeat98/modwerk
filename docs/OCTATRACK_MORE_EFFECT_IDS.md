@@ -179,7 +179,9 @@ Order, each step host-tested before the next:
    `RUNTIME_POOL_BYTES`); modset.c's set buffer follows the pool. The base's RAM grows from about 2.1 to 3.1 MiB,
    taken from sample memory at boot. The self-test's site check masks interrupts a module at a time instead of over
    all of them. The loader's host test fills all 128 slots; S58 boots and passes `pick` in `ot_emu --dsp`. Not yet:
-   128 real modules installed, and their tick and key cost, on the unit.
+   128 real modules installed, and their tick and key cost, on the unit. **Raised (27 November 2026):** the pool to
+   2 MiB, one module's image to 256 KiB and its image and bss to 512 KiB (`build_core.py`), 256 more pages of
+   sample memory with the set buffer.
 7. **Compatibility:** id 31 stays dry from step 5 on, so a project opened on an older base or stock (which clamp
    to 31) plays dry there instead of running another module. TapeHead's preferred handle moves off 31; the
    project map keeps existing projects on their handles until they are opened on the new base.

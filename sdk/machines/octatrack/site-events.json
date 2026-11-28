@@ -349,6 +349,13 @@
    "event": "ev_audio_step",
    "kind": "call",
    "room": 8
+  },
+  {
+   "index": 65,
+   "event": "ot_dsp_effects",
+   "kind": "table",
+   "room": 8,
+   "record": 32
   }
  ]
 }

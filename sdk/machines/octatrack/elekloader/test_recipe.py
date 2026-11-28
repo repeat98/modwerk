@@ -306,7 +306,9 @@ class RuntimeSlotTests(unittest.TestCase):
         self.host_test('test_modset_card.c', defines=('-DMODWERK_HOST_CARD',))
 
     def test_status_keys_on_the_host(self):
-        self.host_test('test_status.c')
+        for defines in ((), ('-DMODWERK_RESIDENT_ON_DEMAND',)):  # the second with program areas: STREAM FULL refuses a pick
+            with self.subTest(defines=defines):
+                self.host_test('test_status.c', defines=defines)
 
     def test_diagnostics_log_on_the_host(self):
         self.host_test('test_diag.c')

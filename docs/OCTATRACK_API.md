@@ -57,7 +57,7 @@ The base owns every stock site that more than one module needs and shares it as 
 - **Editing:** `ev_plock_store` (a lock byte is stored), `ev_knob_store` (a knob turn stores a Part byte).
 - **Projects and settings:** `ev_project_load`, `ev_project_line`, `ev_project_write`, `ev_project_defaults`, `ev_settings_sanitise`.
 - **Projects, banks and Parts as stock saves and loads them:** `ev_banks_load`/`ev_banks_loaded`, `ev_bank_load`/`ev_bank_loaded`, `ev_project_new`, `ev_bank_write`/`ev_bank_written`, `ev_project_store`/`ev_project_stored`, `ev_project_reload`/`ev_project_reloaded`, `ev_part_saved`, `ev_part_clear`. Each `…ed` hook runs when stock's routine returns. With `ev_modules_ready` (the installed modules changed and the card is free), they let a module keep its own file beside the project, read and written from the engine task, the only one that may use the card.
-- **Tables:** `ot_machines` (track machines), `ot_sequencer_rows` (rows in PROJECT > CONTROL > SEQUENCER), `ot_midi_generators`, `ot_sample_editor_actions`, `ot_machine_starts`, `ot_settings` (rows in PROJ > MODWERK > SETTINGS), `ot_part_menu` (rows in the Part Edit window), `ot_sample_memory`, `ot_usb_functions`.
+- **Tables:** `ot_machines` (track machines), `ot_sequencer_rows` (rows in PROJECT > CONTROL > SEQUENCER), `ot_midi_generators`, `ot_sample_editor_actions`, `ot_machine_starts`, `ot_settings` (rows in PROJ > MODWERK > SETTINGS), `ot_part_menu` (rows in the Part Edit window), `ot_sample_memory`, `ot_usb_functions`, `ot_dsp_effects` (an effect's program areas, below).
 - **USB frame:** `ev_usb_frame` runs every 16-sample block at `0x4000d9a0` (`modwerk_usb_function_frame` in `usb_function.c`). A base built with `build_core.py --usb-audio <layout>` links USB Audio into the image: that producer owns the site and the base does not raise the hook. Bases with module USB function slots (`usb_function_slots` when site events are on and no profile layout is linked), including `--packaged-usb-audio` and the beta base (`scripts/octatrack-base.mjs`), install the frame shim at `0x4000d9a0` and raise the hook every block whether or not a function is installed; packaged USB Audio subscribes beside other handlers ([HOOKS.md](../sdk/machines/octatrack/HOOKS.md), `ev_usb_frame`, `base_usb_functions.sites()`).
 
 ```json
@@ -77,6 +77,28 @@ C modules include [modwerk_events.h](../sdk/machines/octatrack/include/modwerk_e
 **Raising a hook.** Declare `"raise": ["ev_mute_keep"]` and define a zero word `raise_ev_mute_keep` in initialized data. The loader points it at the base's entry when the module is installed, and the module calls through it. Mute Modes does this in assembly.
 
 **When no hook fits.** A site only your module needs, your module patches and declares in the manifest. When a second module needs the same site, or one another module or the base already patches, [propose a hook](module-guides/README.md#propose-a-hook): one entry at the end of [events.json](../sdk/machines/octatrack/events.json), reviewed by the owner. `npm run modules:compat` refuses two modules that patch the same bytes, and it names the hook to use instead.
+
+## Program areas
+
+Planned for base 0.8.3 (its cumulative draft; development twins only so far). An FX effect whose DSP code changes with its program (a program knob over many algorithms, as the Quadraverb's) contributes one `struct modwerk_dsp_effect` to `ot_dsp_effects` and requires the base feature `programs` (loader ABI 9, `abi9.py --requires programs`). For each slot that runs its effect the base keeps two areas of `program_words` P words on that slot's core, asks `program(slot)` every UI tick, and for a program the slot does not run yet asks `code(slot, program, at, out)` for its final words at P address `at`, writes them into the area the slot does not run while it plays, then names that area in the slot's record between two frames. The effect's proc reads its record at every call and jumps there; the area returns with `rts` and names no address outside itself:
+
+```
+        move    r7,a            ; the slot's record: X:$7fb0 + 4 * ((r7 >> 8) & 15), word 0
+        lsr     #6,a
+        and     #>$3c,a
+        add     #>$7fb0,a
+        move    a1,r1
+        nop
+        move    x:(r1),a
+        tst     a
+        beq     dry             ; 0: no program yet
+        move    a1,r1
+        nop
+        jsr     (r1)
+dry:
+```
+
+A switch is a write of the code (24 words a frame) and one frame; going back to the program before is the switch alone. A record with `stream_in` or `stream_out` also gets a stream (bases from 0.8.4, `build_core.py --stream-channel`, beside USB AUDIO IN's input; tracks 1-4, on core 1, not yet run on a unit): `fill(slot, f, in)` and `take(slot, f, out)` run every frame in the frame transfer's interrupt, and words 1 and 2 of the record name the in- and out-block, offsets into the frame's host bank, whose base (`$2000` or `$4000`) stock keeps at `X:$207`, once the first blocks have arrived (never from `r6`: stock's dispatcher points it at its parameter copies, and the first Quadraverb package rang there); `fill(f)` has every out-block up to `f - 3`. The frame the record changes is the switch: fade, clear or restart there as the effect needs. The channel's lanes and halfwords a frame (`MW_STREAM_IN_MOST` 352 in, `MW_STREAM_OUT_MOST` 256 out, `stream_channel.h`) are shared by every slot of both cores, and one Quadraverb plate takes them: a second pick is refused with STREAM FULL, naming the slot that holds the lane, and its track keeps its effect; a Part change, reload, paste or project load that brings several gives the lane to the first in slot order, and the others play dry under one STREAM FULL box until their effect changes. A lane being closed counts no more, so a pick made as another slot leaves gets in. While playing the areas come from free words only. [HOOKS.md](../sdk/machines/octatrack/HOOKS.md) has the record and its contract; `sdk/tests/test_dsp_programs.py` runs both against a model of the loader and the frame chain.
 
 ## Keeping state
 

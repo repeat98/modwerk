@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 3,
+  "id": "mutiny",
+  "name": "MUTINY",
+  "version": "0.2.1",
+  "machine": "digitone",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "mbaumannn",
+    "credits": [
+      "mbaumannn — MUTINY design and code",
+      "Dracyr — seq-events, which it builds on",
+      "Logarhythm and djphazer — TB-3PO (Phazerville suite, MIT), which TB3P ports"
+    ]
+  },
+  "maintainers": [
+    "mbaumannn"
+  ],
+  "source": {
+    "repository": "https://github.com/mbaumannn/mutiny",
+    "revision": "1d9f65b6e5412fc44689074c1030a146e1ccaae1",
+    "path": "mods/mutiny"
+  },
+  "presentation": {
+    "label": "MUTINY",
+    "family": "Pattern generation",
+    "summary": "Three Eurorack-style generators on the Digitone's synth tracks, a Euclidean rhythm, a Turing Machine and an acid line, that you play from the encoders and commit to the pattern with YES.",
+    "overview": "MUTINY, by mbaumannn, puts three generative sequencers from the modular world on the Digitone mk1's synth tracks T1-T4: EUCL, a Euclidean rhythm; TURI, a Turing Machine; and TB3P, an acid line ported from the Phazerville suite's TB-3PO. Each model is a module with seven controls on a track. Press TRIG PARAMETERS on the stock TRIG page to open it: while a model is on, the track plays the generated line and turning a control changes the line, not your pattern. YES commits the page the sequencer keys are on as ordinary trigs, and NO takes the last commit back. Its seeds and controls are saved with the project.",
+    "highlights": [
+      "EUCL, TURI and TB3P generators on synth tracks T1-T4, one per track.",
+      "A preview you play and shape without touching the pattern.",
+      "YES commits a page as ordinary trigs; NO undoes the last commit.",
+      "Seeds and controls are saved with the project."
+    ],
+    "usage": [
+      "On synth track 1 open the TRIG page and press TRIG PARAMETERS: the MUTINY page opens.",
+      "Turn encoder A to EUCL and start the transport.",
+      "Turn C (HITS) and D (ROT) until you like the rhythm.",
+      "Press YES to commit the page as trigs, or NO to take the last commit back."
+    ]
+  },
+  "access": {
+    "location": "TRIG page: TRIG PARAMETERS",
+    "steps": [
+      "Use a build containing MUTINY for the Digitone mk1 on OS 1.44; seq-events comes with it.",
+      "On a synth track (T1-T4) open the TRIG page and press TRIG PARAMETERS.",
+      "Turn encoder A to pick a model; press TRIG PARAMETERS again to go back."
+    ],
+    "screenshots": [
+      "media/page.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "TRIG PARAMETERS",
+      "default": null,
+      "doc": "Open the MUTINY page from the stock TRIG page; press again to go back. Opening it writes nothing.",
+      "labels": null
+    },
+    {
+      "name": "Track key 1-4",
+      "default": null,
+      "doc": "Select the track and show it on the page.",
+      "labels": null
+    },
+    {
+      "name": "Encoder A",
+      "default": null,
+      "doc": "MODEL: OFF, EUCL, TURI or TB3P.",
+      "labels": null
+    },
+    {
+      "name": "Encoders B-H",
+      "default": null,
+      "doc": "The model's seven controls; hold one and press NO to reset it.",
+      "labels": null
+    },
+    {
+      "name": "YES",
+      "default": null,
+      "doc": "Commit the page the sequencer keys are on as ordinary trigs.",
+      "labels": null
+    },
+    {
+      "name": "NO",
+      "default": null,
+      "doc": "Cancel the preview; after a commit, restore the track as it was.",
+      "labels": null
+    },
+    {
+      "name": "Encoder H",
+      "default": null,
+      "doc": "Tap: a new line from the same settings. Hold (TURI): freeze the current pass.",
+      "labels": null
+    },
+    {
+      "name": "Track key, held",
+      "default": null,
+      "doc": "Hands the screen back and opens the Mod Menu.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.44"
+    ],
+    "requires": [
+      "seq-events"
+    ],
+    "conflicts": [],
+    "limitations": [
+      "Digitone mk1 on OS 1.44 only; not the Digitone Keys.",
+      "Synth tracks T1-T4 only; settings are per project, not per pattern.",
+      "Under twelve of the 35 scales MUTINY plays chromatically, because OS 1.44's table has no intervals for them.",
+      "A stored trig condition or probability does not gate a generated note; stored locks and micro timing do apply.",
+      "Needs core 4.1 or newer and seq-events (which comes with it), so it does not build beside KitBank 0.2.0, which builds only on the older core."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "4.1",
+    "build": "build.json",
+    "events": [
+      "ev_draw",
+      "ev_enc",
+      "ev_fire_cond",
+      "ev_fire_locks",
+      "ev_fire_vel",
+      "ev_gen_notes",
+      "ev_gen_trig",
+      "ev_key",
+      "ev_key_leds",
+      "ev_tick"
+    ],
+    "claims": [
+      "ui:TRIG page:TRIG PARAMETERS",
+      "projdata:MUT2"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 0,
+    "fastBytes": 0,
+    "load": {
+      "display": "Runs in the sequencer's step fire and on the UI side, nothing in the audio render",
+      "method": "static",
+      "conditions": "From the source: its seq-events handlers decide each step's trig, notes, velocity, condition and locks; its other handlers run on the UI side; one hook at the pattern-length read. Not measured on a unit in Modwerk."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.2.1",
+    "sourceSha256": "c77e2c42516787bd565c2f6351aee13581ca6a9ca52bd710d3221220e3b79f5a",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Digitone MKI",
+      "release": "1.44",
+      "testedOn": "2026-11-08",
+      "tester": "mbaumannn",
+      "durationMinutes": null,
+      "summary": "The author tested MUTINY for about an hour on their Digitone mk1 on OS 1.44, through every feature: the three models, page commits and undo, project save and reload, pattern switches and four tracks generating at once (release v0.2.1, 8 November 2026). This module pins the released file and the seq-events build it was tested with.",
+      "limitations": [
+        "One unit and one session, as the author says.",
+        "Other mods on hardware and a measured timing margin were not tested by the author.",
+        "Not tested in Modwerk on a unit."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "The author's released 0.2.1 file, pinned unchanged, linked locally with core 5.4 and the seq-events build it was tested with: alone, beside KitBank (refused: KitBank builds only on core 2.x), and beside the six Digitone effect pedals, all seven together. Emulator captures show where it appears; nothing ran on a unit in Modwerk.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: commit a Euclidean rhythm",
+        "steps": [
+          "On synth track 1 open the TRIG page and press TRIG PARAMETERS: the MUTINY page opens.",
+          "Turn encoder A to EUCL and start the transport.",
+          "Turn C (HITS) and D (ROT) until you like the rhythm.",
+          "Press YES to commit the page as trigs, or NO to take the last commit back."
+        ]
+      },
+      "screenshots": [
+        "media/page.png",
+        "media/tb3p.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-or-later",
+    "file": "LICENSE",
+    "declaration": "The author's source, imported unchanged from github.com/mbaumannn/mutiny at 1d9f65b (v0.2.1) under its GPL-2.0-or-later licence, in the repository's layout so its includes resolve. TB3P ports TB-3PO from the Phazerville suite (MIT, Logarhythm and djphazer); its notice is in src/src/engine/engine.c. Modwerk adds elekloader's SDK headers digitone-mk1/core3.h, digitone-mk1/seq.h and seq-events.h from commit b893c93 (GPL-2.0-or-later). The library builds the author's released mutiny-0.2.1.elemod."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "MUTINY thumbnail",
+      "alt": "Three generator lanes, Euclidean dots, a shift register and an acid line, feeding a pattern.",
+      "credit": "Modwerk",
+      "license": "GPL-3.0-or-later",
+      "source": "Original Modwerk illustration"
+    },
+    {
+      "path": "media/page.png",
+      "kind": "screenshot",
+      "caption": "The MUTINY page on synth track 1, opened with TRIG PARAMETERS",
+      "alt": "The MUTINY page on synth track 1, opened with TRIG PARAMETERS on the Digitone monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; mbaumannn module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.44",
+        "moduleVersion": "0.2.1",
+        "imageSha256": "765157814bfa688f71a0d835a24c9c3f111af83b8b686456a8343aa11fb65b52",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    },
+    {
+      "path": "media/tb3p.png",
+      "kind": "screenshot",
+      "caption": "TB3P picked with encoder A: its seven controls",
+      "alt": "TB3P picked with encoder A: its seven controls on the Digitone monochrome LCD",
+      "credit": "Modwerk documentation capture; Elektron interface; mbaumannn module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.44",
+        "moduleVersion": "0.2.1",
+        "imageSha256": "765157814bfa688f71a0d835a24c9c3f111af83b8b686456a8343aa11fb65b52",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
+      }
+    }
+  ]
+}

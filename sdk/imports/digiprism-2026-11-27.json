@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "module": "digitone/digiprism",
+  "version": "0.2.0",
+  "date": "2026-11-27",
+  "upstream": {
+    "repository": "https://github.com/irpina/digiprism",
+    "revision": "09456179af986f93b06f5885bbeb16be173bce72",
+    "path": ".",
+    "license": "GPL-2.0-or-later"
+  },
+  "changes": [
+    "DigiPrism 0.2 (tag v0.2, 0945617), imported unchanged: dsp.c, ui.c, dprism.h, tables.h. It patches no stock site: it adds itself to fxkit's effects list and core's Mod Menu, owns the audio through fxkit while active, and keeps its settings in the project (DCHR).",
+    "build.json is the author's mod.json with its buffer region and -Wno-error=incompatible-pointer-types (GCC 16.2 refuses the source's int/int32_t function pointers); it requires fxkit, Modwerk's shared dependency built from irpina's source."
+  ],
+  "files": [
+    {
+      "from": "dsp.c",
+      "to": "src/dsp.c",
+      "sha256": "ac556e954846e4c5cd8c438375748661a1734ba76a5190aed0e2b33452ba7b43"
+    },
+    {
+      "from": "ui.c",
+      "to": "src/ui.c",
+      "sha256": "fbeeba4673172603f6884d1508d31d2d64878619c9c97f577cb90b77e8ea8ee0"
+    },
+    {
+      "from": "dprism.h",
+      "to": "src/dprism.h",
+      "sha256": "6d6b4c164538eab4337da5051722689c663c994131ba96c19e6464738f8027d2"
+    },
+    {
+      "from": "tables.h",
+      "to": "src/tables.h",
+      "sha256": "fd0e46a7f2c5dc169570ed7e380663672a8bf7f9575993d76e338f1b38aa9855"
+    },
+    {
+      "from": "elekloader fxkit-v0.1: elekloader/sdk/include/digitone-mk1/core3.h",
+      "to": "src/digitone-mk1/core3.h",
+      "sha256": "e8a146f4c47e816a3a38543309ad8f09563c15b433008f8eaaec471b9485871b"
+    },
+    {
+      "from": "elekloader fxkit-v0.1: elekloader/sdk/include/digitone-mk1/fxkit.h",
+      "to": "src/digitone-mk1/fxkit.h",
+      "sha256": "e314aa1d7494afa7ae1b2044fd1e5033b02ac4d51c27c36e8036924a404c1fa7"
+    },
+    {
+      "from": "README.md",
+      "to": "upstream/README.md",
+      "sha256": "e8c7d4f53d9a5ad6ed4379544685ed5bb1049aecfa2d7d73bbebf0c1f2c360b8"
+    },
+    {
+      "from": "LICENSE",
+      "to": "LICENSE",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    }
+  ],
+  "excluded": [
+    "mod.json",
+    "docs/",
+    "gentables.py and pedal_tables.py (the generators of tables.h, which is included)"
+  ],
+  "transformations": [
+    "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json."
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata.",
+  "evidence": "sdk/digitone/modules/digiprism/TESTING.md",
+  "requires": [
+    "fxkit"
+  ]
+}

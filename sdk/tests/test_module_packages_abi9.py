@@ -33,6 +33,10 @@ class PublishedAbi9(unittest.TestCase):
         self.assertEqual(entry.only_key_bus(builder.capabilities)(data)['requires'], 8)
         self.assertEqual(builder.capabilities(EVERB), dict(abi=6, features=0, sites=0, copies=0, fills=0))  # unchanged
 
+    def test_an_effect_with_program_areas_is_published_as_abi_9(self):
+        data = abi9.upgrade(EVERB, abi9.base_features(['programs']))
+        self.assertEqual(entry.only_key_bus(builder.capabilities)(data)['requires'], 0x100)
+
     def test_any_other_base_feature_is_refused_before_it_reaches_the_list(self):
         checked = entry.only_key_bus(builder.capabilities)
         for names in (['sidechain'], ['matrix'], ['analog-bd'], ['keybus', 'sidechain']):

@@ -60,7 +60,8 @@ class CavePortTests(unittest.TestCase):
             cave.validate_manifest(SimpleNamespace(name='not-ported', cf_patches=[]))
 
     def test_private_base_arena_binding_cannot_be_guessed(self):
-        symbols = dict(arena_base=0x40db05e0, pool=0x40c1df80, __bss_start=0x40abba58, __bss_end=0x40daee00)
+        # A 2 MiB pool's layout (build_core.py RUNTIME_POOL_BYTES): bss and the arena 1.25 MiB higher than with 768 KiB.
+        symbols = dict(arena_base=0x40ef05e0, pool=0x40c1df80, __bss_start=0x40abba58, __bss_end=0x40eeee00)
         image = bytearray(256)
         for address in (0x4000045e, 0x4000046c, 0x400004c8):
             struct.pack_into('>I', image, address - 0x40000400, symbols['arena_base'])

@@ -92,8 +92,28 @@ enum { MW_ENGINE_FITS, MW_ENGINE_MEMORY, MW_ENGINE_STUCK_BOOT };
 /* `wanted` with what it implies (Sidechain: the key bus); `words`, a packaged feature's incoming engine's size (its
  * package's), else 0. */
 int mw_engines_admit(unsigned feature, unsigned wanted, unsigned words);
-/* ABI 9: the base features this base provides to packages (loader.h): the key bus. */
+/* ABI 9: the base features this base provides to packages (loader.h): the key bus and program areas. */
 unsigned modwerk_machine_dsp_features(void);
+/* Program areas (events.json ot_dsp_effects, dsp_programs.c): an effect whose package requires MW_DSP_PROGRAMS runs its
+ * program's code from one of two areas, side by side in a span of this region, while the next program's code is written
+ * into the other. The base names the area a slot runs in that slot's record, X:MW_SLOT_RECORDS + 4 * ((r7 >> 8) & 15) on the slot's core
+ * (word 0: its P address, 0 none; the other three reserved), written between two frames (the receiver's op 12) and
+ * zeroed by the receiver's first frame. Not a ledger feature (dsp-sites.json): it has no engine, stub or reset. */
+#define MW_DSP_PROGRAMS 0x100u
+#define MW_SLOT_RECORDS 0x7fb0u        /* 16 records of 4 X words on each core: X:$7fb0-$7fef */
+#define MW_SLOT_RECORD_WORDS 64u
+#define MW_AREA_SPANS 8u               /* each core's spans: one for each of its slots, its two areas side by side */
+/* Claim `words` of core c's region: 1 with *offset (from DL_CODE_START), 0 not now, -1 no room. */
+int mw_engines_area_claim(unsigned core, unsigned words, unsigned *offset);
+/* The area at `offset` goes back: only once no slot's record names it. */
+void mw_engines_area_free(unsigned core, unsigned offset);
+/* The UI tick of the program areas (dsp_programs.c), and its counts (diagnostics, never an ABI): programs written,
+ * switches made, refusals (no room, no code, no lane), jobs refused or lost, streams named. */
+void mw_programs_tick(void);
+/* selection.c's guard (status.c), before stock writes a pick of effect `id` on slot 0-15: 1, with the STREAM FULL box,
+ * when its record asks for a stream lane the channel cannot give beside those held or let in; the pick is then not made. */
+int mw_programs_stream_pick(unsigned slot, unsigned id);
+extern volatile uint32_t mw_programs_written, mw_programs_switched, mw_programs_refused, mw_programs_failed, mw_programs_streams;
 /* The unit may give an unused engine back (the board parks its controller): stopped, no pattern change queued, two
  * seconds after the last key or knob and no pick waiting, as an evacuation waits. */
 int mw_engines_settled(void);

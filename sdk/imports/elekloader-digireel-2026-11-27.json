@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "digireel-2026-11-27",
+  "about": "DigiReel 0.2 for Digitone OS 1.43 and 1.44: the author's released .elemod files, pinned unchanged.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "digireel-0.2.elemod",
+      "sha256": "cf833ca138037ff5f011f664776da9371ae466ba66898f5d4f4b479653eef19f",
+      "id": "digireel",
+      "version": "0.2",
+      "device": "digitone-mk1",
+      "os": "1.43",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "irpina/digireel",
+        "tag": "v0.2"
+      },
+      "title": "DigiReel",
+      "requires": [
+        "core",
+        "fxkit"
+      ],
+      "conflicts": [],
+      "summary": "A time-warp pedal for the audio inputs: tape speed from -2x to +2x in tempo windows, pitch apart from speed, HOLD, TAPE STOP, random events, a slicer and MIDI CCs. With fxkit (0.2): a mixer, two LFOs on the stock LFO page aimed at its controls, p-locks kept in the pattern, and the MIDI tracks editable while it plays. The synths are silent while it is the active effect.",
+      "description": "A time-warp pedal for the Digitone mk1's audio inputs: a 10-second tape that always listens, played back at -2x to +2x (reverse included) in windows in time with the Digitone's tempo, pitch apart from speed (STRETCH) or with it (TAPE), HOLD (loop the last or the next window, forwards, backwards or back and forth), TAPE STOP, random speed, pitch, reverse and stutter events, a step slicer, and MIDI CCs. DIGIREEL in core-dn1's Mod Menu (hold a track key) makes it the active effect and opens its page; while it is active it owns the audio engine (the synths are muted) and processes the inputs, through fxkit's MIXER (AMP), with two LFOs aimed at its controls (LFO) and p-locks on the pattern's steps (RECORD: hold a trig, turn a control). MIDI leaves the page to edit the MIDI tracks while it plays; NO turns it off. Needs fxkit (core-dn1 4.1).",
+      "category": "Effect",
+      "author": "irpina",
+      "needs_core": "4.1",
+      "on_unit": "0.2 tested on a Digitone mk1 by its author (Oct 2026), built before the effects' rename, which changed only names; still a beta. Also checked in digikit's emulator on OS 1.43 and 1.44. Not yet run on a Digitone Keys."
+    },
+    {
+      "file": "digireel-0.2-os1.44.elemod",
+      "sha256": "2e71c3feae3403954770a3d43268acea5e86b58b310eb5c3df0be0922bec224d",
+      "id": "digireel",
+      "version": "0.2",
+      "device": "digitone-mk1",
+      "os": "1.44",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "irpina/digireel",
+        "tag": "v0.2"
+      },
+      "title": "DigiReel",
+      "requires": [
+        "core",
+        "fxkit"
+      ],
+      "conflicts": [],
+      "summary": "A time-warp pedal for the audio inputs: tape speed from -2x to +2x in tempo windows, pitch apart from speed, HOLD, TAPE STOP, random events, a slicer and MIDI CCs. With fxkit (0.2): a mixer, two LFOs on the stock LFO page aimed at its controls, p-locks kept in the pattern, and the MIDI tracks editable while it plays. The synths are silent while it is the active effect.",
+      "description": "A time-warp pedal for the Digitone mk1's audio inputs: a 10-second tape that always listens, played back at -2x to +2x (reverse included) in windows in time with the Digitone's tempo, pitch apart from speed (STRETCH) or with it (TAPE), HOLD (loop the last or the next window, forwards, backwards or back and forth), TAPE STOP, random speed, pitch, reverse and stutter events, a step slicer, and MIDI CCs. DIGIREEL in core-dn1's Mod Menu (hold a track key) makes it the active effect and opens its page; while it is active it owns the audio engine (the synths are muted) and processes the inputs, through fxkit's MIXER (AMP), with two LFOs aimed at its controls (LFO) and p-locks on the pattern's steps (RECORD: hold a trig, turn a control). MIDI leaves the page to edit the MIDI tracks while it plays; NO turns it off. Needs fxkit (core-dn1 4.1).",
+      "category": "Effect",
+      "author": "irpina",
+      "needs_core": "4.1",
+      "on_unit": "0.2 tested on a Digitone mk1 by its author (Oct 2026), built before the effects' rename, which changed only names; still a beta. Also checked in digikit's emulator on OS 1.43 and 1.44. Not yet run on a Digitone Keys."
+    }
+  ]
+}

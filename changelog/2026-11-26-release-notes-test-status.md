@@ -1,0 +1,1 @@
+Module pages: release notes no longer say "not yet tested on a unit" for versions that ran on a unit. These lines came from before the unit run and were never removed. Known issues now name only limits you can run into, and `npm run check` keeps test status out of release notes.

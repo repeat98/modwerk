@@ -48,7 +48,7 @@ class VolatileService(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             fixture = Path(temp) / 'fixture.c'
             fixture.write_text(source)
-            for defines in ((), ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u')):
+            for defines in ((), ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=2097152u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u')):
                 executable = Path(temp) / ('fixture-large' if defines else 'fixture')
                 args = ['cc', '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-g',
                         *SANITIZE, '-fno-sanitize-recover=all',
@@ -97,7 +97,7 @@ class VolatileService(unittest.TestCase):
             fixture = Path(temp) / 'fixture.c'
             fixture.write_text(source)
             for defines, run in ((enabled, cases), ((), ('closed',)),
-                                 (enabled + ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=786432u'), cases)):
+                                 (enabled + ('-DRUNTIME_MODULES=128u', '-DRUNTIME_POOL_BYTES=2097152u', '-DRUNTIME_IMAGE_BYTES=262144u', '-DRUNTIME_MODULE_BYTES=524288u'), cases)):
                 executable = Path(temp) / ('board%d' % len(defines))
                 args = ['cc', '-std=c99', '-Wall', '-Wextra', '-Werror', '-pedantic', '-g',
                         *SANITIZE, '-fno-sanitize-recover=all', *defines,

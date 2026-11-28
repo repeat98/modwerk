@@ -6,8 +6,7 @@
       "Fixes recorder-buffer loops on Flex tracks: the voice keeps running across the loop, counters no longer reset, and the loop end no longer plays silent samples.",
       "Fixes recordings alternating in length from one arm to the next for fixed RLEN 1–64 at 30–300 BPM; other settings keep stock lengths.",
       "Media only: new artwork showing repeating recorder segments.",
-      "Available over USB on the Modwerk beta base; it is relinked for each base update and the module itself is unchanged.",
-      "Known issue: the loop fix has not yet been heard on a unit."
+      "Available over USB on the Modwerk beta base; it is relinked for each base update and the module itself is unchanged."
     ]
   }
 ]

@@ -1,0 +1,1 @@
+Octatrack module builder: a DSP effect package may take an effect id up to 127 (it stopped at 31), since the base has had 128 effect ids for FX1 and FX2 alike. How many there are is now set in one file, `sdk/machines/octatrack/elekloader/fx-ids.json`, which the base build and the builder both read. Card images still use stock's 32.

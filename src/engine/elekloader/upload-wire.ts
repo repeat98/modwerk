@@ -41,8 +41,9 @@ export function parseLoadReading(view: DataView): LoadReading {
     tracks1to4: core1 ? values[3] : null, peak1to4: core1 ? values[4] : null }
 }
 
-/** Private beta saved-file export. Only the two fixed MODWERK slots, never arbitrary memory or paths. */
-export const SAVED_SET_CAPACITY = 786432 + 4096
+/** Private beta saved-file export. Only the two fixed MODWERK slots, never arbitrary memory or paths. The module pool
+ * (build_core.py RUNTIME_POOL_BYTES) and the header, as modset.c's SET_BYTES. */
+export const SAVED_SET_CAPACITY = 2097152 + 4096
 export const SAVED_SET_METADATA_BYTES = 80
 export const SAVED_SET_CHUNK_BYTES = 480
 export const SAVED_SET_CHUNK_DATA = 448

@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/irpina/elekloader",
+  "revision": "a60e3baa410090e51d52594d470439351ea0b05c",
+  "license": "GPL-2.0-or-later",
+  "upstreamVersion": "0.1",
+  "sources": {
+    "src/fxkit.c": "82b79f4967887ed5c92984d62137590ab2e2898d5d9ff0033aa9bf9247141917",
+    "src/digitone-mk1/core3.h": "e8a146f4c47e816a3a38543309ad8f09563c15b433008f8eaaec471b9485871b",
+    "src/digitone-mk1/fxkit.h": "e314aa1d7494afa7ae1b2044fd1e5033b02ac4d51c27c36e8036924a404c1fa7"
+  },
+  "adaptation": "irpina's fxkit 0.1 for the Digitone mk1 from elekloader tag fxkit-v0.1, source unchanged with the two SDK headers it includes; its mod.json became build.json. It patches no stock site. The library pins the author's released fxkit-0.1 .elemod files: Modwerk's own compile of this source did not open the effects' pages in the emulator.",
+  "upstreamSourceBytesIdentical": true,
+  "sourcePath": "mods/fxkit-dn1, elekloader/sdk/include/digitone-mk1/core3.h and fxkit.h",
+  "path": "dependencies/fxkit"
+}
