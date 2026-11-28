@@ -385,6 +385,42 @@ static int knob_text(struct core_text *t)
     return CORE_TEXT_DONE;
 }
 
+// A knob a digital voice leaves without a parameter (mw_voice.none) is drawn and
+// answered as stock's CY CLASSIC's C, E and F. Each machine's SYNTH page names the
+// record of each knob A..H (MACHINE_PAGES_AT + 36 m: a word, then eight record ids),
+// and a 0 there draws stock's dithered box and takes no turn. Stock maps each
+// machine's knobs, CCs and NRPNs to its records once at boot (PARAM_MAPS_BUILD_AT,
+// from base.json's site there). Before that, the page's id for that knob becomes 0
+// and the record leaves the slot (owner -1, as stock's records no machine owns,
+// which the map builder and every other reader of the owner skip), so no CC or NRPN
+// reaches it either. The record keeps its id, so nothing else moves. LEV stays: the
+// base plays the stream through it.
+int mw_voice_records(void)
+{
+    const struct mw_voice *const *e;
+    int k;
+    for (e = mw_voices; *e; e++) {
+        unsigned none = (*e)->none & 0xfe;
+        volatile int32_t *page = (volatile int32_t *)(MACHINE_PAGES_AT + 36 * (*e)->slot) + 1;
+        if (!none)
+            continue;
+        for (k = 0; k < 8; k++) {
+            int32_t id = page[k];
+            volatile int32_t *r;
+            unsigned i;
+            if (id < RECORD_FIRST || id > RECORD_LAST)
+                continue;
+            r = (volatile int32_t *)RECORD(id);
+            i = (unsigned)(r[1] - 9);
+            if (r[0] == (*e)->slot && i < 8 && (none >> i & 1)) {
+                page[k] = 0;
+                r[0] = -1;
+            }
+        }
+    }
+    return (int)((get0_t)PARAM_MAPS_BUILD_AT)();
+}
+
 // A digital voice's slot keeps the hidden records' stock widgets: give each knob
 // but LEV a plain dial's count factors, encoder profile and callbacks (their storage
 // holds the same flags for every dial), so every knob steps one value a detent. A

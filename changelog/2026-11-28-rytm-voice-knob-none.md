@@ -1,0 +1,1 @@
+Base: a digital voice machine on the Analog Rytm MKII can mark a knob as having no parameter (`mw_voice.none`), and its SYNTH page then shows stock's dithered empty box there, as stock CY CLASSIC does, instead of an unlabelled dial. That knob takes no turn, lock, MIDI CC or NRPN.

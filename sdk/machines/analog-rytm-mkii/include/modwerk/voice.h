@@ -18,6 +18,8 @@
  *   - the page: the slot's hidden records keep stock's widgets (a waveform switch, a
  *     transient picker); the base gives every knob but LEV a plain or centred dial
  *     (core_machine_knob.centred) and a number for its value;
+ *   - a knob with no parameter (none): no record, as stock's CY CLASSIC has none for C,
+ *     E and F, so the page draws stock's dithered box there and no CC or NRPN reaches it;
  *   - a CPU meter per machine (mw_voice_meter), on the unit's own clock.
  *
  * In the module:
@@ -39,6 +41,7 @@
 #define MW_VOICE_ABI 1
 #define MW_VOICE_FRAMES 32      /* a block, at 48 kHz */
 #define MW_VOICE_TYPES 8        /* at most, in the sound's 3-bit field */
+#define MW_VOICE_NONE(index) (1u << ((index) - 9))  /* mw_voice.none's bit for sound index 10..16 */
 
 /* What a hit and a block play with. */
 struct mw_voice_play {
@@ -56,7 +59,7 @@ struct mw_voice {
     uint8_t types;              /* 0 or 1: one sound; 2..8: variants, stepped by a tap */
     uint8_t tap_encoder;        /* the encoder whose tap steps the type, 0..7 (A..H as the page shows them) */
     uint8_t tap_index;          /* the sound index that encoder shows, 9..16: its label follows the type */
-    uint16_t pad;
+    uint16_t none;              /* bit i: sound index 9 + i has no parameter (MW_VOICE_NONE(index); LEV's bit is ignored) */
     const char *const *labels;  /* types x {short, long}: the tapped knob's names for each type */
     const char *const *names;   /* types: each type's name, shown in the SYNTH page's bottom bar ("808") */
     /* A new hit on voice v (0..7), before its first block. */
