@@ -1,0 +1,1 @@
+Machines: the LXR-02 page links LICHOMAT, an unofficial custom firmware for the LXR-02 built on Erica Synths' published source, with a desktop emulator and a VST3/AU plugin. It is a separate project, not a Modwerk base, and not yet tested on hardware.
