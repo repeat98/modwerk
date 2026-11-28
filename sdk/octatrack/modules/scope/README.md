@@ -62,6 +62,7 @@ Banks), kept as [upstream/LICENSE](upstream/LICENSE).
 LCD captures in this folder are from the **0.2.0** catalog package on a
 **development twin** RAM-booted from OS 1.40C (see TESTING.md). They show
 [SCOPE opening while B02 plays](media/scope-all-live.png) and [a live trace
-after DOWN+TEMPO](media/scope-live-trace.png). The **0.8.1 release base**
-window check on flashed hardware is documented separately in TESTING.md. No
-MAIN/CUE audio capture was available during those captures.
+after DOWN+TEMPO](media/scope-live-trace.png). The same package on the flashed
+**0.8.1** release base passed the open-window check while B02 played (28
+November 2026, TESTING.md). No MAIN/CUE audio capture was available during the
+dev-twin captures.

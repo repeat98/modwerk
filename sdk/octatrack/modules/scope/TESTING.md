@@ -54,13 +54,10 @@ open the stock tempo window. Close with **[TEMPO]**, **[YES]**, or **[NO]**.
 
 | When | Package | How | Result |
 | --- | --- | --- | --- |
-| 28 Nov 2026 | `f8a1ffeb…` | Intended on flashed `eb667962…` with B02 playing | **Not run:** USB bench reported the unit away while another session held the shared device link. |
+| 28 Nov 2026 | `f8a1ffeb…` (0.2.0) | By hand on flashed `eb667962…`, B02 playing, catalog package kept on card | **Pass (reported):** DOWN+TEMPO opens SCOPE with a live trace; OSC, XY and ALL respond; TEMPO alone stays stock; closes with TEMPO, YES or NO. |
 | 26 Nov 2026 | `48522941…` (0.1.0, three stock sites) | By hand during a RAM trial on the same release base | **Pass (reported):** DOWN+TEMPO opens SCOPE; OSC, XY and ALL draw live audio; closes cleanly. See table below. |
 
-**0.2.0** on the release base is expected to match the 0.1.0 UX path above; the
-difference is Tuner compatibility, not the DOWN+TEMPO gesture. Complete the
-28 November row on hardware and update this table before calling release-base
-window proof done.
+Release-base window proof for **0.2.0** is the 28 November row above.
 
 The procedure in `/private/tmp/scope-procedure-scope-020-20261127-2` tested
 SCOPE 0.2.0-experimental package SHA-256
@@ -68,8 +65,8 @@ SCOPE 0.2.0-experimental package SHA-256
 on an MKII running an OS 1.40C Modwerk base identified as `311bb670`.
 Its unit steps 6–10 passed: inventory and Part read, scripted trial,
 120-second soak, CPU price, and restoration. The procedure did not run an
-emulator rehearsal. Its by-hand audio and screen checks, edge-case table,
-and submitter stage remain open.
+emulator rehearsal. Its edge-case table and submitter stage may still be open; release-base
+open-window proof for 0.2.0 is recorded above (28 November 2026).
 
 The first procedure's price command labelled the scene as transport stopped
 and reported +0.1 percentage point of frame interrupt time at rest. A later
