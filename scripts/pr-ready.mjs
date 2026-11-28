@@ -32,9 +32,13 @@ export function gateEdits(files) {
 // machine’s cumulative owner-reviewed draft, merged before a module uses it (docs/module-guides/README.md#propose-a-hook). The per-module recipe
 // files beside the adapters (*.json, *.py) are a module's own and stay in its pull request.
 const BASE = /^(?:sdk\/machines\/[^/]+\/(?:events\.json$|site-events\.json$|dsp-sites\.json$|base-binding\.json$|HOOKS\.md$|include\/|elekloader\/|module-adapters\/[^/]+\.(?:c|h|cpp|s)$)|src\/engine\/assets\/[a-z0-9-]+-base(?:[.-]|$))/
+// Adapter sources that one module's package builder compiles and no base build does: that module's own, as its recipe rows
+// are (usb_audio_settings.c: USB Audio's settings and routing, compiled into its package by usb_audio_package.py only).
+export const PACKAGE_ONLY = new Set(['sdk/machines/octatrack/module-adapters/usb_audio_settings.c'])
+const isBase = file => BASE.test(file) && !PACKAGE_ONLY.has(file)
 /** The base files a change edits while it also adds or changes a module; [] when it changes no module. */
 export function baseEdits(files) {
-  return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => BASE.test(file)) : []
+  return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(isBase) : []
 }
 
 // CI refuses both in contributors' module pull requests opened from this day; earlier ones and the owner's are judged in review.
@@ -265,7 +269,7 @@ async function main(argv) {
   const boardModule = !dirty.length && !behind ? await import('./agent-board.mjs') : null
   const claimed = boardModule && await boardClaims(root, base, boardModule), waiting = boardModule ? await boardModule.inboxNotes() : []
   const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
-  const baseDraft = changed.some(file => BASE.test(file)) || /^base\/[^/]+-next$/.test(git('branch', '--show-current'))
+  const baseDraft = changed.some(isBase) || /^base\/[^/]+-next$/.test(git('branch', '--show-current'))
   const draftOnly = process.env.MODWERK_EVIDENCE_PENDING === '1'
   const description = body === null ? null : descriptionProblems(body, { draft: argv.includes('--draft'), files: branchFiles(git, base) })
   const verdict = readiness({ python, baseDraft, draftOnly, dirty, behind, conflicts, remote, target, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), instrument: instrumentFiles(changed), compiled, board, description })
@@ -276,7 +280,7 @@ async function main(argv) {
   for (const line of verdict.notes) console.log('· ' + line)
   console.log(!verdict.ok ? 'Not ready yet.' : draftOnly ? 'Ready as a draft: missing release evidence is listed above as a warning. Run pr:ready without --draft before you mark it ready for review.' : verdict.baseDraft ? 'Ready to update the cumulative base draft.' : verdict.instrument
     ? 'Ready: local checks passed. Once unit results for the exact build are recorded, mark the draft ready on GitHub and verify its status.'
-    : 'Ready: local checks passed. Push the checked commit, mark any draft ready on GitHub, and verify its status.')
+    : 'Ready: local checks passed. Push the checked commit; once its checks have started (gh pr checks <URL>), mark any draft ready on GitHub, and verify its status. A ready sent with the push can leave only the draft\'s run, which module-pr-ok then fails.')
   return verdict.ok ? 0 : 1
 }
 

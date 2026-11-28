@@ -2,18 +2,16 @@
 """Modwerk's own firmware codec, for every Elektron machine: the section format of OS images (aplib.py packs it,
 elz.py depacks it), the .syx wire format of OS updates (transport.py) and ColdFire instruction lengths (coldfire.py).
 
-The Python builders and checks run the pinned Elekloader checkout (`vendor/elekloader/kit/kit.json`) for formats,
-linking and patching. They put it on sys.path only through use_elekloader(), which first makes the checkout's codec
-and instruction decoder resolve to these modules, so no build or check runs the checkout's own files for them:
+The Python builders and checks run Modwerk's firmware builder (sdk/firmware_builder: formats, linking, patching and
+the SDK's build) under the package name their imports use. use_elekloader() serves that name from
+sdk/firmware_builder, whose codec and instruction decoder are these modules:
 
     sys.path.insert(0, str(ROOT / 'sdk'))
     import firmware_codec
-    firmware_codec.use_elekloader(upstream)
-    from elekloader import formats          # formats, syx and elek pack, depack and frame with this package
+    firmware_codec.use_elekloader(upstream)   # `upstream` is no longer read
+    from elekloader import formats          # sdk/firmware_builder/formats.py
 
-The same names, functions and results as the modules they stand in for (sdk/tests/test_firmware_codec.py), so
-every image, package and .syx stays byte for byte what it was. A recipe that pins the build's inputs names these
-files, not the checkout's (inputs()).
+A recipe that pins the build's inputs names the builder's and this package's files (inputs()).
 """
 import hashlib
 import importlib.abc
@@ -89,19 +87,40 @@ def install_in_elekloader():
         sys.path.append(str(HERE.parent))  # firmware_codec itself importable by name, for _Finder
 
 
-def use_elekloader(checkout):
-    """Put the pinned Elekloader checkout first on sys.path, with its codec and decoder served by this package.
+BUILDER = HERE.parent / 'firmware_builder'
+NAME = 'elekloader'  # the package name the tools import the builder by
 
-    The only way Modwerk's Python puts the checkout on sys.path (sdk/tests/test_firmware_codec.py checks every
-    script). `checkout` is used as given, after expanding ~."""
+
+class _Builder(importlib.abc.MetaPathFinder):
+    """Answers NAME and NAME.* with sdk/firmware_builder's module of the same path: the same module objects."""
+
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname != NAME and not fullname.startswith(NAME + '.'):
+            return None
+        module = importlib.import_module('firmware_builder' + fullname[len(NAME):])
+        spec = importlib.util.spec_from_loader(fullname, _Served(module), origin=module.__spec__.origin,
+                                               is_package=hasattr(module, '__path__'))
+        return spec
+
+
+def use_elekloader(checkout=None):
+    """Make the builder's package name resolve to sdk/firmware_builder. Idempotent; `checkout` is not read."""
+    if HERE.parent.as_posix() not in [Path(p).resolve().as_posix() for p in sys.path if p]:
+        sys.path.append(str(HERE.parent))
+    if not any(isinstance(finder, _Builder) for finder in sys.meta_path):
+        sys.meta_path.insert(0, _Builder())
+
+
+def use_reference_checkout(checkout):
+    """Tests only: the reference checkout on sys.path, with its codec and decoder served by this package, to compare
+    sdk/firmware_builder against while it exists (sdk/tests/test_own_builder_*.py). No tool calls this."""
     install_in_elekloader()
     sys.path.insert(0, str(Path(checkout).expanduser()))
 
 
-def elekloader_inputs(checkout):
-    """The checkout's Python files a build that called use_elekloader() can run: all but its codec/ and isa/."""
-    root = Path(checkout) / 'elekloader'
-    return [path for path in root.rglob('*.py') if path.relative_to(root).parts[0] not in REPLACED]
+def builder_inputs():
+    """The builder's Python files a build runs."""
+    return sorted(BUILDER.rglob('*.py'))
 
 
 def sources():
@@ -109,11 +128,10 @@ def sources():
     return sorted(HERE.glob('*.py'))
 
 
-def inputs(checkout):
-    """{name: SHA-256} of the Python a build runs from the checkout and from this package: the checkout's files as
-    'upstream/elekloader/...', this package's as 'sdk/firmware_codec/...'. Recipes that pin a build's inputs name these."""
-    checkout = Path(checkout)
-    found = {'upstream/' + path.relative_to(checkout).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
-             for path in elekloader_inputs(checkout)}
+def inputs(checkout=None):
+    """{name: SHA-256} of the Python a build runs: the builder's files as 'sdk/firmware_builder/...', this package's as
+    'sdk/firmware_codec/...'. Recipes that pin a build's inputs name these. `checkout` is not read."""
+    found = {'sdk/firmware_builder/' + path.relative_to(BUILDER).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+             for path in builder_inputs()}
     found.update({'sdk/firmware_codec/' + path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in sources()})
     return found

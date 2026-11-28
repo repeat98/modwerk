@@ -28,8 +28,24 @@ volatile uint32_t modwerk_status[5], modwerk_runtime_ticks, dl_frames;
 void modwerk_track_machines(volatile uint8_t *out) { for (unsigned i = 0; i < 24u; ++i) out[i] = (uint8_t)(i + 1u); }
 volatile uint32_t mw_frame_sheds, mw_frame_shed_tracks, mw_frame_brakes, mw_frame_skips, mw_frame_hushes, mw_late_over; /* the frame guard */
 volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* ... and its CPU budget */
+volatile uint32_t mw_cpu_line_refusals, mw_cpu_pick_label, mw_cpu_pick_why, mw_late_after_long, mw_late_low;
 volatile uint8_t mw_cpu_track_refusals[8];
 volatile uint32_t mw_usb_reoffers, mw_usb_reoffer_regs; /* ep0.c's attach watchdog */
+/* ep0.c's USB_GONE reads: the host's frame number, whether a host is expected, the reconnect's state, one sample. */
+volatile struct diag_usb_gone modwerk_test_usb_gone;
+volatile uint32_t mw_ep0_runs, mw_uf_calls;
+static uint32_t frindex, usb_rs = 1u;
+static int expected;
+static unsigned uf_now;
+uint32_t modwerk_usb_frindex(void) { return frindex; }
+int modwerk_usb_host_expected(void) { return expected; }
+unsigned modwerk_usb_reconnect_state(void) { return uf_now; }
+void modwerk_usb_sample(volatile struct diag_usb_sample *s)
+{
+    s->otgsc = 0x00000f20u, s->portsc = 0x18000885u, s->usbcmd = 0x00080000u | usb_rs, s->deviceaddr = 4u << 25, s->frindex = frindex;
+    s->uf_timer = 1100u, s->wd_off = 0, s->wd_detached = 0, s->uf_state = (uint8_t)uf_now, s->uf_off_ticks = 0, s->uf_flags = 1u;
+    s->wd_tries = 0, s->flags = 0x12u, s->uf_reconnects = 9u;
+}
 
 /* The battery copy of the current bank: a record's byte above 15 is a value stock's checks fix (to 15, one each); the
  * first settings check does the same for the saved UI state's bank byte. The restore refuses while any is left. */
@@ -63,9 +79,12 @@ int32_t modwerk_test_stock_restore(void)
 static void power_up(void) { for (unsigned i = 0; i < sizeof restore; ++i) ((uint8_t *)&restore)[i] = 0; restores = 0, restored_bank = 99u; }
 
 static volatile struct diag_incident *last(void) { return &LOG->incident[(LOG->incidents - 1u) % DIAG_INCIDENTS]; }
+static volatile struct diag_incident *before_last(void) { return &LOG->incident[(LOG->incidents - 2u) % DIAG_INCIDENTS]; }
 static void restart(void) { started = 0, ticks = 0, n = cpu_sum = cpu_peak = played = hot_run = hot_count = hot_at = 0; modwerk_diag_tick(); }
 /* One UI tick, as the base runs it: runtime.c's count, then the subscribers. */
 static void tick(void) { modwerk_runtime_ticks = modwerk_runtime_ticks + 1u; modwerk_diag_tick(); }
+/* n audio frames with a UI tick every 46th, ep0_tick running in it (its reconnect tick does not). */
+static void frames(unsigned n) { for (unsigned f = 0; f < n; ++f) { modwerk_diag_frame(); if (f % 46u == 45u) mw_ep0_runs = mw_ep0_runs + 1u, tick(); } }
 
 int main(void)
 {
@@ -166,25 +185,29 @@ int main(void)
     tick();
     CHECK(LOG->incidents == before + 5u);
     /* A late frame entry held, a skipped DSP frame: the count since boot, at most once in HOT_GAP. */
-    mw_frame_skips = 3u;
+    mw_frame_skips = 3u, mw_late_after_long = 2u, mw_late_low = 70000u;
     tick();
-    CHECK(LOG->incidents == before + 6u && last()->kind == DIAG_LATE && last()->a == 3u);
+    CHECK(LOG->incidents == before + 7u && before_last()->kind == DIAG_LATE && before_last()->a == 3u);
+    /* Its DETAIL: of the held entries, two after a long frame and 65,535 at most barely late; nothing from the start. */
+    CHECK(last()->kind == DIAG_DETAIL && last()->cpu == 2u && last()->dsp0 == 0xffffu && !last()->dsp1 && !last()->machine[0] && !last()->machine[1]);
+    CHECK(last()->second == before_last()->second && last()->keys[0] == 0xffu && !last()->playing);
     mw_frame_skips = 9u;
     for (unsigned t = 0; t < HOT_GAP - 1u; ++t) tick();
-    CHECK(LOG->incidents == before + 6u);
+    CHECK(LOG->incidents == before + 7u);
     tick();
-    CHECK(LOG->incidents == before + 7u && last()->kind == DIAG_LATE && last()->a == 9u);
+    CHECK(LOG->incidents == before + 9u && before_last()->kind == DIAG_LATE && before_last()->a == 9u);
+    before += 2u;
     /* An entry later than the wait can hold logs the same incident with nothing more held: the count in the top byte,
      * under the same limit. */
     mw_late_over = 1u;
     for (unsigned t = 0; t < HOT_GAP - 1u; ++t) tick();
     CHECK(LOG->incidents == before + 7u);
     tick();
-    CHECK(LOG->incidents == before + 8u && last()->kind == DIAG_LATE && last()->a == (1u << 24 | 9u));
+    CHECK(LOG->incidents == before + 9u && before_last()->kind == DIAG_LATE && before_last()->a == (1u << 24 | 9u));
     mw_late_over = 300u;
     for (unsigned t = 0; t < HOT_GAP; ++t) tick();
-    CHECK(LOG->incidents == before + 9u && last()->kind == DIAG_LATE && last()->a == (255u << 24 | 9u)); /* 255 at most */
-    before += 2u;
+    CHECK(LOG->incidents == before + 11u && before_last()->kind == DIAG_LATE && before_last()->a == (255u << 24 | 9u)); /* 255 at most */
+    before += 4u;
     /* A pattern begun with module machines silenced, as predicted: a brake incident with bit 23, once in HOT_GAP. */
     mw_frame_hushes = 2u;
     tick();
@@ -196,14 +219,19 @@ int main(void)
     /* The CPU budget refused a machine on T4: one incident with the track, the tracks since the last one and the count. */
     before = LOG->incidents;
     mw_cpu_refusals = 2u, mw_cpu_refusal_tracks = 1u << 3, mw_cpu_track_refusals[3] = 2u;
+    mw_cpu_line_refusals = 0, mw_cpu_pick_label = 0x414d4947u, mw_cpu_pick_why = 1u << 16 | 3u << 8 | 4u; /* "AMIG" on T4, the Part budget */
     tick();
-    CHECK(LOG->incidents == before + 1u && last()->kind == DIAG_CPU && last()->a == (0x08u << 24 | 0x08u << 16 | 2u));
+    CHECK(LOG->incidents == before + 2u && before_last()->kind == DIAG_CPU && before_last()->a == (0x08u << 24 | 0x08u << 16 | 2u));
+    /* Its DETAIL: both were the Part budget's, and the last one's name and why. */
+    CHECK(last()->kind == DIAG_DETAIL && last()->a == 2u << 16 && last()->screen == 0x414d4947u && last()->tempo24 == (1u << 16 | 3u << 8 | 4u));
     tick();
-    CHECK(LOG->incidents == before + 1u);
+    CHECK(LOG->incidents == before + 2u);
     /* Ten minutes on (HOT_GAP), one on T6: the record names T6 alone as its own, T4 and T6 since the start. */
     mw_cpu_refusals = 3u, mw_cpu_refusal_tracks |= 1u << 5, ++mw_cpu_track_refusals[5], cpu_at = 0;
+    mw_cpu_line_refusals = 1u, mw_cpu_pick_label = 0x54415045u, mw_cpu_pick_why = 13u << 8 | 1u; /* "TAPE" on T6 FX2: the frame line, the Part is busy */
     tick();
-    CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_CPU && last()->a == (0x28u << 24 | 0x20u << 16 | 3u));
+    CHECK(LOG->incidents == before + 4u && before_last()->kind == DIAG_CPU && before_last()->a == (0x28u << 24 | 0x20u << 16 | 3u));
+    CHECK(last()->kind == DIAG_DETAIL && last()->a == (2u << 16 | 1u) && last()->screen == 0x54415045u && last()->tempo24 == (13u << 8 | 1u));
 
     /* The UI stands still for six seconds while frames run, then moves again. The frame interrupt interrupted a task
      * (level 0) at 0x40015520 each time (channel 1's vector): one FREEZE_PC sample at 5 s; the tick moved before the one at 6 s. */
@@ -329,7 +357,75 @@ int main(void)
     CHECK(last()->kind == DIAG_RESTORE && last()->a == 72u && last()->dsp0 == 72u && last()->screen == 0x100u && last()->tempo24 == 0xffffffffu);
     power_up();
 
+    /* The host's USB frames stop while one is expected (diag.h's USB_GONE): a sample at 3 s and one a second until 6 s,
+     * then the tick adds the record, its first sample whole. The UI tick and ep0_tick run on; the reconnect tick doesn't. */
+    restart();
+    for (unsigned i = 0; i < 5u; ++i) modwerk_status[i] = 0;
+    for (unsigned i = 0; i < sizeof modwerk_test_usb_gone; ++i) ((volatile uint8_t *)&modwerk_test_usb_gone)[i] = 0;
+    usb_index = usb_still = usb_expected = usb_gone = 0;
+    frindex = 1u, modwerk_diag_frame(); /* the frames move */
+    expected = 1, usb_rs = 0u, uf_now = 2u; /* the base's own reconnect took the pull-up off */
+    before = LOG->incidents;
+    frames(USB_GONE_FRAMES);
+    CHECK(USB_GONE->magic == DIAG_USB_GONE_MAGIC && USB_GONE->state == 1u && USB_GONE->boot == LOG->boot && LOG->incidents == before);
+    CHECK(USB_GONE->stopped == 2u && USB_GONE->ticks == USB_GONE_FRAMES / 46u && USB_GONE->ep0 == USB_GONE_FRAMES / 46u && USB_GONE->uf == 0u);
+    frames(3u * SAMPLE_FRAMES);
+    CHECK(USB_GONE->state == 2u && USB_GONE->sample[3].usbcmd == 0x00080000u && LOG->incidents == before);
+    tick();
+    volatile struct diag_incident *u = last();
+    CHECK(LOG->incidents == before + 1u && u->kind == DIAG_USB_GONE && u->boot == LOG->boot && USB_GONE->state == 3u);
+    CHECK(u->a == 0x00000f20u && u->screen == 0x18000885u && u->tempo24 == 0x00080000u && u->cpu == 1100u && u->playing == 0u);
+    CHECK(u->machine[0] == 8u && u->machine[8] == 2u && u->machine[10] == 1u && u->machine[12] == 0x12u && u->machine[13] == 2u);
+    CHECK(u->machine[14] == byte_of(USB_GONE_FRAMES / 46u) && u->machine[16] == 0u && u->machine[17] == 9u);
+    /* The 4, 5 and 6 s samples: OTGSC from byte 20, then USBCMD's low byte, uf_state and flags at 28-30 (fx 4-6), 40-42, 52-54. */
+    CHECK(u->machine[22] == 0x0fu && u->machine[23] == 0x20u && u->fx[4] == 0u && u->fx[5] == 2u && u->fx[6] == 0x12u && u->keys[1] == 2u && u->keys[14] == 0x12u);
+    frames(4u * SAMPLE_FRAMES); /* one record an episode */
+    CHECK(LOG->incidents == before + 1u);
+    /* Frames back after the first sample: the record keeps what it has. */
+    frindex = 2u, modwerk_diag_frame();
+    frames(USB_GONE_FRAMES);
+    frindex = 3u, modwerk_diag_frame();
+    tick();
+    CHECK(LOG->incidents == before + 2u && last()->kind == DIAG_USB_GONE && last()->machine[22] == 0u && last()->machine[23] == 0u);
+    /* A host nobody expected (none talked, the unit not configured): nothing. */
+    expected = 0;
+    frames(USB_GONE_FRAMES + 4u * SAMPLE_FRAMES);
+    frindex = 4u, modwerk_diag_frame();
+    tick();
+    CHECK(LOG->incidents == before + 2u);
+    /* At most four a boot. */
+    expected = 1;
+    for (unsigned e = 0; e < 3u; ++e) {
+        frames(USB_GONE_FRAMES + 4u * SAMPLE_FRAMES);
+        frindex = frindex + 1u, modwerk_diag_frame();
+        tick();
+    }
+    CHECK(LOG->incidents == before + 4u);
+    /* A record whose tick never came (the unit off before its samples were in): the next start adds it, before its START. */
+    usb_gone = 0;
+    frames(USB_GONE_FRAMES);
+    CHECK(USB_GONE->state == 1u);
+    uint32_t gone_boot = LOG->boot;
+    before = LOG->incidents;
+    restart();
+    CHECK(LOG->incidents == before + 3u && LOG->incident[before % DIAG_INCIDENTS].kind == DIAG_USB_GONE && LOG->incident[before % DIAG_INCIDENTS].boot == gone_boot);
+    CHECK(LOG->incident[(before + 1u) % DIAG_INCIDENTS].kind == DIAG_START && USB_GONE->state == 3u);
+    expected = 0, usb_rs = 1u, uf_now = 0;
+
+    /* Late entries before the first tick (stock's own start, 61 on a tester's unit at every power-up) make no LATE, so
+     * the session's first real one is logged when it comes, not ten minutes later. */
+    mw_frame_skips = 0, mw_late_over = 61u, skip_at = 0; /* a power-up clears the statics */
+    restart();
+    before = LOG->incidents;
+    tick();
+    CHECK(LOG->incidents == before);
+    mw_late_over = 62u;
+    tick();
+    CHECK(LOG->incidents == before + 2u && before_last()->kind == DIAG_LATE && before_last()->a == 62u << 24 && before_last()->second == 0u);
+    /* Its DETAIL says how many of those the first tick found, so a reader can take the start's own off. */
+    CHECK(last()->kind == DIAG_DETAIL && !last()->dsp1 && !last()->machine[0] && last()->machine[1] == 61u);
+
     if (failures) fprintf(stderr, "%u failure(s)\n", failures);
-    else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages, the frames before a stall and the power-up's restore passed");
+    else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages, the frames before a stall, the power-up's restore and USB_GONE passed");
     return failures != 0;
 }

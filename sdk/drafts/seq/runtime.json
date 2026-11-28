@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "subscribe": [
+    {"event": "ev_banks_loaded", "fn": "seq_ev_banks_loaded", "order": 50},
+    {"event": "ev_bank_loaded", "fn": "seq_ev_bank_loaded", "order": 50},
+    {"event": "ev_project_new", "fn": "seq_ev_project_new", "order": 50},
+    {"event": "ev_bank_written", "fn": "seq_ev_bank_written", "order": 50},
+    {"event": "ev_project_store", "fn": "seq_ev_project_store", "order": 50},
+    {"event": "ev_project_stored", "fn": "seq_ev_project_stored", "order": 50},
+    {"event": "ev_project_reloaded", "fn": "seq_ev_project_reloaded", "order": 50},
+    {"event": "ev_modules_ready", "fn": "seq_ev_modules_ready", "order": 50},
+    {"event": "ev_in_use", "fn": "seq_in_use", "order": 50}
+  ]
+}

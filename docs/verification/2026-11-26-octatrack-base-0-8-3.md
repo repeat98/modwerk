@@ -1,8 +1,12 @@
-# Octatrack base 0.8.3: three fixes on top of 0.8.2, 26 November 2026
+# Octatrack base 0.8.3: seven changes on top of 0.8.2, 26-27 November 2026
 
-Source: `base/octatrack-next` after main `3e9ce92e3` (base 0.8.2, #2079) plus three changes, each its author's commit:
+Source: `base/octatrack-next` after main `3e9ce92e3` (base 0.8.2, #2079) plus four changes, each its author's commit:
 the frame interrupt's Part read from SRAM (#2174, Laslo), a Keep that never loses to an unreadable saved-set file
-(#2109), and module knob names that follow the drawn track (#2228, #2042). Base builds: see the end.
+(#2109), module knob names that follow the drawn track (#2228, #2042), a USB Audio stream in the CPU limit (#2251), an
+attach watchdog that re-offers a unit a host addressed but never configured, a USB reset that retires stock's
+mass-storage replies, a record of which side gave up when the host's frames stop (#2290), and a forced reconnect that
+stays off the bus long enough for the host's reset retries.
+Base builds: see the end.
 
 ## 25 November 2026: the frame interrupt reads the current Part from SRAM (Laslo, lasl00)
 
@@ -108,12 +112,172 @@ store+0x2fe+30·track+6·fx.
 | LFO destination lists | they show these names too | not changed | known gap: the last-drawn track's names |
 | UI and frame cost of three more hooks | they run on every draw of those pages | not run | needs the unit |
 
+## 26 November 2026: a USB Audio stream counts in the CPU limit (#2251)
+
+- **Report:** UNGEMACH, SYNTIZ or FM Synth picked while no computer streamed broke up once Ableton recorded 16 channels
+  (MKI); picks made while it streamed were refused as PART IS BUSY, and that refusal outlived the stream.
+- **Cause, on the owner's MKII** (0.8.3 development twins, USB Audio 0.4.1, macOS recording with `rec.swift`, the guard
+  step's frame interrupt figures): the USB interrupt runs inside the frame interrupt's renders, so a stream stretches
+  every frame rather than adding a slice after it. USB Audio's own frame block took 0.5 % of a frame.
+
+  | Scene (twin) | No stream: longest / mean | Stream | Stretch of the mean |
+  | --- | --- | --- | --- |
+  | Empty pattern (1) | 33 / 24.2 % | 4 ch: 52.4 / 33.5 % | 1.38 |
+  | Empty pattern (1) | 32.8 / 24.5 % | 16 ch: 69.3 / 43.1 % | 1.76 |
+  | UNGEMACH trigging on T1 (1) | 66.5-73 / 37.6 % | 16 ch: 88.5-91.2 / 58.4-61.9 %, one render dropped in 6 s | 1.63 |
+  | UNGEMACH (1) | 66.7 / 37.4 % | 2 ch: 76-83.6 / 52.8-53.8 % | 1.43 |
+  | UNGEMACH (2, four takes) | 66.4-67.4 / 36.8-37.4 % | 16 ch: 69.4-72.6 / 43.7-44.4 % | 1.19 |
+  | UNGEMACH (2, after an INPUTS reconnect) | 66.8-69.9 / 37.4 % | 16 ch: 77.7-82 / 45.9 %; and playing into INPUTS AB: 45.8 % | 1.23 |
+
+  The stretch differed between boots (twin 1 and twin 2 differ only in a timer read twin 1 took around the USB block,
+  too little to explain it); not explained. Each stream start brought frames of 95-99 % and, once, 14 late entries
+  (the latest 259 µs).
+- **Change:** `usb_function.c` reports from EP3's enable bits (ENDPTCTRL3) whether the host streams, and in which
+  direction. `status.c` stretches what the reserve predicts and what a pick adds by `stream_factor()` (1.65 for every
+  stream, the stretch a Part dropped renders at; the set's `stock` carries `stream` and `streamDuplex` as pseudo ids
+  `0xffffffe0`/`1`), keeps the figures kept from a play as they would be without the stream, and names USB AUDIO STREAM
+  in CPU FULL and in the predicted brake's notice when the stream is what leaves no room.
+- **On the unit (twin 2, `6590dcdf` MAIN):** with 16 channels streaming, SYNTIZ on T3 of an empty pattern was refused:
+  CPU FULL, SYNTIZ NEEDS +30 %, USB AUDIO STREAM. With the stream closed the same pick was made. With UNGEMACH and
+  SYNTIZ on the Part, a pattern started while streaming paused SYNTIZ with the notice USB AUDIO STREAM / SYNTIZ, and
+  UNGEMACH played on.
+- **Host:** `test_status.c` (factor from the set and compiled, the stretched pick and its box, the brake and its notice,
+  the kept figure without the stream), `test_usb_function.c` (the enable bits), `set-package.test.ts` (the ids).
+- **Known limit:** a light Part with one heavy machine picked before the stream starts is not paused (its stretched
+  figure stays under the brake's 122 %) and can drop that machine's renders once the stream opens, as on the MKI. The
+  stream's own cost is the bigger lever (USB Audio).
+- **By width (later the same night):** USB Audio 0.4.2's cost cut (#2288) brought a Main + Cue recording to about 1.26
+  times the frame interrupt, while 16 channels stretched it about 1.86 times in a heavy scene (twin `764b6e71`): one
+  figure for every stream over-books the one and under-books the other. `usb_function.c` now reads the active
+  high-speed profile's EP3 IN packet as it composes the configuration (4 bytes and 12 frames a channel), and
+  `status.c` looks up the set's figure for that width (up to 2, 4, 8, 16 and 20 channels, pseudo ids
+  `0xffffffe2`-`6`, sent from `frame-costs-base.json`'s `stock.streamByWidth`), else the single one as before. No
+  per-width figures are in the stock yet: their measurement (each width at rest and recording, for the live USB Audio
+  version) moved to the next unit turn when the unit went off USB, so the booking is unchanged until then. Host:
+  `test_status.c` (a width's figure, the fallback), `test_usb_function.c` (the packet read), `set-package.test.ts`.
+
+## 26 November 2026: the attach watchdog waits for a configured unit
+
+- **Seen:** on the owner's MKII, four times that day, the unit ran on with USB dead until a power cycle: after a RAM
+  boot (another session's twin `46c30886`, boot 1121, ran 26 min off USB), a RAM boot right after USB Audio trials
+  (twin `65f8604c`, boot 1123), a USB Audio layout change MAIN to TRACKS, and a USB Audio 0.3.0 install (boot 1125). The
+  battery-RAM log shows each boot running on and no `usb` incident: the watchdog (#1985) never re-offered the unit.
+- **Why:** it took any address (DEVICEADDR.USBADR, with a bus reset seen) for enumerated. A host that addressed the unit
+  and then failed (macOS dropped the device: it vanished from the USB tree) left it addressed, so it was never offered
+  again.
+- **Change:** `ep0.c` `enumerated()`: on a base with USB functions, USB MIDI's `usbmidi_up` (set at SET_CONFIGURATION,
+  cleared at a bus reset and the session's end) instead of the address. `usb_attach.h` is unchanged (its host test holds).
+- **Emulator** (`ot_emu` adapted build, twin `764b6e71`, a scripted host): addressed and never configured, the unit was
+  re-offered within 8 s; configured, no re-offer in 15 s. The old rule re-offered a configured unit there too, since the
+  emulator keeps DEVICEADDR at 0, so the emulator cannot show the old rule's gap; the unit run below can.
+- **On the unit** (owner's MKII, evening of 26 November, twins with this change: `764b6e71` running base `478c0c8d`,
+  boots 1129 and 1131, and the built-in USB Audio twin `853a9af2`, boot 1130): three RAM boots, twelve USB Audio trials
+  installed and rolled back (0.3.0 to 0.4.2), and two layout changes (MAIN + CUE to 16 CH and back) with the Mac
+  recording and playing in. The unit stayed on USB throughout, and the log holds no `usb` incident: nothing needed a
+  re-offer. So the change caused no false re-offer in normal use, but no drop happened to show that it heals one.
+- **Not shown:** the re-offer healing a drop on hardware, the released 0.8.2 base (which keeps the old rule), an MKI,
+  a cold start after a power cycle, Windows.
+- **A different loss, open:** the same night another session's three DSP stall runs (twin `764b6e71` and a 0.8.2 twin)
+  each lost USB at the rollback that removed USB Audio after a stream; `npm run device -- recover` finished each without
+  a power cycle. Both bases, so not this rule. The stream had closed 1-1.5 minutes before each removal; those
+  rollbacks removed sets of 18-19 packages with USB Audio among them, while the twelve above removed USB Audio alone and
+  kept USB: removal within a large set is the lead, not yet separated on the unit.
+- **And a boot loss after it:** right after one of those rollbacks (finished by `recover`), a RAM boot from the 0.8.2
+  twin to `764b6e71` ended "boot failed (exit 1)", and the unit stayed off USB until the owner's power cycle: the
+  trap `docs/OCTATRACK_DRIVING.md` already names (a RAM boot after a recovery fails, #1386), not this rule.
+
+## 27 November 2026: a USB reset retires stock's mass-storage replies
+
+- **Seen:** on the owner's MKII (development twin `8a341725` of 0.8.2), a USB Audio 0.4.2 install a minute after a
+  rolled-back trial froze the screen and USB until a power cycle, the audio frames running. The battery-RAM log held a
+  freeze record, PC `0x4001cc30` at level 4 on task 0 (main/idle): the USB interrupt on top of the idle task.
+- **Cause, from OS 1.40C:** `0x4001cc2c`-`0x4001cc32` is stock's USB DISK reply sender (INQUIRY 36 bytes, REQUEST SENSE
+  18, READ CAPACITY 8, from `0x4001e116`, `0x4001e2aa`, `0x4001e30c`, `0x4001e36e`). It takes transfer descriptors 4-15
+  of stock's pool (`0x46c95000`, through the uncached alias) in turn and spins until the next one is inactive. The base
+  always offers mass storage, so a host probes it after every reconnect; a reset that came while a reply was primed left
+  that descriptor ACTIVE, and only the controller clears it. Stock's own ring reset clears slots 4-14, never 15. Read on
+  twin `005817e4`: macOS's polling moves the ring about 1.5 slots a second, so a stale slot freezes the unit within
+  about eight seconds; 8 reconnects there left none.
+- **Fix:** `ep0.c`'s bus-reset hook (every bus reset and session end, before stock's reset routine) flushes EP1's
+  transmit side, bounded, and clears every send slot's token (`usb_stock_sends.h`, host test
+  `test_usb_stock_sends.c`). Every reconnect the base makes ends in the host's bus reset.
+- **Unit (twin `9cf5c4a8`, this fix on `7c732ade`):** 30 LAYOUT changes, each confirmed as soon as the link was back
+  (macOS's probe of the mass storage), then installs with PLAY right after and rollbacks: no freeze, the send slots
+  never left ACTIVE. Before the fix the same day: one freeze in about 25 reconnects.
+- **Open, separate:** the fourth install-PLAY-rollback cycle on that twin lost USB with the UI running: no freeze record,
+  no `usb` re-offer, back only after a power cycle. Understood the same day (next section).
+
+## 27 November 2026: a host reset that meets the base's own reconnect (known issue)
+
+- **Seen:** on the owner's MKII behind a USB 2.0 hub (Genesys) on a Mac, the unit dropped off USB with its screen running,
+  back only after a power cycle: once in 5 install-PLAY-rollback cycles on twin `9cf5c4a8`, once in 6 with a LAYOUT
+  change right after the install on twin `4dd69450`, once in about 32 cycles on twin `ed5474c6`.
+- **The Mac's side** (`log stream` of the kernel and icdd): 0.3 s after the base took the unit off the bus, or as a
+  driver reset the device ("reset API"), the hub reset the port: "resetAndCreateDevice: reset did not enable port",
+  then every 0.37 s, then "persistent enumeration failures". A working reconnect shows "hardware connection lost" and
+  "enumerated" 0.7 s later, no reset failure.
+- **The unit's side** (the `usb_gone` record, #2290, kind 15): the host's frames stopped; 3 to 6 s later the pull-up was
+  on and the base back on the bus, the port either attached and enabled with the old address and no reset taken
+  (`4dd69450`), or held in reset, PORTSC1.PR set throughout (`ed5474c6`). Neither the attach watchdog's re-offers nor a
+  cable replug brought it back; a power cycle did.
+- **One way in, closed:** on `4dd69450` the install's reconnect waited out the patience (12 s: the grace and ten
+  seconds) and was forced; the unit came back half a second later, inside the host's reset retries. A forced detach now
+  stays off the bus for ten seconds, and the attach check retries, off ten seconds as well, when no reset came within
+  three seconds even when the port reads attached (`usb_function.c` UF_DOWN_LONG; host tests). Twin `ed5474c6`: 69
+  reconnects in 28 cycles (half with a LAYOUT change right after the install), none forced, no drop.
+- **Still open:** the other way in, a host driver resetting the device at a removal, dropped once in about 32 cycles on
+  `ed5474c6`. A controller reset that would recover a stuck port (USBCMD.RST, the transceiver as the bootloader sets it
+  up, stock's reset and start) was tried and reverted unproven: its twin never came up on USB after a RAM boot, which
+  a RAM boot does about once in six anyway. Shipped as a known issue (owner, 27 November 2026).
+- **Not tested:** a Mac without a hub, Windows.
+
+## 27 November 2026: the base test procedure, and the release image booted
+
+On the owner's MKII, OS 1.40C, the owner's project, bank C pattern C04, Part 2 (working copy equal to the saved one), a
+Mac connected, no stream. Development twin `ed5474c6` is built from `35a5231e5`, the code 0.8.3 ships: the
+controller-reset attempt and its revert after it cancel out. Main merged with USB Audio 0.4.2 does not change the
+base (`5af431bd`).
+
+- **Steps 1-4** (`npm run test:procedure -- --base --no-emulator`): `sdk:check`, `modules:compat` (0 problems), the
+  base named, the cycle scan current.
+- **Step 7, the large set:** refused whole, RUNTIME_CONFLICT. Bisected to RINGMOD SC alone, which a twin without
+  controller rows does not admit, as on 0.8.1 and 0.8.2. The release image admits it (below). Without it, the 41
+  packages go in halves (the pool), as in 0.8.2's record:
+  - The first half (20 packages, 30 s) ran with no crash, stall, freeze or skipped track, and rolled back.
+  - The second half was cut at 10 s of publication twice: once after the first half's rollback, once after a
+    `recover`. 13 packages were published, then progress stopped, the frames ran on and nothing was recorded; `recover`
+    rolled each back.
+  - The last six of that half (Resonator, Mackity, Butter Fingers, Screen Off, Songbook, Midiverb) were cut once more
+    the same way. Each alone, and both threes, published.
+  - Then the same sets published every time: the six in 2.8-2.9 s and the nineteen in 7.0-7.2 s, 8 of 8 on the twin
+    and 6 of 6 on the release image, also straight after the first half's rollback.
+  - Not reproduced; cause not found. The site gives a set max(10 s, 0.5 s a row), so the same cut would reach a
+    player's sync.
+  - Amiga and Grain were left out, since the loaded project names them (the trap in 0.8.1's record).
+- **Step 8, the soak:** 2,400 operations in 122 s, no failure, health reads 12 ms median and 13 ms p95. The project
+  ignores program changes (PROG CH RECV off), so the pattern never changed.
+- **Step 9, at rest:** all 40 packages but RINGMOD SC, Amiga and Grain, three 8 s readings each. Median +0.0 points of
+  the frame interrupt. None moved a point or more against its own record. Above 0.2: POLY8 2.0, Repitch 1.9 (no
+  record yet), Euclid 1.7 (2.5 recorded), Slow LFO 0.5 (0.5), Tape Echo 0.3 (0.4).
+- **Step 10:** nothing left installed; Part 2 equal to its save.
+- **The release image** (`5af431bd`, RAM-booted after the owner's power cycle from the flashed 0.8.2 `24e480c4`):
+  - It booted and stayed on USB.
+  - It did not load the kept set 0.8.2 had written (Tape Echo, Euclid, Air Chorus), as every base reads only its own
+    (`modset.c`). That set stays on the card for the flashed base.
+  - USB Audio 0.4.2 as a 20 s trial: the Mac listed 4 inputs and 2 outputs (the unit's saved INPUTS AB), no fault, and
+    it rolled back.
+  - RINGMOD SC as a 5 s trial: admitted, rolled back.
+- **Not run:** Amiga and Grain trials (the project), the frame interrupt A/B on the release image, a Keep with two power
+  cycles, Euclid's SETUP pages, an MKI, Windows.
+
 ## Builds and pending
 
-- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `a7771b082b3a0750…`,
-  browser = native `.bin` `cc0519b85418b0d4…` (835,484 bytes). Every change inside a declared site; the bootloader copy
+- Base 0.8.3 (OS 1.40C, `npm run octatrack:base -- --beta --write`, the pinned m68k toolchain): base `5af431bd3e42d93c…`,
+  browser = native `.bin` `cf4fef8f637d8336…` (837,908 bytes; 13,820 container bytes free). Every change inside a declared site; the bootloader copy
   identical. Base-bound packages (Sidechain Compressor, Output Matrix, CC Map, Recorder Loop Fix, Analog BD) bound to it
-  with their bytes unchanged. Not yet booted on a unit.
+  with their bytes unchanged. USB Audio 0.4.2 (`c2597a32`) moves onto it with main. The release image booted on the
+  owner's MKII, 27 November 2026 (above).
+- Pending for #2251 on a unit: the per-width figures, an MKI, and why the stretch differed between boots.
 - Pending on a unit: Euclid on two tracks (one AMP, one LP), switching between their main and FX1/FX2 SETUP pages,
   each showing its own names, with the UI and frame cost of the three hooks; a Keep, then two power cycles; the frame
-  interrupt A/B on the release image.
+  interrupt A/B on the release image; the publication cut above.

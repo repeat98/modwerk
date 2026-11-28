@@ -3,7 +3,7 @@
 import { expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
 import { frameCostTable } from '../src/engine/elekloader/set-package.ts'
-import { added, allocationReading, combined, curveFit, curveRoom, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice } from './octatrack-price.mjs'
+import { added, allocationReading, combined, curveFit, curveRunProblems, measuringCosts, notPlaying, priceInputs, restCost, REST_NOISE, machinePick, stockFit, machineToStatic, pickFailure, priceFileTarget, reading, writePrice, allowanceOf, hasInstances, rolledBackIn } from './octatrack-price.mjs'
 
 function runtimeEffect(slots) {
   const data = Buffer.alloc(76)
@@ -158,15 +158,6 @@ it('refuses a reading the transport did not play, from the session\'s state repl
   expect(notPlaying('error: no answer\n')).toBe(false) // an unknown reply is not counted as stopped
 })
 
-it('stops the curve before it starts when the booked first instance leaves no room on the measure pattern', () => {
-  // FM Synth 0.1.5 on Dev17 C04 (81 % stock alone, booked 31.3): read at 107.9 %, the overload and not its cost.
-  expect(curveRoom({ atRest: 81, booked: 31.3, pattern: '1' })).toMatch(/no room on pattern 1: .*112.3 %, past 100 %.*--measure-pattern/)
-  // The same machine on a pattern with room (stock alone 65 %): the curve runs.
-  expect(curveRoom({ atRest: 65, booked: 31.3, pattern: '3' })).toBeNull()
-  // A module nothing books yet: its first reading decides (curveProblem judges it).
-  expect(curveRoom({ atRest: 95, booked: undefined, pattern: '1' })).toBeNull()
-})
-
 it('reads a curve with the module\'s each booked at 0 and every other figure as booked', () => {
   const list = { about: 'x', stock: { line: 95 }, costs: { grain: { first: 33.3, each: 33.3, rest: 0, points: [33.3] }, amiga: { first: 26.6, each: 4, rest: 0.1 } } }
   const measuring = measuringCosts(list, 'grain')
@@ -179,4 +170,65 @@ it('reads a curve with the module\'s each booked at 0 and every other figure as 
   // Unbooked: the unit charges it by its descriptor, and its table is left alone.
   expect(measuringCosts(list, 'syntiz')).toBeNull()
   expect(measuringCosts(null, 'grain')).toBeNull()
+})
+
+it('reads the rollback from try on SIGINT and from recover (Windows sends a child no SIGINT)', () => {
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\ninterrupted: rolling back\nrolled back (pass --accept to keep it)\n')).toBe(true)
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\nfound trial, generation 3, active a8bcdca3ac910e22…\nnow normal, generation 4, active 4c7eb79b844c8139…\n')).toBe(true)
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\nrecovered from trial \nnormal, generation 4, active 4c7eb79b844c8139…\n')).toBe(true)
+  expect(rolledBackIn('  12s: ticks 3752, value 0x0, slot running\n')).toBe(false)
+  expect(rolledBackIn('nothing to recover \nnormal, generation 4, active 4c7eb79b844c8139…\n')).toBe(false)
+  expect(rolledBackIn('found trial, generation 3\nnow trial, generation 3\n')).toBe(false)
+})
+
+it('reads the Part\'s CPU allowance from the session\'s cpu reply, so a curve can put it back', () => {
+  expect(allowanceOf('allowance 45 %, booked 35 %, refused -\nguarded renders, longest since the last read: T1 53.2\n')).toBe(45)
+  expect(allowanceOf('allowance 400 %, booked 0 %, refused T3\n')).toBe(400)
+  expect(allowanceOf('error: this base does not answer CPU\n')).toBeUndefined() // then the curve leaves the allowance alone
+})
+
+
+it('names a file by its runtime id, or by its hash for a release row without one (USB Audio)', () => {
+  const data = Buffer.alloc(68); data.write('MWRM', 0, 'ascii'); data.write('USB Audio', 50, 'latin1')
+  const sha256 = createHash('sha256').update(data).digest('hex')
+  const usb = { id: 'usb-audio-out-tracks-main-cue', name: 'USB Audio', version: '0.4.2-experimental', sha256 }
+  expect(priceFileTarget('/p/0.4.2-experimental.mwrm', data, [usb])).toMatchObject({ id: 'usb-audio-out-tracks-main-cue', version: '0.4.2-experimental' })
+  expect(priceFileTarget('/p/0.4.2-experimental.mwrm', data, [])).toMatchObject({ id: '0.4.2-experimental', version: 'file' }) // unknown: the file's name
+})
+
+it('tells which packages have instances to curve: an effect by its header, a machine by its descriptors', () => {
+  const header = slots => { const data = Buffer.alloc(68); data.write('MWRM', 0, 'ascii'); if (slots) { data.writeUInt32BE(1, 32); data[39] = slots } return data }
+  expect(hasInstances({ root: '.', id: 'no-such-module', data: header(1) })).toBe(true) // an FX1 effect
+  expect(hasInstances({ root: '.', id: 'grain', data: header(0) })).toBe(true) // a machine
+  expect(hasInstances({ root: '.', id: 'usb-audio-out-tracks-main-cue', data: header(0) })).toBe(false) // neither: priced at rest alone
+})
+
+it('fails a requested curve when an unpublished renamed file measured only its rest', () => {
+  // Observed output: dev.mwrm was not resolved to a draft machine; old CLI exited0.
+  const result = { id: 'dev', version: 'file', before: { frameMax: 68 }, atRest: { frameMax: 73.3 },
+    atRestAdds: { frame: 0 }, rolledBack: true, curve: { error: 'not an effect or a machine: no curve' } }
+  expect(curveRunProblems([result], 4)).toEqual(['dev: not an effect or a machine: no curve'])
+  expect(curveRunProblems([])).toEqual(['no curve measurement completed'])
+  expect(curveRunProblems([{ ...result, curve: undefined }])).toEqual(['dev: no curve measurement completed'])
+})
+
+it('requires the same clean curve as the record, preserving single-track and overload rules', () => {
+  const run = pattern => ({ pattern, admitted: true, frameMax: 80, dropped: 0, stalls: 0, seconds: 8 })
+  const result = { id: 'echo', version: 'file', before: { frameMax: 30 }, atRest: { frameMax: 31 }, rolledBack: true,
+    curve: { first: 10, each: 5, adds: [10, 15, 20], tracks: ['T1', 'T3', 'T6'], notes: [], points: [80, 90, 95, 100], admission: [run('empty'), run('medium')] } }
+  expect(curveRunProblems([result], 4)).toEqual([])
+  const one = { ...result, curve: { ...result.curve, tracks: ['T1'], adds: [10], points: [80, 90] } }
+  expect(curveRunProblems([one], 1)).toEqual([])
+  expect(curveRunProblems([one], 4)[0]).toContain('fewer than three')
+  const firstOver = { ...one, curve: { ...one.curve, first: 95, each: 95, adds: [46], points: [80, 126], notes: ['stopped after T1: longest frame126%,0 renders skipped'] } }
+  expect(curveRunProblems([firstOver], 4)[0]).toContain('first instance')
+  expect(curveRunProblems([{ ...result, curve: { ...result.curve, points: [31, 41, 46, 51] } }], 4)[0]).toContain('stock alone took 31 %') // a light pattern
+  const laterOver = { ...result, curve: { ...result.curve, first: 10, each: 85, tracks: ['T1', 'T3'], adds: [10, 46], points: [80, 90, 126], notes: ['stopped after T3: longest frame126%,0 renders skipped'] } }
+  expect(curveRunProblems([laterOver], 4)).toEqual([])
+  for (const change of [{ rolledBack: false }, { restore: 'Part differs' }, { notPlayed: 'transport stopped' }])
+    expect(curveRunProblems([{ ...result, ...change }])[0]).toContain('run was not clean')
+  for (const change of [{ admitted: false, why: 'CPU FULL' }, { dropped: 1 }, { stalls: 1 }]) {
+    const failed = { ...result, curve: { ...result.curve, admission: [run('empty'), { ...run('medium'), ...change }] } }
+    expect(curveRunProblems([failed])).toHaveLength(1)
+  }
 })

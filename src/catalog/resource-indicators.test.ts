@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { MODULE_DOCUMENTS } from './documents'
 import { parseModuleDocument, parseModuleResourceImpact } from './module-contract'
 import { moduleResourceIndicators } from './resource-indicators'
-import { readDspLoad, readTrackedMemory } from './octatrack-resource-measurements'
+import { measuredFrameCost, readDspLoad, readTrackedMemory } from './octatrack-resource-measurements'
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from './resource-impact'
 import { resourceImpactFixture } from './test-fixtures/resource-impact'
 import example from '../../public/module-repository.example.json'
@@ -42,7 +42,12 @@ describe('module resource gauges', () => {
       expect(indicators.map(indicator => indicator.id)).toEqual(['cpu', 'dsp', 'memory'])
       for (const indicator of indicators) {
         const price = document.resources.cpuPrice
-        if (indicator.id === 'cpu' && price) {
+        const booked = document.category === 'machines' ? measuredFrameCost(document) : undefined
+        if (indicator.id === 'cpu' && booked) {
+          // a machine shows what admission charges (frame-costs.json), not its descriptor price
+          expect(indicator).toMatchObject({ value: booked.first + '%', score: booked.first, maximum: 100, fill: booked.first, source: booked.source })
+          expect(indicator.valueText).toContain(booked.each + '% for each further one')
+        } else if (indicator.id === 'cpu' && price) {
           expect(indicator).toMatchObject({
             value: price.value + '%', score: price.value, maximum: 100, fill: price.value,
             source: 'sdk/octatrack/modules/' + document.id + '/' + price.source,
@@ -121,19 +126,24 @@ describe('module resource gauges', () => {
     expect(moduleResourceIndicators(future)[1]).toMatchObject({ value: 'High', status: 'Estimated' })
   })
 
-  it('shows the measured active CPU load when an Octatrack build has a verified workload', () => {
+  it('shows a machine by what the base charges its pick, with the measured active CPU load beside it', () => {
     const analog = MODULE_DOCUMENTS.find(module => module.id === 'analog-bassdrum')!
-    for (const [id, value] of [
-      ['amiga', '7.4%'], ['analog-bassdrum', '10.1%'], ['poly8', '41.9%'],
-      ['vector', '0.6%'],
+    for (const [id, first, active] of [
+      ['amiga', '26.6%', '7.4%'], ['analog-bassdrum', '24.4%', '10.1%'], ['vector', '0.2%', '0.6%'],
     ]) {
       const document = MODULE_DOCUMENTS.find(module => module.id === id)!
       const [cpu] = moduleResourceIndicators(document)
-      expect(cpu, id).toMatchObject({ value, status: 'Measured · in use' })
-      expect(cpu.description).toContain('(estimated) while the release price is pending')
+      expect(cpu, id).toMatchObject({ value: first, status: 'Measured · first track' })
+      expect(cpu.benchmark?.value, id).toContain(active.slice(0, -1) + '% of a frame added with')
     }
+    // POLY8's booked curve was read on 0.3.4, not the published 0.3.3: its active load, as before
+    const [poly8] = moduleResourceIndicators(MODULE_DOCUMENTS.find(module => module.id === 'poly8')!)
+    expect(poly8).toMatchObject({ value: '41.9%', status: 'Measured · in use' })
     expect(moduleResourceIndicators(analog)[1]).toMatchObject({ value: '+5.6 pp', status: 'Measured · T1–4' })
-    expect(moduleResourceIndicators({ ...analog, version: '99.0.0' })[0].status).toBe('Estimated')
+    // the active reading is bound to its version; a base-bound module's booked cost is the base's, whatever version it runs
+    expect(moduleResourceIndicators({ ...analog, version: '99.0.0' })[0]).toMatchObject({ value: '24.4%', benchmark: undefined })
+    const amiga = MODULE_DOCUMENTS.find(module => module.id === 'amiga')!
+    expect(moduleResourceIndicators({ ...amiga, version: '99.0.0' })[0].status).not.toBe('Measured · first track')
   })
 
   it('binds zero direct DSP cycles to the audited packages and preserves active DSP paths', () => {
@@ -186,6 +196,10 @@ describe('module resource gauges', () => {
     ['previewvol', '0.944 kB'],
   ])('shows the hardware-verified module pool for %s at its measured version', (id, value) => {
     const document = MODULE_DOCUMENTS.find(module => module.id === id)!
+    // The 21 November readings are of the then-current packages: a later version shows no measured figure until its own pool is read.
+    if (poolEvidence.measurements.find(record => record.module === id)!.version !== document.version) {
+      return expect(moduleResourceIndicators(document)[2].status).not.toMatch(/^Measured/)
+    }
     expect(moduleResourceIndicators(document)[2]).toMatchObject({
       value, status: 'Measured · module pool', score: null,
       source: 'docs/verification/2026-11-21-octatrack-module-pool-allocation.json',

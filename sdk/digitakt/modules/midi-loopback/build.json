@@ -1,0 +1,3298 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/loopback.s",
+    "src/cclabels.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_settings",
+      "fn": "loopback_settings",
+      "order": 50
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "loopback_flush",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "settings:MIDI LOOPBACK",
+    "ui:MIDI CC Select:labels"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.53": {
+      "defsym": {
+        "STR_CTOR": "0x4017ac20",
+        "INVALIDATE": "0x400c9812",
+        "BLIT": "0x400c2960",
+        "CHECKBOXES": "0x421f7a3c",
+        "FX_CH": "0x4197b740",
+        "AUTO_CH": "0x4197b6fc",
+        "TRACK_CH": "0x4197b700",
+        "IN_PORTS": "0x4197b754",
+        "DIN_QUEUE": "0x421a8d7c",
+        "USB_QUEUE": "0x421a8d5c",
+        "MIDI_SEM": "0x421a8d34",
+        "QUEUE_SEND": "0x40001b7a",
+        "SEM_POST": "0x40001840",
+        "OUT_LEN": "0x421b5a21",
+        "NOTE_OUT_LEN": "0x421b5620"
+      },
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400e0b84",
+          "op": "jsr",
+          "target": "loopback_out_cc",
+          "len": 6,
+          "stockSha256": "ec0509370ac6c65d06624f5b9a32cfa631b1c2d27045f0b3c3f1dbd2c01e8dd9"
+        },
+        {
+          "addr": "0x400e0dda",
+          "op": "jsr",
+          "target": "loopback_out_note",
+          "len": 6,
+          "stockSha256": "d33c5911a5db646c0876e9c4fcb330ad438d015ae478f8279a23f4107f8f10d7"
+        },
+        {
+          "addr": "0x40063788",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_3_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063798",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_3_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "789b90be4c3c7f67a0a5b8c681b25fa5276c75f66d89ce19047523bc01825626"
+        },
+        {
+          "addr": "0x400637a8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_4_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "93783cd68e3b164fbe6714fa5974c66a0664b065dbd0f07c398edced584dc7af"
+        },
+        {
+          "addr": "0x400637bc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_4_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "efac2a2777d320463108b024f69f56c81145a08e453cf51b908b5c4c5c4f3b3b"
+        },
+        {
+          "addr": "0x400637cc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_5_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bea0cbabbc26d3f987401dc643d39317cf378335de122b00e80feb05c61107a9"
+        },
+        {
+          "addr": "0x400637dc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_5_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2cce383f9a066ceb086bb61d1c80875d718a9e08eb6d98084d892932c4e2d4a5"
+        },
+        {
+          "addr": "0x40063810",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_7_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b93e329d2fb536f6834774f03da707882a3349e12e566014d188d6c9bdab09a"
+        },
+        {
+          "addr": "0x40063824",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_7_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "80205389bce9a4e50d4ccdb35b2709c0e1e6db8d84418f04105d05fd84b9d988"
+        },
+        {
+          "addr": "0x40063878",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_10_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "aa081ce975428977d1e6f44efd7862e4096be25fb8648f73df697b900e237803"
+        },
+        {
+          "addr": "0x4006388c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_10_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "32dcae1e73144036510776a7c91256af4809a6fe13038d43b47f32c5c1672293"
+        },
+        {
+          "addr": "0x400638e0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_13_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f4087f92dde43c9746e9f92b022511ad4684386525d1df4a22cc159de709bc0f"
+        },
+        {
+          "addr": "0x400638f4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_13_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f143d412bae5fb3b6876e145da8f6c4427398b5f5d234f8bedcbb8d0cb727a5a"
+        },
+        {
+          "addr": "0x40063904",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_14_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063914",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_14_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c35738fd916269681bc65cb7bb66156dfa7f44289a2379dc814f4a0783e665f9"
+        },
+        {
+          "addr": "0x40063948",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_16_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c9bee47d118f0f7041c019c48ef441728f2e96d7e211fefedef2f9abf0798a12"
+        },
+        {
+          "addr": "0x4006395c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_16_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "55de059398801b5087e115a1a76b861cbf6e4cfe5faa4189fd6a87243a3cbfea"
+        },
+        {
+          "addr": "0x4006396c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_17_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c9bee47d118f0f7041c019c48ef441728f2e96d7e211fefedef2f9abf0798a12"
+        },
+        {
+          "addr": "0x4006397c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_17_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "9a65801a7fbe2763652ee1a89a8f75daa08489d4e99dfd754375ca1607dd13ac"
+        },
+        {
+          "addr": "0x40063990",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_18_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c9bee47d118f0f7041c019c48ef441728f2e96d7e211fefedef2f9abf0798a12"
+        },
+        {
+          "addr": "0x400639a0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_18_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "e1dfde792f37ae936828a9d90690f44ab9d63cd4b2cc387838aef1225ca3f5ba"
+        },
+        {
+          "addr": "0x400639b0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_19_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c9bee47d118f0f7041c019c48ef441728f2e96d7e211fefedef2f9abf0798a12"
+        },
+        {
+          "addr": "0x400639c4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_19_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "e58c6011f43f6fcdc097aa87e522c8fad46bd31ef51ec338c439c51a1e0f2a0a"
+        },
+        {
+          "addr": "0x400639d4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_20_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x400639e4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_20_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "82f2afe61c8fdc76c022ffe04a22885570b0fc5501eee9ea007fdb2d1a5f0421"
+        },
+        {
+          "addr": "0x400639f8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_21_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063a08",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_21_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "d786b4a1a168b0c1263d6007f080af3cbf2806e1a6acec89e8af2394a3f9a1b5"
+        },
+        {
+          "addr": "0x40063a18",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_22_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063a2c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_22_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "5a76c0939835b87a69789daaae95cacac76dfaf1c43c33317b12afdcdf2f8cf6"
+        },
+        {
+          "addr": "0x40063a3c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_23_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063a4c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_23_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "b36c5e1b3089b0f47abcdf872ce37e038790861258e6025d735905566443bc42"
+        },
+        {
+          "addr": "0x40063a60",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_24_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063a70",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_24_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "990aba10b583bdf10608bdbb95a83f4d2514dff32c452ff7dc201d009665cd70"
+        },
+        {
+          "addr": "0x40063a80",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_25_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063a94",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_25_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "11eca6047f02fdcdc75c8faacca96497d8a9f171c05422ef3eaf296995dc0f4c"
+        },
+        {
+          "addr": "0x40063aa4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_26_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063ab4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_26_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "283996202b4ce29ba33558088a409452a8f813196e42d6566bdfae7fd769b573"
+        },
+        {
+          "addr": "0x40063ac8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_27_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063ad8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_27_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a55246a3c750f08358bf76d55de17bddc3162fecfd26b18a2fee50395ef80a66"
+        },
+        {
+          "addr": "0x40063ae8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_28_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063afc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_28_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "55f7c3f709b78fb5670eb6ec57e9cb250d1fe984ebc065d080a85dff703030d0"
+        },
+        {
+          "addr": "0x40063b0c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_29_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063b1c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_29_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "696cc913f5e0983f319b48d3b8b01e44e7683c29598d907f37d38cb02f48f104"
+        },
+        {
+          "addr": "0x40063b50",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_31_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40063b64",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_31_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "cca99337b3fbdb6b7c31dbb688eef7ba761f23ebde204537aa4d81a89e6a2ac6"
+        },
+        {
+          "addr": "0x40064098",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_70_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f5c94a350baf36e75fb57a88b780e81e63619fce9c12e3a0bcfb341989338599"
+        },
+        {
+          "addr": "0x400640ac",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_70_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "821477c84b5b7ba5d1b0e390d192cadc3ac861220a376add150a297b5512f46f"
+        },
+        {
+          "addr": "0x400640bc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_71_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f5c94a350baf36e75fb57a88b780e81e63619fce9c12e3a0bcfb341989338599"
+        },
+        {
+          "addr": "0x400640cc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_71_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f143d412bae5fb3b6876e145da8f6c4427398b5f5d234f8bedcbb8d0cb727a5a"
+        },
+        {
+          "addr": "0x400640e0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_72_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f5c94a350baf36e75fb57a88b780e81e63619fce9c12e3a0bcfb341989338599"
+        },
+        {
+          "addr": "0x400640f0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_72_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "574cf63848fd6d491ee605211d2d99149fdd54bda8d92478c3b5cb63ade112ba"
+        },
+        {
+          "addr": "0x40064100",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_73_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f5c94a350baf36e75fb57a88b780e81e63619fce9c12e3a0bcfb341989338599"
+        },
+        {
+          "addr": "0x40064114",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_73_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "ace594c192b989a63460c40d6de705bf6348699c7df13b5380495a51be00dbdb"
+        },
+        {
+          "addr": "0x40064124",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_74_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f5c94a350baf36e75fb57a88b780e81e63619fce9c12e3a0bcfb341989338599"
+        },
+        {
+          "addr": "0x40064134",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_74_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "6ee6fb6053dc0ee384be79d3fec243b9073d6bb02b14c9318996c6e22733310c"
+        },
+        {
+          "addr": "0x40064148",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_75_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f5c94a350baf36e75fb57a88b780e81e63619fce9c12e3a0bcfb341989338599"
+        },
+        {
+          "addr": "0x40064158",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_75_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "4c146d421c8a54ec0f68627096a62a21413224ee1a4633620a53ae8be3f296a8"
+        },
+        {
+          "addr": "0x40064168",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_76_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f5c94a350baf36e75fb57a88b780e81e63619fce9c12e3a0bcfb341989338599"
+        },
+        {
+          "addr": "0x4006417c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_76_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f760335b8b2b0a1e73ca66085f177e4f1d9c65bf459881dd528da95e69c9ba80"
+        },
+        {
+          "addr": "0x4006418c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_77_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f5c94a350baf36e75fb57a88b780e81e63619fce9c12e3a0bcfb341989338599"
+        },
+        {
+          "addr": "0x4006419c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_77_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "ee61f63577184dad456d32baffe5a56402c00b6b1ccc71f497801b25c357e7c8"
+        },
+        {
+          "addr": "0x400641b0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_78_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f5c94a350baf36e75fb57a88b780e81e63619fce9c12e3a0bcfb341989338599"
+        },
+        {
+          "addr": "0x400641c0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_78_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "e75e131f5bb3efb814b354154ed2bb3655a999d249cd1b78d30a85676bea65df"
+        },
+        {
+          "addr": "0x400641d0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_79_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f5c94a350baf36e75fb57a88b780e81e63619fce9c12e3a0bcfb341989338599"
+        },
+        {
+          "addr": "0x400641e4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_79_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "d99ccf4b5e283cda59c1ca70776d4c66da1f8c24270d8e776fee491c0d86c09f"
+        },
+        {
+          "addr": "0x400641f4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_80_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c9bee47d118f0f7041c019c48ef441728f2e96d7e211fefedef2f9abf0798a12"
+        },
+        {
+          "addr": "0x40064204",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_80_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "821477c84b5b7ba5d1b0e390d192cadc3ac861220a376add150a297b5512f46f"
+        },
+        {
+          "addr": "0x40064218",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_81_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c9bee47d118f0f7041c019c48ef441728f2e96d7e211fefedef2f9abf0798a12"
+        },
+        {
+          "addr": "0x40064228",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_81_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f143d412bae5fb3b6876e145da8f6c4427398b5f5d234f8bedcbb8d0cb727a5a"
+        },
+        {
+          "addr": "0x40064238",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_82_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c9bee47d118f0f7041c019c48ef441728f2e96d7e211fefedef2f9abf0798a12"
+        },
+        {
+          "addr": "0x4006424c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_82_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "574cf63848fd6d491ee605211d2d99149fdd54bda8d92478c3b5cb63ade112ba"
+        },
+        {
+          "addr": "0x4006425c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_83_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c9bee47d118f0f7041c019c48ef441728f2e96d7e211fefedef2f9abf0798a12"
+        },
+        {
+          "addr": "0x4006426c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_83_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "ace594c192b989a63460c40d6de705bf6348699c7df13b5380495a51be00dbdb"
+        },
+        {
+          "addr": "0x400642a0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_85_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x400642b4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_85_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "3ba9b78168a80203190cb0ccdf9707315f071a251e3ed08005b3097d334a0843"
+        },
+        {
+          "addr": "0x400642c4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_86_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x400642d4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_86_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a67310e3101774f91afa42a1010f1f24bd6c41cdb7b6998b0b4fd3d7ddd5800a"
+        },
+        {
+          "addr": "0x400642e8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_87_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x400642f8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_87_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "0135a068b6e4a34d32c4540ca18d083b1cf5a9e84822d189ae99fe5bb8441140"
+        },
+        {
+          "addr": "0x40064308",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_88_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x4006431c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_88_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a72542f3e408f7016a2f2c8671a1264e3fa7051bf0944dc3100a9a88c7bc2557"
+        },
+        {
+          "addr": "0x4006432c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_89_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x4006433c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_89_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "593a739e3c360b780714665e2110bbf8c69ee06c6b3c0cb08a84065198971edc"
+        },
+        {
+          "addr": "0x40064350",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_90_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40064360",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_90_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "5895ac4d038d48d70b02fe45990e2e8978929255fe61127dc0a8a237f083d82b"
+        },
+        {
+          "addr": "0x40064370",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_91_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a87845fd77874179703f291dc4530e3d34e6bc16ae402cbd10b5bd0c232a00e4"
+        },
+        {
+          "addr": "0x40064384",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_91_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "b53dc8cd62f8fa7a8b2b54160c36f5f746a8bd9aff498716838b6a20f9261dd2"
+        },
+        {
+          "addr": "0x40064394",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_92_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f543298a6f78816224b279adc05aafab891145c00c48708fac2c04ea014f1f92"
+        },
+        {
+          "addr": "0x400643a4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_92_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "b53dc8cd62f8fa7a8b2b54160c36f5f746a8bd9aff498716838b6a20f9261dd2"
+        },
+        {
+          "addr": "0x400643b8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_93_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bebd21a1f5f7f7d5140a9f4e3e153e55302402887217561f3fc666f6b4c9b99c"
+        },
+        {
+          "addr": "0x400643c8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_93_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "b53dc8cd62f8fa7a8b2b54160c36f5f746a8bd9aff498716838b6a20f9261dd2"
+        },
+        {
+          "addr": "0x400643d8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_94_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "3bf80405763a5bcfeb5120ba60685ce639dd54979f90ab82a6a3b1be3e9a2a23"
+        },
+        {
+          "addr": "0x400643ec",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_94_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "b53dc8cd62f8fa7a8b2b54160c36f5f746a8bd9aff498716838b6a20f9261dd2"
+        },
+        {
+          "addr": "0x400643fc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_95_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "b73b16179e3c0522ee1f3731967e58d136d11a9d142ebc277de723977d01fa26"
+        },
+        {
+          "addr": "0x4006440c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_95_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "b53dc8cd62f8fa7a8b2b54160c36f5f746a8bd9aff498716838b6a20f9261dd2"
+        },
+        {
+          "addr": "0x400644f0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_102_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40064500",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_102_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "7e7ad372750dff2468ff39ca04a1f2ee70629bc40e0514c366fb377f0fcb0dae"
+        },
+        {
+          "addr": "0x40064510",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_103_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40064524",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_103_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "840e37be259e1571073c7d2bed6cd212c7d13ab90525e81d54cfb0b4ddc81ad6"
+        },
+        {
+          "addr": "0x40064534",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_104_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40064544",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_104_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "7a4c02d6b750f397986498489a95bbcad872bd83d42651803c0b643401d85de5"
+        },
+        {
+          "addr": "0x40064558",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_105_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40064568",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_105_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "21125b760b652b0b9835df21cc45ecc6c86162b1fbf78cb463f797544320f777"
+        },
+        {
+          "addr": "0x40064578",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_106_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x4006458c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_106_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "98d0bfe00695ab9f9e9de75f8dbd3a23c6ed42d0e88c5cdaaec923039479c5d0"
+        },
+        {
+          "addr": "0x4006459c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_107_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x400645ac",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_107_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f91f0226825b657d0e25671a99094bc375e6eb2c90ab3180b3f1f266755ec3c3"
+        },
+        {
+          "addr": "0x400645c0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_108_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x400645d0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_108_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "87495bc8ce8f943cd88b9126a88cbeff2e025e7d50ad1371b432fa2398dfe84d"
+        },
+        {
+          "addr": "0x400645e0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_109_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x400645f4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_109_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c9da238e270b506ab94724f933befadcf06425ad7f63d0d5f58f3667f327e6b4"
+        },
+        {
+          "addr": "0x40064604",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_110_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x40064614",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_110_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "daa642e189c4b415f1a4d2830149fb12dbaf0d54f5a75eb5a2336111b1f68f9b"
+        },
+        {
+          "addr": "0x40064718",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_118_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a144d629981726fb17cb74b880ed7ab47d7539d94ced1507b2d9958747867585"
+        },
+        {
+          "addr": "0x4006472c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_118_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f9031c5b5e389be16661db977d79617555eae77ebf41066f98199fc9973be7f3"
+        }
+      ]
+    },
+    "1.54": {
+      "defsym": {
+        "STR_CTOR": "0x4017af20",
+        "INVALIDATE": "0x400c9a3a",
+        "BLIT": "0x400c2b88",
+        "CHECKBOXES": "0x421f8a3c",
+        "FX_CH": "0x4197c740",
+        "AUTO_CH": "0x4197c6fc",
+        "TRACK_CH": "0x4197c700",
+        "IN_PORTS": "0x4197c754",
+        "DIN_QUEUE": "0x421a9d7c",
+        "USB_QUEUE": "0x421a9d5c",
+        "MIDI_SEM": "0x421a9d34",
+        "QUEUE_SEND": "0x40001b7a",
+        "SEM_POST": "0x40001840",
+        "OUT_LEN": "0x421b6a21",
+        "NOTE_OUT_LEN": "0x421b6620"
+      },
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400e0dac",
+          "op": "jsr",
+          "target": "loopback_out_cc",
+          "len": 6,
+          "stockSha256": "10fd2dfd6d29b6c1e73fb404103769428f9af66b0f4249311c3fcd9beaaf2731"
+        },
+        {
+          "addr": "0x400e1002",
+          "op": "jsr",
+          "target": "loopback_out_note",
+          "len": 6,
+          "stockSha256": "e6b06970da8d0dabdfd08f7c0353dc1622c2235a32b1e74fd4668006e519d33e"
+        },
+        {
+          "addr": "0x40063788",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_3_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063798",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_3_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "888e614fbeae2951fc0b9b5973c89a5468a9cc84a31df247e6801f5a4de6062e"
+        },
+        {
+          "addr": "0x400637a8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_4_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "039d2034166220a4175cbe8b4a8a9c11cba1f5455fdef92dadca4e79ccf2835e"
+        },
+        {
+          "addr": "0x400637bc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_4_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "83b798d80c209c249178e6f11d4f1ea9e0914453788caedd393237b6f481711d"
+        },
+        {
+          "addr": "0x400637cc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_5_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2dddf9bf11b94452b2db1ffd0f13f1898cfb38a9ff03f148178ae87b9732b76d"
+        },
+        {
+          "addr": "0x400637dc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_5_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f8f258eb13a65fcd7414fdc112de06a684dd473297b4bfabd72f4135a55ffb52"
+        },
+        {
+          "addr": "0x40063810",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_7_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2c497790d9324e44e4e5d97367da04238554d75bbd3a4f770dda5925fca626dd"
+        },
+        {
+          "addr": "0x40063824",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_7_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f95d6d8d980583c72f486d53288e912cacac5fba70309790b239b42a284cbb8c"
+        },
+        {
+          "addr": "0x40063878",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_10_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "44bc53e1ca5821b8c3151c4d4e31fec731e21d849a493e3a1695ec86e502026e"
+        },
+        {
+          "addr": "0x4006388c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_10_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a07479fc2fefe57fc50b14736376f421d7073b3ce020c7b78d4c96a31b3aedc4"
+        },
+        {
+          "addr": "0x400638e0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_13_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bb026f2b6d81dcc2ffdf74e3279f3e1beb6dbfa7d9f42d265b310b4c1fd5757c"
+        },
+        {
+          "addr": "0x400638f4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_13_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f35f1b554d03b51bdc227c943d009e7c9b0bc22d6f63b9f6e4c7cafdcd0cad88"
+        },
+        {
+          "addr": "0x40063904",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_14_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063914",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_14_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "1d0b3dea993e2f069fd625b349314b358c57bc84f95f29ee5c2a2ae32db001e2"
+        },
+        {
+          "addr": "0x40063948",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_16_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "eca061d5f774e8b315d6521e1dda6383c54429456d4e0214982efc9dcd59b4f8"
+        },
+        {
+          "addr": "0x4006395c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_16_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "419f8dc0f2ade91648e641b1cea0145ae2090b649b4d9d19d8042ff10ab0778e"
+        },
+        {
+          "addr": "0x4006396c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_17_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "eca061d5f774e8b315d6521e1dda6383c54429456d4e0214982efc9dcd59b4f8"
+        },
+        {
+          "addr": "0x4006397c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_17_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "b7ff53aa59ef659d614baa76b114399c3582027c7a92092bd092118fb8a949eb"
+        },
+        {
+          "addr": "0x40063990",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_18_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "eca061d5f774e8b315d6521e1dda6383c54429456d4e0214982efc9dcd59b4f8"
+        },
+        {
+          "addr": "0x400639a0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_18_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2e78c7312f06df14a6dd74a1c31e26c7f6dea90a811424fc4e28aaa655276c7c"
+        },
+        {
+          "addr": "0x400639b0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_19_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "eca061d5f774e8b315d6521e1dda6383c54429456d4e0214982efc9dcd59b4f8"
+        },
+        {
+          "addr": "0x400639c4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_19_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "80d81c922793c70c6cf0313f3aeebf2a254611ade488ef315904c90d44895e9a"
+        },
+        {
+          "addr": "0x400639d4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_20_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x400639e4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_20_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "03d2a901a9af3a41789152745c359ab514b707e4fea9a8569a14fe86446a69d6"
+        },
+        {
+          "addr": "0x400639f8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_21_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063a08",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_21_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "36d7b6177ac9825faa2379305c68838acf72b9e1931c56e2f5e57c873fb1bacb"
+        },
+        {
+          "addr": "0x40063a18",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_22_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063a2c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_22_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "0b9e9f93e555b81beb36dab20333d70bace90bd1830bd0802f39d31b2eb2072c"
+        },
+        {
+          "addr": "0x40063a3c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_23_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063a4c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_23_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a7f5ee1ba46fb1f91cb5f3eb0f07893eb2a19761ab02eaa5bd54c3103f95653b"
+        },
+        {
+          "addr": "0x40063a60",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_24_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063a70",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_24_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "8e76fd5643d6ecb8a1e98935914af58cee8cc988b51a9420de817b95f16351be"
+        },
+        {
+          "addr": "0x40063a80",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_25_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063a94",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_25_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "8315db07bc9fe47018c08979cae273e60a332cd5b3c5706cb68a3e406a0f6930"
+        },
+        {
+          "addr": "0x40063aa4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_26_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063ab4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_26_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a4a5d1c3c72904301bdcf0006edb2b6d9591fa62a80410aff783434dc89ba1b6"
+        },
+        {
+          "addr": "0x40063ac8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_27_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063ad8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_27_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "d44e9585e625fb70738634fe00e020e00279362674d9b2ccd8d9fb0fa4f77452"
+        },
+        {
+          "addr": "0x40063ae8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_28_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063afc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_28_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2015ac0f501cfcbe32f878854c9df2a845b8ba41b115374db58343483f255507"
+        },
+        {
+          "addr": "0x40063b0c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_29_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063b1c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_29_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "28d5d5bd606c99ab6f677b94036cbd51dec447effd93fb7a2c875205499cf583"
+        },
+        {
+          "addr": "0x40063b50",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_31_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40063b64",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_31_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c65faaa67d18fef2e396dc2e56025a3ad2e7d562c90455e59969742ccba0c1d2"
+        },
+        {
+          "addr": "0x40064098",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_70_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bcfa71823a1bd2fe1916f2410d113905ff894c3198e3b29575ee17d21b98689a"
+        },
+        {
+          "addr": "0x400640ac",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_70_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "d21757dc5e9dc0c3f04a3dda18f5d21221764f8b211de0446f69d5fafc1df7be"
+        },
+        {
+          "addr": "0x400640bc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_71_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bcfa71823a1bd2fe1916f2410d113905ff894c3198e3b29575ee17d21b98689a"
+        },
+        {
+          "addr": "0x400640cc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_71_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f35f1b554d03b51bdc227c943d009e7c9b0bc22d6f63b9f6e4c7cafdcd0cad88"
+        },
+        {
+          "addr": "0x400640e0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_72_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bcfa71823a1bd2fe1916f2410d113905ff894c3198e3b29575ee17d21b98689a"
+        },
+        {
+          "addr": "0x400640f0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_72_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "4c3e25721645d914db4215946c3d091c561307a5d0d8ce14356433cce8503b5e"
+        },
+        {
+          "addr": "0x40064100",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_73_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bcfa71823a1bd2fe1916f2410d113905ff894c3198e3b29575ee17d21b98689a"
+        },
+        {
+          "addr": "0x40064114",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_73_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "7cc50685f8dbdd0b6d8a7bbefd049bf170c83d124e9e10f07455c583b6531206"
+        },
+        {
+          "addr": "0x40064124",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_74_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bcfa71823a1bd2fe1916f2410d113905ff894c3198e3b29575ee17d21b98689a"
+        },
+        {
+          "addr": "0x40064134",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_74_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "5081e8b7ff2931c48ad492b3aaea900d12759f883560aeedb0b40c02c217a299"
+        },
+        {
+          "addr": "0x40064148",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_75_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bcfa71823a1bd2fe1916f2410d113905ff894c3198e3b29575ee17d21b98689a"
+        },
+        {
+          "addr": "0x40064158",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_75_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "589d42c4a81d2605bbc9615090ef08e75df277fb5c0993481fb5b7f64554bf95"
+        },
+        {
+          "addr": "0x40064168",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_76_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bcfa71823a1bd2fe1916f2410d113905ff894c3198e3b29575ee17d21b98689a"
+        },
+        {
+          "addr": "0x4006417c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_76_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2760b13cde052e3ccb6ebb7da35afd1f553465f6f62ce13ea66a2b3fe2021d8d"
+        },
+        {
+          "addr": "0x4006418c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_77_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bcfa71823a1bd2fe1916f2410d113905ff894c3198e3b29575ee17d21b98689a"
+        },
+        {
+          "addr": "0x4006419c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_77_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "1dccf6135e87ce0ee55b9f657974cbe3ad0251315dea98f0a2a04197500e2843"
+        },
+        {
+          "addr": "0x400641b0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_78_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bcfa71823a1bd2fe1916f2410d113905ff894c3198e3b29575ee17d21b98689a"
+        },
+        {
+          "addr": "0x400641c0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_78_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f4a3f619c7ff63abf90f71ef63f11dee3bdfddc131ec16082a62baef086688d5"
+        },
+        {
+          "addr": "0x400641d0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_79_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bcfa71823a1bd2fe1916f2410d113905ff894c3198e3b29575ee17d21b98689a"
+        },
+        {
+          "addr": "0x400641e4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_79_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "fe31921cade0dc9601dfde3d6855984d57290cf7542ea49a2bf80aac123db1c9"
+        },
+        {
+          "addr": "0x400641f4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_80_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "eca061d5f774e8b315d6521e1dda6383c54429456d4e0214982efc9dcd59b4f8"
+        },
+        {
+          "addr": "0x40064204",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_80_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "d21757dc5e9dc0c3f04a3dda18f5d21221764f8b211de0446f69d5fafc1df7be"
+        },
+        {
+          "addr": "0x40064218",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_81_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "eca061d5f774e8b315d6521e1dda6383c54429456d4e0214982efc9dcd59b4f8"
+        },
+        {
+          "addr": "0x40064228",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_81_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f35f1b554d03b51bdc227c943d009e7c9b0bc22d6f63b9f6e4c7cafdcd0cad88"
+        },
+        {
+          "addr": "0x40064238",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_82_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "eca061d5f774e8b315d6521e1dda6383c54429456d4e0214982efc9dcd59b4f8"
+        },
+        {
+          "addr": "0x4006424c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_82_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "4c3e25721645d914db4215946c3d091c561307a5d0d8ce14356433cce8503b5e"
+        },
+        {
+          "addr": "0x4006425c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_83_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "eca061d5f774e8b315d6521e1dda6383c54429456d4e0214982efc9dcd59b4f8"
+        },
+        {
+          "addr": "0x4006426c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_83_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "7cc50685f8dbdd0b6d8a7bbefd049bf170c83d124e9e10f07455c583b6531206"
+        },
+        {
+          "addr": "0x400642a0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_85_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x400642b4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_85_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "62412f555e92c1d338cdd369e6da759c57b4fe16202efad3fff5d5d0dd827f33"
+        },
+        {
+          "addr": "0x400642c4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_86_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x400642d4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_86_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f815b0759081ff14bbb86bc7e6e07dd749c91c680d56a9916611b199d25a6bd2"
+        },
+        {
+          "addr": "0x400642e8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_87_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x400642f8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_87_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "ac4cf975f94c901c28420f0c76d1da7f856cb617039f531ab8acd58e3ade9ed2"
+        },
+        {
+          "addr": "0x40064308",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_88_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x4006431c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_88_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "5b70b6ecdcdda183b3212dfe2b05aef5d766f5677ea563ef3ddea7c261e769b5"
+        },
+        {
+          "addr": "0x4006432c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_89_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x4006433c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_89_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "808456569f6176e2e1f6992e458d88561f7202f4d58c2904eb3c612da6a8d1c3"
+        },
+        {
+          "addr": "0x40064350",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_90_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40064360",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_90_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "13ddfd45190149a20be36c65151240fc0ba1909abec9172df2c45722b7da749c"
+        },
+        {
+          "addr": "0x40064370",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_91_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "5dc5898221465cf5e5b6fb495b2f1efbb0c9831dc17b30d0dc6ddbd4521cf203"
+        },
+        {
+          "addr": "0x40064384",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_91_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a04276c2eb3cc42fa077e4e1a92c4715b9fc08f514aa898aaa09b34f65c7e039"
+        },
+        {
+          "addr": "0x40064394",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_92_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "4f236bd71be755b7e7ab60e1f1dea9a128b1f684643c5434adf5358e5bdc46c6"
+        },
+        {
+          "addr": "0x400643a4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_92_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a04276c2eb3cc42fa077e4e1a92c4715b9fc08f514aa898aaa09b34f65c7e039"
+        },
+        {
+          "addr": "0x400643b8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_93_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "c800390524e1c7b92e73b9a794fb197d7e069893c5066d6cf6256e31a67c49e0"
+        },
+        {
+          "addr": "0x400643c8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_93_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a04276c2eb3cc42fa077e4e1a92c4715b9fc08f514aa898aaa09b34f65c7e039"
+        },
+        {
+          "addr": "0x400643d8",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_94_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "d384fb0f3c851d8bf460f3b0a1d2bd38f0eb78c2587401e74692d507a46daef1"
+        },
+        {
+          "addr": "0x400643ec",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_94_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a04276c2eb3cc42fa077e4e1a92c4715b9fc08f514aa898aaa09b34f65c7e039"
+        },
+        {
+          "addr": "0x400643fc",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_95_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "eeaff4e6782c14e1d98cb280220b6547aaf60c56952d35eb75f8a07626c03d6a"
+        },
+        {
+          "addr": "0x4006440c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_95_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "a04276c2eb3cc42fa077e4e1a92c4715b9fc08f514aa898aaa09b34f65c7e039"
+        },
+        {
+          "addr": "0x400644f0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_102_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40064500",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_102_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "1ee259ae6e71ab94c9eb4e77183bebeb2b8088807950859a54195163342be755"
+        },
+        {
+          "addr": "0x40064510",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_103_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40064524",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_103_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "460b48d1219889af1c67b55b87c2c61dda8bbc3207c77566a83bffbe1177cf1d"
+        },
+        {
+          "addr": "0x40064534",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_104_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40064544",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_104_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "9035577dad045c8cfa1ef337cc51ad41b9079af372c68719452f1829d9f2fd13"
+        },
+        {
+          "addr": "0x40064558",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_105_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40064568",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_105_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "d4c12618eb3df4f0320400d292565247fdbbf09f20244ca0a28b47ba6c3a46f7"
+        },
+        {
+          "addr": "0x40064578",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_106_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x4006458c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_106_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "e108b81d2434712ecef8059566c65cb333385ef5ea7d8524d8eaf009fb21bd7d"
+        },
+        {
+          "addr": "0x4006459c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_107_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x400645ac",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_107_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "f6e5815385e30a98b5a0c004302faad3637cccff87ea1202d9bdc97413372148"
+        },
+        {
+          "addr": "0x400645c0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_108_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x400645d0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_108_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2f0ad36f24ee098065de3471663e79dffb84651168453f7745644ad60caf06d2"
+        },
+        {
+          "addr": "0x400645e0",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_109_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x400645f4",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_109_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "76a27102100ca1f7e53b3caa3e911304b94f8aca53d664b04d1c2f7621d86945"
+        },
+        {
+          "addr": "0x40064604",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_110_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x40064614",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_110_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "bb8c9811e8d94108ad770baefeb4a0afdbb6621009213b40cd59b6e642e93ed4"
+        },
+        {
+          "addr": "0x40064718",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_118_0"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2b6a132cb31fd5e6ee7a1cbc64ddb16ae7ada53494cd07cde2082f35bd6b7803"
+        },
+        {
+          "addr": "0x4006472c",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "lbl_118_1"
+            }
+          ],
+          "len": 6,
+          "stockSha256": "2589785ebae57c92696ae9fb66dec45fa3db15f2a937ce6c87960f2fdb2829c3"
+        }
+      ]
+    }
+  }
+}

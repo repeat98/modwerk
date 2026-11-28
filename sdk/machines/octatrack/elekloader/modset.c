@@ -60,8 +60,9 @@ int modwerk_test_settling;
 #define SETTLING() (modwerk_test_settling)
 int modwerk_test_dialog;
 #define DIALOG() (modwerk_test_dialog)
-int modwerk_test_playing, modwerk_test_host_busy;
+int modwerk_test_playing, modwerk_test_paused, modwerk_test_host_busy;
 #define STOPPED() (!modwerk_test_playing)
+#define REWOUND() (!modwerk_test_paused)
 #define HOST_BUSY() (modwerk_test_host_busy)
 #ifdef MODWERK_HOST_CARD
 extern uint8_t modwerk_test_card_io[512]; /* the fixture's stock file calls under the real store and load below */
@@ -84,6 +85,14 @@ __attribute__((weak)) int modwerk_controller_settling(void) { return 0; } /* con
 __attribute__((weak)) int modwerk_status_dialog(void) { return 0; } /* status.c: one of its dialogs shows */
 #define DIALOG() modwerk_status_dialog()
 #define STOPPED() modwerk_machine_stopped()
+/* The transport long and the track bytes at 0: GATE() waits for this rewind (stock_140c.c), which a pause or a MIDI STOP
+ * (2, docs/OCTATRACK_HARDWARE_TRAPS.md) never gives although STOPPED() calls it stopped; a panel STOP does. */
+static int rewound(void)
+{
+    for (unsigned i = 0; i < 16u; ++i) if (((volatile const uint8_t *)0x80006500u)[i]) return 0;
+    return *(volatile const uint32_t *)0x800065b8u == 0u;
+}
+#define REWOUND() rewound()
 int modwerk_upload_busy(void); /* ep0.c: a host session is open (an install, a trial, its self-test) */
 #define HOST_BUSY() modwerk_upload_busy()
 #endif
@@ -720,8 +729,9 @@ int modwerk_modset_switch_due(void) { return switch_asked; } /* ep0.c's tick wak
 static uint32_t switch_now(uint32_t id, int on)
 {
     const struct mu_backend *b6 = &modwerk_runtime_backend;
-    if (!STOPPED()) return MODSET_SWITCH_PLAYING;
-    if (!restored || pending || candidate || VOLATILE_BLOCKED() || HOST_BUSY() || !GATE()) return MODSET_SWITCH_BUSY;
+    if (!STOPPED() || !REWOUND()) return MODSET_SWITCH_PLAYING; /* paused: BUSY until a panel STOP, so say that */
+    if (!restored || pending || candidate || VOLATILE_BLOCKED() || HOST_BUSY()) return MODSET_SWITCH_BUSY;
+    if (!GATE()) return MODSET_SWITCH_CARD; /* stopped and rewound: the card, or a recorder row stock kept (#2211) */
     /* Only while the set here is the card's. After a start that skipped, held or left out modules the card still has
      * them all, and saving this start's smaller set over it for a switch would lose them: a restart restores them, a
      * sync decides them. After a base update (another base's set), a damaged file or a module the restore could not

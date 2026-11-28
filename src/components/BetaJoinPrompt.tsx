@@ -66,14 +66,16 @@ export function BetaJoinPrompt() {
     finally { setBusy(false) }
   }
   if (!open) return null
-  return <dialog ref={dialog} className="base-install-dialog beta-join" aria-labelledby="beta-join-title" aria-describedby="beta-join-intro" onCancel={event => { event.preventDefault(); later() }}>
+  return <dialog ref={dialog} className="base-install-dialog beta-join is-intro" aria-labelledby="beta-join-title" aria-describedby="beta-join-intro" onCancel={event => { event.preventDefault(); later() }}>
     <button type="button" className="icon-button base-install-close" aria-label="Close" onClick={later}><Icon name="close" size={18} /></button>
     <LinkHero />
-    <h2 id="beta-join-title" className="link-title" tabIndex={-1}>The beta is open for new testers <span className="module-beta-badge">Beta</span></h2>
+    <h2 id="beta-join-title" className="link-title" tabIndex={-1}>The beta is open for new testers</h2>
     <p id="beta-join-intro" className="base-install-intro">Beta testers try new modules before everyone else and tell us what breaks. It’s open to new testers for a short time, while places last.</p>
-    <ul className="link-promises">{ASKS.map(([icon, lead, rest]) => <li key={lead}><span className="link-feature-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><span><strong>{lead}</strong> {rest}</span></li>)}</ul>
-    <p className={'link-needs' + (usb ? '' : ' is-missing')}>You need an Octatrack (MKI or MKII), your OS 1.40C file, a USB cable and Chrome or Edge on a computer.</p>
-    {!usb ? <p className="file-error" role="alert">Beta modules load over USB, which this browser can’t do. Open Modwerk in Chrome or Edge on a computer to join.</p>
+    {/* Without WebUSB this is all that matters here: said before the cards, not under them. */}
+    {!usb && <p className="file-error" role="alert">Beta modules load over USB, which this browser can’t do. Open Modwerk in Chrome or Edge on a computer to join.</p>}
+    <ul className="link-promises">{ASKS.map(([icon, lead, rest]) => <li key={lead}><span className="link-feature-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><span><strong>{lead}</strong><span className="link-feature-rest"> {rest}</span></span></li>)}</ul>
+    <p className="link-needs">You need an Octatrack (MKI or MKII), your OS 1.40C file, a USB cable and Chrome or Edge on a computer.</p>
+    {!usb ? null
       : !user ? <p className="base-install-note">Sign in or create an account to join.</p>
       : !verified ? <p className="base-install-note">Verify your email and choose a username in your account first.</p>
       : <>

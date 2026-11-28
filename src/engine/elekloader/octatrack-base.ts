@@ -17,7 +17,7 @@ import { build } from '../../../vendor/elekloader/kit/src/patch.ts'
 export type BaseFill = { tag: string; first: number; count: number; offset: number } &
   ({ fx: number; section: string } | { shared: number; site: string } | { curve: 'usb-post-xlv'; section: string })
 /** What build_core.py names its version field: the base's own. */
-const VERSION = 'ELEKLOADER'
+const VERSION = 'MODWERK'
 
 type Part = ['hex', string] | ['stock', string, number]
 const hex = (words: Uint32Array, big: boolean) => Array.from(words, w => (big ? [w >>> 16, w >>> 8, w] : [w, w >>> 8, w >>> 16])

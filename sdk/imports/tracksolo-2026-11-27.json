@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/tracksolo",
+  "version": "0.2.0",
+  "date": "2026-11-27",
+  "upstream": {
+    "repository": "https://github.com/ceredmeat/FLEXMODS",
+    "revision": "e6a2aabf8a94118a7b761dbfeac3e325ce4cd4db",
+    "path": "mods/tracksolo",
+    "license": "GPL-2.0-or-later"
+  },
+  "changes": [
+    "Track Solo 0.2 (FLEXMODS v1.0, e6a2aab), imported unchanged: tracksolo.c. It patches no site: it answers seq-events' ev_fire_trig and subscribes to ev_key, ev_tick and ev_draw; TRK+UP and TRK+DOWN control it.",
+    "build.json is the author's mod.json and requires seq-events, Modwerk's shared dependency built from Dracyr's source. The library builds the author's released tracksolo-0.2.elemod (sdk/imports/elekloader-tracksolo-2026-11-27.json)."
+  ],
+  "files": [
+    {
+      "from": "mods/tracksolo/tracksolo.c",
+      "to": "src/tracksolo.c",
+      "sha256": "008bbe38b5e480e9cd925cfcf1a719522153b89041c8070c216a8f1184b86c76"
+    },
+    {
+      "from": "elekloader v0.11.0: elekloader/sdk/include/digitakt-mk1/core3.h",
+      "to": "src/digitakt-mk1/core3.h",
+      "sha256": "2ae628ba64e84911b2b92e5e034e3ad4e6e7243ca22c2a9addaba26e2e436bdc"
+    },
+    {
+      "from": "elekloader v0.11.0: elekloader/sdk/include/digitakt-mk1/seq.h",
+      "to": "src/digitakt-mk1/seq.h",
+      "sha256": "2406e38cb7f64a763d38fd9ab0b17c8d029e9ffdc52beccd1f465572decbe538"
+    },
+    {
+      "from": "elekloader v0.11.0: elekloader/sdk/include/seq-events.h",
+      "to": "src/seq-events.h",
+      "sha256": "ba17dc0205794956125521c9346235649d7eb1ac828580066c94c3b4d10632b9"
+    },
+    {
+      "from": "mods/tracksolo/README.md",
+      "to": "upstream/README.md",
+      "sha256": "a22433537bc2eceefe75354568075282b519ab000e08053799b891a67f52bc43"
+    },
+    {
+      "from": "LICENSE",
+      "to": "LICENSE",
+      "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+    }
+  ],
+  "excluded": [
+    "mod.json",
+    "the other FLEXMODS mods",
+    "mods/common"
+  ],
+  "transformations": [
+    "None to the author's files. Stock bytes in mod.json's sites became SHA-256 guards in build.json."
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata.",
+  "evidence": "sdk/digitakt/modules/tracksolo/TESTING.md",
+  "requires": []
+}

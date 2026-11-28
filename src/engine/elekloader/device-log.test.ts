@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, freezeSamples, parseDeviceLog } from './device-log'
+import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, describeDetail, describeUsbGone, freezeSamples, parseDeviceLog, usbGone } from './device-log'
 import { DSP_REPORT_NAMES, describeStallFrames, describeStallPacket, describeStallPackets, stallLateness } from '../../community/octatrack-diagnostics-contract'
 import { validateDiagnostic } from '../../../server/octatrack-diagnostics'
 
@@ -50,6 +50,39 @@ describe('the unit’s diagnostics log', () => {
     expect(freezeSamples(parsed.incidents[0])).toEqual([0x40a9fea6, 0x40a9feb4, 0x40a9feb4, 0x40a9feb4].map(pc =>
       ({ pc, sr: 0x2000, level: 0, tcb: 0x46c7bed8, task: 'UI task 0x40061a94, priority 1' })))
     expect(freezeSamples(parsed.incidents[1])).toEqual([{ pc: 0x40015526, sr: 0x2500, level: 5, tcb: 0x460ddde4, task: 'engine task 0x4008445c (card jobs), priority 1' }])
+  })
+  it('reads which check refused, what for, and what the held late entries were (DETAIL)', () => {
+    const parsed = parseDeviceLog(log(view => {
+      const i = INCIDENTS
+      view.setUint32(i, 9); view.setUint32(i + 4, 12); view.setUint32(i + 8, 600); view.setUint32(i + 12, 2 << 16 | 5) // 5 frame line, 2 Part budget
+      view.setUint16(i + 16, 16); view.setUint16(i + 18, 3); view.setUint16(i + 20, 40); view.setUint16(i + 22, 61) // after long, barely late, the start's
+      view.setUint8(i + 24, 0); view.setUint8(i + 25, 151)
+      view.setUint32(i + 80, 0x54415045); view.setUint32(i + 84, 13 << 8 | 1) // "TAPE", T6 FX2, the Part is busy
+    }))!
+    expect(parsed.incidents.map(r => r.kind)).toEqual(['detail'])
+    expect(describeDetail(parsed.incidents[0])).toBe('CPU refusals since the start: 5 by the frame line, 2 by the Part budget; the last for TAPE (effect on T6 FX2: the Part is busy). ' +
+      'Late entries held since the first tick: 3 after a frame of 450 µs or more, 40 less than 110 µs late; the start itself held 61 and had 151 later than the wait can hold')
+    expect(validateDiagnostic({ id: crypto.randomUUID(), event: 'device_log', phase: 'ready', log: { loads: [], incidents: parsed.incidents } })).toBeTruthy()
+  })
+  it('reads which side gave up when the host’s USB frames stopped (USB_GONE, #2290)', () => {
+    const parsed = parseDeviceLog(log(view => {
+      const i = INCIDENTS
+      view.setUint32(i, 4); view.setUint32(i + 4, 1145); view.setUint32(i + 8, 300); view.setUint32(i + 12, 0x00000f20) // OTGSC: VBUS on
+      view.setUint16(i + 16, 15); view.setUint16(i + 18, 1100)
+      // DEVICEADDR, FRINDEX, uf_state, off_ticks, uf_flags, tries, flags, stopped, ticks, ep0, uf, reconnects, 0, 0, then the 4 s sample
+      ;[8, 0, 0, 0, 0, 0, 0x12, 0x34, 2, 0, 1, 0, 0x12, 2, 179, 179, 0, 9, 0, 0, 0, 0, 0x0f, 0x20, 0x18, 0, 0x08, 0x85, 0, 2, 0x12, 0]
+        .forEach((b, j) => view.setUint8(i + 24 + j, b))
+      view.setUint32(i + 80, 0x18000885); view.setUint32(i + 84, 0x00080000) // PORTSC1, USBCMD: the pull-up off
+    }))!
+    const [r] = parsed.incidents
+    expect(r.kind).toBe('usb_gone')
+    const gone = usbGone(r)
+    expect(gone).toMatchObject({ stopped: 2, ticks: 179, ep0: 179, uf: 0, reconnects: 9 })
+    expect(gone.samples).toHaveLength(2)
+    expect(gone.samples[0]).toMatchObject({ otgsc: 0xf20, portsc: 0x18000885, usbcmd: 0x80000, deviceaddr: 0x08000000, frindex: 0x1234, ufState: 2, ufTimer: 1100, flags: 0x12 })
+    expect(gone.samples[1]).toEqual({ otgsc: 0xf20, portsc: 0x18000885, usbcmd: 0, ufState: 2, flags: 0x12, wdTries: 0 })
+    expect(describeUsbGone(r)).toContain('VBUS, pull-up off, suspended, off the bus, configured, reconnecting')
+    expect(describeUsbGone(r)).toContain('the reconnect tick 0 times')
   })
   it('refuses another magic or version and a short read', () => {
     expect(parseDeviceLog(log(view => view.setUint32(4, 3)))).toBeUndefined()
@@ -135,10 +168,12 @@ describe('the unit’s diagnostics log, version 2', () => {
       data.set(log2(view => { view.setUint32(V2_END + 180, 0x4d575354); view.setUint32(V2_END + 184, 2) }))
       const view = new DataView(data.buffer), at = V2_END + 180 + 456
       view.setUint32(at, 0x4d574654); view.setUint32(at + 4, count)
+      view.setUint16(V2_END + 180 + 452, 0x0002); view.setUint16(V2_END + 180 + 454, 0x0018) // the host port: core 0 TXDE, core 1 HF2 | HF3
       ;[749, 206, 2063, 1650].forEach((v, i) => view.setUint16(at + 8 + 2 * (252 + i), v)) // the last two frames: on time, then 1 ms late after an 800 µs run
       return parseDeviceLog(data)!.stall!
     }
     expect(traced(2).frames).toEqual([363, 100, 1000, 800])
+    expect(traced(2).host).toEqual([0x0002, 0x0018])
     expect(describeStallFrames(traced(2).frames)).toBe('2 frames before it: last gaps 363 1000 us (363 is on time); longest 1000 us, 0 frames before the last, after a frame interrupt of 800 us (the longest ran 800 us); the last began 0 274 us late: none 110 to 190 us late, so not the late entry')
     expect(traced(1).frames).toBeUndefined()
     expect(describeStallFrames(undefined)).toBe('')
@@ -161,7 +196,8 @@ describe('the unit’s diagnostics log, version 2', () => {
     expect(describeStallPacket(Array(8).fill(0))).toBe('none')
     expect(describeStallPacket([])).toBe('none')
     // The manager word's low byte is its phase: a publication under way when the stall was found, or idle.
-    const report = (phase: number, version = 12) => Object.assign(Array(85).fill(0), { 0: version, [DSP_REPORT_NAMES.indexOf('manager')]: phase })
+    const idle = -2 >>> 0, report = (phase: number, version = 12) => Object.assign(Array(85).fill(0), { 0: version, [DSP_REPORT_NAMES.indexOf('manager')]: phase,
+      [DSP_REPORT_NAMES.indexOf('job0')]: idle, [DSP_REPORT_NAMES.indexOf('job1')]: idle }) // no job waiting
     const packets = [[0, 40, 8, 0, 0, 0x300, 0, 1], [0x4c44, 7, 4, 1, 33, 1234, 0x1111, 1300]]
     expect(describeStallPackets({ packets, report: report(6) })).toBe('core 0 last packet: PEEK P:$300' + DONE + '; core 1 last packet: BIND id 33, init 1234 proc 1300' + IN_FLIGHT +
       '; a pick, Part change or install under way when it was found (manager phase 6, unbinding the old)')
@@ -172,10 +208,21 @@ describe('the unit’s diagnostics log, version 2', () => {
     const frames = [363, 100, 363, 100, 513, 520, 213, 100]
     expect(describeStallFrames(frames, { packets, report: report(0) })).toMatch(/fits the late entry \(110 to 190 us\); core 0 last packet: PEEK P:\$300, answered or timed out; core 1 last packet: BIND id 33, init 1234 proc 1300, in flight when the frames stopped; no pick, Part change or install under way when it was found$/)
     expect(describeStallFrames(undefined, { packets, report: [] })).toBe('core 0 last packet: PEEK P:$300' + DONE + '; core 1 last packet: BIND id 33, init 1234 proc 1300' + IN_FLIGHT)
+    // A waiting job (status 0) on a core whose header was answered never went out: it found the stall, it did not cause it.
+    const waiting = (job0: number, job1: number) => Object.assign(report(8), { [DSP_REPORT_NAMES.indexOf('job0')]: job0, [DSP_REPORT_NAMES.indexOf('job1')]: job1 })
+    const answered = [packets[0], [0, 7, 8, 1, 1, 0xa50, 0, 256]]
+    expect(describeStallPackets({ packets: answered, report: waiting(idle, 0) })).toMatch(/\(manager phase 8, writing tables\); the waiting job on core 1 was never sent: the frames had stopped before it$/)
+    expect(describeStallPackets({ packets, report: waiting(idle, 0) })).not.toMatch(/never sent/) // core 1's packet still in flight
+    expect(describeStallPackets({ report: waiting(0, 0) })).not.toMatch(/never sent/) // no headers: nothing to judge by
+    // The host port as the record found it: core 0 (the select byte) holding a word for the ColdFire, or not.
+    expect(describeStallPackets({ report: report(0), host: [0x0003, 0] })).toMatch(/; core 0 host port: a word waiting for the ColdFire \(RXDF\), so the core waits at P:\$97 for it$/)
+    expect(describeStallPackets({ report: report(0), host: [0x0000, 0] })).toMatch(/; core 0 host port: no word waiting for the ColdFire, so the core was not waiting on the host, and it had not taken the ColdFire's last word \(TXDE clear\)$/)
     // The Worker takes the two headers and nothing else in their place.
     const stall = { count: 1, reason: 1, ticks: 2, report: report(0) }, upload = (s: object) => () => validateDiagnostic({ id: crypto.randomUUID(), event: 'device_log', phase: 'ready', log: { loads: [], incidents: [], stall: s } })
     expect(upload({ ...stall, packets })).not.toThrow()
     expect(upload({ ...stall, frames, packets })).not.toThrow()
+    expect(upload({ ...stall, packets, host: [2, 0x18] })).not.toThrow()
+    for (const bad of [[2], [2, 0x10000], 'RXDF']) expect(upload({ ...stall, host: bad }), JSON.stringify(bad)).toThrow()
     for (const bad of [[packets[0]], [...packets, packets[0]], [packets[0], [...packets[1], 0]], [packets[0], [0x10000, 0, 0, 0, 0, 0, 0, 0]], [packets[0], 'BIND']])
       expect(upload({ ...stall, packets: bad }), JSON.stringify(bad)).toThrow()
     expect(upload({ count: 1, reason: 1, ticks: 2, packets })).toThrow()

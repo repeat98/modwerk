@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "module": "playmodes",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
     "static": 151872,
     "measured": 63008,
     "budget": 6600000,
-    "method": "0.2.0 ColdFire-core maximum: 1,969 instructions measured, 4,746 bounded, with a 32 cycles/instruction allowance; not measured chip timing. STEP REPEAT with keys held: 1,474 per track step. See evidence/cycles.md. Sixteen-track envelope: 2,429,952 cycles."
+    "method": "0.2.0 ColdFire-core maximum, carried to 0.2.1: 0.2.1 adds only the three project-hook handlers, which run on PROJECT > NEW, CHANGE and RELOAD, never on a step; every function on the step path compiles to the same instructions (playmodes.s differs only in the new functions, one new byte of state and renumbered labels). 1,969 instructions measured, 4,746 bounded, with a 32 cycles/instruction allowance; not measured chip timing. STEP REPEAT with keys held: 1,474 per track step. See evidence/cycles.md. Sixteen-track envelope: 2,429,952 cycles."
   },
   "load": {
     "frameUs": 362.8,
@@ -31,6 +31,6 @@
     "status": "owner-waiver-requested",
     "approval": "sdk/playmodes-build-approval.json",
     "existingReport": "evidence/hardware.md",
-    "note": "0.2.0 has not been played on a unit; the author's MKII report covers 0.1.1's build 24. The current approval file names 0.1.1; a 0.2.0 approval is the owner's decision."
+    "note": "0.2.0 has not been played on a unit; the author's MKII report covers 0.1.1's build 24. The approval file names 0.2.0; a 0.2.1 approval or hardware results are the owner's decision."
   }
 }

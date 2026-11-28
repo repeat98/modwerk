@@ -67,6 +67,7 @@ static unsigned rest_polls; /* the loader's resting poll, checked by sdk/runtime
 static int project_loading; /* fxmap.c's: a project load runs */
 int modwerk_fxmap_loading(void);
 int modwerk_fxmap_loading(void) { return project_loading; }
+volatile uint32_t modwerk_project_loaded; /* fxmap.c's: each completed project load */
 /* fxmap.c's effect ids: the ids the project names (bit id of project_fx), and module 700 + id holds id. */
 #include "fxids.h"
 static uint32_t project_fx;
@@ -534,6 +535,7 @@ static void check_cpu_budget(void)
     CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);
     CHECK(mw_assign(part0(), 3, 5) == (unsigned)-1 && part0()[60 + 90] == 0);  /* a fourth at 12: 48 of 45, nothing written */
     CHECK(cpu_boxes == boxes + 1 && cpu_box_track == 3 && cpu_box_booked == 360 && cpu_box_add == 120 && cpu_box_allowed == 450); /* per mille of a frame */
+    CHECK(mw_cpu_pick_why == (1u << 16 | 3u << 8 | 4u) && mw_cpu_pick_label >> 24 && !mw_cpu_line_refusals); /* diag.c's DETAIL: the Part budget, a machine on T4, by name */
     CHECK(mw_assign(part0(), 3, 6) == (unsigned)-1);                           /* nor the dear one */
     CHECK(mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes + 2);            /* the same machine again asks nothing */
     CHECK(mw_assign(part0(), 2, 6) == (unsigned)-1);                           /* its own 12 back, 30 more: 54 */
@@ -554,6 +556,25 @@ static void check_cpu_budget(void)
     CHECK(mw_cpu_refused == (1u << 0 | 1u << 5 | 1u << 6) && !mw_cpu_booked);
     mw_cpu_allowance = 45;
     for (unsigned t = 0; t < 8; ++t) for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0;
+    mw_ui_tick();
+    CHECK(!mw_cpu_refused);
+    /* A paste the frame line refuses, as it refuses the pick: the track renders the silent source with the box, and
+     * stays so until its machine changes. The same bytes after a project load are not judged (the predicted brake's). */
+    unsigned judged = hot_boxes;
+    cpu_now = hot_line; part0()[60 + 120] = 'A', part0()[61 + 120] = 'B', part0()[62 + 120] = 1;
+    mw_ui_tick(); mw_ui_tick();
+    CHECK(mw_cpu_refused == 1u << 4 && hot_boxes == judged + 1 && hot_box_track == 4 && !hot_box_gone);
+    silent = silent_renders; CHECK(later(4) == -9 && silent_renders == silent + 1);
+    cpu_now = 0; mw_ui_tick(); CHECK(mw_cpu_refused == 1u << 4 && hot_boxes == judged + 1); /* room alone does not lift it */
+    part0()[60 + 120] = 0; mw_ui_tick(); CHECK(!mw_cpu_refused);
+    cpu_in = 0; part0()[60 + 120] = 'A'; mw_ui_tick(); CHECK(!mw_cpu_refused && cpu_in && hot_boxes == judged + 1); /* fits: counted as a pick */
+    part0()[60 + 120] = 0; mw_ui_tick();
+    cpu_now = hot_line; part0()[60 + 120] = 'A'; ++modwerk_project_loaded; mw_ui_tick();
+    CHECK(!mw_cpu_refused && hot_boxes == judged + 1);
+    part0()[60 + 120] = 0; mw_ui_tick();
+    part0()[60 + 120] = 'A'; ++owner_epoch; mw_ui_tick(); /* nor once an install brings the machine the Part names */
+    CHECK(!mw_cpu_refused && hot_boxes == judged + 1);
+    cpu_now = 0; for (unsigned k = 0; k < 3; ++k) part0()[60 + 120 + k] = 0;
     mw_ui_tick(); rows(0, 0, 0, 0);
     CHECK(!mw_cpu_refused);
 }
@@ -917,11 +938,20 @@ static void check_late_entry(void)
     /* In it (81 µs; stall 56's entry, under 110 µs by this clock; the two logged stalls' 149 and 155 µs; 189 µs) it waits
      * until it is 190 µs late: 110 µs at most. */
     static const uint16_t inside[] = {81, 105, 111, 120, 149, 155, 189, 190};
+    uint32_t low = mw_late_low, after_long = mw_late_after_long;
+    mw_frame_last = LATE_LONG - 1u;
     for (unsigned i = 0; i < sizeof inside / sizeof *inside; ++i) {
         uint32_t over = mw_late_over;
         CHECK(late_by(inside[i]) && entry_late == inside[i] * US - 66u && mw_late_max == entry_late);
         CHECK(mw_late_hits == 1u && mw_late_waits == 1u && mw_late_wait_max >= LATE_HI - entry_late && mw_late_over == over);
     }
+    /* Of those eight waits, the two under 110 µs late count as barely late, and none came after a long frame; one after
+     * a frame interrupt of 450 µs does, and an entry that does not wait counts as neither. */
+    CHECK(mw_late_low == low + 2u && mw_late_after_long == after_long);
+    mw_frame_last = LATE_LONG;
+    CHECK(late_by(149) && mw_late_after_long == after_long + 1u && mw_late_low == low + 2u);
+    CHECK(!late_by(75) && mw_late_after_long == after_long + 1u && mw_late_low == low + 2u);
+    mw_frame_last = 0;
     /* A held entry's next one, two frames on, is on the grid: not counted. One past the window after a skipped frame
      * (two frames and 250 µs) is; four frames or more without an entry start again at 0 and are not. */
     { uint32_t over = mw_late_over;

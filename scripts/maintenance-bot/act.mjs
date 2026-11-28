@@ -6,14 +6,16 @@
 import { tagDiscordLinks } from '../../server/site-link-tags.ts'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { HARD_ONLY } from './lanes.mjs'
 import { TODO_COMMAND, actionId, classify } from './policy.mjs'
 import { MARKER, approveRun, boardGet, discord, github, ledger, pages, readBoardTarget, readDiscordTarget, readTarget } from './lib.mjs'
 import { pilotReport } from './eval-pilot.mjs'
-import { dailyReport } from './report.mjs'
+import { dailyReport, weeklyRetro } from './report.mjs'
 
 const daily = process.env.BOT_MODE === 'daily', dir = process.env.BOT_DIR ?? 'bot'
 const { api } = github(), bot = ledger(), chat = discord()
 const targets = new Map(), rejected = [], log = []
+const SICK = 'Maintenance bot: '
 const target = async number => { if (!targets.has(number)) targets.set(number, await readTarget(api, number)); return targets.get(number) }
 const fresh = async number => { targets.delete(number); return target(number) }
 
@@ -49,11 +51,19 @@ async function siteTarget(kind, id) {
   const index = activity.shouts.findIndex(row => row.id === id), shout = activity.shouts[index]
   return { kind: 'shout', id, number: 0, author: shout?.author ?? '', state: shout && !shout.helper && !activity.shouts.slice(index + 1).some(row => row.helper) ? 'open' : 'closed' }
 }
+// Checks that wait for a maintainer need no model: the policy starts them, or asks when the diff changes what
+// the checks run from. One proposal per pull request head.
+const waiting = new Set(((await api('/actions/runs?status=action_required&per_page=50')).workflow_runs ?? []).map(run => run.head_sha))
+if (waiting.size) for (const pull of await pages(api, '/pulls?state=open')) {
+  if (waiting.has(pull.head.sha)) proposals.actions.push({ kind: 'approve_run', number: pull.number, summary: 'Start checks: ' + pull.title.slice(0, 60), reason: 'A first-time contributor’s checks wait for a maintainer.', lane: 'hard' })
+}
 const accepted = []
 for (const proposal of proposals.actions) {
   const kind = String(proposal?.kind ?? ''), board = kind.startsWith('board_'), talk = kind === 'discord_reply', site = kind === 'forum_reply' || kind === 'shout_reply', number = board || talk || site ? 0 : Number(proposal?.number)
   if (!board && !talk && !site && (!Number.isSafeInteger(number) || number < 1)) { rejected.push('A proposal named no pull request or issue.'); continue }
   if (talk && !chat) { rejected.push('A Discord reply was proposed, but the bot has no Discord token.'); continue }
+  // Merging and reviewing are the stronger model's work (lanes.mjs).
+  if (HARD_ONLY.has(kind) && proposal.lane !== 'hard') { rejected.push('#' + number + ' ' + kind + ': only the hard lane merges and reviews.'); continue }
   try {
     const where = site ? await siteTarget(kind, kind === 'forum_reply' ? proposal.thread : proposal.shout) : talk ? await readDiscordTarget(chat, proposal.channel, proposal.message) : board ? await readBoardTarget(kind, proposal.thread ?? proposal.claim) : await target(number)
     const decision = classify(proposal, where, labels)
@@ -61,7 +71,7 @@ for (const proposal of proposals.actions) {
     accepted.push({ id: decision.id, kind: decision.payload.kind, target: number, tier: decision.tier, summary: decision.summary, reason: decision.reason, payload: decision.payload, windowHours: decision.windowHours })
   } catch (error) { reviewError = 'The review could not read every proposal target.'; rejected.push('#' + number + ': could not be read (' + error.message + ').') }
 }
-const { created } = accepted.length ? await bot('/actions', 'POST', { actions: accepted }) : { created: [] }
+const { created } = accepted.length ? await bot('/actions', 'POST', { actions: accepted.slice(0, 50) }) : { created: [] }
 console.log(accepted.length + ' proposals accepted (' + created.length + ' new), ' + rejected.length + ' held back.')
 
 // To-dos: work only a session at the owner's computer can do, picked up there with /modwerk-todo.
@@ -84,6 +94,16 @@ for (const run of (await api('/actions/runs?branch=main&status=completed&per_pag
   if (run.path?.endsWith('/maintenance-bot.yml') || run.event === 'pull_request' || latest.has(run.workflow_id)) continue
   latest.set(run.workflow_id, run)
 }
+// The bot's own health. A source that is down, or a review that failed three passes in a row, is urgent: the
+// owner hears at once, once a day, and the to-do goes away when it works again.
+const sick = []
+const lost = (process.env.BOT_DOWN ?? '').split(', ').filter(Boolean)
+if (lost.length) sick.push({ id: actionId('todo', 0, 'bot down', lost.join(), today), target: 0, command: '/modwerk-maintain', note: SICK + lost.join(', ') + ' could not be read; the rest of the pass ran', urgent: true })
+if (process.env.PROPOSE_RESULT === 'failure') {
+  const before = ((await api('/actions/workflows/maintenance-bot.yml/runs?status=completed&per_page=2')).workflow_runs ?? [])
+  if (before.length === 2 && before.every(run => run.conclusion === 'failure')) sick.push({ id: actionId('todo', 0, 'bot red', today), target: 0, command: 'gh run view ' + (process.env.GITHUB_RUN_ID ?? before[0].id) + ' --log-failed', note: SICK + 'its review failed three passes in a row', urgent: true })
+}
+if (sick.length) await bot('/todos', 'POST', { todos: sick })
 const failing = [...latest.values()].filter(run => run.conclusion === 'failure')
 if (failing.length) await bot('/todos', 'POST', { todos: failing.map(run => ({ id: actionId('todo', 0, 'red main', run.workflow_id, today), target: 0, command: 'gh run view ' + run.id + ' --log-failed', note: 'main is red: ' + run.name + ' at ' + run.head_sha.slice(0, 9), urgent: true })) })
 
@@ -105,12 +125,17 @@ if (pendingDrafts) {
 for (const todo of (await bot('/todos')).todos) {
   const thread = todo.command.match(/^npm run board -- reply ([0-9a-f-]{36})$/)?.[1], run = todo.command.match(/^gh run view (\d+) --log-failed$/)?.[1]
   let settled = false
-  if (todo.command.startsWith('npm run board -- followups ')) settled = !!pendingDrafts && !pendingDrafts.some(draft => draft.id === todo.id)
+  if (todo.note.startsWith(SICK)) settled = !sick.some(item => item.id === todo.id)
+  else if (todo.note.startsWith('Bot retro: ')) settled = todo.id !== actionId('todo', 0, 'bot retro', week)
+  else if (todo.command.startsWith('npm run board -- followups ')) settled = !!pendingDrafts && !pendingDrafts.some(draft => draft.id === todo.id)
   else if (thread) settled = (await readBoardTarget('board_reply', thread))?.state === 'closed'
   else if (run) { const workflow = (await api('/actions/runs/' + run).catch(() => null))?.workflow_id; settled = !!workflow && latest.get(workflow)?.conclusion === 'success' }
   else if (todo.target) settled = (await api('/issues/' + todo.target).then(issue => issue.state, () => 'open')) === 'closed'
   if (settled) await bot('/todos/' + todo.id + '/status', 'POST', { status: 'dropped' })
 }
+
+// The shared list: to-dos about a pull request or issue stand on the agent board as wanted tasks anyone can take.
+await bot('/todos/share', 'POST').catch(error => console.log('The to-dos could not be shared on the board (' + error.message + ').'))
 
 if (daily) {
   // Diagnostics members share, counted by failure: a new failure, or one more than twice its usual daily rate.
@@ -203,8 +228,24 @@ async function carryOut(action) {
   }
   return ['failed', 'unknown kind']
 }
+// What waits for the owner but can no longer happen (closed, merged, new commits) leaves Telegram, so every
+// message there is live. An ask never ran without a tap, so these were never checked before.
+for (const action of ((await bot('/actions/recent?hours=1')).actions ?? []).filter(row => row.status === 'pending' && row.target > 0)) {
+  const issue = await api('/issues/' + action.target).catch(() => null)
+  if (!issue) continue
+  const head = issue.state === 'open' && issue.pull_request && action.payload?.pin?.head ? (await api('/pulls/' + action.target)).head.sha : ''
+  const { kind, pin } = action.payload, replied = !['merge', 'label', 'approve_run'].includes(kind) && pin?.comments !== undefined && pin.comments !== issue.comments
+  const gone = issue.state !== 'open' ? 'it was closed in the meantime' : head && head !== pin.head ? 'new commits arrived'
+    : kind === 'approve_run' && !waiting.has(pin?.head) ? 'no run waits any more' : replied ? 'someone replied in the meantime' : ''
+  if (gone) await bot('/actions/' + action.id + '/expire', 'POST', { result: gone }).catch(() => undefined)
+}
 const { actions: due } = await bot('/actions/due')
 for (const action of due) {
+  // A merge whose checks still run waits for the next pass; claimed now, it would fail and never be tried again.
+  if (action.payload.kind === 'merge') {
+    const now = await fresh(action.payload.number).catch(() => null)
+    if (now?.state === 'open' && now.head === action.payload.head && !now.draft && now.checks === 'pending') continue
+  }
   try { await bot('/actions/' + action.id + '/claim', 'POST') } catch (error) { if (error.status === 409) continue; throw error }
   let outcome
   try { outcome = await carryOut(action) } catch (error) { outcome = ['failed', error.message.slice(0, 300)] }
@@ -217,13 +258,34 @@ console.log(log.length ? log.length + ' carried out: ' + tally('done') + ' done,
 if (rejected.length) console.log(rejected.length + ' held back by the policy.')
 
 // 3. The fingerprint moves only after the model's proposals were filed, so a failed run is retried next pass.
-if (process.env.BOT_FINGERPRINT && hasReview && !reviewError) await bot('/state', 'PUT', { fingerprint: process.env.BOT_FINGERPRINT })
+// It saves the map of what this pass saw with it, so the next pass reviews only what changed since (lanes.mjs).
+if (process.env.BOT_FINGERPRINT && hasReview && !reviewError) await bot('/state', 'PUT', { fingerprint: process.env.BOT_FINGERPRINT, ...(proposals.items && typeof proposals.items === 'object' ? { items: JSON.stringify(proposals.items) } : {}) })
+
+// What each lane read this week, kept beside last week's, so the bot can say what it costs (weeklyRetro).
+let usage = {}
+try { usage = JSON.parse(state.usage || '{}') } catch { /* an unreadable record starts a new one */ }
+if (usage.week !== week) usage = { week, last: usage.week ? { hard: usage.hard, light: usage.light } : usage.last }
+if (hasReview && !reviewError && proposals.usage && typeof proposals.usage === 'object') {
+  for (const lane of ['hard', 'light']) {
+    const cost = proposals.usage[lane]
+    if (cost) usage[lane] = { runs: (usage[lane]?.runs ?? 0) + 1, tokens: (usage[lane]?.tokens ?? 0) + Number(cost.tokens || 0), out: (usage[lane]?.out ?? 0) + Number(cost.out || 0) }
+  }
+  await bot('/state', 'PUT', { usage: JSON.stringify(usage) }).catch(() => undefined)
+}
 
 // 4. The daily report: a few lines; each action already has its own message with buttons.
 if (daily) {
   const { actions } = await bot('/actions/recent?hours=24')
   const broken = !hasReview || !!reviewError
   const progress = state.pilotReported ? '' : '\n' + pilotReport((await bot('/eval-pilot')).records)
-  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + progress + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
+  // Mondays: the bot looks at its own week. A kind of action that keeps being stopped or failing becomes a to-do
+  // for a desktop session to propose the change; the bot never edits its own rules.
+  let retro = ''
+  if (new Date().getUTCDay() === 1) {
+    const look = weeklyRetro((await bot('/actions/recent?hours=168')).actions ?? [], usage.last ?? {})
+    retro = '\n' + look.line
+    if (look.flags.length) await bot('/todos', 'POST', { todos: [{ id: actionId('todo', 0, 'bot retro', week), target: 0, command: '/modwerk-todo retro', note: ('Bot retro: ' + look.flags.join(', ')).slice(0, 200), urgent: false }] })
+  }
+  await bot('/report', 'POST', { text: dailyReport(actions, (await bot('/todos')).todos) + retro + progress + (broken ? '\n⚠️ The review itself failed today; see the Actions log.' : '') })
 }
 if (reviewError) throw new Error(reviewError)

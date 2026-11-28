@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "18e2b8601e49ed08dffc431f26d9e6598e42817a",
+  "sourceCommit": "b81547b137ae3f1b92ba842b4c407bb5db737f61",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "8e46091fcc45a837f0bca85c47907cfcd11d4458f6743e08588d14061242c7e5",
+  "sourceTreeSha256": "f039bf6f82cbeb73b07e649d586df7bd88a4eaf60c872a352986a1ec7c397a0e",
   "compilerSha256": "3bb3824f4e3f6f837b0f9854ca4bb78f67e499197d9eb0bd14237cbd73be5ee8",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
@@ -21,15 +21,15 @@
     "mackity": "0.1.0-experimental",
     "midiverb": "0.1.0-experimental",
     "analog-bassdrum": "0.1.7-experimental",
-    "usb-audio-out-tracks-main-cue": "0.4.1-experimental",
+    "usb-audio-out-tracks-main-cue": "0.4.2-experimental",
     "quantizer": "0.1.5-experimental",
     "synth": "0.1.5-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",
     "vector": "0.3.2-experimental",
-    "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.3-experimental",
+    "playmodes": "0.2.1-experimental",
+    "mute-modes": "0.2.4-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.3-experimental",
     "output-matrix": "0.1.1-experimental",
@@ -79,8 +79,8 @@
       "sha256": "6f4823e51ae30e79f387f2e83dc684c74c7547be223f2e4246c7d51096aa6df5"
     },
     "requested-packages.json": {
-      "bytes": 1362015,
-      "sha256": "94b6d880cba5c6f26c5728c77ea50b2d74d23b0bdb37de6e8ca8f0e55a726711"
+      "bytes": 1362663,
+      "sha256": "02175a862b45011ea337caf9433e821ab187aa0484c9dbcdbfd2b441fa2da4d6"
     },
     "utility-packages.json": {
       "bytes": 11735,
@@ -88,7 +88,7 @@
     },
     "usb-audio-packages.json": {
       "bytes": 736377,
-      "sha256": "24621e44588acdf9b762dcbda4758f81022caf1b77b780884005dfc324a8b9c1"
+      "sha256": "2d03830655d683e1b2af7ba76e1bd5e86c09291a0139abfa094f6225ae1895a3"
     }
   },
   "approval": null,

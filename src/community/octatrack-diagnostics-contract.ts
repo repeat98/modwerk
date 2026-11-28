@@ -90,7 +90,7 @@ export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 export interface DiagnosticLive { samples: number; cpu?: [number, number]; dsp1to4?: [number, number]; dsp5to8?: [number, number] }
 export const DIAGNOSTIC_UNRESPONSIVE = ['usb', 'ui'] as const
 /** `device_log`: records from the unit's own log (diag.h), uploaded at the next connection. */
-export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu', 'brake', 'usb', 'late', 'restore', 'freeze_pc'] as const
+export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'set', 'base', 'shed', 'cpu', 'brake', 'usb', 'late', 'restore', 'freeze_pc', 'usb_gone', 'detail'] as const
 /** `frameGap`: the window's longest time between two audio frames, µs (log version 2); `tickGap` its longest run of
  * frames without a UI tick. */
 export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [number, number]; dsp1to4: [number, number]; dsp5to8: [number, number]; samples: number; playing: number; frameGap?: number; tickGap?: number }
@@ -100,8 +100,9 @@ export interface DeviceCrash { count: number; vector: number; pc: number; sr: nu
  * `frames`: the frames before it, oldest first, two numbers each in µs (diag.h's trace): the time since the frame before
  * began (363 on time) and how long the frame interrupt before it ran. Bases without the trace send none.
  * `packets`: each core's last loader packet header, eight 16-bit words (the record's tx[2][8]); sites before
- * 16 November 2026 sent none. */
-export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[]; packets?: number[][] }
+ * 16 November 2026 sent none. `host`: the host port's status (the record's isr[2]): the selected core's ISR when the
+ * stall was found, and core 1's as dsp_core1.s last read it; sites before 27 November 2026 sent none. */
+export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[]; packets?: number[][]; host?: number[] }
 const FRAME_US = 363, LATE_WINDOW = [110, 190] as const, LATE_TAIL = 6
 /** How late each of a stall's frames began against the DSP's frame grid, in µs: the lateness before it plus its gap
  * less one frame, never under 0. Past a whole frame (or within 20 µs of one) the DSP has skipped that frame, and a gap
@@ -118,7 +119,7 @@ export function stallLateness(frames: number[]): number[] {
 /** A stall in a line: its frames (the last gaps, the longest with the run before it, and whether one of the last frames
  * began in the late entry's window, docs/MODULE_PERFORMANCE.md: about 150 µs late after a long frame), then each core's
  * last packet and whether a publication was under way (describeStallPackets). '' when the record holds none of these. */
-export function describeStallFrames(frames: number[] | undefined, stall?: Pick<DeviceStall, 'packets' | 'report'>): string {
+export function describeStallFrames(frames: number[] | undefined, stall?: Pick<DeviceStall, 'packets' | 'report' | 'host'>): string {
   return [frames?.length ? stallFrames(frames) : '', describeStallPackets(stall)].filter(Boolean).join('; ')
 }
 function stallFrames(frames: number[]): string {
@@ -152,11 +153,19 @@ export function describeStallPacket(header: number[]): string {
 /** Each core's last packet, and whether the loader's manager was publishing (a pick, a Part change or an install) when
  * the stall was found: the report's `manager` word, phase in its low byte (0 idle). The watchdog finds a stall only
  * while a job waits (OCTATRACK_HARDWARE_TRAPS.md), so a publication may have begun after the frames stopped. */
-export function describeStallPackets(stall: Pick<DeviceStall, 'packets' | 'report'> | undefined): string {
+export function describeStallPackets(stall: Pick<DeviceStall, 'packets' | 'report' | 'host'> | undefined): string {
   const lines = (stall?.packets ?? []).map((header, core) => `core ${core} last packet: ${describeStallPacket(header)}`)
-  const manager = (stall?.report?.[0] ?? 0) >= 11 ? stall?.report?.[DSP_REPORT_NAMES.indexOf('manager')] : undefined
-  const phase = (manager ?? 0) & 0xff
+  const report = (stall?.report?.[0] ?? 0) >= 11 ? stall?.report : undefined, word = (name: string) => report?.[DSP_REPORT_NAMES.indexOf(name)]
+  const manager = word('manager'), phase = (manager ?? 0) & 0xff
   if (manager !== undefined) lines.push(phase ? `a pick, Part change or install under way when it was found (manager phase ${phase}${MANAGER_PHASES[phase] ? ', ' + MANAGER_PHASES[phase] : ''})` : 'no pick, Part change or install under way when it was found')
+  // A job still waiting (status 0) whose core's header carries no magic was queued but never sent (transfer.c sends a
+  // queued job at the next frame): the frames had stopped before it, so it found the stall and did not cause it.
+  const unsent = [0, 1].filter(core => word(core ? 'job1' : 'job0') === 0 && stall?.packets?.[core]?.length && stall.packets[core][0] !== PACKET_MAGIC)
+  if (unsent.length) lines.push(`the waiting job on core ${unsent.join(' and ')} was never sent: the frames had stopped before it`)
+  // dsp.c's HOST_ISR: bit 0 RXDF (the core holds a word the ColdFire never took, so it waits at P:$97), bit 1 TXDE.
+  const isr = stall?.host?.[0], select = (word('eportPinFlagSelect') ?? 0) & 0xff
+  if (isr !== undefined) lines.push(`core ${select} host port: ${isr & 1 ? 'a word waiting for the ColdFire (RXDF), so the core waits at P:$97 for it' : 'no word waiting for the ColdFire, so the core was not waiting on the host'}` +
+    (isr & 2 ? '' : ", and it had not taken the ColdFire's last word (TXDE clear)"))
   return lines.join('; ')
 }
 /** The loader's report words, as the stall record and the development report (scripts/device.mjs) carry them
@@ -249,7 +258,9 @@ export interface OctatrackDiagnostic {
   step?: DiagnosticSyncStep
   reconnect?: typeof TRIAL_RECONNECT_FAILURES[number]
   /** A `transport` sync failure's change in the base's EP0 counters over the sync (DIAG version 3, ep0.c): frames
-   * received, refusals, bus resets, data stages primed, completed and abandoned. */
+   * received, refusals, bus resets, data stages primed, completed and abandoned; from 26 November 2026 a seventh entry,
+   * the last completed data stage's descriptor status byte (0x40 halted, 0x20 data buffer error, 0x08 transaction error),
+   * as it stands after the sync: it belongs to this sync only when the completed count rose. */
   usb?: number[]
   /** Offset into the staged package (CHUNK only). Remaining bytes refer to the entire EP0 OUT frame. */
   upload?: { command: StagingCommand; chunkOffset?: number; remainingBytes?: number }
@@ -279,4 +290,45 @@ export function freezeSamples(r: DeviceIncident): { pc: number; sr: number; leve
   const pcs = [r.a, r.screen, r.tempo24, long(16)], srs = [r.cpu, r.dsp5to8, r.dsp1to4, r.machines[20] << 8 | r.machines[21]]
   return pcs.map((pc, i) => ({ pc, sr: srs[i], level: srs[i] >> 8 & 7, tcb: long(4 * i), task: TASKS.get(long(4 * i)) ?? 'TCB 0x' + long(4 * i).toString(16) }))
     .filter(s => s.pc || s.sr || s.tcb)
+}
+/** One USB_GONE sample: the controller's OTGSC, PORTSC1 and USBCMD (its low byte after the first), the base's reconnect
+ * state (usb_function.c, 0-3), the watchdog's tries and diag.h's flags; the first also DEVICEADDR, FRINDEX and the rest. */
+export interface UsbGoneSample { otgsc: number; portsc: number; usbcmd: number; ufState: number; flags: number; wdTries: number
+  deviceaddr?: number; frindex?: number; ufTimer?: number; ufOff?: number; ufFlags?: number; wdOff?: number; wdDetached?: number }
+/** A USB_GONE record (diag.h, bases from 0.8.3; #2290): the host's USB frames stood still three seconds while the base
+ * expected a host. `samples` at 3, 4, 5 and 6 s, without those the frames came back before; `stopped` the reconnect's
+ * state when they stopped; `ticks`, `ep0`, `uf` how far the UI tick, ep0_tick and the reconnect tick moved in those 3 s. */
+export function usbGone(r: DeviceIncident): { stopped: number; ticks: number; ep0: number; uf: number; reconnects: number; samples: UsbGoneSample[] } {
+  const run = [...r.machines, ...r.fx, ...r.keys]
+  const long = (i: number) => (run[i] << 24 | run[i + 1] << 16 | run[i + 2] << 8 | run[i + 3]) >>> 0
+  const first: UsbGoneSample = { otgsc: r.a, portsc: r.screen, usbcmd: r.tempo24, ufState: run[8], flags: run[12], wdTries: run[11],
+    deviceaddr: long(0), frindex: long(4), ufTimer: r.cpu, ufOff: run[9], ufFlags: run[10], wdOff: r.dsp1to4, wdDetached: r.dsp5to8 }
+  const later = [20, 32, 44].map(at => ({ otgsc: long(at), portsc: long(at + 4), usbcmd: run[at + 8], ufState: run[at + 9], flags: run[at + 10], wdTries: run[at + 11] }))
+    .filter(s => s.otgsc || s.portsc || s.usbcmd || s.ufState || s.flags || s.wdTries)
+  return { stopped: run[13], ticks: run[14], ep0: run[15], uf: run[16], reconnects: run[17], samples: [first, ...later] }
+}
+const UF_STATES = ['settled', 'reconnect due', 'off the bus', 'back on the bus']
+const USB_FLAGS = ['fresh', 'configured', 'USB DISK', 'RAM boot armed', 'reconnecting', 'receiving', 'host heard <10 s']
+const CPU_WHY = ['change one first', 'the Part is busy', 'unused modules', 'a USB stream', 'the Part budget']
+/** One line a person reads from a DETAIL record (diag.h, bases from 0.8.4): which check made the CPU refusals and what
+ * the last one was for, then what kind the held late entries were, and how many the start itself brought. */
+export function describeDetail(r: DeviceIncident): string {
+  const name = String.fromCharCode(...[24, 16, 8, 0].map(shift => r.screen >>> shift & 0xff).filter(Boolean))
+  const slot = r.tempo24 >>> 8 & 0xff, machine = r.tempo24 >>> 16 & 1
+  const refused = r.a ? `CPU refusals since the start: ${r.a & 0xffff} by the frame line, ${r.a >>> 16} by the Part budget; the last for ${name || 'an unnamed pick'} ` +
+    `(${machine ? 'machine' : 'effect'} on T${slot % 8 + 1}${machine ? '' : slot > 7 ? ' FX2' : ' FX1'}: ${CPU_WHY[r.tempo24 & 0xff] ?? 'why ' + (r.tempo24 & 0xff)}). ` : ''
+  return refused + `Late entries held since the first tick: ${r.cpu} after a frame of 450 µs or more, ${r.dsp5to8} less than 110 µs late; ` +
+    `the start itself held ${r.dsp1to4} and had ${r.machines[0] << 8 | r.machines[1]} later than the wait can hold`
+}
+/** One line a person reads: which side gave up (no VBUS: the host's port; SUSP: suspended; pull-up off: the unit). */
+export function describeUsbGone(r: DeviceIncident): string {
+  const g = usbGone(r)
+  const sample = (s: UsbGoneSample) => [s.otgsc & 0x800 ? 'VBUS' : 'no VBUS', s.usbcmd & 1 ? 'pull-up on' : 'pull-up off',
+    s.portsc & 0x80 ? 'suspended' : s.portsc & 1 ? 'attached' : 'not attached', UF_STATES[s.ufState] ?? 'state ' + s.ufState,
+    ...USB_FLAGS.filter((_, i) => s.flags >> i & 1)].join(', ') + ` (OTGSC 0x${s.otgsc.toString(16)}, PORTSC1 0x${s.portsc.toString(16)})`
+  const [first, ...later] = g.samples
+  return `the host's USB frames stopped (${UF_STATES[g.stopped] ?? 'state ' + g.stopped} then); in 3 s the UI tick ran ${g.ticks}, ep0_tick ${g.ep0}, ` +
+    `the reconnect tick ${g.uf} times; ${g.reconnects} reconnects; at 3 s: ${sample(first)}, USBCMD 0x${first.usbcmd.toString(16)}, ` +
+    `address ${(first.deviceaddr ?? 0) >>> 25}, reconnect timer ${first.ufTimer}, watchdog off ${first.wdOff} detached ${first.wdDetached} tries ${first.wdTries}` +
+    later.map((s, i) => `; at ${4 + i} s: ${sample(s)}`).join('')
 }

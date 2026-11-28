@@ -22,6 +22,9 @@ import firmware_codec  # noqa: E402
 _spec = importlib.util.spec_from_file_location('modwerk_usb_post', HERE / 'usb_post.py')
 usb_post = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(usb_post)
 VERSION = '0.3.1-modwerk-dev.1'
+# The update name the resident bootloader shows while flashing (the ELEK header's ten-character field, right-justified);
+# src/engine/elekloader/octatrack-base.ts writes the same.
+UPDATE_NAME = 'MODWERK'
 # Resident controller trust: association, the scoped write lease, its resolver and the board-compiled policy table.
 CONTROLLER_POLICY_SOURCES = ('controller_policy.c', 'controller_policy.h', 'controller_association.c', 'controller_association.h',
                              'controller_write_lease.c', 'controller_write_lease.h', 'controller_write_policy.c',
@@ -1780,7 +1783,7 @@ def main():
             spec = importlib.util.spec_from_file_location('modwerk_usb_audio_profiles',
                 APP / 'sdk/machines/octatrack/module-adapters/usb-audio-profiles/profiles.py')
             usb_profiles = importlib.util.module_from_spec(spec); spec.loader.exec_module(usb_profiles)
-    for name in ('ep0.c', 'usb_attach.h', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
+    for name in ('ep0.c', 'usb_attach.h', 'usb_stock_sends.h', 'fxids.h', 'runtime.c', 'runtime.h', 'boot.c', 'boot.h', 'boot.s', 'flash.c', 'flash.h', 'slots.c', 'slots.h', 'modset.c', 'boot_anim.c', 'boot_anim.s', 'crash.c', 'crash.s', 'run_unpack.s') + (('dev.c',) if args.dev else ()) + (
             ('runtime_events.h', 'runtime_events.s', 'machine_registry.c', 'machine_registry.s', 'midi_generators.c',
              'midi_generators.s', 'sample_memory.c') if args.site_events else ()) + (
             ('part_menu.c', 'part_menu.s') if args.part_menu else ()):
@@ -2478,7 +2481,7 @@ modwerk_retained_end:
                       'arena_base','__arena_pages','__arena_fill','__arena_clear',
                       'ev_tick','ev_draw','ev_key','ev_enc','ev_midi','ev_frame'}:
         raise ValueError('Core has unexpected unresolved imports: ' + str(mod.imports))
-    outputs, manifest = patch.build(str(args.stock), [path], version='ELEKLOADER')
+    outputs, manifest = patch.build(str(args.stock), [path], version=UPDATE_NAME)
     mapping = manifest.pop('_map')
     # MAIN stores .run packed (run_pack.py): the linked image again without its plain copy, repacked and verified as
     # patch.build does, so the RAM boot bound and every hash below are the packed image's.

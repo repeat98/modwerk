@@ -23,7 +23,7 @@ try{
  const replies=[],handle=createEngineSession(r=>replies.push(r)),ids=['sidechain-compressor','playmodes','mute-modes','midi-cc-slots']
  await handle({id:1,type:'inspect',name:'original.bin',buffer:original.slice().buffer});assert.equal(replies.at(-1).type,'inspection')
  await handle({id:2,type:'build',moduleIds:ids,keepStockFx2:false,startup:'docking'})
- const result=replies.at(-1);assert.equal(result.type,'built',JSON.stringify(result));assert(result.report.installer);assert.equal(result.report.version,'ELEKLOADER')
+ const result=replies.at(-1);assert.equal(result.type,'built',JSON.stringify(result));assert(result.report.installer);assert.equal(result.report.version,'MODWERK')
  const zip=new Uint8Array(result.buffer);assert.equal(sha(zip),result.sha256)
  const files=new Map();for(const m of members(zip))files.set(m.filename,await read(zip,m))
  assert.equal(sha(files.get('Modwerk-USB-base.bin')),result.report.installer.baseSha256)

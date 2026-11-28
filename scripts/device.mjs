@@ -39,6 +39,7 @@
 // Each command is one whole transaction. A trial is rolled back unless --accept
 // is given; Ctrl-C rolls back early. If this process dies mid-trial, unplug USB:
 // the base rolls back any module that was not accepted.
+import { panelInput, panelKeys } from './device-panel.mjs'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { deflateSync, crc32 } from 'node:zlib'
 import { basename, join, resolve } from 'node:path'
@@ -52,7 +53,7 @@ import * as formats from '../vendor/elekloader/kit/src/formats.ts'
 import { OCTATRACK } from '../vendor/elekloader/kit/src/devices.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, RuntimeFeature, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
-import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, freezeSamples, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
+import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, describeDetail, describeUsbGone, freezeSamples, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
 import { DSP_REPORT_NAMES as REPORT_NAMES, describeStallFrames, describeStallPackets } from '../src/community/octatrack-diagnostics-contract.ts'
 import { encodeModuleSet, frameCostTable } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
@@ -148,19 +149,19 @@ const KEYS = { DOWN: 0x20, RIGHT: 0x21, SRC: 0x22, AMP: 0x23, LFO: 0x24, FX1: 0x
   ...Object.fromEntries(Array.from({ length: 16 }, (_, i) => ['TRIG' + (i + 1), i])),
   ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => ['T' + (i + 1), 0x10 + i])),
   ...Object.fromEntries(['A', 'B', 'C', 'D', 'E', 'F'].map((e, i) => ['PUSH' + e, 0x38 + i])) }
+const NOT_DEV = 'This base does not answer development requests: build it with --dev.'
 async function devIn(request, value, length) {
   const reply = await unit.controlTransferIn({ requestType: 'vendor', recipient: 'interface', request, value, index }, length)
   if (reply.status !== 'ok' || reply.data?.byteLength !== length) throw new Error(request === 16 ?
     'The base refused this MEM read: development bases read 0x40000400-0x40cfffff, 0x46000000-0x46ffffff, 0x80000000-0x8000ffff and 0x100f0000-0x100fffff only (dev.c).' :
-    'This base does not answer development requests: build it with --dev.')
+    NOT_DEV)
   return new Uint8Array(reply.data.buffer, reply.data.byteOffset, reply.data.byteLength)
 }
 /** FUNC+PLAY: hold every key but the last, tap the last, release the held ones. */
 async function keys(spec) {
   const codes = spec.split('+').map(name => KEYS[name.toUpperCase()] ?? Number(name))
   if (codes.some(code => !Number.isInteger(code) || code < 0 || code > 63)) throw new Error('Unknown key in ' + spec + ': ' + Object.keys(KEYS).join(' '))
-  for (const code of codes) { await devIn(5, code | 0x100, 1); await wait(code === codes.at(-1) ? 80 : 30) }
-  for (const code of codes.reverse()) { await devIn(5, code, 1); await wait(30) }
+  await panelKeys(devIn, codes)
 }
 async function screen(png = values.png) {
   const frame = (await devIn(7, 0, 1028)).subarray(4)
@@ -357,9 +358,10 @@ const REPORT_HEX = new Set(['buffers', 'arenas', 'hostFlags', 'manager', 'used',
  * masks' second words and a pad at the end; fxids.h). The base answers only its own length. */
 async function reportView() {
   for (const words of [78, 81, 83, 85]) { // 32, 64, 96 or 128 ids
-    try { const bytes = await devIn(11, 0, 4 * words); return new DataView(bytes.buffer, bytes.byteOffset, 4 * words) } catch { /* the other length */ }
+    // Only a refusal means the other length; the unit away (USB Audio's reconnect) keeps its own message, which the test tools wait out.
+    try { const bytes = await devIn(11, 0, 4 * words); return new DataView(bytes.buffer, bytes.byteOffset, 4 * words) } catch (error) { if (error.message !== NOT_DEV) throw error }
   }
-  throw new Error('This base does not answer development requests: build it with --dev.')
+  throw new Error(NOT_DEV)
 }
 /** status.c's tail of the report (version 11 and up): word i of the first 78. */
 async function statusWords() {
@@ -447,14 +449,14 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     if (Date.now() > until) throw new Error('stopped at the time limit before ' + step)
     let m
     if ((m = /^w(\d+)$/.exec(step))) await wait(Number(m[1]))
-    else if ((m = /^enc([A-F]|LEVEL)([+-]\d+)$/i.exec(step))) await devIn(8, 0x30 | ('ABCDEF'.indexOf(m[1].toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(m[1].toUpperCase()) : 6) | (Number(m[2]) & 0xff) << 8, 1)
-    else if ((m = /^fader(\d+)$/.exec(step))) await devIn(8, 0x40 | Number(m[1]) << 8, 1)
+    else if ((m = /^enc([A-F]|LEVEL)([+-]\d+)$/i.exec(step))) await panelInput(devIn, 8, 0x30 | ('ABCDEF'.indexOf(m[1].toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(m[1].toUpperCase()) : 6) | (Number(m[2]) & 0xff) << 8)
+    else if ((m = /^fader(\d+)$/.exec(step))) await panelInput(devIn, 8, 0x40 | Number(m[1]) << 8)
     else if (step === 'ui') await ui()
     else if (step === 'screen') await screen()
     else if ((m = /^([+-])([A-Z0-9]+)$/i.exec(step))) { // +BANK holds, -BANK lets go
       const code = KEYS[m[2].toUpperCase()]
       if (code === undefined) throw new Error('Unknown key in ' + step + ': ' + Object.keys(KEYS).join(' ')) // not TRIG1 (undefined | 0x100)
-      await devIn(5, code | (m[1] === '+' ? 0x100 : 0), 1)
+      await panelInput(devIn, 5, code | (m[1] === '+' ? 0x100 : 0))
     }
     else if ((m = /^png:(\S+)$/.exec(step))) await screen(m[1])
     else if ((m = /^mem:(0x[0-9a-f]+):(\d+)$/i.exec(step))) { // RAM, read-only, hex; any length (500-byte reads)
@@ -558,7 +560,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
         const kept = tv.getUint32(0) === 0x4d574654 && tv.getUint32(4) === w(1)
         console.log(`stall ${w(1)}: ${['test', 'frames stopped', 'eDMA refused a transfer'][w(2)] ?? 'reason ' + w(2)} at tick ${w(3)}\n  ` +
         named(i => i < w(4) ? w(5 + i) : 0) + `\n  packets core 0 ${Buffer.from(b.subarray(404, 420)).toString('hex')} core 1 ${Buffer.from(b.subarray(420, 436)).toString('hex')}` +
-        '\n  ' + describeStallPackets({ packets: [0, 1].map(c => Array.from({ length: 8 }, (_, i) => v.getUint16(404 + 16 * c + 2 * i))), report: Array.from({ length: Math.min(w(4), 96) }, (_, i) => w(5 + i)) }) +
+        '\n  ' + describeStallPackets({ packets: [0, 1].map(c => Array.from({ length: 8 }, (_, i) => v.getUint16(404 + 16 * c + 2 * i))), report: Array.from({ length: Math.min(w(4), 96) }, (_, i) => w(5 + i)), host: [v.getUint16(452), v.getUint16(454)] }) +
         `\n  live FX ${Buffer.from(b.subarray(436, 452)).toString('hex')}\n  host ISR selected core 0x${v.getUint16(452).toString(16)} ` +
         `(RXDF ${v.getUint16(452) & 1}: a word the ColdFire never took), core 1 as last read 0x${v.getUint16(454).toString(16)}` +
         (kept ? '\n  ' + describeStallFrames(Array.from({ length: 256 }, (_, i) => us(i))) + '\n  gaps ' + Array.from({ length: 128 }, (_, i) => us(2 * i)).join(' ') + '\n  runs ' + Array.from({ length: 128 }, (_, i) => us(2 * i + 1)).join(' ') : '\n  no frames kept with it (a base before the trace)'))
@@ -573,6 +575,8 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
         console.log(`diaglog boot ${log.boot} seq ${log.seq}: ${log.incidents.length} incidents, ${log.loads.length} loads`)
         for (const r of log.incidents) if (r.kind === 'freeze_pc') console.log(`  #${r.seq} boot ${r.boot} +${r.second}s freeze_pc: ` +
           freezeSamples(r).map(s => `0x${s.pc.toString(16)}${withName(namesFor(identity.base), s.pc)} level ${s.level} in ${s.task}`).join('; '))
+        else if (r.kind === 'usb_gone') console.log(`  #${r.seq} boot ${r.boot} +${r.second}s usb_gone: ${describeUsbGone(r)}`)
+        else if (r.kind === 'detail') console.log(`  #${r.seq} boot ${r.boot} +${r.second}s detail: ${describeDetail(r)}`)
         else console.log(`  #${r.seq} boot ${r.boot} +${r.second}s ${r.kind} a=${r.kind === 'base' ? r.a.toString(16).padStart(8, '0') : r.kind === 'set' ? r.a + ' [' + [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean).join(' ') + ']' : r.a} cpu ${r.cpu / 10}% T1-4 ${r.dsp1to4 / 10}% T5-8 ${r.dsp5to8 / 10}% ` +
           `${r.playing ? 'playing' : 'stopped'} tempo ${(r.tempo24 / 24).toFixed(1)} screen 0x${r.screen.toString(16)} keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(',')} ` +
           `fx ${r.fx.map(f => f.toString(16)).join(',')} machines ${r.machines.join(',')}`)
@@ -751,12 +755,12 @@ if (command === 'serve') {
     const [, name, delta] = /^([A-F]|LEVEL)([+-]\d+)$/i.exec(file) ?? []
     const encoder = 'ABCDEF'.indexOf(name?.toUpperCase()) >= 0 ? 'ABCDEF'.indexOf(name.toUpperCase()) : name?.toUpperCase() === 'LEVEL' ? 6 : -1
     if (encoder < 0 || !Number(delta) || Math.abs(delta) > 127) throw new Error('Use enc A+3, enc F-1 or enc LEVEL+2.')
-    await devIn(8, 0x30 | encoder | (Number(delta) & 0xff) << 8, 1); process.exit(0)
+    await panelInput(devIn, 8, 0x30 | encoder | (Number(delta) & 0xff) << 8); process.exit(0)
   }
   if (command === 'fader') {
     const position = Number(file)
     if (!Number.isInteger(position) || position < 0 || position > 255) throw new Error('Use fader 0-255.')
-    await devIn(8, 0x40 | position << 8, 1); process.exit(0)
+    await panelInput(devIn, 8, 0x40 | position << 8); process.exit(0)
   }
   if (command === 'loader') {
     const bytes = await devIn(9, 0, 60), view = new DataView(bytes.buffer, bytes.byteOffset, 60)

@@ -42,7 +42,8 @@ export const LINK_DEVICES: LinkDevice[] = [
       { version: '1.43', syxSha256: 'c5a54cc05b921f2e4bd814834c5365c2a5aa01d7772a9a2961fac1c3095bf9aa', mainSha256: '3831a477a2a22befb23c42e47e782853da49566ef5d0a1767fcf6c30e6767414', mainLength: 2732208 },
       { version: '1.44', syxSha256: 'd4f200d04484333d82822db7744e6484d0def8f2db8ddf55ee2b780cc13c9659', mainSha256: 'fce648a97c6c5d93b961732e8f8db6b02e0820c6d344c7e2131fa05a4b3168e4', mainLength: 2736304 },
     ],
-    areas: { ddr: [0x47be0000, 0x47c00000] },
+    // bulk: the DDR a mod's large buffers may claim as regions (core-dn1 3.2 and newer; the kit's profile)
+    areas: { ddr: [0x47be0000, 0x47c00000], bulk: [0x44000000, 0x47be0000] },
     ddr: [0x47be0000, 0x47c00000], sramCode: [0, 0], fastTable: '', protected: [],
   },
   {

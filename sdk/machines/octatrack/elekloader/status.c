@@ -102,6 +102,15 @@ static uint32_t recent_mean(void)
  * played, kept until it plays four seconds again. Eight readings in a row playing, so none of them is a stopped one. */
 static uint32_t frame_recent[8], frame_played, frame_newest; /* as cpu_recent; the longest as it last stood playing; the newest */
 static uint32_t frame_longest(void);
+/* A USB stream (#2251): while a computer records from the unit or plays into it, the USB interrupt runs inside the
+ * frame interrupt's renders and stretches every frame (owner's MKII, a 0.8.3 twin, USB Audio 0.4.1, 26 November 2026:
+ * the frame interrupt's mean 24.5 to 43.1 % on an empty pattern with 16 channels, 37.6 to 61.9 % with UNGEMACH
+ * trigging on T1, whose render grew to 73.8 % of a frame and was dropped once in 6 s; 37.4 to 53.8 % with 2). A
+ * computer opens or closes its stream whenever it likes, so what the reserve predicts is stretched by the stream that
+ * runs now (stream_factor, per mille, 1000 with none), and the figures kept from a play are kept as they would be
+ * without the stream they were played with: a stream that has ended gives its room back at once. */
+static uint32_t stream_factor(void);
+static uint32_t scaled(uint32_t v, uint32_t g) { return v * g / 1000u; } /* per mille: no overflow below 4,000 % */
 /* Module picks and removals since the frame readings last held them (machine_registry.c, the effect check below), per
  * mille of a frame: a pick made stopped is judged with every one before it, and a machine swapped out and back stopped
  * by what it adds, once. Eight readings played after the last change, the share holds them all; until then the kept
@@ -150,9 +159,10 @@ static void cpu_note_played(void)
     } else {
         unsigned now = modwerk_machine_pattern();
         if (now != reading_pattern) play_readings = 0, reading_pattern = now, played_since = 0; /* four seconds of this pattern first */
-        if (frame_newest > played_since) played_since = frame_newest;
+        uint32_t g = stream_factor();
+        if (frame_newest * 1000u / g > played_since) played_since = frame_newest * 1000u / g;
         if (++adjust_readings >= 8u) frame_adjust = 0;
-        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest(), played_pattern = now, note_stock();
+        if (++play_readings >= 8u && !frame_adjust) frame_played = frame_longest() * 1000u / g, played_pattern = now, note_stock();
     }
     if (booked != booked_seen) booked_moved = 0;
     booked_seen = booked;
@@ -203,6 +213,8 @@ static uint32_t measured_load(uint32_t gone) /* `gone`: what a pick's predecesso
     int32_t adjust = frame_adjust - (int32_t)gone, kept = (int32_t)(elsewhere ? 0u : frame_played) + adjust, now;
     if (reading_pattern == modwerk_machine_pattern() && (int32_t)played_since - (int32_t)gone > kept)
         kept = (int32_t)played_since - (int32_t)gone;              /* played with the picks since: higher, so honest */
+    int32_t g = (int32_t)stream_factor();                          /* kept without a stream: stretched by the one now */
+    kept = kept * g / 1000, adjust = adjust * g / 1000, gone = gone * (uint32_t)g / 1000u;
     if (modwerk_machine_stopped()) now = (int32_t)frame_newest + (adjust > 0 ? adjust : 0);
     else now = (int32_t)frame_longest() - (int32_t)gone; /* playing, the last four seconds hold what leaves */
     int32_t most = kept > now ? kept : now;
@@ -392,10 +404,12 @@ void modwerk_test_menu(int unused)
 #define RIGHT 0x21
 #define ROWS 4u
 #define MISSING_ROWS 2u /* the missing page: two lines a module, its name and where the project names it */
-int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track); /* fxmap.c */
-/* Where the project names a missing module, as `at` holds it (fxmap.c's first find: kind, bank, Part, track):
- * "BANK A PART 1 T2", with SAVED before PART when only a Part's saved copy names it (a RELOAD brings it back).
- * `brief` leaves out "BANK " for a line that would not fit. */
+int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *slot, unsigned *places); /* fxmap.c */
+static char *number(char *s, uint32_t v);
+/* Where the project names a missing module, as `at` holds it (fxmap.c's first find: kind, bank, Part, track, then an
+ * effect's slot, 1 FX1 or 2 FX2, and how many more places name it): "BANK A PART 1 T2 FX1 +2", with SAVED before
+ * PART when only a Part's saved copy names it (a RELOAD brings it back). `brief` leaves out "BANK " for a line that
+ * would not fit. */
 static void missing_where(char *out, const uint8_t *at, int brief)
 {
     char *s = out;
@@ -404,8 +418,19 @@ static void missing_where(char *out, const uint8_t *at, int brief)
         *s++ = (char)('A' + at[1]);
         for (const char *t = at[0] == 2 ? " SAVED PART " : " PART "; *t; ) *s++ = *t++;
         *s++ = (char)('1' + at[2]), *s++ = ' ', *s++ = 'T', *s++ = (char)('1' + at[3]);
+        if (at[4]) *s++ = ' ', *s++ = 'F', *s++ = 'X', *s++ = (char)('0' + at[4]);
+        if (at[5]) *s++ = ' ', *s++ = '+', s = number(s, at[5]);
     }
     *s = 0;
+}
+/* fxmap.c's find as missing_where reads it: the slot, and the places past the first (at most 255). */
+static uint8_t fx_where(unsigned id, uint8_t *at)
+{
+    unsigned bank = 0, part = 0, slot = 0, places = 0;
+    at[0] = (uint8_t)modwerk_fxmap_where(id, &bank, &part, &slot, &places);
+    at[1] = (uint8_t)bank, at[2] = (uint8_t)part, at[3] = (uint8_t)(slot & 7u), at[4] = (uint8_t)(at[0] ? 1u + slot / 8u : 0u);
+    at[5] = (uint8_t)(places > 256u ? 255u : places ? places - 1u : 0u);
+    return at[0];
 }
 unsigned modwerk_dsp_missing_list(uint8_t *out, unsigned first, unsigned most);
 int modwerk_fxmap_describe(unsigned id, uint32_t *module, uint16_t *layout, char *name); /* fxmap.c */
@@ -425,7 +450,7 @@ __attribute__((weak)) int modwerk_machine_where_module(uint32_t module, unsigned
 static uint8_t missing[4 + 24 * MODWERK_MISSING_MAX];
 /* Where each listed module is named, refreshed with the list while the page shows: a lookup reads every bank's Parts,
  * too slow for each drawing (the open page already costs about 0.8 ms a composition, OCTATRACK_HARDWARE_TRAPS.md). */
-static uint8_t missing_at[MODWERK_MISSING_MAX][4];
+static uint8_t missing_at[MODWERK_MISSING_MAX][6];
 static fx_set missing_told, missing_last; /* the handles the page told about; the list at the last check */
 static uint32_t machines_told, machines_last; /* the same for the machines, by their map entry */
 /* Listed modules switched off on MODULES (modset.c's shelf): named by the project, not gone. They never open the page
@@ -465,9 +490,10 @@ static void missing_locate(void)
 {
     for (unsigned i = 0; i < missing[3]; ++i) {
         unsigned bank = 0, part = 0, track = 0, k;
-        missing_at[i][0] = (uint8_t)(listed_machine(i, &k) ? modwerk_machine_where(k, &bank, &part, &track)
-                                                           : modwerk_fxmap_where(missing[4 + 24 * i], &bank, &part, &track));
+        if (!listed_machine(i, &k)) { fx_where(missing[4 + 24 * i], missing_at[i]); continue; }
+        missing_at[i][0] = (uint8_t)modwerk_machine_where(k, &bank, &part, &track);
         missing_at[i][1] = (uint8_t)bank, missing_at[i][2] = (uint8_t)part, missing_at[i][3] = (uint8_t)track;
+        missing_at[i][4] = missing_at[i][5] = 0; /* a machine sits on the track itself */
     }
 }
 static void missing_check(void)
@@ -562,6 +588,40 @@ static uint32_t tuned(uint32_t id, uint32_t compiled)
     uint32_t value, unused;
     return modwerk_status_module_cost(id, &value, &unused) ? value : compiled;
 }
+/* What an open stream adds to the frame interrupt's work, per mille of it: to a computer, and with the computer also
+ * playing into the unit (INPUTS). On the owner's MKII a 16-channel stream stretched a playing Part's frames 1.19 to 1.23
+ * times on one boot and 1.63 to 1.76 times on another (2 channels: 1.43); playing into the unit added nothing measurable
+ * on top. Both are the 1.65 a Part dropped renders at. The set's `stock` carries newer ones: one per width (up to 2, 4,
+ * 8, 16 and 20 channels, STREAM_WIDTH_ID + 0-4), read from the active profile's EP3 IN packet, else one for every stream.
+ * shortcut: a full-speed stream (one pair) takes its high-speed profile's width; measured live as the stream opens
+ * would follow the module's own cost too. */
+#define STREAM_ID 0xffffffe0u
+#define STREAM_DUPLEX_ID 0xffffffe1u
+#define STREAM_WIDTH_ID 0xffffffe2u
+#ifndef MW_STREAM
+#define MW_STREAM 650u
+#endif
+#ifndef MW_STREAM_DUPLEX
+#define MW_STREAM_DUPLEX 650u
+#endif
+#ifdef MODWERK_HOST
+unsigned modwerk_test_streams, modwerk_test_stream_bytes;
+static unsigned modwerk_usb_function_streams(void) { return modwerk_test_streams; }
+static unsigned modwerk_usb_function_stream_bytes(void) { return modwerk_test_stream_bytes; }
+#else
+__attribute__((weak)) unsigned modwerk_usb_function_streams(void) { return 0; } /* usb_function.c, when the base has it */
+__attribute__((weak)) unsigned modwerk_usb_function_stream_bytes(void) { return 0; }
+#endif
+static uint32_t stream_factor(void)
+{
+    unsigned streams = modwerk_usb_function_streams();
+    if (!streams) return 1000u;
+    uint32_t single = streams & 2u ? tuned(STREAM_DUPLEX_ID, MW_STREAM_DUPLEX) : tuned(STREAM_ID, MW_STREAM);
+    unsigned channels = modwerk_usb_function_stream_bytes() / 48u;  /* 4 bytes and 12 frames a high-speed packet */
+    if (!channels) return 1000u + single;
+    unsigned width = channels <= 2u ? 0u : channels <= 4u ? 1u : channels <= 8u ? 2u : channels <= 16u ? 3u : 4u;
+    return 1000u + tuned(STREAM_WIDTH_ID + width, single);
+}
 static uint32_t frame_line(void)
 {
     uint32_t line = tuned(FRAME_LINE_ID, 0u); /* a line of 0 would refuse every pick */
@@ -653,7 +713,7 @@ unsigned modwerk_machine_part_machines(uint8_t tracks[8], uint32_t cost[8], cons
 volatile uint32_t mw_frame_hushes; /* for diagnostics: each pattern that began with modules gone (diag.c's `brake`, flagged) */
 fx_set modwerk_machine_deadline_effects(void); /* machine_registry.c: effects that can bypass dry (ev_frame_deadline's rest) */
 void modwerk_fxmap_name(unsigned id, char *out); /* fxmap.c: 16 bytes */
-static unsigned hush_notice_left, hush_playing, hush_count;
+static unsigned hush_notice_left, hush_playing, hush_count, hush_usb; /* hush_usb: without the USB stream nothing would go */
 static char hush_names[2][17];
 static void hush_name(unsigned n, const char *name)
 {
@@ -685,8 +745,10 @@ static unsigned hush_pick(unsigned p, unsigned most, unsigned tracks, unsigned i
         fc[j] += c;
     }
     unsigned hushed = 0, count = 0;
+    uint32_t g = stream_factor();
+    if (named) hush_usb = g > 1000u && scaled(load, g) > HUSH_CEILING && load <= HUSH_CEILING;
     for (unsigned i = 0; i < 8u; ++i) fx->w[i % MODWERK_FX_WORDS] = 0;
-    while (load > HUSH_CEILING) {
+    while (scaled(load, g) > HUSH_CEILING) {
         unsigned best = 16u, machine = 0; uint32_t most_cost = 0;
         for (unsigned k = 0; k < nm; ++k) if (mc[k] > most_cost) most_cost = mc[k], best = k, machine = 1;
         if (!machine) for (unsigned k = 0; k < nf; ++k) if (fc[k] > most_cost) most_cost = fc[k], best = k;
@@ -725,7 +787,7 @@ uint32_t modwerk_status_hush(fx_set fx[2], uint16_t id[2])
 }
 uint32_t modwerk_status_frame_load(void)
 {
-    uint32_t measured = measured_load(0), stock = reserved(8u, 16u, 0);
+    uint32_t measured = measured_load(0), stock = scaled(reserved(8u, 16u, 0), stream_factor());
     return measured > stock ? measured : stock;
 }
 /* The memory after a module loads (owner, 11 October 2026): picked onto a track, or accepted over USB. A box with
@@ -857,6 +919,7 @@ static const char *switch_why(uint32_t result)
     if (result == MODSET_SWITCH_PLAYING) return "STOP PLAYBACK FIRST";
     if (result == MODSET_SWITCH_PARTIAL) return "RESTART FIRST";
     if (result == MODSET_SWITCH_SYNC) return "SYNC ON THE SITE FIRST";
+    if (result == MODSET_SWITCH_CARD) return "CARD BUSY: TRY AGAIN";
     if (result == MODSET_SWITCH_FULL || result == MODSET_SWITCH_REFUSED + RUNTIME_FULL) return "NO ROOM FOR IT";
     if (result == MODSET_SWITCH_REFUSED + RUNTIME_IN_USE) return "IN USE ON A TRACK";
     if (result == MODSET_SWITCH_REFUSED + RUNTIME_MEMORY) return "NO MEMORY FOR IT";
@@ -905,11 +968,9 @@ static const char *still_used(uint32_t id)
         uint32_t module = 0;
         uint16_t layout;
         char name[16];
-        unsigned bank = 0, part = 0, track = 0;
-        if (!fx_in(used, k) || !modwerk_fxmap_describe(k, &module, &layout, name) || module != id) continue;
-        uint8_t at[4] = {(uint8_t)modwerk_fxmap_where(k, &bank, &part, &track), 0, 0, 0};
-        if (!at[0]) continue;
-        at[1] = (uint8_t)bank, at[2] = (uint8_t)part, at[3] = (uint8_t)track;
+        uint8_t at[6];
+        if (!fx_in(used, k) || !modwerk_fxmap_describe(k, &module, &layout, name) || module != id || !fx_where(k, at)) continue;
+        at[4] = at[5] = 0; /* the line as it was: a longer one falls back to USED IN ANOTHER PART */
         char *s = text;
         for (const char *t = "USED IN "; *t; ) *s++ = *t++;
         missing_where(s, at, 1);
@@ -918,7 +979,7 @@ static const char *still_used(uint32_t id)
     /* A machine: the project's machine map knows where (machine_registry.c); a Part of this bank naming it refuses the
      * switch, so this is another bank's. */
     unsigned bank = 0, part = 0, track = 0;
-    uint8_t at[4] = {(uint8_t)modwerk_machine_where_module(id, &bank, &part, &track), 0, 0, 0};
+    uint8_t at[6] = {(uint8_t)modwerk_machine_where_module(id, &bank, &part, &track), 0, 0, 0, 0, 0};
     if (!at[0]) return 0;
     at[1] = (uint8_t)bank, at[2] = (uint8_t)part, at[3] = (uint8_t)track;
     char *s = used_text;
@@ -1286,9 +1347,11 @@ static void missing_page(unsigned char *frame)
             *s = 0;
             label(X0 + 6u, Y0 + 14u + 18u * i, marked);
         } else label(X0 + 6u, Y0 + 14u + 18u * i, name[0] ? name : "UNNAMED MODULE");
+        unsigned x = X0 + 10u;
         missing_where(where, missing_at[missing_top + i], 0);
-        if (TEXT_WIDTH(FONT, -1, where) > (int)(X1 - 14u - (X0 + 10u))) missing_where(where, missing_at[missing_top + i], 1);
-        label(X0 + 10u, Y0 + 22u + 18u * i, where);
+        if (TEXT_WIDTH(FONT, -1, where) > (int)(X1 - 14u - x)) missing_where(where, missing_at[missing_top + i], 1);
+        if (TEXT_WIDTH(FONT, -1, where) > (int)(X1 - 14u - x)) x = X0 + 6u; /* "B SAVED PART 4 T4 FX2 +1": the indent's room */
+        label(x, Y0 + 22u + 18u * i, where);
     }
     if (missing_top) arrow(frame, X1 - 10u, Y0 + 14u, 1);
     if (missing_top + MISSING_ROWS < n) arrow(frame, X1 - 10u, Y0 + 14u + 9u * (ROWS - 1u) + 3u, 0);
@@ -1469,7 +1532,7 @@ void modwerk_status_machine_refused(unsigned track, const char *label)
  * the DSP; a CPU row, solid what the unit takes now and shaded what the pick adds, both of what fits (`whole`), its
  * figure the now, never past 100 %; for a module only on the ColdFire, what makes room, or PART IS BUSY (`busy`) when
  * the Part's own sound is why. `used`, `add`, `whole` in the same unit; `dsp` the pick's DSP cycles, 0 none. */
-enum { WHY_CHANGE, WHY_PART, WHY_UNUSED }; /* CPU FULL's last line (`busy`) */
+enum { WHY_CHANGE, WHY_PART, WHY_UNUSED, WHY_USB }; /* CPU FULL's last line (`busy`) */
 static void cpu_refusal_box(unsigned slot, unsigned machine, const char *label, uint32_t used, uint32_t add, uint32_t whole, unsigned busy, uint32_t dsp)
 {
     if ((open != CLOSED && open != MEMORY) || slot >= (machine ? 8u : 16u)) return;
@@ -1491,6 +1554,7 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
 }
 uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
 extern volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks, mw_wake_mille; /* machine_registry.c */
+extern volatile uint32_t mw_cpu_line_refusals, mw_cpu_pick_label, mw_cpu_pick_why; /* ... which check refused, and what */
 extern volatile uint8_t mw_cpu_track_refusals[8]; /* machine_registry.c: each track's refusals, for diag.c's CPU record */
 /* MWMS v2's frame cost table (loader.c, set_package.h): what each measured module adds to the frame interrupt, per mille
  * of a frame, on each further track or slot it takes (its `each`) and on top for the first of the Part (its `first`
@@ -1589,23 +1653,26 @@ int modwerk_status_pick_busy(unsigned slot, unsigned machine, const char *label,
     /* A further instance on a track that trigs brings its own trig starts: about 2.5 % over its each (a second Amiga on
      * C03 added 4.3, 5.7 and 7.4 against its each of 4, twins 27, 30 and 29). */
     if (machine && further && slot < 8u && modwerk_machine_trigging() >> slot & 1u) add += MEASURED_SAMPLE;
-    uint32_t measured = measured_load(gone) + add, line = frame_line();
+    uint32_t g = stream_factor(), stretched = scaled(add, g); /* what it takes beside a USB stream that runs now */
+    uint32_t measured = measured_load(gone) + stretched, line = frame_line();
     /* A machine's first instance on a track that plays a sample takes that render's place in the measured frame too:
      * 2.5 %, measured (twin 27, C03's T1: Amiga added 24.1 against its curve's 26.6 on an empty track), a further one
      * nothing (the second added 4.3 against its each of 4; a machine's own trig starts cost about the sample's). The
      * reserve's 7 % is the stacked ladder's, measured there. shortcut: one figure for every machine. */
-    if (machine && !further && !gone && slot < 8u && modwerk_machine_trigging() >> slot & 1u) measured = measured > MEASURED_SAMPLE ? measured - MEASURED_SAMPLE : 0u;
+    if (machine && !further && !gone && slot < 8u && modwerk_machine_trigging() >> slot & 1u) measured = measured > scaled(MEASURED_SAMPLE, g) ? measured - scaled(MEASURED_SAMPLE, g) : 0u;
     uint32_t sample, base = reserved(machine ? slot : 8u, machine ? 16u : slot, &sample);
     uint32_t net = !machine || further ? add : add > sample ? add - sample : 0u; /* a first machine in a sample's place */
-    uint32_t stock = base + net, load = measured > stock ? measured : stock;
+    uint32_t stock = scaled(base + net, g), load = measured > stock ? measured : stock;
     if (load < line) return 0;
-    uint32_t before = load > add ? load - add : 0u, rest = modwerk_machine_rest_booked();
+    uint32_t before = load > stretched ? load - stretched : 0u, rest = modwerk_machine_rest_booked();
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u), ++mw_cpu_track_refusals[slot & 7u];
-    uint32_t reserve = stock_reserve(0), modules = stock - net - reserve; /* the Part's modules but this pick, and at rest */
-    /* Why, in the box: modules installed and used nowhere, when their cost at rest is more than the pick's and what
-     * leaves no room; the Part's own sound; else the Part's modules, one of which to change. */
-    unsigned why = rest > add && load - rest < line ? WHY_UNUSED : before > reserve + modules ? WHY_PART : WHY_CHANGE;
-    cpu_refusal_box(slot, machine, label, before, add, line, why, dsp);
+    /* Why, in the box: a USB stream the pick would fit without; modules installed and used nowhere, when their cost at
+     * rest is more than the pick's and what leaves no room; the Part's own sound; else the Part's modules, one of which
+     * to change. */
+    unsigned why = g > 1000u && load * 1000u / g < line ? WHY_USB : rest > add && load - scaled(rest, g) < line ? WHY_UNUSED :
+                   before > scaled(base, g) ? WHY_PART : WHY_CHANGE;
+    mw_cpu_line_refusals = mw_cpu_line_refusals + 1u, mw_cpu_pick_label = modwerk_label4(label), mw_cpu_pick_why = (machine ? 1u << 16 : 0u) | (slot & 0xffu) << 8 | why;
+    cpu_refusal_box(slot, machine, label, before, stretched, line, why, dsp);
     return 1;
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
@@ -1695,7 +1762,8 @@ static void refused_box(unsigned char *frame)
         if (refused_dsp_add) /* as DSP FULL draws its DSP row */
             label(23u, 34u, "DSP"), share_bar(frame, 45u, 34u, 40, 6, refused_dsp + refused_dsp_add, refused_dsp_add), percent(89u, 34u, refused_dsp + refused_dsp_add);
         label(23u, y, "CPU"), share_bar(frame, 45u, y, 40, 6, cpu + part, part), percent(89u, y, cpu);
-        if (!refused_dsp_add) label(23u, 42u, refused_busy == WHY_UNUSED ? "UNUSED MODULES" : refused_busy == WHY_PART ? "PART IS BUSY" : "CHANGE ONE FIRST");
+        if (!refused_dsp_add) label(23u, 42u, refused_busy == WHY_USB ? "USB AUDIO STREAM" : refused_busy == WHY_UNUSED ? "UNUSED MODULES" :
+                                              refused_busy == WHY_PART ? "PART IS BUSY" : "CHANGE ONE FIRST");
         return;
     }
     const int32_t add = (int32_t)refused[4];
@@ -1869,7 +1937,7 @@ static void status_draw(unsigned char *frame)
         fill(frame, 13u, 18u, 114u, 45u, 0);
         outline(frame, 13u, 18u, 114u, 45u);
         static char more[17];
-        centred(23u, "PATTERN IS BUSY");
+        centred(23u, hush_usb ? "USB AUDIO STREAM" : "PATTERN IS BUSY");
         centred(34u, hush_names[0]);
         if (hush_count > 2u) {
             unsigned n = hush_count - 1u, i = 0;

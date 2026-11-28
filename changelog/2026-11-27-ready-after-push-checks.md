@@ -1,0 +1,1 @@
+Development: `npm run pr:ready` and the developer workflow now say to mark a draft ready only once the push's checks have started. A ready sent together with the push could leave only the draft's check run, which then failed with "This run checked the PR as a draft".

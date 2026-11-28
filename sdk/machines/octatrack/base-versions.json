@@ -166,7 +166,13 @@
   {
    "version": "0.8.3",
    "identities": [
-    "a7771b082b3a0750799d4d0859ef74bb2bbea681af68750e14d3dbfa1ec63b9b"
+    "5af431bd3e42d93ce766747f4ed77505df88ce3b49e26ff7ce4dc32af7795829"
+   ]
+  },
+  {
+   "version": "0.8.4",
+   "identities": [
+    "fe4e7623ee2dde7a6486f4699e5ecfe7ac4c7f43419abe80ba7de5ca2776d8a6"
    ]
   }
  ]

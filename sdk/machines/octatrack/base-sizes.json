@@ -461,11 +461,21 @@
   },
   {
    "base": "0.8.3",
-   "identity": "a7771b082b3a0750799d4d0859ef74bb2bbea681af68750e14d3dbfa1ec63b9b",
+   "identity": "5af431bd3e42d93ce766747f4ed77505df88ce3b49e26ff7ce4dc32af7795829",
    "layouts": {
     "off": {
-     "main": 1351618,
-     "container": 835468
+     "main": 1353795,
+     "container": 837892
+    }
+   }
+  },
+  {
+   "base": "0.8.4",
+   "identity": "fe4e7623ee2dde7a6486f4699e5ecfe7ac4c7f43419abe80ba7de5ca2776d8a6",
+   "layouts": {
+    "off": {
+     "main": 1354737,
+     "container": 838968
     }
    }
   }

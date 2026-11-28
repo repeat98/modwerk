@@ -106,11 +106,19 @@ The later module release needs its own PR and the owner's library-copy approval.
 
 ## Review follow-up — 28 November 2026
 
-Board claims are linked to PR2248: hook octatrack/0 denotes the existing DSP
-dispatcher, not a new ColdFire event; the two DSP-region keys are
+Board claims are linked to PR2248: dsp-region octatrack/returning-processor-chain reserves the existing DSP
+dispatcher extension, with no ColdFire event claim; the two state-region keys are
 octatrack/returning-y-800-bff-both and octatrack/returning-y-cc1-fef-both.
 The three legacy-test assumptions are corrected only on the separate branch
 fix/resident-tests-ledger, tested on both current main and the processor extension.
 That fix needs its own review/merge before the full processor check can be green.
 The private RAM pair named above still contains both proposals. Splitting the
 source does not turn it into physical qualification of the eventual merged Base.
+
+The processor source is merged with current cumulative Base0.8.4 at
+3d7054f7826447e66dd2cd3dbf05be7fab3d4a52, including Modwerk's own Python
+firmware builder. Native returning contract, board and generated transport
+fixtures pass on that merged source. Earlier private bundle identities above
+do not name a build of this merge. A new compiler/structural build and exact
+unit qualification are still required. The erroneous octatrack/0 hook claim
+was released as requested; the chain claim uses the DSP-region kind.

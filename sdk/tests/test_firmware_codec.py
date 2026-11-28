@@ -205,39 +205,37 @@ class Install(unittest.TestCase):
     def tearDown(self):
         self.folder.cleanup()
 
-    def test_the_checkout_runs_with_this_codec_and_none_of_its_own(self):
+    def test_the_builder_is_served_and_a_checkout_is_never_read(self):
         run = python(self.checkout, '''
             firmware_codec.use_elekloader(CHECKOUT)
-            assert sys.path[0] == CHECKOUT
+            assert CHECKOUT not in sys.path
             from elekloader import formats, devices
-            import elekloader, elekloader.codec.aplib
-            from firmware_codec import aplib, elz, transport, coldfire
-            assert (formats.aplib, formats.elz, formats.transport, devices.decoder()) == (aplib, elz, transport, coldfire)
-            assert elekloader.codec.aplib is aplib and elekloader.isa.coldfire is coldfire
-            assert aplib.__spec__.name == 'firmware_codec.aplib'
-            assert not any(m.__file__.startswith(CHECKOUT) for n, m in sys.modules.items()
-                           if n.startswith(('elekloader.codec', 'elekloader.isa')) and getattr(m, '__file__', None))
+            import elekloader, elekloader.codec.aplib, elekloader.isa.coldfire, firmware_builder.formats
+            from firmware_codec import aplib, coldfire
+            assert formats is firmware_builder.formats and elekloader.codec.aplib is aplib and elekloader.isa.coldfire is coldfire
+            assert not any(getattr(m, '__file__', None) and m.__file__.startswith(CHECKOUT) for m in list(sys.modules.values()))
             firmware_codec.use_elekloader(CHECKOUT)  # again: idempotent
             print('ok')
         ''')
         self.assertEqual((run.returncode, run.stdout.strip()), (0, 'ok'), run.stderr)
 
-    def test_refuses_a_codec_the_checkout_already_imported(self):
+    def test_the_reference_checkout_refuses_a_codec_it_already_imported(self):
         (self.checkout / 'elekloader/codec/__init__.py').write_text('')
         (self.checkout / 'elekloader/codec/aplib.py').write_text('')
         run = python(self.checkout, '''
             sys.path.insert(0, CHECKOUT)
             import elekloader.codec.aplib
-            firmware_codec.use_elekloader(CHECKOUT)
+            firmware_codec.use_reference_checkout(CHECKOUT)
         ''')
         self.assertNotEqual(run.returncode, 0)
         self.assertIn('was imported before firmware_codec.install_in_elekloader()', run.stderr)
 
-    def test_inputs_name_this_package_and_not_the_checkouts_codec(self):
+    def test_inputs_name_the_builder_and_this_package(self):
         found = firmware_codec.inputs(self.checkout)
-        self.assertEqual(sorted(found), sorted(['upstream/elekloader/__init__.py', 'upstream/elekloader/formats.py',
-                                                'upstream/elekloader/devices.py'] +
+        self.assertEqual(sorted(found), sorted(['sdk/firmware_builder/' + p.relative_to(firmware_codec.BUILDER).as_posix() for p in firmware_codec.builder_inputs()] +
                                                ['sdk/firmware_codec/' + p.name for p in firmware_codec.sources()]))
+        self.assertIn('sdk/firmware_builder/link.py', found)
+        self.assertFalse(any(name.startswith('upstream/') for name in found))
         self.assertEqual(found['sdk/firmware_codec/aplib.py'], sha((ROOT / 'sdk/firmware_codec/aplib.py').read_bytes()))
         self.assertEqual({p.name for p in firmware_codec.sources()},
                          {'__init__.py', 'aplib.py', 'elz.py', 'transport.py', 'coldfire.py'})
@@ -245,7 +243,7 @@ class Install(unittest.TestCase):
     @unittest.skipUnless((UPSTREAM / 'elekloader/syx.py').is_file(), 'needs the pinned Elekloader checkout')
     def test_the_pinned_checkout_runs_with_this_codec(self):
         run = python(UPSTREAM, '''
-            firmware_codec.use_elekloader(CHECKOUT)
+            firmware_codec.use_reference_checkout(CHECKOUT)
             from elekloader import elek, formats, syx
             from elekloader.devices import devices
             import firmware_codec.aplib, firmware_codec.elz, firmware_codec.transport, firmware_codec.coldfire
@@ -302,7 +300,9 @@ class EveryScript(unittest.TestCase):
                     users.append(name)
                     if name in RECEIPT_PINNED:
                         continue
-                    if 'use_elekloader(' not in text:
+                    # the parity tests load the reference checkout on purpose, to compare the builder with it
+                    reference = name.startswith('sdk/tests/test_own_builder_') and 'use_reference_checkout(' in text
+                    if 'use_elekloader(' not in text and not reference:
                         problems.append(name + ': imports elekloader without firmware_codec.use_elekloader()')
                 problems += ['%s:%d: %s' % (name, text.count('\n', 0, m.start()) + 1, why)
                              for why, pattern in AROUND.items() for m in pattern.finditer(text)

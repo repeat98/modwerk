@@ -17,7 +17,8 @@ struct mw_controller_binding {struct mw_controller_identity identity;uint32_t ge
 struct mw_controller_slot {struct mw_controller_binding binding;unsigned state,job_state[2];};
 struct mw_controller_write_policy {struct mw_controller_identity identity;};
 struct runtime_module {struct {unsigned cycles,kind;} dsp;};
-static unsigned closed,mask[2]={16,16},mask_known=3,modwerk_controller_lease_seen;
+static unsigned closed,mask[2]={16,16},mask_known=3;
+static volatile uint8_t modwerk_controller_lease_seen; /* actual controller ABI */
 static struct {struct mw_controller_slot slots[2];} registry;
 #define REGISTRY registry
 static struct {unsigned quiesce;} want[2];
