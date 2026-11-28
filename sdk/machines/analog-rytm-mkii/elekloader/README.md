@@ -88,9 +88,9 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 | Variant | Identity | `.run` | `.bss` | Relocations |
 |---|---|---|---|---|
 | irpina's release `core-ar2-0.7.elemod` (the reference) | — | 10,692 | 1,368 | 103 |
-| plain | `bd31e2a6` | 10,772 | 1,368 | 150 |
-| voices | `2569452d` | 14,900 | 2,832 | 227 |
-| send-bus | `2350612c` | 33,022 | 4,172 | 645 |
+| plain | `14aab2f2` | 10,772 | 1,368 | 150 |
+| voices | `eef7dba0` | 14,900 | 2,832 | 227 |
+| send-bus | `bd5afe4f` | 33,022 | 4,172 | 645 |
 
 Every variant has a 110-byte `.boot`. Each keeps the exports, imports, tables, contributions and sites of the variant
 it follows (plain `6dce8111`, voices `187b5126`, send-bus `9dc04c4c`, built from core-ar2 0.7's source with the same
