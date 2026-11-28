@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "rave-stab",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-28T01:30:00Z",
+  "imageSha256": "d7697d672a32fb3176ab582ad00127d64a9af2ad4d80c7decf0418a955058c7b",
+  "build": "Modwerk's linker (scripts/link-image.mjs): the Modwerk base's voices variant 879c6c23 + this folder's SY RAVE 0.1.0-experimental alone, on stock OS 1.74, --version RV07",
+  "unit": {
+    "model": "Analog Rytm MKII",
+    "method": "RAM-booted over the development base's USB link (rytm_link.py ramboot, image crc de8e3c72); nothing written to the flash",
+    "screen": "rytm_link.py's 128x64 screen read at 3x, unmodified"
+  },
+  "conditions": "The unit's own kit K001 on the SD track, sequencer stopped, GLOBAL > REMOTE CTRL on. Keys and encoders sent over the link (rytm_link.py steps).",
+  "captures": [
+    {
+      "path": "media/machine-list.png",
+      "plan": "cd sdk/machines/analog-rytm-mkii/tools; rytm_link.py steps 'FUNC+SRC w600 DOWN*26 UP*3 w500 png:machine-list.png' (the SD track; the cursor from SD HARD down past DISABLE, then up to SY RAVE)",
+      "sha256": "14e3f91306beabcd1fea5c534de10c10dbf6aa1649b2ed1460cf281d7d170660"
+    },
+    {
+      "path": "media/synth-page.png",
+      "plan": "cd sdk/machines/analog-rytm-mkii/tools; rytm_link.py steps 'YES w2800 png:synth-page.png' (right after the machine-list plan)",
+      "sha256": "21a4887c9775ab29de9c825e600bde5f96be4d698c45941b17b8f45c7cd2f159"
+    },
+    {
+      "path": "media/chord-name.png",
+      "plan": "cd sdk/machines/analog-rytm-mkii/tools; rytm_link.py steps 'encC+4 w40' forty times, then 'w100 png:chord-name.png' (after a few larger turns had left CHD at 0)",
+      "sha256": "454ae318bb0e98c61d9bafe735e746262b252007fca945e5024819e5cc933d6c"
+    }
+  ]
+}
