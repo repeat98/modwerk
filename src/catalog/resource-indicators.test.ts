@@ -131,7 +131,7 @@ describe('module resource gauges', () => {
       expect(moduleResourceIndicators(outputMatrix)[0].benchmark?.value).toBe('13.1% of a frame added with ALL routes in MATRIX mode')
     } else {
       expect(moduleResourceIndicators(outputMatrix)[1].status).toBe('Estimated')
-      expect(moduleResourceIndicators(outputMatrix)[1].hardware).not.toBe(true)
+      expect(moduleResourceIndicators(outputMatrix)[1]).not.toMatchObject({ hardware: true })
       expect(moduleResourceIndicators(outputMatrix)[0].benchmark).toBeUndefined()
     }
     expect(moduleResourceIndicators(bbd)[1]).toMatchObject({
@@ -162,7 +162,7 @@ describe('module resource gauges', () => {
       expect(moduleResourceIndicators(analog)[1]).toMatchObject({ value: '+5.6 pp', status: 'Measured · T1–4' })
     else {
       expect(moduleResourceIndicators(analog)[1].status).toBe('Estimated')
-      expect(moduleResourceIndicators(analog)[1].hardware).not.toBe(true)
+      expect(moduleResourceIndicators(analog)[1]).not.toMatchObject({ hardware: true })
     }
     // the active reading is bound to its version; a base-bound module's booked cost is the base's, whatever version it runs
     expect(moduleResourceIndicators({ ...analog, version: '99.0.0' })[0]).toMatchObject({ value: '24.4%', benchmark: undefined })
@@ -249,7 +249,7 @@ describe('module resource gauges', () => {
     const sidechain = MODULE_DOCUMENTS.find(module => module.id === 'sidechain-compressor')!
     if (!activePackageRecorded(sidechain.id)) {
       expect(moduleResourceIndicators(sidechain)[1].status).toBe('Estimated')
-      expect(moduleResourceIndicators(sidechain)[1].hardware).not.toBe(true)
+      expect(moduleResourceIndicators(sidechain)[1]).not.toMatchObject({ hardware: true })
       expect(moduleResourceIndicators(sidechain)[1].value).not.toBe('+1.8 pp')
       return
     }
