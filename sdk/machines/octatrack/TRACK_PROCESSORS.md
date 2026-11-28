@@ -76,7 +76,7 @@ during a trial.
 
 ## Evidence and limits
 
-The prepared private Base identity is
+An earlier combined private Base identity is
 57cf36e6af98cd7215f3bd6e62d4049266c4e6544ed13ef2d4b7c97c07eaa3e8.
 The separate M/S package SHA is
 c974ee3929ced354fbb37942d83f27698ec25b04704a9c1ba13cfbc5462821af.
@@ -102,7 +102,7 @@ this chain. Older private hardware results do not qualify this exact build.
 The maintainer requested scheduling after0.8.3. Exact-build live-FX/both-core,
 CPU/load, persistence, normal-set and longer Undo qualification remain pending;
 an older1,562-second Undo failure is unresolved. Keep the proposal a draft.
-The later module release needs its own PR and the owner's library-copy approval.
+The later module release needs its own PR; the owner has approved its library copy.
 
 ## Review follow-up — 28 November 2026
 
@@ -119,6 +119,16 @@ The processor source is merged with current cumulative Base0.8.4 at
 3d7054f7826447e66dd2cd3dbf05be7fab3d4a52, including Modwerk's own Python
 firmware builder. Native returning contract, board and generated transport
 fixtures pass on that merged source. Earlier private bundle identities above
-do not name a build of this merge. A new compiler/structural build and exact
-unit qualification are still required. The erroneous octatrack/0 hook claim
+do not name a build of this merge. A fresh official compiler/structural build
+now passes; exact unit qualification is still required. The erroneous octatrack/0 hook claim
 was released as requested; the chain claim uses the DSP-region kind.
+
+Current processor-only Base identity:
+001accdcb3b2cddad67aed8fc1c950f58e0e4c6eab9e7bf781b7b2b78c10d8f3.
+The packed container is849464 of851712 bytes (2248 spare); MAIN is1363236
+of1572864. The browser and native firmware images match exactly. Strict
+stock-free package scanning passes. Analog BD's recipe was recaptured against
+the actual new Base imports; its source hashes and six reconstruction copies
+are unchanged. Base-bound packages were regenerated and rebuild identically
+against this new binding. This build contains no M/S module or settings-action
+API, and has not run on a unit. It is not the old combined RAM pair.
