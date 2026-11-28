@@ -88,6 +88,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [STATISTICS.md](STATISTICS.md): the admin statistics.
 - [WEB_PUSH.md](WEB_PUSH.md): device push notifications.
 - [FIRMWARE_DOWNLOAD_API.md](FIRMWARE_DOWNLOAD_API.md): building and saving firmware without a browser.
+- [HOSTED_BASES.md](HOSTED_BASES.md): the prebuilt base images the owner hosts, for makers who agreed, and how he publishes them.
 - [EXTERNAL_PROJECTS.md](EXTERNAL_PROJECTS.md): the Other projects directory.
 - [SOCIAL-PREVIEW.md](SOCIAL-PREVIEW.md): sharing preview artwork.
 - [COMMUNITY_OPERATIONS.md](COMMUNITY_OPERATIONS.md): running the community: registrations, moderation, [email sendouts](COMMUNITY_OPERATIONS.md#preparing-an-email-sendout).
@@ -101,6 +102,8 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 History, not current instructions.
 
 - [What hurts Octatrack musicians](verification/2026-11-27-octatrack-ux-findings.md): refusals, dropped renders, late frames, sync failures and stalls on bases 0.8 to 0.8.2, recounted from shared diagnostics, Discord and the issues, 27 November 2026.
+- [Syntakt native sequencer contracts](verification/2026-11-27-syntakt-sequencer.md): native step, queued request and accepted-trigger layers, ownership and bounded test evidence for a shared provider; [OS 1.42 guard ledger](verification/2026-11-27-syntakt-sequencer-guards.json).
+- [Syntakt static findings ledger](verification/2026-11-27-syntakt-static-findings-ledger.md): the original findings retained when the sequencer update made room in the main report.
 - The Analog BD Undo recording and BBD Delay buffer check are in the [Octatrack 0.7.10 test record](verification/2026-11-19-octatrack-0710-checks.md).
 - [Unused module cost](verification/2026-11-20-octatrack-unused-module-cost.md): what 24 installed, unused modules cost the frame interrupt, module by module, and resting machines, 20 November 2026.
 - The DSP stall on a project load with modules restored from the card, and its 0.7.11 fix, are in the [project-load record](verification/2026-11-19-octatrack-project-load-dsp.md).

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import DN2 from '../../../sdk/machines/digitone-ii/elekloader/device.json' with { type: 'json' }
-import { DIGITAKT_MK2, devices, identify, linkable } from '../../../vendor/elekloader/kit/src/devices.ts'
+import { DIGITAKT_MK2, devices, identify, linkable } from '../elektron/devices.ts'
 import { ELE3_DEVICES } from '../elektron/ele3'
 import { LINK_DEVICES } from '../elektron/elemod'
 import { CARRIED_DEVICES, carriedDevice, carryDevices } from './carried-devices'

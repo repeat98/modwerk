@@ -1,7 +1,7 @@
 import { useId, useState } from 'react'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import type { LoadReading } from '../engine/elekloader/upload-wire'
-import { useOctatrackLoad } from '../hooks/useOctatrackLoad'
+import { droppedText, useOctatrackLoad } from '../hooks/useOctatrackLoad'
 import { loadPath, percent } from '../config/octatrack-load'
 import './octatrack-load.css'
 
@@ -16,7 +16,7 @@ const SERIES: { key: keyof Pick<LoadReading, 'cpu' | 'tracks1to4' | 'tracks5to8'
 /** The Status panel's load: three meter cells (the hardware meter windows now) and a cell with the last five minutes,
  * as a graph or a table in the same space. Recorded on every page while the unit is idle (recordLoad). */
 export function OctatrackLoad({ link, active }: { link: OctatrackLink | null; active: boolean }) {
-  const { points, notice, clear, now, ready, unsupported } = useOctatrackLoad(link)
+  const { points, notice, clear, now, ready, unsupported, dropped } = useOctatrackLoad(link)
   const last = points.at(-1)
   const latest = active && ready && last && now - last.at <= 6000 ? last.reading : null
   const off = !link?.getState().identity?.canSubmit || unsupported
@@ -26,7 +26,7 @@ export function OctatrackLoad({ link, active }: { link: OctatrackLink | null; ac
     <Meter area="hub-cell-dsp2" title="DSP tracks 5–8 · working now" value={latest?.tracks5to8} peak={latest?.peak5to8} />
     <LoadChart points={points} now={now} series={SERIES} onClear={clear}
       off={off ? unsupported ? 'Live load needs a newer Modwerk base than the one on your Octatrack.' : 'Connect your Octatrack over USB to see its live load.' : undefined}
-      note={notice || (latest ? 'Every two seconds while your Octatrack is connected. The CPU runs the screen, the sequencer and the modules’ code; each DSP runs the sound, machines and effects of four tracks. Without any module an Octatrack reads about 45 % CPU stopped and 60 to 75 % playing; from 85 % it takes no further module machine or effect.' : 'Waiting for live load. Syncing takes priority.')} />
+      note={notice || (dropped ? droppedText(dropped) : latest ? 'Every two seconds while your Octatrack is connected. The CPU runs the screen, the sequencer and the modules’ code; each DSP runs the sound, machines and effects of four tracks. Without any module an Octatrack reads about 45 % CPU stopped and 60 to 75 % playing; from 85 % it takes no further module machine or effect.' : 'Waiting for live load. Syncing takes priority.')} />
   </>
 }
 

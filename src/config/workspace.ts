@@ -5,7 +5,7 @@ import { compareModuleVersions } from '../catalog/versions'
 import { isDigiDevice, resolveDigiSelection, withoutRetiredDigiModules } from '../devices/digi-mods'
 import { isZoomSetDevice, resolveZoomSelection } from '../devices/zoom-effects'
 import { parseUsbAudioConfiguration, USB_AUDIO_MODULE, type UsbAudioConfiguration } from './usb-audio'
-import type { Lock as StorageLock } from '../../vendor/elekloader/kit/src/store.ts'
+import type { Lock as StorageLock } from '../engine/elektron/store.ts'
 export type { StorageLock }
 
 export const DEFAULT_DEVICE = 'octatrack'

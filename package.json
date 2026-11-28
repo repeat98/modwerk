@@ -14,6 +14,7 @@
     "changelog": "node scripts/changelog.mjs",
     "preview": "vite preview --host 127.0.0.1",
     "firmware:download": "node scripts/firmware-download.mjs",
+    "base:publish": "node scripts/base-publish.mjs",
     "firmware:api": "node scripts/firmware-api.mjs",
     "mcp": "node scripts/frontend-mcp.mjs",
     "lint": "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/",

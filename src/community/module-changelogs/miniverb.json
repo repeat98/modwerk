@@ -5,8 +5,7 @@
     "changes": [
       "Fixes Mini Verb on T3 and T7 writing into Sidechain Compressor's memory, which could leak one track's audio into another in a card build with both.",
       "Mini Verb and Sidechain Compressor can be picked together in a card build again. The sound, controls and saved projects are unchanged.",
-      "Over USB the base still keeps Mini Verb off T3 and T7 while Sidechain Compressor is installed.",
-      "Known issue: this version is not yet tested on hardware."
+      "Over USB the base still keeps Mini Verb off T3 and T7 while Sidechain Compressor is installed."
     ]
   },
   {
@@ -17,7 +16,7 @@
       "Controls, defaults and saved projects are unchanged.",
       "Beta base update: picking Mini Verb no longer shows DSP MEMORY FULL just because the effects of the bank's other Parts don't all fit.",
       "No longer offered beside Sidechain Compressor: on T3 and T7 a build with both could leak one track's audio into another.",
-      "Known issue: not yet tested on hardware, and it is not confirmed that the THRU noise reported in #428 is gone."
+      "Known issue: it is not confirmed that the THRU noise reported in #428 is gone."
     ]
   },
   {
@@ -26,7 +25,7 @@
     "changes": [
       "Fixes clipping at hot input levels when MIX is between dry and wet. MIX 32 is still 25% wet and MIX 0 still fully dry.",
       "The reverb, controls and saved settings are unchanged; output that did not clip can differ by a tiny amount.",
-      "Known issue: not yet tested on hardware, and it is not confirmed that this fixes the THRU noise reported in #428.",
+      "Known issue: it is not confirmed that this fixes the THRU noise reported in #428.",
       "Media only: adds an audio preview, recorded with 0.2.0 before this fix."
     ]
   },
@@ -36,8 +35,7 @@
     "changes": [
       "Moves MIX from upper-right encoder C to lower-right encoder F and adds TONE above it.",
       "TONE is neutral at 64; darker settings low-pass the wet output and brighter settings high-pass it. The feedback tank and DAMP are unchanged.",
-      "After updating: old MIX values, locks, scenes and LFO destinations on slot C now drive TONE. Set TONE back to 64 and move MIX settings and automation to slot F.",
-      "Known issue: this version is not yet tested on hardware."
+      "After updating: old MIX values, locks, scenes and LFO destinations on slot C now drive TONE. Set TONE back to 64 and move MIX settings and automation to slot F."
     ]
   },
   {

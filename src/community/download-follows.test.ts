@@ -9,9 +9,9 @@ afterEach(()=>vi.resetAllMocks())
 describe('download update subscriptions',()=>{
   it('follows each downloaded module once using machine-specific IDs, independent of usage consent',async()=>{
     vi.mocked(post).mockResolvedValue({enabled:true})
-    expect(await followDownloadedModules(['miniverb','miniverb','digitakt-digihealth','digitone-digihealth','unknown',PAUSED_MODULE_IDS.find(id => !isBetaModule(id))!])).toEqual({followed:3,failed:false})
+    expect(await followDownloadedModules(['miniverb','miniverb','digitakt-digiperform','digitone-kitbank','unknown',PAUSED_MODULE_IDS.find(id => !isBetaModule(id))!])).toEqual({followed:3,failed:false})
     expect(vi.mocked(post).mock.calls).toEqual([
-      ['/modules/miniverb/download',{}],['/modules/digitakt-digihealth/download',{}],['/modules/digitone-digihealth/download',{}],
+      ['/modules/miniverb/download',{}],['/modules/digitakt-digiperform/download',{}],['/modules/digitone-kitbank/download',{}],
     ])
   })
   it('follows a beta download only with beta access', () => asBeta(async () => {

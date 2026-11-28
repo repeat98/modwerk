@@ -1,0 +1,1 @@
+Development: the Octatrack device driver (`scripts/device.mjs`) can press **TEMPO** on a connected unit, so host scripts and SCOPE-style panel automation can use HOLD plus TEMPO without hand-pressing the key.

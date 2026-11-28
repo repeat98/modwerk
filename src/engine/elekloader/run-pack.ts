@@ -2,7 +2,7 @@
 // The base's .run stored packed in MAIN, as build_core.py stores it (sdk/machines/octatrack/elekloader/run_pack.py):
 // the kit's own section format in place of the plain copy, which the boot decodes (run_unpack.s). The same kit
 // packer as build_core.py's, so the browser's .bin stays build_core.py's byte for byte.
-import { equal } from '../../../vendor/elekloader/kit/src/bytes.ts'
+import { equal } from '../elektron/bytes.ts'
 import { packSection } from '../elektron/codec/pack.ts'
 import { depackSection } from '../elektron/codec/depack.ts'
 
