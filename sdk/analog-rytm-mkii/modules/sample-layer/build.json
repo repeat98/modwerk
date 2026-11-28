@@ -81,7 +81,7 @@
   "claims": [
     "ui:FUNC + SMPL: SAMPLE ENGINE list (stock: sample list, still on knob D)",
     "ui:UP, DOWN, YES, NO and knobs A-H while the SAMPLE ENGINE list is open",
-    "ui:SAMPLE pages with TRANSIENTS or GRANULAR: one page, SMPL stays on it",
+    "ui:SAMPLE page for TRANSIENT (one page)",
     "param:hidden ids 447-456 and 458",
     "audio:sample stream before the voice mixer"
   ],
