@@ -321,7 +321,8 @@ const octatrack: FaqSection[] = [
           <ul>
             <li><strong>Skipped at startup:</strong> PROJ or FUNC was held while it started. The modules load at the next start.</li>
             <li><strong>Held at startup:</strong> the last start crashed or froze while loading your modules. They load at the next start.</li>
-            <li><strong>Saved by another base,</strong> or the saved modules couldn’t be read: this happens after a base change. Sync your modules again.</li>
+            <li><strong>Not all loaded at startup</strong> after a base update: a few modules are built for one exact base (Analog BD, Sidechain Compressor, Output Matrix, CC Map, Recorder Loop, USB Audio). The others load by themselves. Sync your modules to put those back.</li>
+            <li><strong>Saved by another base,</strong> or the saved modules couldn’t be read: on a base before 0.8.4 this happens after every base change. Sync your modules again.</li>
           </ul>
         </>,
       },

@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * Host check of modset.c with a pretend card: accepted packages are saved to the two files in turn, a
  * removal drops its module, the newest whole set is installed after a boot, a damaged newer file leaves the
- * older one, and another base's set or a held PROJ or FUNC installs nothing. A Keep joins the set only as exactly the
+ * older one, and a held PROJ or FUNC installs nothing. Another base's set restores but for the modules linked to that
+ * base, and only while this base has saved none of its own. A Keep joins the set only as exactly the
  * trial's whole-set identity, and its save reports unsaved and failed until the card has it. A start that crashed,
  * stopped or hung while its restore ran leaves the package it was installing out, or holds the set once. A module
  * switched off on the unit is unloaded and waits on the shelf, across power cycles, until it is switched on or a host
@@ -170,16 +171,20 @@ int main(void)
     /* The newer file damaged: the older one, with both modules. */
     card[0][HEADER + 9] ^= 1; boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == RESTORED && installed == 2);
-    /* Nothing installed: FUNC held, PROJ held (from power-on, where FUNC opens the Startup Menu), or a set another
-     * base wrote. PART, beside PROJ in its row, installs as usual. */
+    /* Nothing installed: FUNC held or PROJ held (from power-on, where FUNC opens the Startup Menu). PART, beside PROJ
+     * in its row, installs as usual. */
     card[0][HEADER + 9] ^= 1; HOLD(FUNC); boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == SKIPPED && !installed);
     LET_GO(); HOLD(PROJ); modwerk_test_said = 0; boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == SKIPPED && !installed && modwerk_test_said && !strcmp(modwerk_test_said, "MODULES SKIPPED"));
     LET_GO(); HOLD(PART); boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == RESTORED && installed == 1);
+    /* Sets another base wrote: the newer one restores. With one of this base's own, that one, though it is older. */
     LET_GO(); card[0][20] ^= 1; card[1][20] ^= 1; boot(); modwerk_modset_service();
-    CHECK(modwerk_modset_result == FOREIGN && !installed);
+    CHECK(modwerk_modset_result == RESTORED && installed == 1 && !memcmp(set + 20, modwerk_base_digest, 32));
+    card[1][20] ^= 1; boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 2);
+    card[1][20] ^= 1;
     /* A closed gate waits: no restore, no save. */
     card[0][20] ^= 1; card[1][20] ^= 1; boot(); modwerk_test_gate = 0; modwerk_modset_service();
     CHECK(!restored && !installed);
@@ -440,13 +445,29 @@ int main(void)
 
     /* ADOPT TEST (development bases): the card's set another base wrote restores, read-only: that start writes no set. */
     for (unsigned i = 0; i < 2; ++i) card[i][20] ^= 1;
-    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == FOREIGN && !installed);
+    boot(); modwerk_modset_service(); CHECK(!adopted && modwerk_modset_result == RESTORED && installed == 1);
     modwerk_modset_adopt_test(1); modwerk_test_adopt[1] ^= 1; /* another base's request */
-    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == FOREIGN && !installed);
+    boot(); modwerk_modset_service(); CHECK(!adopted && modwerk_modset_result == RESTORED && installed == 1);
     modwerk_modset_adopt_test(1); written = writes;
     boot(); modwerk_modset_service(); CHECK(adopted && modwerk_modset_result == RESTORED && installed == 1); /* the sync's set: 0x303 */
     accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVE_FAILED && pending && writes == written);
-    modwerk_modset_adopt_test(0); boot(); modwerk_modset_service(); CHECK(!adopted && modwerk_modset_result == FOREIGN && !installed);
+    modwerk_modset_adopt_test(0); boot(); modwerk_modset_service(); CHECK(!adopted && modwerk_modset_result == RESTORED && installed == 1);
+
+    /* A base update. The set the last base saved restores but for the modules linked to that base (Analog BD), with
+     * nothing written; the sync's Analog BD for this base joins it, and the next start restores this base's own set,
+     * whatever generation the old base's file in the other slot claims. */
+    memset(card_bytes, 0, sizeof card_bytes); memset(card_shelf_bytes, 0, sizeof card_shelf_bytes);
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == NONE_SAVED);
+    make(0, 0x701u, 0); make(1, 0xabdb1445u, 0);
+    accept(0, 48); accept(1, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED);
+    unsigned old = card_bytes[0] ? 0 : 1;
+    card[old][20] ^= 1; modwerk_test_said = 0; refused_m = refused_c = 0; written = writes; boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == REFUSED && installed == 1 && prepared == 1 && ids[0] == 0x701u && writes == written);
+    CHECK(said("SYNC FOR ALL MODULES") && refused_m == 0xabdb1445u && refused_c == BOUND_LEFT);
+    CHECK(modwerk_modset_count == 1 && used() == HEADER + 56 && !memcmp(set + 20, modwerk_base_digest, 32));
+    accept(1, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED && card_bytes[!old]);
+    put32(card[old] + 8, 99); boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 2);
 
     /* A file the start could not read. Three saves: 0x501 (slot 1), 0x502 too (slot 0), 0x501 replaced (slot 1, newest). */
     memset(card_bytes, 0, sizeof card_bytes); memset(card_shelf_bytes, 0, sizeof card_shelf_bytes);
@@ -479,7 +500,7 @@ int main(void)
     puts("Octatrack module set: saved in turn, removals dropped, the newest whole set restored, damaged and foreign sets and a held PROJ or FUNC refused, "
          "a Keep joined only as the trial's identity and reported unsaved until saved, a start that crashed or stopped while restoring guarded, "
          "modules switched off and on at once and kept off across power cycles, every package's restore outcome listed for a host, "
-         "another base's set restored read-only on a development request, "
+         "another base's set restored but for the modules linked to it, read-only on a development request, "
          "and a file a start could not read reported damaged and written before a save counted.");
     return 0;
 }

@@ -264,10 +264,10 @@ static void read_errors(void)
     CHECK(keep_then_restart(&kept) && writes_to[newer] > w0 && writes_to[newer ^ 1u] == w1);
     CHECK(modwerk_modset_result == RESTORED && state() == kept);
 
-    /* One file unreadable, the other another base's set: FOREIGN, the Keep goes into the unreadable one and wins. */
+    /* One file unreadable, the other another base's set: that one restores, the Keep goes into the unreadable one and wins. */
     two_sets(2, &newer);
     card[newer ^ 1u][20] ^= 1, open_error[newer] = -5; power_on();
-    CHECK(modwerk_modset_result == FOREIGN && !running_count);
+    CHECK(modwerk_modset_result == RESTORED && running_count);
     w1 = writes_to[newer ^ 1u];
     CHECK(keep_then_restart(&kept) && writes_to[newer ^ 1u] == w1 && modwerk_modset_result == RESTORED && state() == kept);
 

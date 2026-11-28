@@ -2,7 +2,7 @@
 // What the base's restore at startup did with each saved module (USB request 43, elekloader/modset.c), in words: the
 // unit itself says only SOME MODULES FAILED or MODULES LEFT OUT.
 import { sha } from '../elektron/bytes.ts'
-import { RESTORE_GUARD, type RestoreOutcome, type RestoreReport } from './upload-usb.ts'
+import { RESTORE_BOUND, RESTORE_GUARD, type RestoreOutcome, type RestoreReport } from './upload-usb.ts'
 
 /** The self-test record's `saved` after a start that loaded only part of the card's set (modset.c REFUSED, LEFT_OUT). */
 export const PARTLY_RESTORED = [6, 10] as const
@@ -14,6 +14,7 @@ const RUNTIME_CHECK_DSP = 4
 export function restoreReason(outcome: Pick<RestoreOutcome, 'refusal' | 'check' | 'bytes' | 'largestFree'>): string {
   switch (outcome.refusal) {
     case RESTORE_GUARD: return 'The last start crashed or froze while loading it, so it was left out. A sync tries it again.'
+    case RESTORE_BOUND: return 'It is built for one exact base, and the base changed. A sync installs the one for this base.'
     case 1: return 'It was built for another Modwerk base. Sync it again.'
     case 2: return outcome.check === RUNTIME_CHECK_DSP ? 'It needs more DSP memory than was free. Remove a module, then sync.'
       : `It needs ${kb(outcome.bytes)} of module memory` + (outcome.largestFree ? `; the largest free block was ${kb(outcome.largestFree)}` : '') + '. Remove a module, then sync.'

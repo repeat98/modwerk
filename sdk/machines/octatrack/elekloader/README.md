@@ -330,11 +330,11 @@ The set therefore still names exactly what runs, and every identity a host check
 baseline) holds without a rule for modules that are off. The shelf is saved in the same file, after the set's sectors:
 a set with a shelf is version 2 and is whole only with a whole shelf of its own generation behind it, so a write cut
 short falls back to the other file's older set and shelf (`sdk/tests/runtime_card_shelf.c` cuts the power before every
-sector). The shelf takes its room from the set's, and it goes with the set when another base starts (FOREIGN). A host
+sector). The shelf takes its room from the set's. After a base update the set the last base saved restores but for the modules linked to that base (`base_bound[]`, modset.c: the unit says `SYNC FOR ALL MODULES`, and a sync installs the ones built for this base); its shelf is dropped, since it may hold one of them. A host
 that installs a module that is off switches it on; one that removes it takes it off the shelf. PROJ held at power-on
 skips the set and keeps the shelf. A start that did not load the card's whole set refuses a switch (saving its smaller
 set would lose the rest): `RESTART FIRST` after a skipped or held start, or one the boot guard left a module out of;
-`SYNC ON THE SITE FIRST` after another base's set, a damaged file or a module that failed to load. A module that is off
+`SYNC ON THE SITE FIRST` after a base update that left a module out, a damaged file or a module that failed to load. A module that is off
 is not missing: MISSING marks it (OFF) and YES switches every one on; it opens for one only after a project load, not
 right after the player switched it off, and its track says `<NAME> IS OFF`. Switching off a module another Part names
 says where (`USED IN C SAVED PART 2 T5`).

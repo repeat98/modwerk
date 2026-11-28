@@ -6,8 +6,8 @@
  * Writing and reading use the logger's stock file calls and gate (engine task, card ready, nothing playing or
  * recording, not in USB disk mode). PROJ held from power-on, or FUNC held while the restore runs, skips the restore,
  * so a module that breaks the unit cannot lock it out (owner, 11 November 2026: FUNC held at power-on opens
- * Elektron's Startup Menu instead; an MKI has no PROJ key); so does another base's set (its configuration hash
- * differs) or a damaged file. The boot guard below does it without a key when the last start crashed or stopped
+ * Elektron's Startup Menu instead; an MKI has no PROJ key); so does a damaged file. Another base's set (its
+ * configuration hash differs) restores but for the modules linked to that base (base_bound[] below). The boot guard below does it without a key when the last start crashed or stopped
  * while its restore ran.
  * A file the start could not read in full is not an absent one: what it holds is unknown and may be newer than anything
  * read, so nothing restores from it, the result is DAMAGED, and the next save writes it too before it counts as saved,
@@ -140,7 +140,8 @@ struct guard { uint32_t magic, base, armed, loading, crashes, stalls, fails, gen
 #define GUARD_MAGIC 0x4d574247u /* "MWBG" */
 #define GUARD_SETTLE 600u       /* ticks after the restore with frames moving and nothing recorded: settled */
 #define GUARD_NOTICE 480u       /* ticks from the start: after crash.c's CRASH RECOVERED, which would cover it */
-enum { GUARD_LEFT = 0x100u, GUARD_HELD = 0x101u }; /* diag.c's refusal for the guard's, past the loader's codes */
+enum { GUARD_LEFT = 0x100u, GUARD_HELD = 0x101u, BOUND_LEFT = 0x102u }; /* diag.c's refusal for the guard's and for a
+                                                                         * package linked to another base, past the loader's codes */
 #ifdef MODWERK_HOST
 struct guard modwerk_test_guard;
 uint32_t modwerk_test_crashes, modwerk_test_stalls, modwerk_test_frames;
@@ -505,18 +506,42 @@ static int store(unsigned which)
 }
 #endif
 
-/* A loaded slot that this base wrote whole: 1, else 0 (another base's set is FOREIGN). */
+/* The set survives a base update (owner, 28 November 2026: a unit that starts without its modules after an update
+ * looks broken). Another base's whole set restores when this base has none of its own, package by package through the
+ * loader, as its own does. Left out are only the modules linked to one exact base: they call the base by absolute
+ * address (base_bound.py, the site's `requiredBase`) and a package carries no mark of it, so the base knows them by
+ * module id (the first four bytes of the SHA-256 of the id). A sync installs the ones built for this base. Never take
+ * an id off this list: a card can hold a package from the time its module was linked so
+ * (sdk/tests/test_base_bound_set.py holds the list and the published packages together). The shelf of such a set is
+ * dropped, since it may hold one of them. */
+static const uint32_t base_bound[] = {
+    0x95cff696u, /* sidechain-compressor */
+    0xcaf158b5u, /* output-matrix */
+    0xabdb1445u, /* analog-bassdrum */
+    0x42a1756eu, /* cc-map */
+    0x823e0f45u, /* recorder-loop-fix */
+    0xb1288f29u, /* usb-audio-out-tracks-main-cue */
+};
+static unsigned foreign;   /* this start's set is another base's */
+static uint32_t bound_out; /* its packages left out as linked to that base */
+static int bound(uint32_t id)
+{
+    for (unsigned i = 0; i < sizeof base_bound / sizeof *base_bound; ++i) if (base_bound[i] == id) return 1;
+    return 0;
+}
+/* A loaded slot that reads whole: 1 this base's, 2 another base's, else 0. */
 static int whole(int n)
 {
     uint8_t digest[MU_DIGEST_BYTES];
+    int other = 0;
     if (n < (int)HEADER || (be32(set + 4) != 1u && !(be32(set + 4) == 2u && off_bytes)) || be32(set + 16) != (uint32_t)n) return 0;
-    for (unsigned i = 0; i < 32u; ++i) if (set[20 + i] != modwerk_base_digest[i] && !ADOPTING()) { modwerk_modset_result = FOREIGN; return 0; }
+    for (unsigned i = 0; i < 32u; ++i) if (set[20 + i] != modwerk_base_digest[i] && !ADOPTING()) other = 1;
     mu_sha256(set + HEADER, (uint32_t)n - HEADER, digest);
     for (unsigned i = 0; i < MU_DIGEST_BYTES; ++i) if (digest[i] != set[52 + i]) return 0;
 #if defined MODWERK_DEV || defined MODWERK_HOST
     if (ADOPTING()) adopted = 1;
 #endif
-    return 1;
+    return other ? 2 : 1;
 }
 /* A package the loader refuses BUSY (it names every switch it could not make so) is tried again every half second,
  * ten seconds at most, before it is left out: at power-on Ring SC, the key bus reader, was refused BUSY while a sync
@@ -600,6 +625,11 @@ static void restore_pass(void)
             if (!left_out) left_out = id, left_why = GUARD_LEFT;
             continue;
         }
+        if (foreign && bound(id)) {
+            outcome(count, 2, set + at + 8, length, BOUND_LEFT, 0, 0), ++bound_out;
+            if (!left_out) left_out = id, left_why = BOUND_LEFT;
+            continue;
+        }
         /* The package a crash or a stall would blame: after a stall the loader is shut off and refuses the rest. */
         if (STALLS == g->stalls) g->loading = id;
         if (open && b6->prepare(b6->user, set + at + 8, length) && b6->publish(b6->user) == MU_APPLIED && b6->retire(b6->user)) {
@@ -631,12 +661,12 @@ static void restore_pass(void)
     }
     if (left_out) modwerk_diag_refused(left_out, left_why, left_used, left_largest, left_check);
     restore_count = count;
-    if (installed != count) seal(installed, end);
+    if (installed != count || foreign) seal(installed, end); /* another base's set is this base's from here on */
     modwerk_modset_generation = be32(set + 8), modwerk_modset_count = installed;
     modwerk_modset_result = installed == count ? RESTORED : guarded ? LEFT_OUT : REFUSED;
     if (guarded) notice_at = TICKS, notice_after = GUARD_NOTICE, notice = guarded == 1u ? guard_text : "MODULES LEFT OUT";
     else if (installed && installed == count) notice_at = TICKS, notice = "MODULES LOADED";
-    else SAY(installed ? "SOME MODULES FAILED" : "MODULES NOT LOADED"); /* no engine changes what these say */
+    else SAY(bound_out && installed + bound_out == count ? "SYNC FOR ALL MODULES" : installed ? "SOME MODULES FAILED" : "MODULES NOT LOADED"); /* no engine changes what these say */
     modwerk_diag_set(); /* diag.c: the set this boot runs, in the unit's log */
 }
 /* After a boot: the newest whole set, each package installed as a USB install would be. */
@@ -648,6 +678,10 @@ static void restore(void)
     uint32_t ga = wa ? be32(set + 8) : 0;
     int b = load(1), wb = whole(b);
     uint32_t gb = wb ? be32(set + 8) : 0;
+    /* Another base's set counts only while this base has saved none of its own: an older base's file stays in the other
+     * slot after the first save here, with a higher generation. */
+    if (wa == 1 || wb == 1) { if (wa == 2) wa = 0, ga = 0; if (wb == 2) wb = 0, gb = 0; }
+    foreign = wa == 2 || wb == 2, bound_out = 0;
     unread = (unsigned)(a == LOAD_UNREAD) | (unsigned)(b == LOAD_UNREAD) << 1;
     int hold = guard_check(ga > gb ? ga : gb);
     /* With no whole set the next save goes first to a file this start could not read: when only one could not be read,
@@ -659,6 +693,7 @@ static void restore(void)
         slot = wb && (!wa || gb > ga) ? 1u : 0u;
         if (wa || wb) (void)load(slot); /* its shelf stays, for the page and the next save */
         else off_bytes = 0, slot = first;
+        if (foreign) off_bytes = 0;
         for (unsigned i = 0; i < HEADER; ++i) set[i] = 0;
         put32(set + 8, ga > gb ? ga : gb);
         if (held) { modwerk_modset_result = SKIPPED; SAY("MODULES SKIPPED"); return; }
@@ -667,7 +702,7 @@ static void restore(void)
         return;
     }
     if (!wa && !wb) { /* a file there that did not read whole, or could not be read, is DAMAGED: not "nothing saved" */
-        if (modwerk_modset_result != FOREIGN) modwerk_modset_result = a || b ? DAMAGED : NONE_SAVED;
+        modwerk_modset_result = a || b ? DAMAGED : NONE_SAVED;
         off_bytes = 0, slot = first; /* no set of this base's: its shelf goes with it */
         for (unsigned i = 0; i < HEADER; ++i) set[i] = 0;
         modwerk_diag_set(); /* nothing restored: the log says so */
@@ -680,6 +715,7 @@ static void restore(void)
         put32(set + 8, ga);
         return;
     }
+    if (foreign) off_bytes = 0;
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) restore_outcome(i) = 0;
     restored = 0, left_out = left_why = left_used = left_largest = left_check = 0;
     restore_pass();
@@ -734,7 +770,7 @@ static uint32_t switch_now(uint32_t id, int on)
     if (!GATE()) return MODSET_SWITCH_CARD; /* stopped and rewound: the card, or a recorder row stock kept (#2211) */
     /* Only while the set here is the card's. After a start that skipped, held or left out modules the card still has
      * them all, and saving this start's smaller set over it for a switch would lose them: a restart restores them, a
-     * sync decides them. After a base update (another base's set), a damaged file or a module the restore could not
+     * sync decides them. After a base update that left out a module linked to the old base, a damaged file or a module the restore could not
      * load, a restart comes back the same: only a sync makes the set whole, so the page says that (owner, 16 November
      * 2026). */
     if (modwerk_modset_result == SKIPPED || modwerk_modset_result == HELD || modwerk_modset_result == LEFT_OUT) return MODSET_SWITCH_PARTIAL;

@@ -44,6 +44,9 @@ export const RESTORE_BYTES = 8 + 32 * RESTORE_PAGE
 /** A RESTORE entry's refusal when the boot guard left the module out (the last start crashed or froze loading it), past
  * the loader's own codes (sdk/runtime/loader-refusals.json). */
 export const RESTORE_GUARD = 0x100
+/** A RESTORE entry's refusal when the set was saved by another base and this module is linked to that base (modset.c
+ * BOUND_LEFT): after a base update, every other module loads by itself. */
+export const RESTORE_BOUND = 0x102
 export const SLOTS_BYTES = 24
 /** Where the base lives in the unit's flash (docs/OCTATRACK_TWO_SLOT_BASE.md). `fellBack`: the newest slot's base did
  * not start three times, so the boot stub started the previous one. Null before the base's first look after a start. */

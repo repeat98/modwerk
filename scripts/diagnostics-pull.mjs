@@ -58,7 +58,7 @@ const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
 /** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
 const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down', 'window open', 'meets a buffer'],
-  { 0x100: 'the last start crashed or froze loading it' }) // modset.c's boot guard, past the loader's codes
+  { 0x100: 'the last start crashed or froze loading it', 0x102: 'linked to the base that saved the set' }) // modset.c's boot guard and base update, past the loader's codes
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
 const STATELESS = ['crash', 'stall', 'set', 'base', 'freeze_pc', 'usb_gone', 'detail'] // records that carry no cpu, keys or screen

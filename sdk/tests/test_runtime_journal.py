@@ -135,15 +135,18 @@ int main(void)
         boot(); modwerk_modset_service(); CHECK(nothing_restored());
         accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED);
         boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1);
-        /* The first save after a base change: both slots hold another base's sets. */
+        /* The first save after a base change: both slots hold another base's sets, and the newer one restores (modset.c:
+         * the set survives a base update), again after the torn save. */
         fresh(); accept(0, 48); accept(1, 40); modwerk_modset_service(); accept(2, 36); modwerk_modset_service();
         card[0][20] ^= 1; card[1][20] ^= 1;
-        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == FOREIGN && !installed);
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1);
         memcpy(was, card[1], SET_BYTES);
         accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED); tear(1, at[i], was);
-        boot(); modwerk_modset_service(); CHECK(nothing_restored());
+        /* One of the old base's two sets: the torn slot's, of two modules, when the tear left it whole under the new
+         * generation (the new set is as long as the one it replaced). */
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && (installed == 1 || installed == 2));
         accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED);
-        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1);
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2);
         /* This base's whole set in the other slot: the torn one is passed over, and the next save goes over it. */
         fresh(); accept(0, 48); modwerk_modset_service(); accept(1, 40); modwerk_modset_service();
         boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2);
@@ -163,7 +166,7 @@ int main(void)
         # The site writes the module set as the base's own file (src/engine/elekloader/card-set.ts) for the card
         # route. card-set-fixture.hex is that writer's output, held byte for byte by card-set.test.ts; here the
         # base's real code takes it: over an older set the unit saved itself, with the unit's later saves winning
-        # in turn, and not on another base. On test_modset.c's pretend card, as above.
+        # in turn, and on another base too (none of its modules is linked to a base). On test_modset.c's pretend card.
         site = bytes.fromhex((ROOT / 'sdk/tests/card-set-fixture.hex').read_text().strip())
         fixture = (ELEK / 'test_modset.c').read_text()
         source = fixture[:fixture.index('int main(void)')] + 'static const uint8_t site_file[] = {' + ','.join(map(str, site)) + '};' + r'''
@@ -193,10 +196,10 @@ int main(void)
     /* Damage that higher-generation import: slot one's saved three-module set is still recoverable. */
     card[0][HEADER + 9] ^= 1; boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == RESTORED && installed == 3);
-    /* Alone on the card of a unit that runs another base: nothing is installed. */
+    /* Alone on the card of a unit that runs another base: both install, since neither is linked to a base. */
     memset(card, 0, sizeof card); memset(card_bytes, 0, sizeof card_bytes);
     copy_to_card(); card[0][20] ^= 1; boot(); modwerk_modset_service();
-    CHECK(modwerk_modset_result == FOREIGN && !installed);
+    CHECK(modwerk_modset_result == RESTORED && installed == 2);
     if (failures) { fprintf(stderr, "%u card set checks failed\n", failures); return 1; }
     return 0;
 }
