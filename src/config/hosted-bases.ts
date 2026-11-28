@@ -1,4 +1,4 @@
-// Hosted base images (docs/HOSTED_BASES.md): the Octatrack base without the musician's own OS file. An image counts
+// Hosted base images (docs/HOSTED_BASES.md): a Modwerk base without the musician's own OS file. An image counts
 // only when its identity is the one this site publishes for the layout and its bytes match the manifest's SHA-256;
 // the unit's IDENTIFY then confirms the identity once it runs.
 import type { HostedBase, HostedBaseManifest } from '../../server/base-images'
@@ -18,13 +18,19 @@ export function hostedOctatrackEntry(images: readonly HostedBase[], layout?: Bas
     image.identity === (step ? STEP_IDENTITIES[wanted] : baseLayout(image.identity) === wanted ? image.identity : undefined))
 }
 
+/** A hosted image's bytes, refused unless their size and SHA-256 are the manifest's. `own` names the musician's file. */
+export async function downloadHostedBase(entry: HostedBase, own: string) {
+  const response = await apiFetch('/bases/' + entry.machine + '/' + entry.identity)
+  if (!response.ok) throw new Error(response.status === 401 || response.status === 403 ? 'Sign in with a verified account to download the prebuilt base.' : 'The prebuilt base did not download. Try again, or choose your own ' + own + '.')
+  const buffer = await response.arrayBuffer()
+  const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', buffer)), byte => byte.toString(16).padStart(2, '0')).join('')
+  if (buffer.byteLength !== entry.size || sha256 !== entry.sha256) throw new Error('The prebuilt base arrived damaged. Try again, or choose your own ' + own + '.')
+  return { buffer, sha256 }
+}
+
 export async function hostedOctatrackBase(layout?: BaseLayout, step = false): Promise<BaseImage> {
   const entry = hostedOctatrackEntry(await hostedBases(), layout, step)
   if (!entry) throw new Error('Modwerk has no prebuilt base for this yet. Choose your own OS 1.40C file instead.')
-  const response = await apiFetch('/bases/octatrack/' + entry.identity)
-  if (!response.ok) throw new Error(response.status === 401 || response.status === 403 ? 'Sign in with a verified account to download the prebuilt base.' : 'The prebuilt base did not download. Try again, or choose your own OS 1.40C file.')
-  const buffer = await response.arrayBuffer()
-  const sha256 = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', buffer)), byte => byte.toString(16).padStart(2, '0')).join('')
-  if (buffer.byteLength !== entry.size || sha256 !== entry.sha256) throw new Error('The prebuilt base arrived damaged. Try again, or choose your own OS 1.40C file.')
-  return { buffer, sha256, base: entry.identity }
+  return { ...await downloadHostedBase(entry, 'OS 1.40C file'), base: entry.identity }
 }
+

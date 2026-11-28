@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Owner only (docs/HOSTED_BASES.md): build the Octatrack base images this checkout publishes from your own OS 1.40C
-// file, with the browser's own path (published-base.ts), and upload each with its manifest entry to the private
+// Owner only (docs/HOSTED_BASES.md): build the base images this checkout publishes from your own OS file, with the
+// browser's own path (published-base.ts for the Octatrack, Modwerk's builder with no modules for the others), and upload each with its manifest entry to the private
 // modwerk-base-images bucket through your wrangler login. Images go to a private temporary folder, removed afterwards;
 // nothing enters the checkout. Run it from a checkout of the deployed revision.
 //
 //   npm run base:publish -- --stock OCTATRACK_OS1.40C.bin [--dry-run]
+//   npm run base:publish -- --machine digitakt-ii|analog-rytm-mkii|model-cycles --stock OS.syx [--dry-run]
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -15,11 +16,16 @@ import { buildPublishedBase } from '../src/engine/elekloader/published-base.ts'
 import { baseLayout, buildLayout } from '../src/engine/elekloader/base-variants.ts'
 import { firmwareFilename } from '../src/config/firmware-filename.ts'
 import { USB_AUDIO_PACKAGED } from '../src/config/usb-audio.ts'
+import { Bridge } from '../src/engine/elektron/builder-bridge.ts'
+import { sha } from '../src/engine/elektron/bytes.ts'
+import { carryDevices } from '../src/engine/elekloader/carried-devices.ts'
+import { baseIdentity, planBuild } from '../src/engine/elekloader/machine-build.ts'
 
 const BUCKET = 'modwerk-base-images', MANIFEST = 'manifest.json'
 const root = fileURLToPath(new URL('../', import.meta.url))
-const { values: args } = parseArgs({ options: { stock: { type: 'string' }, 'dry-run': { type: 'boolean', default: false } } })
-if (!args.stock) throw new Error('Usage: npm run base:publish -- --stock OCTATRACK_OS1.40C.bin [--dry-run]')
+const KIT_MACHINES = ['digitakt-ii', 'analog-rytm-mkii', 'model-cycles']
+const { values: args } = parseArgs({ options: { machine: { type: 'string', default: 'octatrack' }, stock: { type: 'string' }, 'dry-run': { type: 'boolean', default: false } } })
+if (!args.stock || ![...KIT_MACHINES, 'octatrack'].includes(args.machine)) throw new Error('Usage: npm run base:publish -- [--machine octatrack|' + KIT_MACHINES.join('|') + '] --stock OS-FILE [--dry-run]')
 
 const assets = join(root, 'src/engine/assets'), current = USB_AUDIO_PACKAGED ? assets : join(assets, 'linked-audio-0.7.11')
 const files = { false: { package: join(current, 'octatrack-base.elemod'), variants: join(current, 'octatrack-base-variants.json'), fills: join(current, 'octatrack-base-fills.json') },
@@ -42,8 +48,29 @@ export async function publishedImages(stock) {
   return images
 }
 
+/** A machine whose modules link into the OS (DigiBuildPanel): the base is the page's build with no modules, in the
+ * page's default display version, from the core whose identity base-binding.json pins. */
+export async function kitBaseImages(machine, stock, name) {
+  carryDevices()
+  const bridge = new Bridge(), loaded = await bridge.setStock({ name }, stock)
+  if (!loaded.ok) throw new Error(loaded.error)
+  const plan = planBuild(machine, loaded.os, []), identity = baseIdentity(machine, [])
+  if (!plan.core || plan.core.sha256 !== identity) throw new Error('This OS file builds no published ' + machine + ' base (OS ' + loaded.os + '). Choose the OS the base is built for.')
+  const core = new Uint8Array(readFileSync(join(root, 'vendor/elekloader/catalog', plan.core.file)))
+  const added = bridge.addCore({ name: plan.core.file, sha256: plan.core.sha256 }, core)
+  if (added.error || added.ok === false) throw new Error(added.error)
+  const enabled = ['/work/core/' + plan.core.file], version = loaded.dev.default_version
+  const named = bridge.version({ enabled, version })
+  if (!named.ok) throw new Error(named.error)
+  const built = await bridge.build({ enabled, version, name: named.name, store: null })
+  if (!built.ok) throw new Error(built.error)
+  const image = built.files[0], digest = sha(image.data)
+  // Named like the Octatrack's (firmware-filename.ts): the machine, base and the identity's first digits.
+  return [{ entry: { machine, identity, release: loaded.os, version, sha256: digest, size: image.data.length, file: 'Modwerk-' + machine + '-base-' + identity.slice(0, 8) + '.syx' }, bin: image.data }]
+}
+
 const stock = new Uint8Array(readFileSync(args.stock))
-const images = await publishedImages(stock)
+const images = args.machine === 'octatrack' ? await publishedImages(stock) : await kitBaseImages(args.machine, stock, args.stock.split('/').pop())
 for (const { entry } of images) console.log(`${entry.file}: identity ${entry.identity}, sha256 ${entry.sha256} (${entry.size} bytes)`)
 if (args['dry-run']) process.exit(0)
 

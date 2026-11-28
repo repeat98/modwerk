@@ -5,7 +5,7 @@ import { needMember } from './auth'
 import { HttpError, response } from './security'
 
 export const BASE_MANIFEST_KEY = 'manifest.json'
-export interface HostedBase { machine: string; identity: string; sha256: string; size: number; file: string; step?: boolean; layout?: string }
+export interface HostedBase { machine: string; identity: string; sha256: string; size: number; file: string; step?: boolean; layout?: string; release?: string; version?: string }
 export interface HostedBaseManifest { schema: 1; images: HostedBase[] }
 const IMAGE = /^\/api\/bases\/([a-z0-9-]{1,40})\/([a-f0-9]{64})$/
 export const baseImageKey = (image: Pick<HostedBase, 'machine' | 'identity'>) => image.machine + '/' + image.identity
