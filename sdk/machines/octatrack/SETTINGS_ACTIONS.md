@@ -30,3 +30,8 @@ code natively, with native platform facts substituted. It covers original
 settings/presets and action behavior, repeat YES, retained row, refreshed value,
 stale epoch and no battery write or installation replay. No firmware, emulator
 or DSP executes. Current upstream port is not physically qualified.
+
+This source-only proposal targets base/octatrack-next. The cumulative draft
+owns the Base version, generated package and release notes; this API does not
+publish a parallel Base. Run pr:ready with --base-branch base/octatrack-next.
+Exact-build menu and lifecycle qualification remains pending on the unit.
