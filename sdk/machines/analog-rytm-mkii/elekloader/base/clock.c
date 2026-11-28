@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Modwerk's Analog Rytm MKII base: the sequencer's time for the send effects (mw_fx_clock, modwerk/fx.h).
 //
 // It is read as Retrig Grid reads it, never kept by a clock of its own: the sequencer's 24 PPQN pulse, whose

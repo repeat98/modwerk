@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* Fixed-point helpers for digital voices (modwerk/voice.h) on the Rytm's ColdFire, with a
  * host model for testing the same C off the unit (build with -DMW_DSP_HOST).
  *

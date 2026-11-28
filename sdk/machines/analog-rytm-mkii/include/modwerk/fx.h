@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /* Modwerk's Analog Rytm MKII base: the send effects' list. The base owns the send bus, its return, the SEND and
  * SEND FX pages, the kit's effect and values, their p-locks and a work area; a send effect is a module that
  * contributes one record to the table mw_fx (build.json: "contribute": [{"to": "mw_fx", "data": "my_fx"}]).
