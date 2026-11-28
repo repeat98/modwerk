@@ -143,7 +143,10 @@ development twin `4c7eb79b` RAM-booted over the flashed base `eb667962`
 Package `5c88a76b…`, twin `43ac24652a89f28b`, author's project on the MKII.
 The author saved the project with SEQ installed, power-cycled, reloaded the
 project, and opened SEQ on a track that had written rhythms: PULS, ROT, LANE
-and depths matched the state before save. The stock-flow rows from
+and depths matched the state before save. After the power cycle the unit ran
+the flashed release base `eb667962` (no development USB). For the reload check
+the author RAM-booted twin `43ac24652a89f28b` again; SEQ stayed in the kept
+module set on the card, so the project load did not need a new trial. The stock-flow rows from
 `docs/TEST_PROCEDURE.md` (project copy and save with the module kept) passed
 on the panel.
 
