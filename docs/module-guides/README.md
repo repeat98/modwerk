@@ -41,7 +41,7 @@ In the library, categories describe the instrument function a musician wants to 
 - *Declare conflicts; never hope.* Put what you cannot share in `compatibility.conflicts` and in the resource claims (FX2 ids, caves, hook sites, DSP data ranges). The ledger refuses collisions by name. A declared conflict never makes an overlap with another module acceptable: the [cross-compatibility gate](#cross-compatibility) refuses it anyway. Analog BD admits only its reviewed DSP companions (`analogBdCompanions`), subject to actual placement; an effect that builds beside the stock FX2 effects is named in `FITS_BESIDE_STOCK_FX2` (`src/catalog/selection-conflicts.ts`). The library reads the same conflicts to flag a module on its card, and offer a swap, before anyone adds it (`src/catalog/add-blocks.ts`), so a declared conflict needs no extra interface work.
 - *Leave your declared bytes as installed.* The base checks every byte a poke or a symbol ref wrote before it installs, replaces or removes a module; a byte changed at run time (text written into a poked string) makes it refuse every later change as busy until a power cycle. Keep what changes in your own memory and point the stock reference at it with a `SymbolRef`. Before you poke a stock string, check that no other reference points inside it: compilers share string tails, and a poked `"... %d"` emptied every number drawn with the shared `"%d"` (Songbook, 23 November 2026).
 - *Appear everywhere from the manifest.* The `sdk/catalog.json` entry (`id`, `version`, `addedAt`) puts the module in the library, the configurator and its module page. Add `presentation/thumbnail.svg` (320×192) or hand-drawn art in `ModulePreview.tsx`, and `resources.impact`.
-- *Survive saved work.* Saved configurations pin module versions, and saved Octatrack projects store knob bytes. A new version must load what an old one saved, or the README says exactly what breaks and how to migrate.
+- *Survive saved work.* Every update loads and plays what an earlier version saved. A change that cannot ships as a new module ([updates keep saved work](#updates-keep-saved-work)).
 - *Read a project's own file once it is the project in use.* Loading another project (PROJECT > CHANGE), stock's project directory still names the last project at `ev_banks_load` and at `ev_banks_loaded`; the new name is only in the load job's record until the load is over. Read the file once the project name in use is the new one, or in a card job of your own after the load (Songbook, 24 November 2026).
 - *Use the same documentation contract.* README sections, a tutorial of at least three steps, TESTING.md, real black-and-white screenshots. See [MODULE_QUALIFICATION.md](../MODULE_QUALIFICATION.md).
 - *Ship by the same CI.* Every PR gets the quick check. Only code changes get the Docker compile, the Windows check and a version bump; documentation and media edits need none.
@@ -75,6 +75,29 @@ A **minor change to a stock flow** is allowed when the module cannot do its job 
 | Screenshots of the real LCD | `scripts/capture-module-ui.py` ([guide](../MODULE_UI_CAPTURES.md)) |
 
 Most of these need a native toolchain and your own original OS 1.40C kept outside the repository ([SDK README](../../sdk/README.md#octatrack-native-development)). Say in TESTING.md which you ran.
+
+## Updates keep saved work
+
+A module id has one live version. The next build or sync gives every player the latest version, and their saved projects, Parts and sets then run on it; a saved set records the version it was made with but never holds it back. So an update must leave what players made sounding and working as it did.
+
+**Fine in an update:**
+
+- Bug fixes, including ones that change the sound to what the module was meant to do (clipping, aliasing, a dead knob). The release notes name each one.
+- Lower CPU or memory use with the same sound.
+- New controls after the existing ones, and new modes, pages or options that change nothing until a player picks them.
+- A new default for fresh instances, and clearer descriptions.
+
+**Breaking, so it ships as a new module:**
+
+- Removing, renaming, moving or replacing a control, or changing what its values mean: its range (`count`), its value labels, its scale or curve.
+- A clearly different sound at the same settings: another algorithm, voicing, filter, saturation or gain staging.
+- Changing what the module's saved data means.
+
+Ask yourself: would someone who loads a project they saved last month hear a difference they did not choose, or have to set something again? Then it is breaking. Reading old values and mapping them so old projects play the same keeps it an update; say how in TESTING.md.
+
+**Ship a breaking change as a new module** with its own id and name, through a first release ([ADD_A_MODULE.md](../ADD_A_MODULE.md)). The published module stays as it is and keeps getting fixes; its README and release notes point players to the new one. The new module starts without the old one's followers and downloads, which is the price of not changing anyone's music under them. If the two cannot run side by side, the new one names the old in `compatibility.conflicts`. The owner decides if and when the old one retires. A module only days old, or a control that never worked, can be an exception: ask the owner in the pull request.
+
+**What the gate checks.** Automatic publication of an author update compares the manifest's `controls` with the published version. On the Octatrack each control keeps its place in the list (projects store knob values by place), its name, `count` and `labels`; on other machines each named control stays, with the same `count` and `labels`. Anything else goes to owner review. No program hears the sound, so the release checkbox has you vouch that projects saved with the published version keep their controls and sound, apart from the fixes the release notes name.
 
 ## Cross-compatibility
 

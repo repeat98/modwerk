@@ -1,7 +1,7 @@
 import { compareModuleVersions } from '../catalog/versions.ts'
 
 export const AUTHOR_RELEASE_REQUEST = 'Automatically merge and publish my module update after checks pass.'
-export const AUTHOR_RELEASE_EVIDENCE = 'I verified the source, licences, UI and qualification reports, including instance isolation and Part/project/reboot persistence where applicable; no required acceptance check is failed or untested.'
+export const AUTHOR_RELEASE_EVIDENCE = 'I verified the source, licences, UI and qualification reports, including instance isolation and Part/project/reboot persistence where applicable; no required acceptance check is failed or untested; projects saved with the published version keep their controls and sound, apart from the fixes the release notes name.'
 export const ACTIONS_BOT_ID = 41898282
 export type AuthorRegistry = { schemaVersion: 1; accounts: Record<string, number> }
 export type AuthorModule = { folder: string; document: Record<string, unknown> }
@@ -102,6 +102,20 @@ function authorizeVendor(vendor: AuthorVendor | undefined, changes: readonly Aut
   return permitted
 }
 
+/** Octatrack projects store each control's value by its place in the list, so a published control keeps its place,
+ * name, range and values there. Other machines list gestures and pages, matched by name. Appending a control, or
+ * changing a default or description, is additive. */
+export function changedControls(before: unknown, after: unknown, positional: boolean): string[] {
+  const list = (value: unknown) => Array.isArray(value) ? value.map(object) : []
+  const next = list(after)
+  return list(before).flatMap((control, index) => {
+    const name = String(control.name), named = next.find(item => item.name === control.name), now = positional ? next[index] : named
+    if (!now) return [name + (positional && index >= next.length ? ' removed' : ' renamed or removed')]
+    if (now.name !== control.name) return [name + (named ? ' moved' : ' renamed or replaced')]
+    return same(now.count, control.count) && same(now.labels, control.labels) ? [] : [name + ' range or values changed']
+  })
+}
+
 /** Base-branch documents and registry are the authority. PR metadata never grants access. */
 export function authorizeAuthorUpdate(registry: AuthorRegistry, author: unknown, modules: readonly AuthorModule[], changes: readonly AuthorChange[], vendor?: AuthorVendor) {
   parseAuthorRegistry(registry)
@@ -121,6 +135,8 @@ export function authorizeAuthorUpdate(registry: AuthorRegistry, author: unknown,
     if (typeof document.version !== 'string' || typeof module.document.version !== 'string' || compareModuleVersions(document.version, module.document.version) <= 0) throw new Error('Increase the semantic version for ' + moduleReleaseId(module) + '.')
     // A contributor cannot make a new owner waiver, or carry one into changed runtime code.
     if (object(document.tests).releaseWaiver || object(object(document.tests).qualification).hardware && object(object(object(document.tests).qualification).hardware).kind === 'owner-waived') throw new Error('Owner release waivers require owner review.')
+    const controls = changedControls(module.document.controls, document.controls, module.folder.startsWith('sdk/octatrack/'))
+    if (controls.length) throw new Error('Changed controls in ' + moduleReleaseId(module) + ' (' + controls.slice(0, 5).join(', ') + '): projects saved with the published version would play differently. Ship the change as a new module, or ask the owner to review it (docs/module-guides/README.md#updates-keep-saved-work).')
     next.set(moduleReleaseId(module), document)
   }
   const ids = new Set(touched.map(moduleReleaseId)), octatrack = touched.some(module => module.folder.startsWith('sdk/octatrack/'))

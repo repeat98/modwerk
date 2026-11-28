@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ACTIONS_BOT_ID, AUTHOR_RELEASE_REQUEST, AUTHOR_RELEASE_EVIDENCE, authorizeAuthorUpdate, authorReleaseEvent, authorRequestedRelease, parseAuthorRegistry, requireAuthorChecks, type AuthorChange, type AuthorModule } from './author-updates'
+import { ACTIONS_BOT_ID, AUTHOR_RELEASE_REQUEST, AUTHOR_RELEASE_EVIDENCE, authorizeAuthorUpdate, authorReleaseEvent, changedControls, authorRequestedRelease, parseAuthorRegistry, requireAuthorChecks, type AuthorChange, type AuthorModule } from './author-updates'
 
 const registry = { schemaVersion: 1 as const, accounts: { devilfish707: 86663946, irpina: 264014615 } }
 const author = { login: 'devilfish707', id: 86663946, type: 'User' }, base = 'b'.repeat(40), head = 'a'.repeat(40)
@@ -12,7 +12,7 @@ const body = '- [x] ' + AUTHOR_RELEASE_REQUEST + '\n- [x] ' + AUTHOR_RELEASE_EVI
 describe('module author release authority', () => {
   it('requires both explicit release authorization and evidence review', () => {
     expect(authorRequestedRelease(body)).toBe(true)
-    for (const text of [body.replace('[x]', '[ ]'), body.split('\n')[0], '> ' + body, body.replace('no required acceptance check is failed or untested.', 'some tests are pending.')]) expect(authorRequestedRelease(text)).toBe(false)
+    for (const text of [body.replace('[x]', '[ ]'), body.split('\n')[0], '> ' + body, body.replace('no required acceptance check is failed or untested;', 'some tests are pending;'), body.replace('; projects saved with the published version keep their controls and sound, apart from the fixes the release notes name.', '.')]) expect(authorRequestedRelease(text)).toBe(false)
   })
   it('uses immutable IDs from the trusted registry and supports case changes', () => {
     expect(authorizeAuthorUpdate(registry, { ...author, login: 'Devilfish707' }, modules, update()).modules).toEqual(['tapehead'])
@@ -30,6 +30,19 @@ describe('module author release authority', () => {
       [...update(), change('.github/module-authors.json', registry, { ...registry, accounts: { other: author.id } })],
     ]
     for (const changes of bad) expect(() => authorizeAuthorUpdate(registry, author, modules, changes)).toThrow()
+  })
+  it('sends changed published controls to owner review and lets additive ones through', () => {
+    const controls = [{ name: 'TIME', default: 64, count: 128, doc: 'delay time', labels: null }, { name: 'MODE', default: 0, count: 2, doc: 'mode', labels: ['TAPE', 'BBD'] }]
+    const published = { ...document, controls }
+    const release = (next: unknown[]) => authorizeAuthorUpdate(registry, author, [{ ...modules[0], document: published }], [change(path, published, { ...published, version: '0.1.3-experimental', controls: next })])
+    for (const next of [[...controls, { name: 'TONE', default: 0, count: 128, doc: 'new', labels: null }], [{ ...controls[0], default: 32, doc: 'longer delay time' }, controls[1]]]) expect(() => release(next)).not.toThrow()
+    expect(changedControls(controls, [controls[0]], true)).toEqual(['MODE removed'])
+    expect(changedControls(controls, [controls[1], controls[0]], true)).toEqual(['TIME moved', 'MODE moved'])
+    expect(changedControls(controls, [controls[1], controls[0]], false)).toEqual([])
+    expect(changedControls(controls, [controls[1]], false)).toEqual(['TIME renamed or removed'])
+    expect(changedControls(controls, [{ ...controls[0], name: 'DLY' }, controls[1]], true)).toEqual(['TIME renamed or replaced'])
+    expect(changedControls(controls, [{ ...controls[0], count: 64 }, { ...controls[1], labels: ['TAPE', 'DIGI'] }], true)).toEqual(['TIME range or values changed', 'MODE range or values changed'])
+    expect(() => release([controls[1], controls[0]])).toThrow('Changed controls in tapehead (TIME moved, MODE moved)')
   })
   it('keeps module, upstream and media licence text changes on the owner review path', () => {
     for (const file of ['LICENSE', 'upstream/LICENSE.txt', 'media/LICENSE.md', 'COPYING', 'NOTICE']) expect(() => authorizeAuthorUpdate(registry, author, modules, [...update(), change(modules[0].folder + '/' + file, 'original terms', 'changed terms')])).toThrow('Licence text changes')
