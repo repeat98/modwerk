@@ -1,3 +1,4 @@
+import { posix } from 'node:path'
 import { compareModuleVersions } from '../catalog/versions.ts'
 
 export const AUTHOR_RELEASE_REQUEST = 'Automatically merge and publish my module update after checks pass.'
@@ -166,7 +167,14 @@ export function authorizeAuthorUpdate(registry: AuthorRegistry, author: unknown,
     }
     if (/^sdk\/imports\/[a-z0-9-]+\.json$/.test(change.path) && !change.before && change.after && octatrack) {
       const record = object(JSON.parse(change.after))
-      if (!Array.isArray(record.modules) || !record.modules.length || record.modules.some(id => !ids.has(String(id))) || !Array.isArray(record.files) || record.files.some(file => !touched.some(module => String(object(file).path).startsWith('modules/' + module.document.id + '/')))) throw new Error('Import records must concern only the author modules.')
+      // Without a root, paths are upstream's (modules/<id>/…); with one, root plus path must stay in the module's folder or its sdk/octabam copy.
+      const inside = (file: unknown) => touched.some(module => {
+        const raw = String(object(file).path)
+        if (typeof record.root !== 'string') return raw.startsWith('modules/' + module.document.id + '/')
+        const full = posix.normalize(record.root + '/' + raw)
+        return [module.folder, module.folder.replace(/^sdk\/octatrack\//, 'sdk/octabam/')].some(home => full.startsWith(home + '/'))
+      })
+      if (!Array.isArray(record.modules) || !record.modules.length || record.modules.some(id => !ids.has(String(id))) || !Array.isArray(record.files) || !record.files.every(inside)) throw new Error('Import records must concern only the author modules.')
       continue
     }
     if (octatrack && packageNames.some(name => change.path === 'src/engine/assets/' + name + '.json') && change.before && change.after) {
