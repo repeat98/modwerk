@@ -199,7 +199,7 @@ h2 { font-size: var(--text-md); letter-spacing: -.15px; font-weight: 600; }
 .module-card .module-preview { background-color: var(--preview); }
 .module-card .preview-label { height: auto; min-height: 30px; gap: 8px; font-size: .625rem; line-height: 1.4; letter-spacing: .04em; }
 .preview-label .module-caution-badge { position: relative; z-index: 1; flex: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: normal; }
-.module-card .signal-art { flex-shrink: 1; min-height: 0; }
+.module-card .signal-art { flex-shrink: 1; min-height: 0; transform: scale(.88); }
 .module-cover { display: block; position: relative; overflow: hidden; }
 .module-cover:focus-visible { outline-offset: -3px; }
 @media (min-width: 821px) {
